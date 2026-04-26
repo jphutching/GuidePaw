@@ -1,5 +1,10 @@
 <?php
 require 'includes/db_connect.php';
+require_once 'includes/feature_flags.php';
+if (!featureEnabled($pdo, 'alerts_enabled')) {
+    header('Location: index.php?msg=feature_disabled');
+    exit;
+}
 checkLogin();
 $userId=(int)$_SESSION['user_id']; $dog=requireActiveDog($pdo,$userId); $alerts=getDogAlertItems($pdo,$userId,(int)$dog['id']);
 ?>

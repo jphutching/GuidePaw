@@ -1,5 +1,10 @@
 <?php
 require 'includes/db_connect.php';
+require_once 'includes/feature_flags.php';
+if (!featureEnabled($pdo, 'health_docs_enabled')) {
+    header('Location: index.php?msg=feature_disabled');
+    exit;
+}
 require 'includes/validation.php';
 checkLogin();
 

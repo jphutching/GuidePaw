@@ -1,5 +1,10 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/feature_flags.php';
+if (!featureEnabled($pdo, 'ada_wallet_enabled')) {
+    header('Location: index.php?msg=feature_disabled');
+    exit;
+}
 checkLogin();
 
 $userId = (int) ($_SESSION['user_id'] ?? 0);

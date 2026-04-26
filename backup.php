@@ -1,5 +1,10 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/feature_flags.php';
+if (!featureEnabled($pdo, 'backup_tools_enabled')) {
+    header('Location: index.php?msg=feature_disabled');
+    exit;
+}
 require_once 'includes/app_config.php';
 checkLogin();
 
