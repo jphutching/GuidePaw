@@ -150,17 +150,49 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <div class="col-6 col-md-4"><a href="dogs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🐕<br>Dogs</a></div>
             <div class="col-6 col-md-4"><a href="dog_profile.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>Dog Profile</a></div>
             <div class="col-6 col-md-4"><a href="collaboration.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🤝<br>Handlers</a></div>
-            <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
-            <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
-            <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
-            <div class="col-6 col-md-4"><a href="training_program.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎓<br>Training</a></div>
-            <div class="col-6 col-md-4"><a href="medications.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💊<br>Meds</a></div>
-            <div class="col-6 col-md-4"><a href="certification.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Certification</a></div>
-            <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
+            <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🩺<br>Health Docs<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">📅<br>Vet Appts<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🧠<br>Alerts<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'training_program_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="training_program.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎓<br>Training</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🎓<br>Training<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="medications.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💊<br>Meds</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">💊<br>Meds<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="certification.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Certification</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">✅<br>Certification<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'backup_tools_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">💾<br>Backup<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
             <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
             <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗄️<br>DB Status</a></div>
             
-            <div class="col-6 col-md-4"><a href="ada_wallet_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Wallet Card</a></div>
+            <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="ada_wallet_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Wallet Card</a></div>
+            <?php else: ?>
+                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🪪<br>ADA Wallet Card<br><small>Coming soon</small></div></div>
+            <?php endif; ?>
         </div>
     </div>
 
