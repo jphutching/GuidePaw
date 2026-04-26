@@ -1,0 +1,10 @@
+.env
+.env.*
+/vendor/
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/tmp/*
+!/storage/tmp/.gitkeep
+
+# Runtime logs
+storage/logs/*.log

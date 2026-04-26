@@ -1,0 +1,10 @@
+<?php
+require 'includes/db_connect.php';
+checkLogin();
+$userId=(int)$_SESSION['user_id']; $dog=requireActiveDog($pdo,$userId); $alerts=getDogAlertItems($pdo,$userId,(int)$dog['id']);
+?>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Smart Alerts</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="styles.css" rel="stylesheet"></head><body>
+<?php require_once 'includes/beta_banner.php'; ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
+<div class="topbar p-4 shadow-sm"><div class="page-shell p-0 d-flex justify-content-between align-items-start gap-3"><div><div class="small opacity-75">Smart alerts</div><h2 class="mb-1">🧠 <?= e($dog['name']) ?></h2><div class="small opacity-75">Training, health, medication, and certification warnings in one place.</div></div><a href="index.php" class="btn btn-outline-light btn-sm">Dashboard</a></div></div>
+<div class="page-shell"><div class="d-flex flex-wrap gap-2 mb-3"><a href="log_entry.php" class="btn btn-outline-primary btn-sm">New log</a><a href="appointments.php" class="btn btn-outline-primary btn-sm">Appointments</a><a href="medications.php" class="btn btn-outline-primary btn-sm">Medications</a><a href="certification.php" class="btn btn-outline-primary btn-sm">Certification</a></div><?php if(!$alerts): ?><div class="alert alert-success">No active alerts for this dog right now.</div><?php else: ?><div class="vstack gap-3"><?php foreach($alerts as $alert): ?><div class="card shadow-sm alert-card <?= e($alert['level']) ?>"><div class="card-body"><div class="d-flex justify-content-between gap-3 align-items-start"><div><div class="fw-semibold"><?= e($alert['title']) ?></div><div class="small-muted mt-1"><?= e($alert['detail']) ?></div></div><span class="badge <?= $alert['level']==='danger'?'bg-danger':($alert['level']==='warning'?'bg-warning text-dark':'bg-info text-dark') ?>"><?= e(ucfirst($alert['level'])) ?></span></div></div></div><?php endforeach; ?></div><?php endif; ?></div></body></html>

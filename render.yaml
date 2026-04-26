@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: guidepaw-beta-web
+    runtime: docker
+    plan: starter
+    repo: https://github.com/REPLACE_WITH_YOUR_USERNAME/REPLACE_WITH_YOUR_REPO
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz.php
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_MODE
+        value: beta
+      - key: APP_NAME
+        value: GuidePaw Beta PG
+      - key: APP_SHORT_NAME
+        value: GuidePaw
+      - key: APP_BETA_BANNER_ENABLED
+        value: "true"
+      - key: APP_BETA_BANNER_LABEL
+        value: BETA / MIGRATION BUILD
+      - key: APP_STORAGE_PATH
+        value: /data
+      - key: DB_DRIVER
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: guidepaw-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: guidepaw-postgres
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: guidepaw-postgres
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: guidepaw-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: guidepaw-postgres
+          property: password
+    disk:
+      name: guidepaw-beta-storage
+      mountPath: /data
+      sizeGB: 10
+
+databases:
+  - name: guidepaw-postgres
+    plan: basic-256mb
+    databaseName: guidepaw
+    user: guidepaw

@@ -1,0 +1,13 @@
+GuidePaw PostgreSQL current-build fixes
+
+Included:
+- PostgreSQL-only schema and docs
+- schema `SMALLINT` correction
+- Training History query quote fix
+- Reports query empty-string fix
+- Quick Log GPS + city/state capture
+- bottom nav + More flyout, floating menu button removed
+- shared nav styling loaded on key pages
+- dashboard ADA duplicate tile removed
+- ADA Wallet Card page reworked
+- Ubuntu migration guide added

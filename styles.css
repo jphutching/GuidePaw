@@ -1,0 +1,31 @@
+
+:root{--psd-primary:#0d6efd;--psd-bg:#f4f7fb;--psd-card:#ffffff;--psd-border:#dfe5ee;--psd-text:#1f2937;--psd-muted:#6b7280;}
+body{background:var(--psd-bg);color:var(--psd-text);} .page-shell{max-width:980px;margin:0 auto;padding:1rem;} .card{border-radius:18px;border:1px solid var(--psd-border);} .card.shadow-sm{box-shadow:0 .35rem 1rem rgba(15,23,42,.08)!important;} .btn{border-radius:14px;font-weight:600;} .btn-tile{background:var(--psd-card);border:1px solid var(--psd-border);min-height:108px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.35rem;font-size:1.02rem;} .section-title{font-size:1.05rem;font-weight:700;margin-bottom:.75rem;} .info-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .65rem;border-radius:999px;background:#eef4ff;color:#234;font-size:.85rem;} .alert-card{border-left:5px solid #0dcaf0;} .alert-card.warning{border-left-color:#ffc107;} .alert-card.danger{border-left-color:#dc3545;} .alert-card.info{border-left-color:#0dcaf0;} .data-label{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--psd-muted);} .kv-box{padding:.85rem 1rem;border:1px solid var(--psd-border);border-radius:14px;background:#fff;height:100%;} .form-control,.form-select,textarea{border-radius:12px;} .topbar{background:linear-gradient(135deg,#0d6efd,#2855c4);color:white;border-bottom-left-radius:20px;border-bottom-right-radius:20px;} .small-muted{font-size:.87rem;color:var(--psd-muted);} @media (max-width:576px){.page-shell{padding:.85rem;}.btn-tile{min-height:96px;font-size:.95rem;}}
+
+
+.beta-banner { position: sticky; top: 0; z-index: 1030; }
+.beta-banner .btn-close { float:none; }
+
+
+/* GuidePaw mobile navigation */
+body{padding-bottom:calc(5.75rem + env(safe-area-inset-bottom));}
+body.gp-menu-open{overflow:hidden;}
+.gp-menu-toggle{position:fixed;top:calc(.9rem + env(safe-area-inset-top));left:.9rem;z-index:1042;width:48px;height:48px;border:0;border-radius:14px;background:#ffffff;color:#1f2937;box-shadow:0 .35rem 1rem rgba(15,23,42,.18);display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 12px;}
+.gp-menu-toggle span{display:block;height:2px;background:#1f2937;border-radius:999px;}
+.gp-offcanvas-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1043;}
+.gp-offcanvas{position:fixed;top:0;left:0;bottom:0;width:min(86vw,340px);background:#fff;transform:translateX(-105%);transition:transform .22s ease;z-index:1044;padding:1rem 1rem calc(6rem + env(safe-area-inset-bottom));box-shadow:0 .75rem 2rem rgba(15,23,42,.22);overflow-y:auto;}
+.gp-offcanvas.open{transform:translateX(0);}
+.gp-offcanvas-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem;padding-top:calc(.15rem + env(safe-area-inset-top));}
+.gp-offcanvas-title{font-size:1.1rem;font-weight:700;}
+.gp-offcanvas-subtitle{font-size:.88rem;color:var(--psd-muted);}
+.gp-offcanvas-links{display:flex;flex-direction:column;gap:.55rem;}
+.gp-offcanvas-link{display:flex;align-items:center;gap:.75rem;padding:.9rem 1rem;border:1px solid var(--psd-border);border-radius:16px;background:#fff;color:var(--psd-text);text-decoration:none;font-weight:600;}
+.gp-offcanvas-link.active{background:#eef4ff;border-color:#b9d0ff;color:#163d8a;}
+.gp-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:1041;display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;padding:.55rem .65rem calc(.55rem + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--psd-border);box-shadow:0 -.25rem 1rem rgba(15,23,42,.08);}
+.gp-bottom-link{appearance:none;border:0;background:transparent;color:var(--psd-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;text-decoration:none;font-size:.73rem;font-weight:700;padding:.45rem .25rem;border-radius:14px;}
+.gp-bottom-link.active{color:#0d6efd;background:#eef4ff;}
+.gp-link-emoji{font-size:1.12rem;line-height:1;}
+@media (min-width: 992px){
+  .gp-menu-toggle{left:max(1.25rem, calc((100vw - 980px)/2 + .5rem));}
+  .gp-bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:min(980px,100%);border-radius:18px 18px 0 0;}
+}

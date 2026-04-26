@@ -1,0 +1,11 @@
+.git
+.gitignore
+README.md
+CHANGELOG.md
+docs/
+sql/
+node_modules/
+Dockerfile*
+render.yaml
+*.zip
+.DS_Store

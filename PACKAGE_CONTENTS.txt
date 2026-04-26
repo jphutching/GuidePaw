@@ -1,0 +1,7 @@
+This zip contains:
+- current GuidePaw app code
+- PostgreSQL schema
+- Ubuntu install guide
+- Termux + Debian sandbox guide
+- Render deploy guide
+- current build notes
