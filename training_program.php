@@ -2,6 +2,7 @@
 require 'includes/db_connect.php';
 require_once 'includes/feature_flags.php';
 require_once 'includes/training_goals.php';
+require_once 'includes/training_goals.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {
     header('Location: index.php?msg=feature_disabled');
     exit;
