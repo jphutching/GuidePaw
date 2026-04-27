@@ -1,6 +1,7 @@
 <?php
 require 'includes/db_connect.php';
 require_once 'includes/feature_flags.php';
+require_once 'includes/training_goals.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {
     header('Location: index.php?msg=feature_disabled');
     exit;
@@ -113,16 +114,7 @@ $recentSessions = [];
 $nextModules = [];
 
 try {
-    $stmt = $pdo->prepare("
-        SELECT g.*, d.name AS dog_name
-        FROM training_goals g
-        JOIN dogs d ON d.id = g.dog_id
-        WHERE g.user_id = ? AND g.status = 'active'
-        ORDER BY g.created_at DESC
-        LIMIT 3
-    ");
-    $stmt->execute([$userId]);
-    $activeGoals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $activeGoals = getActiveTrainingGoals($pdo, $userId, 3);
 
     $stmt = $pdo->prepare("
         SELECT s.*, d.name AS dog_name, m.title AS module_title
@@ -150,10 +142,7 @@ try {
     $nextModules = [];
 }
 
-$easyWin = 'Say your dog’s name once. Reward the moment they look at you. Repeat 3 times.';
-if (!empty($activeGoals)) {
-    $easyWin = 'Work 3 minutes on: ' . ($activeGoals[0]['desired_behavior'] ?: $activeGoals[0]['goal_category']);
-}
+$easyWin = buildEasyWinFromGoal($activeGoals[0] ?? null);
 ?>
 
 <div class="container my-3">
