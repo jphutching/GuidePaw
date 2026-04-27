@@ -24,7 +24,39 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 $medications=getDogMedications($pdo,$dogId); $csrf=generateCsrfToken();
 ?>
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Medications</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="styles.css" rel="stylesheet"></head><body>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Medications</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="styles.css" rel="stylesheet">
+<style>
+.gp-brand-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 4vw, 28px);
+    margin: clamp(12px, 3vw, 22px) auto;
+    flex-wrap: wrap;
+}
+.gp-brand-logo {
+    width: clamp(120px, 34vw, 175px);
+    height: auto;
+    border-radius: 16px;
+    display: block;
+}
+.gp-brand-copy {
+    text-align: center;
+    color: #fff;
+}
+.gp-brand-tagline {
+    font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif;
+    font-size: clamp(.86rem, 3.1vw, 1.08rem);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+</style>
+
+</head><body>
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="topbar p-4 shadow-sm"><div class="page-shell p-0"><div class="d-flex justify-content-between align-items-start gap-3"><div><div class="small opacity-75">Medication tracking</div><h2 class="mb-1">💊 <?= e($dog['name']) ?></h2><div class="small opacity-75">Track dosing, refill dates, and reminder times per dog.</div></div><a href="index.php" class="btn btn-outline-light btn-sm">Dashboard</a></div></div></div>

@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 checkLogin();
 
 $uid = $_SESSION['user_id'];
@@ -39,6 +40,37 @@ $qr_api = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . url
     <title>Settings & Mastery</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+
+<style>
+.gp-brand-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 4vw, 28px);
+    margin: clamp(12px, 3vw, 22px) auto;
+    flex-wrap: wrap;
+}
+.gp-brand-logo {
+    width: clamp(120px, 34vw, 175px);
+    height: auto;
+    border-radius: 16px;
+    display: block;
+}
+.gp-brand-copy {
+    text-align: center;
+    color: #fff;
+}
+.gp-brand-tagline {
+    font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif;
+    font-size: clamp(.86rem, 3.1vw, 1.08rem);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+</style>
+
 </head>
 <body class="bg-light pb-5">
 <?php require_once 'includes/beta_banner.php'; ?>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/db_connect.php';
+require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/behavior_incidents.php';
 
@@ -129,8 +130,40 @@ $current = $protocols[$selected];
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background: #eee; }
     </style>
+
+<style>
+.gp-brand-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 4vw, 28px);
+    margin: clamp(12px, 3vw, 22px) auto;
+    flex-wrap: wrap;
+}
+.gp-brand-logo {
+    width: clamp(120px, 34vw, 175px);
+    height: auto;
+    border-radius: 16px;
+    display: block;
+}
+.gp-brand-copy {
+    text-align: center;
+    color: #fff;
+}
+.gp-brand-tagline {
+    font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', system-ui, sans-serif;
+    font-size: clamp(.86rem, 3.1vw, 1.08rem);
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+</style>
+
 </head>
 <body>
+<?php guidepawBrandHeader(); ?>
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Habit Repair</h1>
