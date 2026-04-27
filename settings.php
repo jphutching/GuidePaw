@@ -73,6 +73,7 @@ $qr_api = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" . url
 
 </head>
 <body class="bg-light pb-5">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="container py-4">
