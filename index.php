@@ -49,16 +49,24 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
     min-width: 180px;
 }
 .gp-brand-name {
-    font-size: clamp(1.45rem, 5vw, 2.4rem);
-    font-weight: 800;
-    line-height: 1;
+    font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', 'Nunito', system-ui, sans-serif;
+    font-size: clamp(1.7rem, 6vw, 2.8rem);
+    font-weight: 900;
+    line-height: .95;
+    letter-spacing: .01em;
+    color: #ffffff;
+    text-shadow: 0 3px 10px rgba(0,0,0,.22);
 }
 .gp-brand-tagline {
-    margin-top: 8px;
-    font-size: clamp(.72rem, 2.5vw, .95rem);
-    letter-spacing: .12em;
+    margin-top: 10px;
+    font-family: 'Trebuchet MS', system-ui, sans-serif;
+    font-size: clamp(.86rem, 3.1vw, 1.08rem);
+    font-weight: 900;
+    letter-spacing: .08em;
     text-transform: uppercase;
-    opacity: .78;
+    color: #ffffff;
+    opacity: .98;
+    text-shadow: 0 2px 8px rgba(0,0,0,.28);
 }
 @media (max-width: 520px) {
     .gp-brand-copy {
