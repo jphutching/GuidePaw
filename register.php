@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body class="bg-light p-4">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
     <div class="card p-4 mx-auto shadow" style="max-width:400px;">
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'setup_required'): ?><div class="alert alert-info">Create your first handler account to initialize the app.</div><?php endif; ?>

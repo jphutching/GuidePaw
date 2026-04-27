@@ -32,6 +32,7 @@ checkLogin();
 <body class="bg-light pb-5">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="bg-primary text-white px-4 py-3 shadow-sm">

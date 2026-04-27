@@ -22,6 +22,7 @@ $u = $stmt->fetch();
 <body class="container p-4 bg-light">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width:400px;">

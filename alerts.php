@@ -43,6 +43,7 @@ $userId=(int)$_SESSION['user_id']; $dog=requireActiveDog($pdo,$userId); $alerts=
 </head><body>
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="topbar p-4 shadow-sm"><div class="page-shell p-0 d-flex justify-content-between align-items-start gap-3"><div><div class="small opacity-75">Smart alerts</div><h2 class="mb-1">🧠 <?= e($dog['name']) ?></h2><div class="small opacity-75">Training, health, medication, and certification warnings in one place.</div></div><a href="index.php" class="btn btn-outline-light btn-sm">Dashboard</a></div></div>

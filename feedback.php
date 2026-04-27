@@ -58,6 +58,7 @@ $csrf = generateCsrfToken();
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <div class="page-shell mt-4" style="max-width: 880px;">
     <div class="d-flex justify-content-between align-items-center mb-3">

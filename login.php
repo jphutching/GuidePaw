@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body class="container p-5 bg-light">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
     <form method="POST" class="card p-4 mx-auto shadow" style="max-width:400px;">
         <h3 class="text-center mb-4">Driver Login</h3>

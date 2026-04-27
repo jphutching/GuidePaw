@@ -65,6 +65,7 @@ $csrfToken = generateCsrfToken();
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="container py-4" style="max-width: 760px;">

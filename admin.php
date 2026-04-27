@@ -55,6 +55,7 @@ $csrf = generateCsrfToken();
 <body>
 <?php guidepawBrandHeader(); ?>
 
+
 <div class="wrap">
     <div class="top">
         <h1>GuidePaw Admin</h1>

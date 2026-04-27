@@ -46,5 +46,6 @@ $dog = $stmt->fetch();
 <body class="bg-light p-4 text-center">
 <?php guidepawBrandHeader(); ?>
 
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?><div class="card shadow-lg p-4 mx-auto" style="max-width:400px; border-top: 10px solid #0d6efd;"><h1 class="mb-0"><?= e($dog['name']) ?></h1><p class="badge bg-info text-dark"><?= e($dog['breed']) ?></p><p class="small text-muted mb-0">Owner: <?= e($dog['owner_username']) ?></p><hr><div class="bg-white p-3 rounded border mb-3"><small class="text-muted d-block">MICROCHIP ID</small><strong style="font-size: 1.2rem;"><?= e($dog['chip_number'] ?: 'Not Listed') ?></strong></div><?php if (!empty($dog['date_of_birth']) || !empty($dog['approx_age_years'])): ?><div class="bg-white p-3 rounded border mb-3"><small class="text-muted d-block">AGE</small><strong><?= !empty($dog['date_of_birth']) ? e($dog['date_of_birth']) : e((string) $dog['approx_age_years']) . ' years approx' ?></strong></div><?php endif; ?><div class="d-grid gap-2"><a href="dog_profile.php?dog_id=<?= (int) $dog['id'] ?>" class="btn btn-outline-primary btn-sm">Edit Dog Profile</a><a href="dogs.php" class="btn btn-outline-secondary btn-sm">All Dogs</a></div></div></body></html>
