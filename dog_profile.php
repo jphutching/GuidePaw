@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require 'includes/validation.php';
 require 'includes/dog_breeds.php';
@@ -60,6 +61,7 @@ $csrf = generateCsrfToken();
 </head>
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="container py-4" style="max-width: 760px;">

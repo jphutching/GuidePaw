@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/feature_flags.php';
 if (!featureEnabled($pdo, 'medications_enabled')) {
@@ -57,6 +58,7 @@ $medications=getDogMedications($pdo,$dogId); $csrf=generateCsrfToken();
 
 </head><body>
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="topbar p-4 shadow-sm"><div class="page-shell p-0"><div class="d-flex justify-content-between align-items-start gap-3"><div><div class="small opacity-75">Medication tracking</div><h2 class="mb-1">💊 <?= e($dog['name']) ?></h2><div class="small opacity-75">Track dosing, refill dates, and reminder times per dog.</div></div><a href="index.php" class="btn btn-outline-light btn-sm">Dashboard</a></div></div></div>

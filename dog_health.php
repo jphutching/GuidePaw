@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/feature_flags.php';
 if (!featureEnabled($pdo, 'health_docs_enabled')) {
@@ -76,6 +77,7 @@ $docs = $docs->fetchAll();
 <link href="styles.css" rel="stylesheet"></head>
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="container py-4" style="max-width: 1100px;">

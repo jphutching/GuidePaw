@@ -164,6 +164,7 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+
 <div class="wrap">
     <p><a href="training_program.php">← Training Program</a></p>
     <h1>Training Session Log</h1>

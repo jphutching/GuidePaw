@@ -100,6 +100,7 @@ function h($value) {
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+
 <div class="wrap">
     <div class="top">
         <div>

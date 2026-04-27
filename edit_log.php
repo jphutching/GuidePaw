@@ -29,6 +29,7 @@ $skills = json_decode($log['skills_practiced'], true) ?: [];
 </head>
 <body class="container mt-4 bg-light">
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="card shadow p-4 mx-auto" style="max-width: 600px;">

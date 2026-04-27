@@ -164,6 +164,7 @@ $current = $protocols[$selected];
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Habit Repair</h1>

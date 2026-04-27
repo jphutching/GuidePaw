@@ -93,6 +93,7 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Training Goal Intake</h1>

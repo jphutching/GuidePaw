@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/two_factor.php';
 checkLogin();
@@ -62,6 +63,7 @@ $isEnabled = !empty($user['is_2fa_enabled']) && !empty($user['google_2fa_secret'
 </head>
 <body class="container p-4 bg-light">
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="card shadow-sm mx-auto" style="max-width: 520px;">

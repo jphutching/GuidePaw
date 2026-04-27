@@ -1,4 +1,5 @@
-<?php 
+<?php
+require_once __DIR__ . '/includes/brand_header.php'; 
 require 'includes/db_connect.php'; 
 
 if (!empty($_SESSION['user_id'])) {
@@ -63,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body class="container p-5 bg-light">
 <?php guidepawBrandHeader(); ?>
+
 <?php require_once 'includes/beta_banner.php'; ?>
     <form method="POST" class="card p-4 mx-auto shadow" style="max-width:400px;">
         <h3 class="text-center mb-4">Driver Login</h3>
