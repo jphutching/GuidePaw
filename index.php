@@ -199,5 +199,35 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
     </div>
 
     <script src="app.js"></script>
+
+<div class="container my-4">
+    <h2 class="h5 mb-3">Training Core</h2>
+    <div class="row g-3">
+        <?php if (featureEnabled($pdo, 'candidate_scoring_enabled')): ?>
+            <div class="col-6 col-md-3">
+                <a href="candidate_assessment.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🐾<br>Candidate<br>Assessment</a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (featureEnabled($pdo, 'goal_intake_enabled')): ?>
+            <div class="col-6 col-md-3">
+                <a href="training_goal_intake.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎯<br>Goal<br>Intake</a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (featureEnabled($pdo, 'habit_repair_enabled')): ?>
+            <div class="col-6 col-md-3">
+                <a href="habit_repair.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🛠️<br>Habit<br>Repair</a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['is_admin'])): ?>
+            <div class="col-6 col-md-3">
+                <a href="admin_feature_roadmap.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗺️<br>Feature<br>Roadmap</a>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 </body>
 </html>
