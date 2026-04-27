@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 checkLogin();
 $uid = $_SESSION['user_id'];
 
@@ -19,6 +20,7 @@ $u = $stmt->fetch();
 <head><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet"></head>
 <body class="container p-4 bg-light">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width:400px;">

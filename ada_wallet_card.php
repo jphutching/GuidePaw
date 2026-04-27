@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 require_once 'includes/feature_flags.php';
 if (!featureEnabled($pdo, 'ada_wallet_enabled')) {
     header('Location: index.php?msg=feature_disabled');
@@ -287,6 +288,7 @@ $handlerName = $user['username'] ?? 'Handler';
     </style>
 </head>
 <body class="wallet-page pb-5">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 

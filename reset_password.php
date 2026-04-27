@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container p-5 bg-light">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
     <form method="POST" class="card p-4 mx-auto shadow" style="max-width:400px;">
         <h4 class="mb-3">Account Recovery</h4>

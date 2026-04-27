@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/db_connect.php';
+require_once __DIR__ . '/includes/brand_header.php';
 checkLogin();
 require_once __DIR__ . '/includes/feature_flags.php';
 
@@ -52,6 +53,7 @@ $csrf = generateCsrfToken();
     </style>
 </head>
 <body>
+<?php guidepawBrandHeader(); ?>
 <div class="wrap">
     <div class="top">
         <h1>GuidePaw Admin</h1>

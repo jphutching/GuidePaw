@@ -61,6 +61,7 @@ $isEnabled = !empty($user['is_2fa_enabled']) && !empty($user['google_2fa_secret'
     <link href="styles.css" rel="stylesheet">
 </head>
 <body class="container p-4 bg-light">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="card shadow-sm mx-auto" style="max-width: 520px;">

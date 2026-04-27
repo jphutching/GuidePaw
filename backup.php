@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 require_once 'includes/feature_flags.php';
 if (!featureEnabled($pdo, 'backup_tools_enabled')) {
     header('Location: index.php?msg=feature_disabled');
@@ -28,6 +29,7 @@ $dogCount = (int) $dogCountStmt->fetchColumn();
     <link href="styles.css" rel="stylesheet">
 </head>
 <body class="bg-light pb-5">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <div class="container py-4" style="max-width: 860px;">

@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 require_once 'includes/app_config.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -55,6 +56,7 @@ $csrf = generateCsrfToken();
 <link href="styles.css" rel="stylesheet">
 </head>
 <body class="pb-5">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <div class="page-shell mt-4" style="max-width: 880px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
