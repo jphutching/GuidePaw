@@ -124,7 +124,9 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             </div>
         <?php endif; ?>
 
-        <?php if (($_GET['msg'] ?? '') === 'quick_session_disabled'): ?>
+        <?php if (($_GET['msg'] ?? '') === 'feature_disabled'): ?>
+                <div class="alert alert-info">That GuidePaw feature is not enabled yet. It is on the roadmap and may be available in a future beta.</div>
+            <?php elseif (($_GET['msg'] ?? '') === 'quick_session_disabled'): ?>
             <div class="alert alert-warning">Quick Session is temporarily disabled during beta.</div>
         <?php elseif (($_GET['msg'] ?? '') === 'detailed_log_disabled'): ?>
             <div class="alert alert-warning">Detailed Log is temporarily disabled during beta.</div>
