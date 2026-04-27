@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/training_goals.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -30,54 +31,12 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dogId = (int)($_POST['dog_id'] ?? 0);
 
-    $insert = $pdo->prepare("
-        INSERT INTO training_goals
-        (
-            dog_id,
-            user_id,
-            goal_category,
-            current_problem,
-            desired_behavior,
-            context_environment,
-            trigger_description,
-            handler_time_budget_minutes,
-            reinforcer_preference,
-            safety_risk,
-            success_criteria,
-            maintenance_plan,
-            status
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-    ");
-
-    $insert->execute([
-        $dogId,
-        $userId,
-        trim($_POST['goal_category'] ?? ''),
-        trim($_POST['current_problem'] ?? ''),
-        trim($_POST['desired_behavior'] ?? ''),
-        trim($_POST['context_environment'] ?? ''),
-        trim($_POST['trigger_description'] ?? ''),
-        (int)($_POST['handler_time_budget_minutes'] ?? 3),
-        trim($_POST['reinforcer_preference'] ?? ''),
-        isset($_POST['safety_risk']) ? 1 : 0,
-        trim($_POST['success_criteria'] ?? ''),
-        trim($_POST['maintenance_plan'] ?? '')
-    ]);
+    createTrainingGoal($pdo, $userId, $_POST);
 
     $message = 'Training goal saved.';
 }
 
-$recentStmt = $pdo->prepare("
-    SELECT g.*, d.name AS dog_name
-    FROM training_goals g
-    JOIN dogs d ON d.id = g.dog_id
-    WHERE g.user_id = ?
-    ORDER BY g.created_at DESC
-    LIMIT 8
-");
-$recentStmt->execute([$userId]);
-$recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
+$recent = getRecentTrainingGoals($pdo, $userId, 8);
 ?>
 <!doctype html>
 <html lang="en">
