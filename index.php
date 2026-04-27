@@ -27,13 +27,57 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <title><?= e(appName()) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
+
+<style>
+.gp-brand-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(12px, 4vw, 28px);
+    margin-bottom: clamp(16px, 4vw, 28px);
+    flex-wrap: wrap;
+}
+.gp-brand-logo {
+    width: clamp(120px, 32vw, 190px);
+    height: auto;
+    border-radius: 14px;
+    display: block;
+}
+.gp-brand-copy {
+    text-align: left;
+    color: #fff;
+    min-width: 180px;
+}
+.gp-brand-name {
+    font-size: clamp(1.45rem, 5vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1;
+}
+.gp-brand-tagline {
+    margin-top: 8px;
+    font-size: clamp(.72rem, 2.5vw, .95rem);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    opacity: .78;
+}
+@media (max-width: 520px) {
+    .gp-brand-copy {
+        text-align: center;
+    }
+}
+</style>
+
 </head>
 <body class="pb-5">
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="topbar p-4 shadow-sm">
-    <div class="text-center mb-3">
-        <img src="assets/brand/guidepaw-logo.png" alt="GuidePaw" style="max-width:150px; width:58%; height:auto; border-radius:12px;">
+    <div class="gp-brand-hero">
+        <img class="gp-brand-logo" src="/assets/brand/guidepaw-logo.png" alt="GuidePaw">
+        <div class="gp-brand-copy">
+            <div class="gp-brand-name">GuidePaw</div>
+            <div class="gp-brand-tagline">Training. Trust. For the Journey.</div>
+        </div>
     </div>
         <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
