@@ -106,6 +106,120 @@ $csrf = generateCsrfToken();
 <body class="pb-5">
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
+
+<?php
+$activeGoals = [];
+$recentSessions = [];
+$nextModules = [];
+
+try {
+    $stmt = $pdo->prepare("
+        SELECT g.*, d.name AS dog_name
+        FROM training_goals g
+        JOIN dogs d ON d.id = g.dog_id
+        WHERE g.user_id = ? AND g.status = 'active'
+        ORDER BY g.created_at DESC
+        LIMIT 3
+    ");
+    $stmt->execute([$userId]);
+    $activeGoals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->prepare("
+        SELECT s.*, d.name AS dog_name, m.title AS module_title
+        FROM training_sessions s
+        JOIN dogs d ON d.id = s.dog_id
+        LEFT JOIN training_modules m ON m.id = s.module_id
+        WHERE s.user_id = ?
+        ORDER BY s.created_at DESC
+        LIMIT 3
+    ");
+    $stmt->execute([$userId]);
+    $recentSessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->query("
+        SELECT title, level_number, category
+        FROM training_modules
+        WHERE is_active = 1
+        ORDER BY level_number, sort_order
+        LIMIT 5
+    ");
+    $nextModules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $activeGoals = [];
+    $recentSessions = [];
+    $nextModules = [];
+}
+
+$easyWin = 'Say your dog’s name once. Reward the moment they look at you. Repeat 3 times.';
+if (!empty($activeGoals)) {
+    $easyWin = 'Work 3 minutes on: ' . ($activeGoals[0]['desired_behavior'] ?: $activeGoals[0]['goal_category']);
+}
+?>
+
+<div class="container my-3">
+    <div class="alert alert-success">
+        <strong>Today&apos;s Easy Win:</strong>
+        <?= e($easyWin) ?>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6">Active Goals</h2>
+                    <?php if (!$activeGoals): ?>
+                        <p class="small text-muted mb-0">No active goals yet. Start with Goal Intake.</p>
+                    <?php else: ?>
+                        <?php foreach ($activeGoals as $goal): ?>
+                            <div class="small mb-2">
+                                <strong><?= e($goal['dog_name']) ?>:</strong>
+                                <?= e($goal['success_criteria'] ?: $goal['desired_behavior']) ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <a class="btn btn-sm btn-outline-primary mt-2" href="training_goal_intake.php">Goal Intake</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6">Current Modules</h2>
+                    <?php foreach ($nextModules as $module): ?>
+                        <div class="small mb-2">
+                            Level <?= e($module['level_number']) ?>:
+                            <?= e($module['title']) ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6">Progress / Regression</h2>
+                    <?php if (!$recentSessions): ?>
+                        <p class="small text-muted mb-0">No logged training sessions yet.</p>
+                    <?php else: ?>
+                        <?php foreach ($recentSessions as $session): ?>
+                            <div class="small mb-2">
+                                <strong><?= e($session['dog_name']) ?>:</strong>
+                                <?= e($session['progression_status']) ?>
+                                <?php if (!empty($session['module_title'])): ?>
+                                    on <?= e($session['module_title']) ?>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <a class="btn btn-sm btn-outline-primary mt-2" href="habit_repair.php">Habit Repair</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="topbar p-4 shadow-sm">
     <div class="page-shell p-0 d-flex justify-content-between align-items-start gap-3">
         <div>
