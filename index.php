@@ -29,53 +29,6 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 
-<style>
-.gp-brand-hero {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(12px, 4vw, 28px);
-    margin-bottom: clamp(16px, 4vw, 28px);
-    flex-wrap: wrap;
-}
-.gp-brand-logo {
-    width: clamp(120px, 32vw, 190px);
-    height: auto;
-    border-radius: 14px;
-    display: block;
-}
-.gp-brand-copy {
-    text-align: left;
-    color: #fff;
-    min-width: 180px;
-}
-.gp-brand-name {
-    font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', 'Nunito', system-ui, sans-serif;
-    font-size: clamp(1.7rem, 6vw, 2.8rem);
-    font-weight: 900;
-    line-height: .95;
-    letter-spacing: .01em;
-    color: #ffffff;
-    text-shadow: 0 3px 10px rgba(0,0,0,.22);
-}
-.gp-brand-tagline {
-    margin-top: 10px;
-    font-family: 'Trebuchet MS', system-ui, sans-serif;
-    font-size: clamp(.86rem, 3.1vw, 1.08rem);
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #ffffff;
-    opacity: .98;
-    text-shadow: 0 2px 8px rgba(0,0,0,.28);
-}
-@media (max-width: 520px) {
-    .gp-brand-copy {
-        text-align: center;
-    }
-}
-</style>
-
 </head>
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
@@ -83,11 +36,6 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="topbar p-4 shadow-sm">
-    <div class="gp-brand-hero">
-        <img class="gp-brand-logo" src="/assets/brand/guidepaw-logo.png" alt="GuidePaw">
-        <div class="gp-brand-copy">
-            <div class="gp-brand-tagline">Training Trust for the Journey</div>
-        </div>
     </div>
         <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
