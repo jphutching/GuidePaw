@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/candidate_scoring.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -21,29 +22,6 @@ function h($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function score_value($key) {
-    return max(1, min(5, (int)($_POST[$key] ?? 3)));
-}
-
-function build_recommendation($avg, $safetyFlags) {
-    if (trim($safetyFlags) !== '') {
-        return [
-            0,
-            'Not suitable for PSD/service path at this time. Professional review recommended before advancing.'
-        ];
-    }
-
-    if ($avg >= 4.0) {
-        return [3, 'Service-dog candidate. Continue with structured foundations and public-readiness checks.'];
-    }
-
-    if ($avg >= 3.0) {
-        return [2, 'PSD foundations or travel companion path. Build confidence, neutrality, and handler engagement.'];
-    }
-
-    return [0, 'Pet manners and confidence building first. Reassess after foundation work.'];
-}
-
 $dogsStmt = $pdo->prepare("SELECT id, name FROM dogs WHERE owner_user_id = ? ORDER BY name");
 $dogsStmt->execute([$userId]);
 $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -54,27 +32,18 @@ $result = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dogId = (int)($_POST['dog_id'] ?? 0);
 
-    $scoreKeys = [
-        'confidence_score',
-        'startle_recovery_score',
-        'handler_engagement_score',
-        'food_motivation_score',
-        'toy_motivation_score',
-        'settle_score',
-        'human_neutrality_score',
-        'dog_neutrality_score',
-        'environment_score',
-        'handling_score'
-    ];
+    $scoreKeys = candidateScoreKeys();
 
     $scores = [];
     foreach ($scoreKeys as $key) {
-        $scores[$key] = score_value($key);
+        $scores[$key] = clampCandidateScore($_POST[$key] ?? 3);
     }
 
-    $avg = array_sum($scores) / count($scores);
+    $avg = averageCandidateScore($scores);
     $safetyFlags = trim($_POST['safety_flags'] ?? '');
-    [$focusLevel, $recommendation] = build_recommendation($avg, $safetyFlags);
+    $candidateRecommendation = recommendCandidateFocusLevel($avg, $safetyFlags);
+    $focusLevel = $candidateRecommendation['focus_level'];
+    $recommendation = $candidateRecommendation['recommendation'];
 
     $insert = $pdo->prepare("
         INSERT INTO dog_candidate_assessments
