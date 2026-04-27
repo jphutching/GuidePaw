@@ -33,7 +33,7 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <?php require_once 'includes/mobile_nav.php'; ?>
     <div class="topbar p-4 shadow-sm">
     <div class="text-center mb-3">
-        <img src="assets/brand/guidepaw-logo.png" alt="GuidePaw" style="max-width: 180px; width: 70%; height: auto;">
+        <img src="assets/brand/guidepaw-logo.png" alt="GuidePaw" style="max-width:150px; width:58%; height:auto; border-radius:12px;">
     </div>
         <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
