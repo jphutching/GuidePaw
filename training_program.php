@@ -204,6 +204,7 @@ $easyWin = buildEasyWinFromGoal($activeGoals[0] ?? null);
                         <?php endforeach; ?>
                     <?php endif; ?>
                     <a class="btn btn-sm btn-outline-primary mt-2" href="habit_repair.php">Habit Repair</a>
+                    <a class="btn btn-sm btn-outline-success mt-2 ms-2" href="training_session_log.php">Log Session</a>
                 </div>
             </div>
         </div>
