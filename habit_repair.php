@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/behavior_incidents.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -92,19 +93,7 @@ if (!isset($protocols[$selected])) {
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dogId = (int)($_POST['dog_id'] ?? 0);
-    $incidentType = trim($_POST['incident_type'] ?? $selected);
-    $context = trim($_POST['context_environment'] ?? '');
-    $trigger = trim($_POST['trigger_description'] ?? '');
-    $severity = max(1, min(5, (int)($_POST['severity'] ?? 2)));
-    $notes = trim($_POST['notes'] ?? '');
-
-    $stmt = $pdo->prepare("
-        INSERT INTO behavior_incidents
-        (user_id, dog_id, incident_type, context_environment, trigger_description, severity, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->execute([$userId, $dogId, $incidentType, $context, $trigger, $severity, $notes]);
+    createBehaviorIncident($pdo, $userId, $_POST);
 
     $message = 'Incident saved. Start with the easiest reset step today.';
 }
@@ -113,16 +102,7 @@ $dogsStmt = $pdo->prepare("SELECT id, name FROM dogs WHERE owner_user_id = ? ORD
 $dogsStmt->execute([$userId]);
 $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$recentStmt = $pdo->prepare("
-    SELECT b.*, d.name AS dog_name
-    FROM behavior_incidents b
-    JOIN dogs d ON d.id = b.dog_id
-    WHERE b.user_id = ?
-    ORDER BY b.created_at DESC
-    LIMIT 8
-");
-$recentStmt->execute([$userId]);
-$recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
+$recent = getRecentBehaviorIncidents($pdo, $userId, 8);
 
 $current = $protocols[$selected];
 ?>
