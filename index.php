@@ -84,7 +84,7 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
         <img class="gp-brand-logo" src="/assets/brand/guidepaw-logo.png" alt="GuidePaw">
         <div class="gp-brand-copy">
             <div class="gp-brand-name">GuidePaw</div>
-            <div class="gp-brand-tagline">Training. Trust. For the Journey.</div>
+            <div class="gp-brand-tagline">Training Trust for the Journey</div>
         </div>
     </div>
         <div class="d-flex justify-content-between align-items-start gap-3">
