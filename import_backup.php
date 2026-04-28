@@ -395,6 +395,19 @@ try {
     $pdo->commit();
     $result['success'] = true;
     $result['message'] = 'Backup restore completed.';
+
+    writeAuditLog(
+        $pdo,
+        'backup_import_completed',
+        'backup',
+        null,
+        'Mode: ' . $mode .
+        '; dogs=' . $result['dogs_restored'] .
+        '; logs=' . $result['logs_restored'] .
+        '; documents=' . $result['documents_restored'] .
+        '; appointments=' . $result['appointments_restored'] .
+        '; media=' . $result['media_restored']
+    );
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
