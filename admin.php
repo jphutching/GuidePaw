@@ -109,6 +109,15 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 
+
+    <div class="card">
+        <div class="label">Feedback Reports</div>
+        <div class="desc">Review bug reports, feature requests, screenshots, logs, and uploaded attachments.</div>
+        <div style="margin-top:12px;">
+            <a class="btn" href="admin_feedback.php">Open Feedback</a>
+        </div>
+    </div>
+
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
 
