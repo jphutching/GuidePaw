@@ -23,6 +23,38 @@ if (!in_array($status, ['active', 'archived', 'all'], true)) {
     $status = 'active';
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'restore_record') {
+    $recordType = $_POST['record_type'] ?? '';
+    $recordId = (int)($_POST['record_id'] ?? 0);
+
+    if ($recordId > 0) {
+        if ($recordType === 'goal') {
+            $stmt = $pdo->prepare("UPDATE training_goals SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+            $stmt->execute([$recordId, $userId]);
+        } elseif ($recordType === 'incident') {
+            $stmt = $pdo->prepare("UPDATE behavior_incidents SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+            $stmt->execute([$recordId, $userId]);
+        } elseif ($recordType === 'session') {
+            $stmt = $pdo->prepare("UPDATE training_sessions SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+            $stmt->execute([$recordId, $userId]);
+        } elseif ($recordType === 'assessment') {
+            $stmt = $pdo->prepare("
+                UPDATE dog_candidate_assessments a
+                SET status = 'active',
+                    updated_at = CURRENT_TIMESTAMP
+                FROM dogs d
+                WHERE a.id = ?
+                  AND a.dog_id = d.id
+                  AND d.owner_user_id = ?
+            ");
+            $stmt->execute([$recordId, $userId]);
+        }
+    }
+
+    header('Location: training_history.php?status=archived&msg=updated');
+    exit;
+}
+
 $statusSql = $status === 'all' ? '' : "AND COALESCE(status, 'active') = ?";
 
 function bindStatus(PDOStatement $stmt, int $userId, string $status): void {
@@ -33,7 +65,7 @@ function bindStatus(PDOStatement $stmt, int $userId, string $status): void {
 }
 
 $goalsSql = "
-    SELECT g.created_at, d.name AS dog_name, g.goal_category AS type, g.current_problem AS summary, g.status
+    SELECT g.id, 'goal' AS record_type, g.created_at, d.name AS dog_name, g.goal_category AS type, g.current_problem AS summary, g.status
     FROM training_goals g
     JOIN dogs d ON d.id = g.dog_id
     WHERE g.user_id = ? $statusSql
@@ -46,7 +78,7 @@ $stmt->execute();
 $goals = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $incidentsSql = "
-    SELECT b.created_at, d.name AS dog_name, b.incident_type AS type, b.context_environment AS summary, COALESCE(b.status, 'active') AS status
+    SELECT b.id, 'incident' AS record_type, b.created_at, d.name AS dog_name, b.incident_type AS type, b.context_environment AS summary, COALESCE(b.status, 'active') AS status
     FROM behavior_incidents b
     JOIN dogs d ON d.id = b.dog_id
     WHERE b.user_id = ? $statusSql
@@ -59,7 +91,7 @@ $stmt->execute();
 $incidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $sessionsSql = "
-    SELECT s.created_at, d.name AS dog_name, s.progression_status AS type,
+    SELECT s.id, 'session' AS record_type, s.created_at, d.name AS dog_name, s.progression_status AS type,
            CONCAT(s.reps_successful, '/', s.reps_attempted, ' successful') AS summary,
            COALESCE(s.status, 'active') AS status
     FROM training_sessions s
@@ -74,7 +106,7 @@ $stmt->execute();
 $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $assessmentsSql = "
-    SELECT a.created_at, d.name AS dog_name,
+    SELECT a.id, 'assessment' AS record_type, a.created_at, d.name AS dog_name,
            CONCAT('Focus Level ', a.focus_level_recommended) AS type,
            a.recommendation AS summary,
            COALESCE(a.status, 'active') AS status
@@ -97,6 +129,16 @@ function renderRows(array $rows): void {
         echo '<td>' . h($row['type']) . '</td>';
         echo '<td>' . h($row['summary']) . '</td>';
         echo '<td>' . h($row['status']) . '</td>';
+        echo '<td>';
+        if (($row['status'] ?? '') === 'archived') {
+            echo '<form method="post" onsubmit="return confirm(\'Restore this record?\');">';
+            echo '<input type="hidden" name="action" value="restore_record">';
+            echo '<input type="hidden" name="record_type" value="' . h($row['record_type']) . '">';
+            echo '<input type="hidden" name="record_id" value="' . h($row['id']) . '">';
+            echo '<button type="submit">Restore</button>';
+            echo '</form>';
+        }
+        echo '</td>';
         echo '</tr>';
     }
 }
@@ -118,6 +160,7 @@ function renderRows(array $rows): void {
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background: #eee; }
         .small { color: #666; font-size: 13px; }
+        button { padding: 8px 10px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -149,9 +192,10 @@ function renderRows(array $rows): void {
                     <th>Type</th>
                     <th>Summary</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
                 <?php if (!$rows): ?>
-                    <tr><td colspan="5">No records found.</td></tr>
+                    <tr><td colspan="6">No records found.</td></tr>
                 <?php else: ?>
                     <?php renderRows($rows); ?>
                 <?php endif; ?>
