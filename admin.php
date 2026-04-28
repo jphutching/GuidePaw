@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 checkLogin();
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/audit_log.php';
 requireAdmin();
 
 if (!currentUserIsAdmin()) {
@@ -29,6 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':key' => $key,
         ]);
     }
+
+    writeAuditLog($pdo, 'feature_flags_updated', 'feature_flags', null, 'Admin updated feature flag settings.');
 
     $message = 'Feature flags updated.';
 }
