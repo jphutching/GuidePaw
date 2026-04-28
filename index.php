@@ -144,6 +144,7 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <div class="col-6 col-md-4"><a href="view_logs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📋<br>History</a></div>
             <div class="col-6 col-md-4"><a href="stats.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📊<br>Stats</a></div>
             <div class="col-6 col-md-4"><a href="settings.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚙️<br>Settings</a></div>
+            <div class="col-6 col-md-4"><a href="feedback.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💬<br>Feedback<br>Bug Report</a></div>
 
             <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="quick_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚡<br>Quick Session</a></div>
