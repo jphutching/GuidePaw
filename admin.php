@@ -106,6 +106,15 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 
+
+    <div class="card">
+        <div class="label">System Health</div>
+        <div class="desc">Check database, PHP Zip support, writable folders, table counts, and recent audit events.</div>
+        <div style="margin-top:12px;">
+            <a class="btn" href="db_status.php">Open System Health</a>
+        </div>
+    </div>
+
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
 
