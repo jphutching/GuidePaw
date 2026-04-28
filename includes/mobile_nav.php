@@ -2,11 +2,16 @@
 $currentPage = basename($_SERVER['PHP_SELF'] ?? '');
 $activeDogName = $_SESSION['active_dog_name'] ?? ($_SESSION['dog_name'] ?? '');
 
+if (!function_exists('featureEnabled')) {
+    require_once __DIR__ . '/feature_flags.php';
+}
+
 $navItems = [
     ['href' => 'index.php', 'label' => 'Home', 'emoji' => '🏠', 'match' => ['index.php']],
-    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐕', 'match' => ['dogs.php','dog_profile.php']],
+    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐕', 'match' => ['dogs.php','dog_profile.php','profile.php','collaboration.php']],
     ['href' => 'quick_log.php', 'label' => 'Log', 'emoji' => '⚡', 'match' => ['quick_log.php','log_entry.php','view_logs.php','stats.php']],
     ['href' => 'training_program.php', 'label' => 'Training', 'emoji' => '🎓', 'match' => ['training_program.php','training_goal_intake.php','training_session_log.php','candidate_assessment.php','habit_repair.php','training_history.php']],
+    ['href' => 'dog_health.php', 'label' => 'Health', 'emoji' => '🩺', 'match' => ['dog_health.php','appointments.php','medications.php','alerts.php','certification.php']],
     ['href' => 'settings.php', 'label' => 'Settings', 'emoji' => '⚙️', 'match' => ['settings.php','edit_profile.php','setup_2fa.php']],
 ];
 
@@ -20,14 +25,29 @@ if (function_exists('currentUserIsAdmin') && currentUserIsAdmin()) {
         isset($pdo) &&
         featureEnabled($pdo, 'backup_tools_enabled')
     ) {
-        $navItems[] = ['href' => 'backup.php', 'label' => 'Backup', 'emoji' => '💾', 'match' => ['backup.php','import_backup.php']];
+        $navItems[] = ['href' => 'backup.php', 'label' => 'Backup', 'emoji' => '💾', 'match' => ['backup.php','import_backup.php','export_backup.php']];
     }
 
     $navItems[] = ['href' => 'admin.php', 'label' => 'Admin', 'emoji' => '🛠️', 'match' => ['admin.php','admin_feature_roadmap.php','admin_audit_log.php','db_status.php','api_tokens.php']];
 }
 
 $navItems[] = ['href' => 'logout.php', 'label' => 'Logout', 'emoji' => '🚪', 'match' => ['logout.php']];
+
+$primaryTabs = [
+    ['href' => 'index.php', 'label' => 'Home', 'emoji' => '🏠', 'match' => ['index.php']],
+    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐕', 'match' => ['dogs.php','dog_profile.php','profile.php','collaboration.php']],
+    ['href' => 'training_program.php', 'label' => 'Training', 'emoji' => '🎓', 'match' => ['training_program.php','training_goal_intake.php','training_session_log.php','candidate_assessment.php','habit_repair.php','training_history.php']],
+];
+
+$primaryActive = false;
+foreach ($primaryTabs as $tab) {
+    if (in_array($currentPage, $tab['match'], true)) {
+        $primaryActive = true;
+        break;
+    }
+}
 ?>
+
 
 <div class="gp-mobile-nav-shell">
     <div class="gp-offcanvas-backdrop" data-gp-menu-close hidden></div>
