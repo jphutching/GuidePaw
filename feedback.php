@@ -18,6 +18,7 @@ function h($value): string {
 }
 
 $message = '';
+$uploadDebug = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = ($_POST['category'] ?? 'bug') === 'feature' ? 'feature' : 'bug';
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($_FILES['attachments']['name'] as $i => $originalName) {
             $error = $_FILES['attachments']['error'][$i] ?? UPLOAD_ERR_NO_FILE;
             if ($error !== UPLOAD_ERR_OK) {
+                $uploadDebug[] = 'Upload error for ' . (string)$originalName . ': code ' . $error;
                 continue;
             }
 
@@ -79,7 +81,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $size = (int)($_FILES['attachments']['size'][$i] ?? 0);
             $ext = strtolower(pathinfo((string)$originalName, PATHINFO_EXTENSION));
 
-            if ($size <= 0 || $size > 100 * 1024 * 1024 || !in_array($ext, $allowedExtensions, true)) {
+            if ($size <= 0) {
+                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': empty file.';
+                continue;
+            }
+
+            if ($size > 100 * 1024 * 1024) {
+                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': file too large (' . $size . ' bytes).';
+                continue;
+            }
+
+            if (!in_array($ext, $allowedExtensions, true)) {
+                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': extension .' . $ext . ' not allowed.';
                 continue;
             }
 
@@ -103,8 +116,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $mime,
                     $size
                 ]);
+            } else {
+                $uploadDebug[] = 'Could not move uploaded file: ' . (string)$originalName;
             }
         }
+    }
+
+    if ($uploadDebug) {
+        $_SESSION['feedback_upload_debug'] = $uploadDebug;
+        header('Location: feedback.php?msg=upload_debug');
+        exit;
     }
 
     header('Location: feedback.php?msg=saved');
@@ -115,6 +136,9 @@ if (($_GET['msg'] ?? '') === 'saved') {
     $message = 'Report saved successfully.';
 } elseif (($_GET['msg'] ?? '') === 'missing') {
     $message = 'Please add details before saving.';
+} elseif (($_GET['msg'] ?? '') === 'upload_debug') {
+    $message = 'Report saved, but one or more attachments were skipped: ' . implode(' | ', $_SESSION['feedback_upload_debug'] ?? []);
+    unset($_SESSION['feedback_upload_debug']);
 }
 ?>
 <!doctype html>
