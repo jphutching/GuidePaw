@@ -134,3 +134,24 @@ Recent deployment smoke checks passed:
 
 Candidate scoring was refined so ordinary safety notes do not automatically fail a dog. Severe safety terms still trigger Focus Level 0 and professional review.
 
+
+## Training Core Record Management Checkpoint
+
+Added archive controls for Training Core records:
+
+- Training Goals can be archived from Goal Intake
+- Behavior Incidents can be archived from Habit Repair
+- Training Sessions can be archived from Session Log
+- Candidate Assessments can be archived from Candidate Assessment
+
+Archived records are hidden from active/recent working lists where appropriate.
+
+Also verified:
+
+- `scripts/deploy_local.sh` passes
+- PHP syntax checks pass in repo and live path
+- Brand header check passes
+- Missing linked PHP files check passes
+- Training Core pages return `200 OK`
+- Git working tree is clean
+
