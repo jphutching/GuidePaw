@@ -233,6 +233,12 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             </div>
         <?php endif; ?>
 
+        <?php if (featureEnabled($pdo, 'training_progression_enabled')): ?>
+            <div class="col-6 col-md-3">
+                <a href="training_history.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📚<br>Training<br>History</a>
+            </div>
+        <?php endif; ?>
+
         <?php if (!empty($_SESSION['is_admin'])): ?>
             <div class="col-6 col-md-3">
                 <a href="admin_feature_roadmap.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗺️<br>Feature<br>Roadmap</a>
