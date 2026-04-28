@@ -308,3 +308,15 @@ Admin page links to System Health.
 
 Verified visually in browser and deploy smoke checks passed.
 
+
+## Navigation and Admin Visibility Checkpoint
+
+Cleaned up normal-user navigation and dashboard visibility:
+
+- Disabled/unchecked feature tiles are hidden instead of shown as “Coming soon”
+- Admin-only links are hidden from normal users
+- Backup, API Tokens, System Health, Roadmap, and Admin links are admin-only in the UI
+- Mobile navigation was simplified to common-sense groups
+- Admin guard was hardened to verify admin status from the database, not only session data
+- Deploy smoke checks passed
+
