@@ -8,12 +8,6 @@ require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/audit_log.php';
 requireAdmin();
 
-if (!currentUserIsAdmin()) {
-    http_response_code(403);
-    echo 'Admin access required.';
-    exit;
-}
-
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
