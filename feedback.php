@@ -30,13 +30,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    $legacyType = $category === 'feature' ? 'feature' : 'bug';
+    $legacyTitle = $pageWorkflow !== '' ? $pageWorkflow : ucfirst($category) . ' report';
+    $legacyDescription = $details;
+
     $stmt = $pdo->prepare("
         INSERT INTO feedback_reports
-        (user_id, category, page_workflow, contact_email, details)
-        VALUES (?, ?, ?, ?, ?)
+        (
+            user_id,
+            report_type,
+            title,
+            description,
+            category,
+            page_workflow,
+            contact_email,
+            details
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id
     ");
-    $stmt->execute([$userId, $category, $pageWorkflow, $contactEmail, $details]);
+    $stmt->execute([
+        $userId,
+        $legacyType,
+        $legacyTitle,
+        $legacyDescription,
+        $category,
+        $pageWorkflow,
+        $contactEmail,
+        $details
+    ]);
     $feedbackId = (int)$stmt->fetchColumn();
 
     $uploadDir = __DIR__ . '/uploads/feedback';
