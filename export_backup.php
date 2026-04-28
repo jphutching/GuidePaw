@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/authz.php';
 require_once 'includes/db_connect.php';
 requireAdmin();
@@ -6,6 +7,7 @@ checkLogin();
 
 $userId = (int) $_SESSION['user_id'];
 $format = $_GET['format'] ?? 'json';
+writeAuditLog($pdo, 'backup_export_started', 'backup', null, 'Format: ' . $format);
 $allowedFormats = ['json', 'csv', 'package'];
 if (!in_array($format, $allowedFormats, true)) {
     $format = 'json';
