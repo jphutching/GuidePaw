@@ -208,3 +208,13 @@ Added admin backup access:
 - Admin page also links to Backup Tools
 - Verified full ZIP backup download works after enabling PHP Zip support
 
+
+## Backup Import Safety Checkpoint
+
+Added backup import safety warning:
+
+- `backup.php` now warns that imports can overwrite or duplicate records
+- Import form now asks for confirmation before upload
+- Admin backup snapshot flow remains available from `admin.php`
+- Full ZIP backup package download has been verified
+
