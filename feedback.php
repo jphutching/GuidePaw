@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $safeName = 'feedback_' . $feedbackId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
             $storedPath = 'uploads/feedback/' . $safeName;
 
-            if (move_uploaded_file($tmpName, __DIR__ . '/' . $storedPath)) {
+            if (@move_uploaded_file($tmpName, __DIR__ . '/' . $storedPath)) {
                 $att = $pdo->prepare("
                     INSERT INTO feedback_attachments
                     (feedback_id, original_name, stored_path, mime_type, file_size)
