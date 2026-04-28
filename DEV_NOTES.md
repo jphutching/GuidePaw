@@ -343,3 +343,24 @@ Verified:
 - Roadmap page no longer relies only on stale session flags
 - Deploy smoke checks passed
 
+
+## Admin Access Verification Checkpoint
+
+Verified admin-only access behavior:
+
+- Admin account can access all admin/system pages
+- Normal user account is blocked from all admin/system pages
+- Normal-user dashboard remains usable
+- Admin-only UI links/cards are hidden from normal users
+
+Tested admin-only pages:
+
+- `admin.php`
+- `admin_feature_roadmap.php`
+- `admin_audit_log.php`
+- `db_status.php`
+- `backup.php`
+- `export_backup.php`
+- `import_backup.php`
+- `api_tokens.php`
+
