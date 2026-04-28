@@ -262,3 +262,30 @@ Current audited actions include:
 - Backup imports
 - Training record archive/restore actions
 
+
+## Completed Audit Coverage Checkpoint
+
+Admin audit logging now covers the key sensitive flows:
+
+- Feature flag updates
+- Feature roadmap edits
+- Backup exports
+- Backup imports
+- Training goal archive/restore
+- Behavior incident archive/restore
+- Training session archive/restore
+- Candidate assessment archive/restore
+
+Verified in PostgreSQL and in the in-app Admin Audit Log viewer.
+
+Recent verified audit actions include:
+
+- `training_goal_archived`
+- `training_goal_restored`
+- `behavior_incident_archived`
+- `behavior_incident_restored`
+- `training_session_archived`
+- `training_session_restored`
+- `candidate_assessment_archived`
+- `candidate_assessment_restored`
+
