@@ -320,3 +320,14 @@ Cleaned up normal-user navigation and dashboard visibility:
 - Admin guard was hardened to verify admin status from the database, not only session data
 - Deploy smoke checks passed
 
+
+## Normal User Navigation Fix Checkpoint
+
+Fixed normal-user dashboard visibility after navigation cleanup:
+
+- Restored visible dashboard cards for normal users
+- Kept admin-only cards hidden from normal users
+- Fixed `includes/mobile_nav.php` after cleanup so `$primaryTabs` and `$primaryActive` are defined
+- Normal user can now see usable app navigation again
+- Admin/system links remain hidden from normal users
+
