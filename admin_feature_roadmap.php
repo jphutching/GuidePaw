@@ -43,6 +43,57 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 function h($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
+
+$message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int)($_POST['id'] ?? 0);
+    $lifecycleStatus = trim($_POST['lifecycle_status'] ?? 'backlog');
+    $ownerName = trim($_POST['owner_name'] ?? '');
+    $milestone = trim($_POST['milestone'] ?? '');
+    $releaseNotes = trim($_POST['release_notes'] ?? '');
+    $flagEnabled = isset($_POST['is_enabled']) ? 1 : 0;
+
+    $allowedStatuses = [
+        'backlog',
+        'spec_ready',
+        'feature_flag_created',
+        'database_api_ready',
+        'ui_hidden_behind_flag',
+        'internal_testing',
+        'beta_enabled',
+        'metrics_reviewed',
+        'fully_released',
+        'maintenance_owner_assigned'
+    ];
+
+    if (!in_array($lifecycleStatus, $allowedStatuses, true)) {
+        $lifecycleStatus = 'backlog';
+    }
+
+    $stmt = $pdo->prepare("
+        UPDATE feature_roadmap
+        SET lifecycle_status = ?,
+            owner_name = ?,
+            milestone = ?,
+            release_notes = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ");
+    $stmt->execute([$lifecycleStatus, $ownerName, $milestone, $releaseNotes, $id]);
+
+    $flagStmt = $pdo->prepare("
+        UPDATE feature_flags
+        SET is_enabled = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE flag_key = (
+            SELECT flag_key FROM feature_roadmap WHERE id = ?
+        )
+    ");
+    $flagStmt->execute([$flagEnabled, $id]);
+
+    $message = 'Roadmap item updated.';
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -65,6 +116,9 @@ function h($value) {
         .should { background: #fff3cd; }
         .could { background: #e2e3ff; }
         .small { color: #666; font-size: 13px; }
+        input, select, textarea { width: 100%; box-sizing: border-box; padding: 6px; }
+        textarea { min-height: 54px; }
+        button { margin-top: 6px; padding: 6px 10px; font-weight: 700; }
     </style>
 
 <style>
@@ -111,6 +165,10 @@ function h($value) {
         <div><a href="admin.php">← Admin</a></div>
     </div>
 
+    <?php if ($message): ?>
+        <div style="padding:10px;border-radius:8px;background:#d1e7dd;margin-bottom:12px;"><?= h($message) ?></div>
+    <?php endif; ?>
+
     <table>
         <thead>
         <tr>
@@ -127,28 +185,35 @@ function h($value) {
         <tbody>
         <?php foreach ($rows as $row): ?>
             <tr>
-                <td>
-                    <strong><?= h($row['label'] ?: $row['flag_key']) ?></strong><br>
-                    <span class="small"><?= h($row['flag_key']) ?></span>
-                </td>
-                <td><span class="badge <?= h($row['priority_level']) ?>"><?= h(strtoupper($row['priority_level'])) ?></span></td>
-                <td><?= h($row['lifecycle_status']) ?></td>
-                <td>
-                    <?php if ((int)$row['is_enabled'] === 1): ?>
-                        <span class="badge enabled">Enabled</span>
-                    <?php else: ?>
-                        <span class="badge disabled">Disabled</span>
-                    <?php endif; ?>
-                </td>
-                <td><?= h($row['owner_name'] ?: 'Unassigned') ?></td>
-                <td><?= h($row['milestone']) ?></td>
-                <td><?= h($row['success_metric']) ?></td>
-                <td>
-                    <strong>Acceptance:</strong> <?= h($row['acceptance_criteria']) ?><br>
-                    <?php if (!empty($row['release_notes'])): ?>
-                        <span class="small"><?= h($row['release_notes']) ?></span>
-                    <?php endif; ?>
-                </td>
+                <form method="post">
+                    <input type="hidden" name="id" value="<?= h($row['id']) ?>">
+                    <td>
+                        <strong><?= h($row['label'] ?: $row['flag_key']) ?></strong><br>
+                        <span class="small"><?= h($row['flag_key']) ?></span>
+                    </td>
+                    <td><span class="badge <?= h($row['priority_level']) ?>"><?= h(strtoupper($row['priority_level'])) ?></span></td>
+                    <td>
+                        <select name="lifecycle_status">
+                            <?php foreach (['backlog','spec_ready','feature_flag_created','database_api_ready','ui_hidden_behind_flag','internal_testing','beta_enabled','metrics_reviewed','fully_released','maintenance_owner_assigned'] as $status): ?>
+                                <option value="<?= h($status) ?>" <?= $row['lifecycle_status'] === $status ? 'selected' : '' ?>><?= h($status) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                    <td>
+                        <label class="small">
+                            <input type="checkbox" name="is_enabled" value="1" <?= (int)$row['is_enabled'] === 1 ? 'checked' : '' ?>>
+                            Enabled
+                        </label>
+                    </td>
+                    <td><input name="owner_name" value="<?= h($row['owner_name']) ?>" placeholder="Owner"></td>
+                    <td><input name="milestone" value="<?= h($row['milestone']) ?>" placeholder="Milestone"></td>
+                    <td><?= h($row['success_metric']) ?></td>
+                    <td>
+                        <strong>Acceptance:</strong> <?= h($row['acceptance_criteria']) ?><br>
+                        <textarea name="release_notes" placeholder="Notes"><?= h($row['release_notes']) ?></textarea>
+                        <button type="submit">Save</button>
+                    </td>
+                </form>
             </tr>
         <?php endforeach; ?>
         </tbody>
