@@ -218,3 +218,28 @@ Added backup import safety warning:
 - Admin backup snapshot flow remains available from `admin.php`
 - Full ZIP backup package download has been verified
 
+
+## Admin Audit Logging Checkpoint
+
+Added admin audit logging with `admin_audit_log` and `includes/audit_log.php`.
+
+Currently audited actions:
+
+- Feature flag updates
+- Feature roadmap edits
+- Backup exports
+- Backup imports
+- Training goal archive
+- Training goal restore
+
+Verified audit rows in PostgreSQL for:
+
+- `feature_flags_updated`
+- `roadmap_item_updated`
+- `backup_export_started`
+- `backup_import_completed`
+- `training_goal_archived`
+- `training_goal_restored`
+
+Also fixed backup import dog restore by adding the missing `$insertDog` prepared statement.
+
