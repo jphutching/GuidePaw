@@ -44,7 +44,7 @@ function h($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-$message = '';
+$message = (($_GET['msg'] ?? '') === 'roadmap_updated') ? 'Roadmap item updated.' : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
@@ -92,7 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ");
     $flagStmt->execute([$flagEnabled, $id]);
 
-    $message = 'Roadmap item updated.';
+    header('Location: admin_feature_roadmap.php?msg=roadmap_updated');
+    exit;
 }
 ?>
 <!doctype html>
