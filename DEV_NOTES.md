@@ -289,3 +289,22 @@ Recent verified audit actions include:
 - `candidate_assessment_archived`
 - `candidate_assessment_restored`
 
+
+## Admin System Health Checkpoint
+
+Upgraded `db_status.php` into an admin System Health page.
+
+System Health now shows:
+
+- Database connectivity
+- PHP version
+- ZipArchive / PHP Zip support
+- Session status
+- Writable upload/asset paths
+- Key table counts
+- Recent audit events
+
+Admin page links to System Health.
+
+Verified visually in browser and deploy smoke checks passed.
+
