@@ -1,7 +1,27 @@
 <?php
 require_once __DIR__ . '/includes/authz.php';
-require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
+
+requireAdmin();
+
+$userId = (int)($_SESSION['user_id'] ?? 0);
+$adminCheck = $pdo->prepare('SELECT is_admin FROM users WHERE id = ? LIMIT 1');
+$adminCheck->execute([$userId]);
+$debugAdminValue = (int)$adminCheck->fetchColumn();
+if (isset($_GET['debug_admin'])) {
+    header('Content-Type: text/plain');
+    echo 'session_user_id=' . ($_SESSION['user_id'] ?? 'none') . PHP_EOL;
+    echo 'session_username=' . ($_SESSION['username'] ?? 'none') . PHP_EOL;
+    echo 'session_is_admin=' . ($_SESSION['is_admin'] ?? 'none') . PHP_EOL;
+    echo 'db_is_admin=' . $debugAdminValue . PHP_EOL;
+    exit;
+}
+
+if ($debugAdminValue !== 1) {
+    $_SESSION['is_admin'] = 0;
+    header('Location: index.php?msg=admin_required');
+    exit;
+}
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/audit_log.php';
