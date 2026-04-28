@@ -243,3 +243,22 @@ Verified audit rows in PostgreSQL for:
 
 Also fixed backup import dog restore by adding the missing `$insertDog` prepared statement.
 
+
+## Admin Audit Log Viewer Checkpoint
+
+Added in-app admin audit log viewer:
+
+- `admin_audit_log.php` displays the latest audit events
+- Admins can filter by action and user ID
+- Admin page links to the Audit Log viewer
+- Viewer is protected by `requireAdmin()`
+- Confirmed page loads successfully in browser
+
+Current audited actions include:
+
+- Feature flag updates
+- Feature roadmap edits
+- Backup exports
+- Backup imports
+- Training record archive/restore actions
+
