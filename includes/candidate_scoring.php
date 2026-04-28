@@ -35,11 +35,28 @@ function averageCandidateScore(array $scores): float
 
 function recommendCandidateFocusLevel(float $averageScore, string $safetyFlags = ''): array
 {
-    if (trim($safetyFlags) !== '') {
-        return [
-            'focus_level' => 0,
-            'recommendation' => 'Not suitable for PSD/service path at this time. Professional review recommended before advancing.'
-        ];
+    $safetyText = strtolower(trim($safetyFlags));
+    $severeFlags = [
+        'bite',
+        'severe aggression',
+        'human aggression',
+        'dog aggression',
+        'severe fear',
+        'shutdown',
+        'uncontrolled lunging',
+        'cannot recover',
+        'panic',
+        'snap',
+        'attack'
+    ];
+
+    foreach ($severeFlags as $flag) {
+        if ($safetyText !== '' && str_contains($safetyText, $flag)) {
+            return [
+                'focus_level' => 0,
+                'recommendation' => 'Not suitable for PSD/service path at this time. Professional review recommended before advancing.'
+            ];
+        }
     }
 
     if ($averageScore >= 4.0) {
