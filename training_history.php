@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -31,12 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resto
         if ($recordType === 'goal') {
             $stmt = $pdo->prepare("UPDATE training_goals SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
             $stmt->execute([$recordId, $userId]);
+            writeAuditLog($pdo, 'training_goal_restored', 'training_goals', $recordId, 'Training goal restored.');
         } elseif ($recordType === 'incident') {
             $stmt = $pdo->prepare("UPDATE behavior_incidents SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
             $stmt->execute([$recordId, $userId]);
+            writeAuditLog($pdo, 'behavior_incident_restored', 'behavior_incidents', $recordId, 'Behavior incident restored.');
         } elseif ($recordType === 'session') {
             $stmt = $pdo->prepare("UPDATE training_sessions SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
             $stmt->execute([$recordId, $userId]);
+            writeAuditLog($pdo, 'training_session_restored', 'training_sessions', $recordId, 'Training session restored.');
         } elseif ($recordType === 'assessment') {
             $stmt = $pdo->prepare("
                 UPDATE dog_candidate_assessments a
@@ -48,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resto
                   AND d.owner_user_id = ?
             ");
             $stmt->execute([$recordId, $userId]);
+            writeAuditLog($pdo, 'candidate_assessment_restored', 'dog_candidate_assessments', $recordId, 'Candidate assessment restored.');
         }
     }
 

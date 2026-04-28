@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -101,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $incidentId = (int)($_POST['incident_id'] ?? 0);
         $stmt = $pdo->prepare("UPDATE behavior_incidents SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
         $stmt->execute([$incidentId, $userId]);
+        writeAuditLog($pdo, 'behavior_incident_archived', 'behavior_incidents', $incidentId, 'Behavior incident archived.');
 
         header('Location: habit_repair.php?msg=updated');
         exit;

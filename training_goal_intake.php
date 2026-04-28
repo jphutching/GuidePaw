@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $goalId = (int)($_POST['goal_id'] ?? 0);
         $stmt = $pdo->prepare("UPDATE training_goals SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
         $stmt->execute([$goalId, $userId]);
+        writeAuditLog($pdo, 'training_goal_archived', 'training_goals', $goalId, 'Training goal archived.');
 
         header('Location: training_goal_intake.php?msg=updated');
         exit;

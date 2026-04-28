@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -34,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $sessionId = (int)($_POST['session_id'] ?? 0);
         $stmt = $pdo->prepare("UPDATE training_sessions SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
         $stmt->execute([$sessionId, $userId]);
+        writeAuditLog($pdo, 'training_session_archived', 'training_sessions', $sessionId, 'Training session archived.');
 
         header('Location: training_session_log.php?msg=updated');
         exit;

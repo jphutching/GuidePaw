@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -46,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               AND d.owner_user_id = ?
         ");
         $stmt->execute([$assessmentId, $userId]);
+        writeAuditLog($pdo, 'candidate_assessment_archived', 'dog_candidate_assessments', $assessmentId, 'Candidate assessment archived.');
 
         header('Location: candidate_assessment.php?msg=updated');
         exit;
