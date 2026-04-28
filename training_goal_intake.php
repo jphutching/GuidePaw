@@ -31,11 +31,21 @@ $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC);
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $dogId = (int)($_POST['dog_id'] ?? 0);
+    $action = $_POST['action'] ?? 'create';
+
+    if ($action === 'archive') {
+        $goalId = (int)($_POST['goal_id'] ?? 0);
+        $stmt = $pdo->prepare("UPDATE training_goals SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+        $stmt->execute([$goalId, $userId]);
+
+        header('Location: training_goal_intake.php?msg=updated');
+        exit;
+    }
 
     createTrainingGoal($pdo, $userId, $_POST);
 
-    $message = 'Training goal saved.';
+    header('Location: training_goal_intake.php?msg=saved');
+    exit;
 }
 
 $recent = getRecentTrainingGoals($pdo, $userId, 8);
@@ -110,6 +120,7 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
             <p>No dogs found. Add a dog profile first.</p>
         <?php else: ?>
             <form method="post">
+                <input type="hidden" name="action" value="create">
                 <label>Dog</label>
                 <select name="dog_id" required>
                     <?php foreach ($dogs as $dog): ?>
@@ -171,6 +182,7 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
             <th>Problem</th>
             <th>Success criteria</th>
             <th>Status</th>
+            <th>Actions</th>
         </tr>
         <?php foreach ($recent as $row): ?>
             <tr>
@@ -179,6 +191,15 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
                 <td><?= h($row['current_problem']) ?></td>
                 <td><?= h($row['success_criteria']) ?></td>
                 <td><?= h($row['status']) ?></td>
+                <td>
+                    <?php if ($row['status'] === 'active'): ?>
+                        <form method="post" onsubmit="return confirm('Archive this training goal?');">
+                            <input type="hidden" name="action" value="archive">
+                            <input type="hidden" name="goal_id" value="<?= h($row['id']) ?>">
+                            <button type="submit">Archive</button>
+                        </form>
+                    <?php endif; ?>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
