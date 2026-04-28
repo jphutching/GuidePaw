@@ -155,3 +155,20 @@ Also verified:
 - Training Core pages return `200 OK`
 - Git working tree is clean
 
+
+## Training Core Dashboard Stats Checkpoint
+
+Added Training Core stats to the Training Program page:
+
+- Active Goals
+- Sessions This Week
+- 7-Day Success Rate
+- Open Regressions
+- Latest Candidate Focus
+
+Added reusable helper:
+
+- `includes/training_stats.php`
+
+Verified visually in browser and deploy smoke checks passed.
+
