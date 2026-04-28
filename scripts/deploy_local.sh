@@ -62,3 +62,9 @@ if [ "$missing" -ne 0 ] || [ "$bad_links" -ne 0 ]; then
 fi
 
 echo "Deploy and smoke checks complete."
+
+# Ensure writable upload directories survive deploys
+sudo mkdir -p /var/www/guidepaw/uploads/feedback
+sudo chown -R www-data:www-data /var/www/guidepaw/uploads
+sudo find /var/www/guidepaw/uploads -type d -exec chmod 775 {} \;
+sudo find /var/www/guidepaw/uploads -type f -exec chmod 664 {} \;
