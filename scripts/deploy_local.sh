@@ -68,3 +68,9 @@ sudo mkdir -p /var/www/guidepaw/uploads/feedback
 sudo chown -R www-data:www-data /var/www/guidepaw/uploads
 sudo find /var/www/guidepaw/uploads -type d -exec chmod 775 {} \;
 sudo find /var/www/guidepaw/uploads -type f -exec chmod 664 {} \;
+
+# Ensure writable upload directories survive deploys
+sudo mkdir -p /var/www/guidepaw/uploads/feedback
+sudo chown -R www-data:www-data /var/www/guidepaw/uploads
+sudo find /var/www/guidepaw/uploads -type d -exec chmod 775 {} \;
+sudo find /var/www/guidepaw/uploads -type f -exec chmod 664 {} \;
