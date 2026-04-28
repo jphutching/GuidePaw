@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/feature_flags.php';
 require_once 'includes/training_goals.php';
+require_once 'includes/training_stats.php';
 require_once 'includes/training_goals.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {
     header('Location: index.php?msg=feature_disabled');
@@ -180,7 +181,62 @@ try {
 }
 
 $easyWin = buildEasyWinFromGoal($activeGoals[0] ?? null);
+$trainingStats = getTrainingCoreStats($pdo, $userId);
 ?>
+
+
+<div class="container my-3">
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body">
+                    <div class="small text-muted">Active Goals</div>
+                    <div class="display-6 fw-bold"><?= e($trainingStats['active_goals']) ?></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body">
+                    <div class="small text-muted">Sessions This Week</div>
+                    <div class="display-6 fw-bold"><?= e($trainingStats['sessions_7d']) ?></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body">
+                    <div class="small text-muted">7-Day Success</div>
+                    <div class="display-6 fw-bold">
+                        <?= $trainingStats['avg_success_rate_7d'] === null ? '—' : e($trainingStats['avg_success_rate_7d']) . '%' ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body">
+                    <div class="small text-muted">Open Regressions</div>
+                    <div class="display-6 fw-bold"><?= e($trainingStats['open_regressions']) ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h2 class="h6 mb-2">Latest Candidate Focus</h2>
+            <?php if ($trainingStats['latest_focus_level'] === null): ?>
+                <p class="small text-muted mb-0">No active candidate assessment yet.</p>
+            <?php else: ?>
+                <p class="mb-0">
+                    <strong><?= e($trainingStats['latest_candidate_dog']) ?>:</strong>
+                    Focus Level <?= e($trainingStats['latest_focus_level']) ?>
+                </p>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
 
 <div class="container my-3">
     <div class="alert alert-success">
