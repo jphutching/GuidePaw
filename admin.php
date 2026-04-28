@@ -77,6 +77,23 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 
+    <div class="card">
+        <div class="label">Backup Snapshot</div>
+        <div class="desc">Download a current GuidePaw backup package or manage backup imports.</div>
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn" href="export_backup.php?format=package">Download Full Snapshot</a>
+            <a class="btn" href="backup.php">Backup Tools</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="label">Feature Roadmap</div>
+        <div class="desc">Review feature lifecycle, owners, milestones, and release status.</div>
+        <div style="margin-top:12px;">
+            <a class="btn" href="admin_feature_roadmap.php">Open Roadmap</a>
+        </div>
+    </div>
+
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
 
