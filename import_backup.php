@@ -177,6 +177,13 @@ try {
         }
     }
 
+    $insertDog = $pdo->prepare('
+        INSERT INTO dogs
+        (owner_user_id, name, breed, chip_number, weight_lbs, date_of_birth, birth_is_approximate, approx_age_years, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING id
+    ');
+
     $insertDoc = $pdo->prepare('INSERT INTO dog_documents (dog_id, uploaded_by_user_id, doc_type, title, provider_name, notes, file_path, mime_type) VALUES (?,?,?,?,?,?,?,?)');
     $insertAppt = $pdo->prepare('INSERT INTO dog_vet_appointments (dog_id, dog_vet_id, created_by_user_id, title, appointment_at, reminder_at, location_text, notes, status) VALUES (?,?,?,?,?,?,?,?,?)');
     $insertLog = $pdo->prepare('INSERT INTO daily_logs (user_id, dog_id, log_date, location_name, location_city_state, location_type, focus_level, skills_practiced, handler_notes, media_url, media_type, media_mime, latitude, longitude) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
