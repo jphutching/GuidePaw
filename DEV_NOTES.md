@@ -110,3 +110,27 @@ Recent deployment smoke checks passed:
 
 Candidate scoring was refined so ordinary safety notes do not automatically fail a dog. Severe safety terms still trigger Focus Level 0 and professional review.
 
+
+## Verified Training Core Checkpoint
+
+Verified Training Core browser flows:
+
+- Candidate Assessment loads and saves
+- Goal Intake loads and saves
+- Habit Repair loads and saves
+- Training Session Log loads and saves
+- Training Core feature flags are enabled
+- Database permissions and ownership are assigned to `guidepaw`
+- Shared GuidePaw brand header is present on all visual PHP pages
+- PWA paths were updated from `/psd_logbook/` to root deployment paths
+- `scripts/deploy_local.sh` deploys repo files to `/var/www/guidepaw` and runs smoke checks
+
+Recent deployment smoke checks passed:
+
+- PHP syntax: passed
+- Brand header check: passed
+- Missing linked PHP files: none
+- Training Core pages return `200 OK`
+
+Candidate scoring was refined so ordinary safety notes do not automatically fail a dog. Severe safety terms still trigger Focus Level 0 and professional review.
+
