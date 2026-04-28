@@ -97,6 +97,15 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 
+
+    <div class="card">
+        <div class="label">Audit Log</div>
+        <div class="desc">Review sensitive admin, backup, archive, and restore actions.</div>
+        <div style="margin-top:12px;">
+            <a class="btn" href="admin_audit_log.php">Open Audit Log</a>
+        </div>
+    </div>
+
     <form method="post">
         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
 
