@@ -1,52 +1,34 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF'] ?? '');
-$activeDogName = $_SESSION['dog_name'] ?? '';
-require_once __DIR__ . '/feature_flags.php';
+$activeDogName = $_SESSION['active_dog_name'] ?? ($_SESSION['dog_name'] ?? '');
+
 $navItems = [
-    ['href' => 'index.php', 'label' => 'Dashboard', 'emoji' => '🏠', 'match' => ['index.php']],
-    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐾', 'match' => ['dogs.php','dog_profile.php','profile.php','collaboration.php']],
-    ['href' => 'quick_log.php', 'label' => 'Quick Session', 'emoji' => '⚡', 'match' => ['quick_log.php','log_entry.php','view_logs.php','edit_log.php']],
-    ['href' => 'dog_health.php', 'label' => 'Health', 'emoji' => '🩺', 'match' => ['dog_health.php','appointments.php','medications.php','alerts.php','certification.php']],
-    ['href' => 'stats.php', 'label' => 'Reports', 'emoji' => '📊', 'match' => ['stats.php','training_program.php','service_dog_rights.php','ada_wallet_card.php']],
-    ['href' => 'backup.php', 'label' => 'Backup', 'emoji' => '💾', 'match' => ['backup.php','import_backup.php','api_tokens.php']],
-    ['href' => 'settings.php', 'label' => 'Settings', 'emoji' => '⚙️', 'match' => ['settings.php','edit_profile.php','setup_2fa.php','db_status.php']],
-];
-if (!empty($_SESSION['is_admin'])) {
-    $navItems[] = ['href' => 'admin.php', 'label' => 'Admin', 'emoji' => '🛠️', 'match' => ['admin.php']];
-}
-$navItems[] = ['href' => 'logout.php', 'label' => 'Logout', 'emoji' => '🚪', 'match' => ['logout.php']];
-$primaryTabs = [
     ['href' => 'index.php', 'label' => 'Home', 'emoji' => '🏠', 'match' => ['index.php']],
-    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐾', 'match' => ['dogs.php','dog_profile.php','profile.php','collaboration.php']],
-    ['href' => 'quick_log.php', 'label' => 'Quick Session', 'emoji' => '⚡', 'match' => ['quick_log.php','log_entry.php','view_logs.php','edit_log.php']],
+    ['href' => 'dogs.php', 'label' => 'Dogs', 'emoji' => '🐕', 'match' => ['dogs.php','dog_profile.php']],
+    ['href' => 'quick_log.php', 'label' => 'Log', 'emoji' => '⚡', 'match' => ['quick_log.php','log_entry.php','view_logs.php','stats.php']],
+    ['href' => 'training_program.php', 'label' => 'Training', 'emoji' => '🎓', 'match' => ['training_program.php','training_goal_intake.php','training_session_log.php','candidate_assessment.php','habit_repair.php','training_history.php']],
+    ['href' => 'settings.php', 'label' => 'Settings', 'emoji' => '⚙️', 'match' => ['settings.php','edit_profile.php','setup_2fa.php']],
 ];
-$quickSessionDisabled = function_exists('featureEnabled') && isset($pdo) && !featureEnabled($pdo, 'quick_session_enabled');
-if ($quickSessionDisabled) {
-    foreach ($navItems as &$item) {
-        if ($item['href'] === 'quick_log.php') {
-            $item['disabled'] = true;
-            $item['disabled_note'] = 'Coming soon';
-        }
-    }
-    unset($item);
 
-    foreach ($primaryTabs as &$tab) {
-        if ($tab['href'] === 'quick_log.php') {
-            $tab['disabled'] = true;
-            $tab['disabled_note'] = 'Coming soon';
-        }
-    }
-    unset($tab);
+if (function_exists('featureEnabled') && isset($pdo) && !featureEnabled($pdo, 'quick_session_enabled')) {
+    $navItems = array_values(array_filter($navItems, fn($item) => ($item['href'] ?? '') !== 'quick_log.php'));
 }
 
-$primaryActive = false;
-foreach ($primaryTabs as $tab) {
-    if (in_array($currentPage, $tab['match'], true)) {
-        $primaryActive = true;
-        break;
+if (function_exists('currentUserIsAdmin') && currentUserIsAdmin()) {
+    if (
+        function_exists('featureEnabled') &&
+        isset($pdo) &&
+        featureEnabled($pdo, 'backup_tools_enabled')
+    ) {
+        $navItems[] = ['href' => 'backup.php', 'label' => 'Backup', 'emoji' => '💾', 'match' => ['backup.php','import_backup.php']];
     }
+
+    $navItems[] = ['href' => 'admin.php', 'label' => 'Admin', 'emoji' => '🛠️', 'match' => ['admin.php','admin_feature_roadmap.php','admin_audit_log.php','db_status.php','api_tokens.php']];
 }
+
+$navItems[] = ['href' => 'logout.php', 'label' => 'Logout', 'emoji' => '🚪', 'match' => ['logout.php']];
 ?>
+
 <div class="gp-mobile-nav-shell">
     <div class="gp-offcanvas-backdrop" data-gp-menu-close hidden></div>
     <aside class="gp-offcanvas" aria-hidden="true" data-gp-menu-panel>

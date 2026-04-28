@@ -142,16 +142,12 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <div class="col-6 col-md-4">
                 <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
                     <a href="quick_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚡<br>Quick Session</a>
-                <?php else: ?>
-                    <div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">⚡<br>Quick Session<br><small>Coming soon</small></div>
-                <?php endif; ?>
+<?php endif; ?>
             </div>
             <div class="col-6 col-md-4">
                 <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
                     <a href="log_entry.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📝<br>Detailed Log</a>
-                <?php else: ?>
-                    <div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">📝<br>Detailed Log<br><small>Coming soon</small></div>
-                <?php endif; ?>
+<?php endif; ?>
             </div>
             <div class="col-6 col-md-4"><a href="view_logs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📋<br>History</a></div>
             <div class="col-6 col-md-4"><a href="stats.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📊<br>Stats</a></div>
@@ -160,47 +156,37 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <div class="col-6 col-md-4"><a href="collaboration.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🤝<br>Handlers</a></div>
             <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🩺<br>Health Docs<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
             <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">📅<br>Vet Appts<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
             <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🧠<br>Alerts<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
             <?php if (featureEnabled($pdo, 'training_program_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="training_program.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎓<br>Training</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🎓<br>Training<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
             <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="medications.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💊<br>Meds</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">💊<br>Meds<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
             <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="certification.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Certification</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">✅<br>Certification<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
-            <?php if (featureEnabled($pdo, 'backup_tools_enabled')): ?>
+<?php endif; ?>
+            <?php if (currentUserIsAdmin() && featureEnabled($pdo, 'backup_tools_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">💾<br>Backup<br><small>Coming soon</small></div></div>
+<?php endif; ?>
+            <?php if (currentUserIsAdmin()): ?>
+                <?php if (currentUserIsAdmin()): ?>
+                <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
             <?php endif; ?>
-            <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
-            <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗄️<br>DB Status</a></div>
+            <?php endif; ?>
+            <?php if (currentUserIsAdmin()): ?>
+                <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>System<br>Health</a></div>
+            <?php endif; ?>
             
             <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="ada_wallet_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Wallet Card</a></div>
-            <?php else: ?>
-                <div class="col-6 col-md-4"><div class="btn btn-tile w-100 shadow-sm text-dark text-center disabled opacity-75">🪪<br>ADA Wallet Card<br><small>Coming soon</small></div></div>
-            <?php endif; ?>
+<?php endif; ?>
         </div>
     </div>
 
@@ -241,7 +227,11 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 
         <?php if (!empty($_SESSION['is_admin'])): ?>
             <div class="col-6 col-md-3">
+                <?php if (currentUserIsAdmin()): ?>
+                <?php if (currentUserIsAdmin()): ?>
                 <a href="admin_feature_roadmap.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗺️<br>Feature<br>Roadmap</a>
+            <?php endif; ?>
+            <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
