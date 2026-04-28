@@ -4,8 +4,8 @@ function createBehaviorIncident(PDO $pdo, int $userId, array $data): int
 {
     $stmt = $pdo->prepare("
         INSERT INTO behavior_incidents
-        (user_id, dog_id, incident_type, context_environment, trigger_description, severity, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (user_id, dog_id, incident_type, context_environment, trigger_description, severity, notes, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
         RETURNING id
     ");
 
@@ -28,7 +28,7 @@ function getRecentBehaviorIncidents(PDO $pdo, int $userId, int $limit = 8): arra
         SELECT b.*, d.name AS dog_name
         FROM behavior_incidents b
         JOIN dogs d ON d.id = b.dog_id
-        WHERE b.user_id = ?
+        WHERE b.user_id = ? AND COALESCE(b.status, 'active') = 'active'
         ORDER BY b.created_at DESC
         LIMIT ?
     ");

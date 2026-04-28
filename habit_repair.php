@@ -95,9 +95,21 @@ if (!isset($protocols[$selected])) {
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? 'create';
+
+    if ($action === 'archive') {
+        $incidentId = (int)($_POST['incident_id'] ?? 0);
+        $stmt = $pdo->prepare("UPDATE behavior_incidents SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+        $stmt->execute([$incidentId, $userId]);
+
+        header('Location: habit_repair.php?msg=updated');
+        exit;
+    }
+
     createBehaviorIncident($pdo, $userId, $_POST);
 
-    $message = 'Incident saved. Start with the easiest reset step today.';
+    header('Location: habit_repair.php?msg=saved');
+    exit;
 }
 
 $dogsStmt = $pdo->prepare("SELECT id, name FROM dogs WHERE owner_user_id = ? ORDER BY name");
@@ -198,6 +210,7 @@ $current = $protocols[$selected];
             <p>No dogs found. Add a dog profile first.</p>
         <?php else: ?>
             <form method="post">
+                <input type="hidden" name="action" value="create">
                 <input type="hidden" name="incident_type" value="<?= h($selected) ?>">
 
                 <label>Dog</label>
@@ -238,6 +251,7 @@ $current = $protocols[$selected];
             <th>Type</th>
             <th>Severity</th>
             <th>Context</th>
+            <th>Actions</th>
         </tr>
         <?php foreach ($recent as $row): ?>
             <tr>
@@ -246,6 +260,13 @@ $current = $protocols[$selected];
                 <td><?= h($row['incident_type']) ?></td>
                 <td><?= h($row['severity']) ?></td>
                 <td><?= h($row['context_environment']) ?></td>
+                <td>
+                    <form method="post" onsubmit="return confirm('Archive this behavior incident?');">
+                        <input type="hidden" name="action" value="archive">
+                        <input type="hidden" name="incident_id" value="<?= h($row['id']) ?>">
+                        <button type="submit">Archive</button>
+                    </form>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
