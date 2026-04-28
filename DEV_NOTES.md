@@ -172,3 +172,17 @@ Added reusable helper:
 
 Verified visually in browser and deploy smoke checks passed.
 
+
+## Training History Restore Checkpoint
+
+Added Training History restore controls:
+
+- Archived goals can be restored
+- Archived behavior incidents can be restored
+- Archived training sessions can be restored
+- Archived candidate assessments can be restored
+
+Training History now supports Active, Archived, and All filters with record actions.
+
+Verified visually in browser and deploy smoke checks passed.
+
