@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($uploadDir, 0755, true);
     }
 
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'log', 'csv', 'json', 'pdf'];
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'log', 'csv', 'json', 'pdf', 'mp4', 'mov', 'webm', 'm4v', '3gp'];
 
     if ($feedbackId > 0 && !empty($_FILES['attachments']['name'][0])) {
         foreach ($_FILES['attachments']['name'] as $i => $originalName) {
@@ -187,10 +187,10 @@ if (($_GET['msg'] ?? '') === 'saved') {
                     type="file"
                     name="attachments[]"
                     multiple
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.txt,.log,.csv,.json,.pdf,image/*,text/plain,application/pdf"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.txt,.log,.csv,.json,.pdf,.mp4,.mov,.webm,.m4v,.3gp,image/*,video/*,text/plain,application/pdf"
                 >
                 <div class="small" style="margin-top:8px;">
-                    Optional. Attach screenshots, photos, TXT, LOG, CSV, JSON, or PDF files. Max 10 MB each.
+                    Optional. Attach screenshots, photos, videos, TXT, LOG, CSV, JSON, or PDF files. Max 10 MB each.
                 </div>
                 <ul id="selectedFiles" class="small"></ul>
             </div>
