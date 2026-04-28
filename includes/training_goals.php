@@ -23,7 +23,7 @@ function getRecentTrainingGoals(PDO $pdo, int $userId, int $limit = 8): array
         SELECT g.*, d.name AS dog_name
         FROM training_goals g
         JOIN dogs d ON d.id = g.dog_id
-        WHERE g.user_id = ?
+        WHERE g.user_id = ? AND g.status = 'active'
         ORDER BY g.created_at DESC
         LIMIT ?
     ");

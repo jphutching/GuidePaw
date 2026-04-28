@@ -16,10 +16,13 @@ if (!function_exists('guidepawFormUx')) {
         echo '
 <style>
 .gp-form-toast {
-    position: sticky;
-    top: 0;
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 9999;
-    margin: 12px auto;
+    margin: 0 auto;
+    width: calc(100% - 28px);
     max-width: 920px;
     padding: 14px 16px;
     border-radius: 12px;
