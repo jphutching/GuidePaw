@@ -28,6 +28,17 @@ $message = '';
 $result = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? 'create';
+
+    if ($action === 'archive') {
+        $sessionId = (int)($_POST['session_id'] ?? 0);
+        $stmt = $pdo->prepare("UPDATE training_sessions SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
+        $stmt->execute([$sessionId, $userId]);
+
+        header('Location: training_session_log.php?msg=updated');
+        exit;
+    }
+
     $dogId = (int)($_POST['dog_id'] ?? 0);
     $goalId = ($_POST['goal_id'] ?? '') !== '' ? (int)$_POST['goal_id'] : null;
     $moduleId = ($_POST['module_id'] ?? '') !== '' ? (int)$_POST['module_id'] : null;
@@ -103,7 +114,7 @@ $recentStmt = $pdo->prepare("
     FROM training_sessions s
     JOIN dogs d ON d.id = s.dog_id
     LEFT JOIN training_modules m ON m.id = s.module_id
-    WHERE s.user_id = ?
+    WHERE s.user_id = ? AND COALESCE(s.status, 'active') = 'active'
     ORDER BY s.created_at DESC
     LIMIT 8
 ");
@@ -187,6 +198,7 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
             <p>No dogs found. Add a dog profile first.</p>
         <?php else: ?>
             <form method="post">
+                <input type="hidden" name="action" value="create">
                 <label>Dog</label>
                 <select name="dog_id" required>
                     <?php foreach ($dogs as $dog): ?>
@@ -258,6 +270,7 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
             <th>Module</th>
             <th>Success</th>
             <th>Status</th>
+            <th>Actions</th>
         </tr>
         <?php foreach ($recent as $row): ?>
             <tr>
@@ -266,6 +279,13 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                 <td><?= h($row['module_title']) ?></td>
                 <td><?= h($row['reps_successful'] . '/' . $row['reps_attempted']) ?></td>
                 <td><?= h($row['progression_status']) ?></td>
+                <td>
+                    <form method="post" onsubmit="return confirm('Archive this training session?');">
+                        <input type="hidden" name="action" value="archive">
+                        <input type="hidden" name="session_id" value="<?= h($row['id']) ?>">
+                        <button type="submit">Archive</button>
+                    </form>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
