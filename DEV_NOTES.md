@@ -331,3 +331,15 @@ Fixed normal-user dashboard visibility after navigation cleanup:
 - Normal user can now see usable app navigation again
 - Admin/system links remain hidden from normal users
 
+
+## Admin Roadmap Access Fix
+
+Fixed admin-only access for `admin_feature_roadmap.php`.
+
+Verified:
+
+- Normal user account is blocked
+- Admin guard checks database-backed admin status
+- Roadmap page no longer relies only on stale session flags
+- Deploy smoke checks passed
+
