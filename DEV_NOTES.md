@@ -198,3 +198,13 @@ Added CSV export for Training History:
 
 Verified visually in browser and confirmed CSV download works.
 
+
+## Admin Backup Snapshot Checkpoint
+
+Added admin backup access:
+
+- Admin page now includes a Backup Snapshot card
+- Admins can download a full backup package from `export_backup.php?format=package`
+- Admin page also links to Backup Tools
+- Verified full ZIP backup download works after enabling PHP Zip support
+
