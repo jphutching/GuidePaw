@@ -175,6 +175,7 @@ function renderRows(array $rows): void {
         <a class="<?= $status === 'active' ? 'active' : '' ?>" href="?status=active">Active</a>
         <a class="<?= $status === 'archived' ? 'active' : '' ?>" href="?status=archived">Archived</a>
         <a class="<?= $status === 'all' ? 'active' : '' ?>" href="?status=all">All</a>
+        <a href="training_history_export.php?status=<?= h($status) ?>">⬇ Export CSV</a>
     </div>
 
     <?php foreach ([
