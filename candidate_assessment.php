@@ -32,6 +32,25 @@ $message = '';
 $result = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? 'create';
+
+    if ($action === 'archive') {
+        $assessmentId = (int)($_POST['assessment_id'] ?? 0);
+        $stmt = $pdo->prepare("
+            UPDATE dog_candidate_assessments a
+            SET status = 'archived',
+                updated_at = CURRENT_TIMESTAMP
+            FROM dogs d
+            WHERE a.id = ?
+              AND a.dog_id = d.id
+              AND d.owner_user_id = ?
+        ");
+        $stmt->execute([$assessmentId, $userId]);
+
+        header('Location: candidate_assessment.php?msg=updated');
+        exit;
+    }
+
     $dogId = (int)($_POST['dog_id'] ?? 0);
 
     $scoreKeys = candidateScoreKeys();
@@ -100,7 +119,7 @@ $recentStmt = $pdo->prepare("
     SELECT a.*, d.name AS dog_name
     FROM dog_candidate_assessments a
     JOIN dogs d ON d.id = a.dog_id
-    WHERE d.owner_user_id = ?
+    WHERE d.owner_user_id = ? AND COALESCE(a.status, 'active') = 'active'
     ORDER BY a.created_at DESC
     LIMIT 5
 ");
@@ -200,6 +219,7 @@ $labels = [
             <p>No dogs found. Add a dog profile first.</p>
         <?php else: ?>
             <form method="post">
+                <input type="hidden" name="action" value="create">
                 <label>Dog</label>
                 <select name="dog_id" required>
                     <?php foreach ($dogs as $dog): ?>
@@ -238,6 +258,7 @@ $labels = [
             <th>Dog</th>
             <th>Focus</th>
             <th>Recommendation</th>
+            <th>Actions</th>
         </tr>
         <?php foreach ($recent as $row): ?>
             <tr>
@@ -245,6 +266,13 @@ $labels = [
                 <td><?= h($row['dog_name']) ?></td>
                 <td><?= h($row['focus_level_recommended']) ?></td>
                 <td><?= h($row['recommendation']) ?></td>
+                <td>
+                    <form method="post" onsubmit="return confirm('Archive this candidate assessment?');">
+                        <input type="hidden" name="action" value="archive">
+                        <input type="hidden" name="assessment_id" value="<?= h($row['id']) ?>">
+                        <button type="submit">Archive</button>
+                    </form>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
