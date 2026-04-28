@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $size = (int)($_FILES['attachments']['size'][$i] ?? 0);
             $ext = strtolower(pathinfo((string)$originalName, PATHINFO_EXTENSION));
 
-            if ($size <= 0 || $size > 10 * 1024 * 1024 || !in_array($ext, $allowedExtensions, true)) {
+            if ($size <= 0 || $size > 100 * 1024 * 1024 || !in_array($ext, $allowedExtensions, true)) {
                 continue;
             }
 
@@ -212,7 +212,7 @@ if (($_GET['msg'] ?? '') === 'saved') {
                     accept=".jpg,.jpeg,.png,.gif,.webp,.txt,.log,.csv,.json,.pdf,.mp4,.mov,.webm,.m4v,.3gp,image/*,video/*,text/plain,application/pdf"
                 >
                 <div class="small" style="margin-top:8px;">
-                    Optional. Attach screenshots, photos, videos, TXT, LOG, CSV, JSON, or PDF files. Max 10 MB each.
+                    Optional. Attach screenshots, photos, videos, TXT, LOG, CSV, JSON, or PDF files. Max 100 MB each.
                 </div>
                 <ul id="selectedFiles" class="small"></ul>
             </div>
