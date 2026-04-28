@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
@@ -6,11 +7,7 @@ require_once __DIR__ . '/includes/feature_flags.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
-}
-
-if (empty($_SESSION['is_admin'])) {
-    echo 'Admin access required.';
-    exit;
+requireAdmin();
 }
 
 $stmt = $pdo->query("

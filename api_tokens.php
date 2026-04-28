@@ -1,8 +1,10 @@
 <?php
+require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once 'includes/api_auth.php';
 require_once 'includes/validation.php';
+requireAdmin();
 checkLogin();
 $userId = (int)$_SESSION['user_id'];
 $message = null;

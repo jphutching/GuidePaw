@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/form_ux.php';
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
@@ -8,6 +9,7 @@ if (!featureEnabled($pdo, 'backup_tools_enabled')) {
     exit;
 }
 require_once 'includes/app_config.php';
+requireAdmin();
 checkLogin();
 
 $userStmt = $pdo->prepare('SELECT username, dog_name, breed FROM users WHERE id = ?');
