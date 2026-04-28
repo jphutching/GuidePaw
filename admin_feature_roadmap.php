@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php if ($message): ?>
-        <div style="padding:10px;border-radius:8px;background:#d1e7dd;margin-bottom:12px;"><?= h($message) ?></div>
+        <div style="padding:14px 16px;border-radius:10px;background:#d1e7dd;border:1px solid #badbcc;color:#0f5132;font-weight:800;margin-bottom:14px;">✅ <?= h($message) ?></div>
     <?php endif; ?>
 
     <table>
