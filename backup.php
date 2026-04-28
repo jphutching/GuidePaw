@@ -76,7 +76,11 @@ $dogCount = (int) $dogCountStmt->fetchColumn();
         <div class="card-body">
             <h5 class="card-title">Restore Backup</h5>
             <p class="text-muted">Supports JSON backups and full backup packages. Merge adds dogs that do not already exist by name under your account. Replace clears your currently owned dogs and restores from the backup.</p>
-            <form action="import_backup.php" method="post" enctype="multipart/form-data">
+            <div class="alert alert-warning">
+                <strong>Important:</strong> Backup imports can overwrite or duplicate existing records.
+                Only import a backup you trust and only after downloading a fresh snapshot.
+            </div>
+            <form action="import_backup.php" method="post" enctype="multipart/form-data" onsubmit="return confirm('Import this backup file? Make sure you downloaded a fresh backup first.');">
                 <input type="hidden" name="csrf_token" value="<?= e(generateCsrfToken()) ?>">
                 <div class="mb-3">
                     <label class="form-label">Backup file</label>
