@@ -1,29 +1,29 @@
 const CACHE_NAME = 'psd-logbook-v16';
 const APP_SHELL = [
-  '/psd_logbook/',
-  '/psd_logbook/index.php',
-  '/psd_logbook/login.php',
-  '/psd_logbook/register.php',
-  '/psd_logbook/log_entry.php',
-  '/psd_logbook/view_logs.php',
-  '/psd_logbook/settings.php',
-  '/psd_logbook/profile.php',
-  '/psd_logbook/manifest.json',
-  '/psd_logbook/app.js',
-  '/psd_logbook/csrf_token.php',
-  '/psd_logbook/appointment_notifications.php',
-  '/psd_logbook/appointments.php',
-  '/psd_logbook/dog_health.php',
-  '/psd_logbook/dogs.php',
-  '/psd_logbook/backup.php',
-  '/psd_logbook/service_dog_rights.php',
-  '/psd_logbook/ada_wallet_card.php',
-  '/psd_logbook/styles.css',
-  '/psd_logbook/alerts.php',
-  '/psd_logbook/training_program.php',
-  '/psd_logbook/medications.php',
-  '/psd_logbook/certification.php',
-  '/psd_logbook/offline.html'
+  '/',
+  '/index.php',
+  '/login.php',
+  '/register.php',
+  '/log_entry.php',
+  '/view_logs.php',
+  '/settings.php',
+  '/profile.php',
+  '/manifest.json',
+  '/app.js',
+  '/csrf_token.php',
+  '/appointment_notifications.php',
+  '/appointments.php',
+  '/dog_health.php',
+  '/dogs.php',
+  '/backup.php',
+  '/service_dog_rights.php',
+  '/ada_wallet_card.php',
+  '/styles.css',
+  '/alerts.php',
+  '/training_program.php',
+  '/medications.php',
+  '/certification.php',
+  '/offline.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -54,7 +54,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           const cached = await caches.match(request);
-          return cached || caches.match('/psd_logbook/offline.html');
+          return cached || caches.match('/offline.html');
         })
     );
     return;
@@ -94,7 +94,7 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/psd_logbook/appointments.php';
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/appointments.php';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

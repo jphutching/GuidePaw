@@ -1,5 +1,5 @@
 (function () {
-  const APP_SCOPE = '/psd_logbook/';
+  const APP_SCOPE = '/';
   const DB_NAME = 'psdLogbookOffline';
   const DB_VERSION = 1;
   const STORE_NAME = 'queuedLogs';
