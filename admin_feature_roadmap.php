@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/audit_log.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -89,6 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )
     ");
     $flagStmt->execute([$flagEnabled, $id]);
+
+    writeAuditLog($pdo, 'roadmap_item_updated', 'feature_roadmap', $id, 'Admin updated roadmap item and feature flag state.');
 
     header('Location: admin_feature_roadmap.php?msg=roadmap_updated');
     exit;
