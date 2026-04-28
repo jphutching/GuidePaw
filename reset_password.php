@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 
@@ -50,5 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <button class="btn btn-danger w-100 py-2">Reset Password</button>
         <a href="login.php" class="btn btn-link w-100 mt-2 text-decoration-none small text-muted">Back to Login</a>
     </form>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

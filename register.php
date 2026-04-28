@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require 'includes/validation.php';
@@ -54,5 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <button class="btn btn-primary w-100">Initialize Profile</button>
             </form>
     </div>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

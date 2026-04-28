@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once 'includes/app_config.php';
@@ -100,5 +101,6 @@ $csrf = generateCsrfToken();
         </div>
     </form>
 </div>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

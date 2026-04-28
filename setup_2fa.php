@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/two_factor.php';
@@ -103,5 +104,6 @@ $isEnabled = !empty($user['is_2fa_enabled']) && !empty($user['google_2fa_secret'
             <a href="settings.php" class="btn btn-link w-100 mt-3">Back to settings</a>
         </div>
     </div>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

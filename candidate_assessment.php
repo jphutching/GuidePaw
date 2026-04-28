@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
@@ -248,5 +249,6 @@ $labels = [
         <?php endforeach; ?>
     </table>
 </div>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

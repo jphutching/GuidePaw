@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require 'includes/validation.php';
@@ -132,4 +133,5 @@ $incoming = $incomingStmt->fetchAll();
         </div>
     </div>
 </div>
+<?php guidepawFormUx(); ?>
 </body></html>

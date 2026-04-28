@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once 'includes/feature_flags.php';
@@ -111,5 +112,6 @@ $dogCount = (int) $dogCountStmt->fetchColumn();
     </div>
 </div>
 <script src="app.js"></script>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

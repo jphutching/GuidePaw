@@ -1,4 +1,5 @@
-<?php 
+<?php
+require_once __DIR__ . '/includes/form_ux.php'; 
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php'; 
 checkLogin(); // Security Guard
@@ -71,5 +72,6 @@ $skills = json_decode($log['skills_practiced'], true) ?: [];
             </div>
         </form>
     </div>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

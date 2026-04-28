@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/two_factor.php';
@@ -66,5 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="btn btn-primary w-100">Verify</button>
         <a href="login.php" class="btn btn-link w-100 mt-2">Back</a>
     </form>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

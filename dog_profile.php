@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require 'includes/validation.php';
@@ -223,5 +224,6 @@ function wireChipLinks(scope){
   wireChipLinks(document);
 })();
 </script>
+<?php guidepawFormUx(); ?>
 </body>
 </html>

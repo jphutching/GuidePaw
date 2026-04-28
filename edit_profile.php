@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/form_ux.php';
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 checkLogin();
@@ -33,5 +34,6 @@ $u = $stmt->fetch();
         <button class="btn btn-primary w-100">Update Stats</button>
         <a href="index.php" class="btn btn-link w-100 mt-2">Cancel</a>
     </form>
+<?php guidepawFormUx(); ?>
 </body>
 </html>
