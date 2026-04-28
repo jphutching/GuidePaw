@@ -139,55 +139,58 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
         <?php endif; ?>
 
         <div class="row g-3">
-            <div class="col-6 col-md-4">
-                <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
-                    <a href="quick_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚡<br>Quick Session</a>
-<?php endif; ?>
-            </div>
-            <div class="col-6 col-md-4">
-                <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
-                    <a href="log_entry.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📝<br>Detailed Log</a>
-<?php endif; ?>
-            </div>
-            <div class="col-6 col-md-4"><a href="view_logs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📋<br>History</a></div>
-            <div class="col-6 col-md-4"><a href="stats.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📊<br>Stats</a></div>
             <div class="col-6 col-md-4"><a href="dogs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🐕<br>Dogs</a></div>
             <div class="col-6 col-md-4"><a href="dog_profile.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>Dog Profile</a></div>
-            <div class="col-6 col-md-4"><a href="collaboration.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🤝<br>Handlers</a></div>
-            <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
-<?php endif; ?>
-            <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
-<?php endif; ?>
-            <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
-<?php endif; ?>
+            <div class="col-6 col-md-4"><a href="view_logs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📋<br>History</a></div>
+            <div class="col-6 col-md-4"><a href="stats.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📊<br>Stats</a></div>
+            <div class="col-6 col-md-4"><a href="settings.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚙️<br>Settings</a></div>
+
+            <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="quick_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚡<br>Quick Session</a></div>
+            <?php endif; ?>
+
+            <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="log_entry.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📝<br>Detailed Log</a></div>
+            <?php endif; ?>
+
             <?php if (featureEnabled($pdo, 'training_program_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="training_program.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎓<br>Training</a></div>
-<?php endif; ?>
+            <?php endif; ?>
+
+            <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
+            <?php endif; ?>
+
+            <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
+            <?php endif; ?>
+
+            <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
+                <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
+            <?php endif; ?>
+
             <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="medications.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💊<br>Meds</a></div>
-<?php endif; ?>
+            <?php endif; ?>
+
             <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="certification.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Certification</a></div>
-<?php endif; ?>
-            <?php if (currentUserIsAdmin() && featureEnabled($pdo, 'backup_tools_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
-<?php endif; ?>
-            <?php if (currentUserIsAdmin()): ?>
-                <?php if (currentUserIsAdmin()): ?>
-                <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
             <?php endif; ?>
-            <?php endif; ?>
-            <?php if (currentUserIsAdmin()): ?>
-                <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>System<br>Health</a></div>
-            <?php endif; ?>
-            
+
             <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                 <div class="col-6 col-md-4"><a href="ada_wallet_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Wallet Card</a></div>
-<?php endif; ?>
+            <?php endif; ?>
+
+            <?php if (currentUserIsAdmin()): ?>
+                <div class="col-6 col-md-4"><a href="admin.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🛠️<br>Admin</a></div>
+                <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
+                <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>System<br>Health</a></div>
+                <?php if (featureEnabled($pdo, 'backup_tools_enabled')): ?>
+                    <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
+
     </div>
 
     <script src="app.js"></script>
@@ -225,13 +228,9 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             </div>
         <?php endif; ?>
 
-        <?php if (!empty($_SESSION['is_admin'])): ?>
+        <?php if (currentUserIsAdmin()): ?>
             <div class="col-6 col-md-3">
-                <?php if (currentUserIsAdmin()): ?>
-                <?php if (currentUserIsAdmin()): ?>
                 <a href="admin_feature_roadmap.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗺️<br>Feature<br>Roadmap</a>
-            <?php endif; ?>
-            <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
