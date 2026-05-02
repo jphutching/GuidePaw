@@ -8,3 +8,14 @@
 
 # Runtime logs
 storage/logs/*.log
+
+# GuidePaw local audit/deploy artifacts
+guidepaw_beta_audit*.txt
+guidepaw_beta_audit*.sh
+render.yaml.backup.*
+*.dump
+*.sql.dump
+*.backup
+.env
+.env.*
+!.env.render.example
