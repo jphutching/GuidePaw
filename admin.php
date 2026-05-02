@@ -139,5 +139,7 @@ $csrf = generateCsrfToken();
     </form>
 </div>
 <?php guidepawFormUx(); ?>
+
+<p><a class="btn btn-outline-primary" href="admin_beta_requests.php">Beta Access Requests</a></p>
 </body>
 </html>
