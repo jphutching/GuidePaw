@@ -490,14 +490,14 @@ function getDogBreedsCatalog(): array
             'notes' => 'For rare breeds, rely on individual assessment, breeder/rescue history, health screening, and observed public-access temperament.',
         ],
         'Designer / Hybrid' => [
-            'temperament' => 'Mixed traits from parent breeds; consistency varies by breeder, generation, and individual dog',
-            'traits' => 'May combine useful qualities, but coat, size, drive, and temperament are less predictable than established breeds',
-            'notes' => 'Evaluate the actual dog in front of you. Parent breeds and generation can affect grooming, shedding, size, and working suitability.',
+            'temperament' => 'Mixed traits from parent breeds; consistency varies by breeder, generation, health testing, early socialization, and the individual dog',
+            'traits' => 'May combine useful qualities, but coat, size, drive, nerves, confidence, public neutrality, and trainability can be less predictable than established breeds',
+            'notes' => 'Service-work suitability must be based on the individual dog, not the designer-breed label. Review parent breeds, generation, structure, health history, recovery from stress, task aptitude, and ability to stay neutral in public.',
         ],
         'Mixed / Unknown / Other' => [
-            'temperament' => 'Individual temperament matters more than label',
-            'traits' => 'Use when breed is mixed, unknown, rare, custom, or not listed',
-            'notes' => 'GuidePaw allows custom breed entries. The dropdown helps with reference notes but does not restrict what can be saved.',
+            'temperament' => 'Individual temperament, health, structure, and training history matter more than the label',
+            'traits' => 'Use when breed is mixed, unknown, rare, custom, or not listed; suitability should be evaluated through observed behavior and task needs',
+            'notes' => 'For custom or unknown breeds, assess the dog directly: confidence, public neutrality, handler focus, recovery from stress, physical soundness, task aptitude, grooming/coat needs, and whether the dog can work calmly without distress.',
         ],
     ];
 
