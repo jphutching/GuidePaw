@@ -344,6 +344,174 @@ function getDogBreedsCatalog(): array
         'Other / Custom' => ['size' => 'Custom', 'weight_range' => 'Custom', 'coat_type' => 'Custom', 'shedding' => 'Custom', 'exercise_level' => 'Custom'],
     ];
 
+
+    // GUIDEPAW_BREED_EXPANSION_V1
+    // Supplemental breed catalog. This preserves the detailed entries above and only fills in missing breeds.
+    // Breed is still saved as free text, so users can type custom mixes, rare breeds, or unknown lineage.
+    $supplementalBreedGroups = [
+        'Sporting' => [
+            "American Water Spaniel", "Barbet", "Boykin Spaniel", "Bracco Italiano", "Brittany",
+            "Chesapeake Bay Retriever", "Clumber Spaniel", "Cocker Spaniel", "Curly-Coated Retriever",
+            "English Cocker Spaniel", "English Setter", "English Springer Spaniel", "Field Spaniel",
+            "Flat-Coated Retriever", "German Shorthaired Pointer", "German Wirehaired Pointer",
+            "Golden Retriever", "Gordon Setter", "Irish Red and White Setter", "Irish Setter",
+            "Irish Water Spaniel", "Labrador Retriever", "Lagotto Romagnolo",
+            "Nederlandse Kooikerhondje", "Nova Scotia Duck Tolling Retriever", "Pointer",
+            "Portuguese Water Dog", "Spinone Italiano", "Sussex Spaniel", "Vizsla", "Weimaraner",
+            "Welsh Springer Spaniel", "Wirehaired Pointing Griffon", "Wirehaired Vizsla"
+        ],
+        'Hound' => [
+            "Afghan Hound", "American English Coonhound", "American Foxhound", "Azawakh",
+            "Basenji", "Basset Fauve de Bretagne", "Basset Hound", "Beagle",
+            "Black and Tan Coonhound", "Bloodhound", "Bluetick Coonhound", "Borzoi",
+            "Cirneco dell'Etna", "Dachshund", "English Foxhound", "Grand Basset Griffon Vendeen",
+            "Greyhound", "Hamiltonstovare", "Harrier", "Ibizan Hound", "Irish Wolfhound",
+            "Norwegian Elkhound", "Otterhound", "Petit Basset Griffon Vendeen", "Pharaoh Hound",
+            "Plott Hound", "Portuguese Podengo Pequeno", "Redbone Coonhound", "Rhodesian Ridgeback",
+            "Saluki", "Scottish Deerhound", "Sloughi", "Treeing Walker Coonhound", "Whippet"
+        ],
+        'Working' => [
+            "Akita", "Alaskan Malamute", "Anatolian Shepherd Dog", "Bernese Mountain Dog",
+            "Black Russian Terrier", "Boerboel", "Boxer", "Bullmastiff", "Cane Corso",
+            "Chinook", "Doberman Pinscher", "Dogo Argentino", "Dogue de Bordeaux",
+            "German Pinscher", "Giant Schnauzer", "Great Dane", "Great Pyrenees",
+            "Greater Swiss Mountain Dog", "Komondor", "Kuvasz", "Leonberger", "Mastiff",
+            "Neapolitan Mastiff", "Newfoundland", "Rottweiler", "Saint Bernard", "Samoyed",
+            "Siberian Husky", "Standard Schnauzer", "Tibetan Mastiff"
+        ],
+        'Terrier' => [
+            "Airedale Terrier", "American Hairless Terrier", "American Staffordshire Terrier",
+            "Australian Terrier", "Bedlington Terrier", "Border Terrier", "Bull Terrier",
+            "Cairn Terrier", "Cesky Terrier", "Dandie Dinmont Terrier", "Glen of Imaal Terrier",
+            "Irish Terrier", "Kerry Blue Terrier", "Lakeland Terrier", "Manchester Terrier",
+            "Miniature Bull Terrier", "Miniature Schnauzer", "Norfolk Terrier", "Norwich Terrier",
+            "Parson Russell Terrier", "Rat Terrier", "Russell Terrier", "Scottish Terrier",
+            "Sealyham Terrier", "Skye Terrier", "Smooth Fox Terrier", "Soft Coated Wheaten Terrier",
+            "Staffordshire Bull Terrier", "Teddy Roosevelt Terrier", "Welsh Terrier",
+            "West Highland White Terrier", "Wire Fox Terrier"
+        ],
+        'Toy' => [
+            "Affenpinscher", "Biewer Terrier", "Brussels Griffon", "Cavalier King Charles Spaniel",
+            "Chihuahua", "Chinese Crested", "English Toy Spaniel", "Havanese", "Italian Greyhound",
+            "Japanese Chin", "Maltese", "Manchester Terrier (Toy)", "Miniature Pinscher",
+            "Papillon", "Pekingese", "Pomeranian", "Poodle (Toy)", "Pug", "Russian Toy",
+            "Russian Tsvetnaya Bolonka", "Shih Tzu", "Silky Terrier", "Toy Fox Terrier",
+            "Yorkshire Terrier"
+        ],
+        'Non-Sporting' => [
+            "American Eskimo Dog", "Bichon Frise", "Boston Terrier", "Bulldog",
+            "Chinese Shar-Pei", "Chow Chow", "Coton de Tulear", "Dalmatian", "Finnish Spitz",
+            "French Bulldog", "Keeshond", "Lhasa Apso", "Löwchen", "Norwegian Lundehund",
+            "Poodle", "Poodle (Miniature)", "Poodle (Standard)", "Schipperke", "Shiba Inu",
+            "Tibetan Spaniel", "Tibetan Terrier", "Xoloitzcuintli"
+        ],
+        'Herding' => [
+            "Australian Cattle Dog", "Australian Shepherd", "Bearded Collie", "Beauceron",
+            "Belgian Laekenois", "Belgian Malinois", "Belgian Sheepdog", "Belgian Tervuren",
+            "Bergamasco Sheepdog", "Berger Picard", "Border Collie", "Bouvier des Flandres",
+            "Briard", "Canaan Dog", "Cardigan Welsh Corgi", "Collie", "Entlebucher Mountain Dog",
+            "Finnish Lapphund", "German Shepherd Dog", "Icelandic Sheepdog", "Lancashire Heeler",
+            "Miniature American Shepherd", "Mudi", "Norwegian Buhund", "Old English Sheepdog",
+            "Pembroke Welsh Corgi", "Polish Lowland Sheepdog", "Puli", "Pumi", "Pyrenean Shepherd",
+            "Shetland Sheepdog", "Spanish Water Dog", "Swedish Vallhund"
+        ],
+        'Rare / International / Foundation Stock' => [
+            "Aidi", "Appenzeller Sennenhund", "Australian Kelpie", "Australian Stumpy Tail Cattle Dog",
+            "Austrian Pinscher", "Barbado da Terceira", "Bavarian Mountain Scent Hound",
+            "Bolognese", "Bohemian Shepherd", "Braque du Bourbonnais", "Braque Francais Pyrenean",
+            "Broholmer", "Carolina Dog", "Catahoula Leopard Dog", "Caucasian Shepherd Dog",
+            "Central Asian Shepherd Dog", "Czechoslovakian Vlcak", "Danish-Swedish Farmdog",
+            "Dutch Shepherd", "Estrela Mountain Dog", "Eurasier", "German Longhaired Pointer",
+            "German Spitz", "Hokkaido", "Jagdterrier", "Jindo", "Kai Ken", "Karelian Bear Dog",
+            "Kishu Ken", "Kromfohrlander", "Lapponian Herder", "Mountain Cur", "Norrbottenspets",
+            "Perro de Presa Canario", "Peruvian Inca Orchid", "Portuguese Podengo",
+            "Portuguese Podengo Pequeno", "Pyrenean Mastiff", "Rafeiro do Alentejo",
+            "Romanian Mioritic Shepherd Dog", "Schapendoes", "Shikoku", "Slovakian Wirehaired Pointer",
+            "Stabyhoun", "Swedish Lapphund", "Taiwan Dog", "Thai Ridgeback", "Tornjak",
+            "Tosa", "Transylvanian Hound", "Yakutian Laika"
+        ],
+        'Designer / Hybrid' => [
+            "Aussiedoodle", "Aussalier", "Beaglier", "Bernedoodle", "Bichpoo", "Bordoodle",
+            "Boxador", "Cavachon", "Cavador", "Cavapoo", "Chiweenie", "Chorkie", "Cockalier",
+            "Cockapoo", "Corgipoo", "Danoodle", "Doxiepoo", "Double Doodle", "Frenchton",
+            "Gerberian Shepsky", "Goldador", "Golden Mountain Doodle", "Golden Shepherd",
+            "Goldendoodle", "Havapoo", "Huskydoodle", "Irish Doodle", "Jackapoo", "Labradoodle",
+            "Labrastaff", "Maltipoo", "Miniature Goldendoodle", "Miniature Labradoodle",
+            "Morkie", "Newfypoo", "Peekapoo", "Pitsky", "Pomapoo", "Pomchi", "Pomsky",
+            "Poochon", "Puggle", "Rottle", "Saint Berdoodle", "Schnoodle", "Sheepadoodle",
+            "Shih-Poo", "Shorkie", "Springerdoodle", "Vizsladoodle", "Weimardoodle",
+            "Whoodle", "Yorkipoo"
+        ],
+        'Mixed / Unknown / Other' => [
+            "Mixed Breed", "Mixed Breed - Large", "Mixed Breed - Medium", "Mixed Breed - Small",
+            "Unknown Breed", "Other / Not Listed"
+        ],
+    ];
+
+    $groupBreedDefaults = [
+        'Sporting' => [
+            'temperament' => 'Generally active, social, responsive, and people-oriented',
+            'traits' => 'Often trainable and handler-focused; many sporting breeds are strong candidates for service-dog work when temperament is stable',
+            'notes' => 'Consider energy level, settling skills, grooming needs, and public neutrality for the individual dog.',
+        ],
+        'Hound' => [
+            'temperament' => 'Often independent, scent- or sight-driven, and gentle with familiar people',
+            'traits' => 'Can be steady companions; distraction management and recall/focus may need extra work',
+            'notes' => 'Evaluate the individual dog carefully, especially around scent, prey drive, vocalizing, and environmental focus.',
+        ],
+        'Working' => [
+            'temperament' => 'Often powerful, confident, loyal, and task-oriented',
+            'traits' => 'May be capable and steady, but size, public perception, guarding tendencies, and orthopedic health matter',
+            'notes' => 'Best candidates need excellent neutrality, social stability, and clear handler focus.',
+        ],
+        'Terrier' => [
+            'temperament' => 'Often bold, alert, clever, and energetic',
+            'traits' => 'Can learn quickly; prey drive, persistence, and vocal behavior may need careful management',
+            'notes' => 'Often better suited to alert/response or smaller task sets than heavy physical support work.',
+        ],
+        'Toy' => [
+            'temperament' => 'Often portable, attentive, companion-oriented, and alert',
+            'traits' => 'Can be useful for alert/response work; size limits physical support tasks',
+            'notes' => 'Confidence, neutrality, and safe handling in public are especially important.',
+        ],
+        'Non-Sporting' => [
+            'temperament' => 'Varies widely by breed and line',
+            'traits' => 'Companion qualities, trainability, coat care, energy, and heat tolerance vary significantly',
+            'notes' => 'Use this as a starting point and evaluate the individual dog, health, structure, and working temperament.',
+        ],
+        'Herding' => [
+            'temperament' => 'Often intelligent, responsive, observant, and handler-aware',
+            'traits' => 'Highly trainable; may be sensitive, motion-aware, vocal, or prone to environmental scanning',
+            'notes' => 'Strong candidates need excellent off-switch, public neutrality, and stable nerves.',
+        ],
+        'Rare / International / Foundation Stock' => [
+            'temperament' => 'Breed traits vary widely; research the specific breed, line, and purpose',
+            'traits' => 'Added for broader breed selection and record accuracy',
+            'notes' => 'For rare breeds, rely on individual assessment, breeder/rescue history, health screening, and observed public-access temperament.',
+        ],
+        'Designer / Hybrid' => [
+            'temperament' => 'Mixed traits from parent breeds; consistency varies by breeder, generation, and individual dog',
+            'traits' => 'May combine useful qualities, but coat, size, drive, and temperament are less predictable than established breeds',
+            'notes' => 'Evaluate the actual dog in front of you. Parent breeds and generation can affect grooming, shedding, size, and working suitability.',
+        ],
+        'Mixed / Unknown / Other' => [
+            'temperament' => 'Individual temperament matters more than label',
+            'traits' => 'Use when breed is mixed, unknown, rare, custom, or not listed',
+            'notes' => 'GuidePaw allows custom breed entries. The dropdown helps with reference notes but does not restrict what can be saved.',
+        ],
+    ];
+
+    foreach ($supplementalBreedGroups as $groupName => $breedNames) {
+        foreach ($breedNames as $breedName) {
+            if (!isset($catalog[$breedName])) {
+                $catalog[$breedName] = array_merge(
+                    ['group' => $groupName],
+                    $groupBreedDefaults[$groupName] ?? $groupBreedDefaults['Mixed / Unknown / Other']
+                );
+            }
+        }
+    }
+
     foreach ($catalog as $breedName => &$breedInfo) {
         $breedInfo = array_merge([
             'size' => 'Varies',
