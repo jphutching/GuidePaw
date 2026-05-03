@@ -112,6 +112,9 @@ function betaApproveRequest(PDO $pdo, int $requestId, int $adminUserId, bool $se
             approved_by_user_id = ?,
             approved_at = CURRENT_TIMESTAMP,
             denied_at = NULL,
+            redeemed_at = NULL,
+            linked_user_id = NULL,
+            email_sent_at = NULL,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         RETURNING *
