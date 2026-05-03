@@ -121,13 +121,13 @@ $csrf = generateCsrfToken();
                         <td><?= e($r['token_preview'] ?? '') ?></td>
                         <td><?= e(mb_strimwidth((string) ($r['reason'] ?? ''), 0, 120, '...')) ?></td>
                         <td>
-                            <?php if ($r['status'] === 'pending' || $r['status'] === 'approved'): ?>
+                            <?php if ($r['status'] === 'pending' || $r['status'] === 'approved' || $r['status'] === 'redeemed'): ?>
                                 <form method="post" class="d-inline">
                                     <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $r['id'] ?>">
                                     <input type="hidden" name="action" value="approve">
                                     <input type="hidden" name="send_email" value="<?= $autoEmail ? '1' : '' ?>">
-                                    <button class="btn btn-sm btn-success">Approve / New Token</button>
+                                    <button class="btn btn-sm btn-success">Approve / Reissue New Token</button>
                                 </form>
                             <?php endif; ?>
                             <?php if ($r['status'] !== 'denied' && $r['status'] !== 'redeemed'): ?>
