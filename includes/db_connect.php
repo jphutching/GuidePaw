@@ -101,6 +101,11 @@ function checkLogin(): void {
         redirectToAuth('session_expired');
     }
 
+    if (array_key_exists('account_status', $user) && (string) $user['account_status'] === 'deactivated') {
+        logoutSessionState();
+        redirectToAuth('account_deactivated');
+    }
+
     $_SESSION['user_id'] = (int) $user['id'];
     $_SESSION['dog_name'] = $user['dog_name'] ?? '';
     $_SESSION['username'] = $user['username'] ?? '';
