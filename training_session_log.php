@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/training_progression.php';
+require_once __DIR__ . '/includes/training_data.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -110,6 +111,7 @@ $goalsStmt->execute([$userId]);
 $goals = $goalsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $modules = $pdo->query("SELECT id, title FROM training_modules WHERE is_active = 1 ORDER BY level_number, sort_order")->fetchAll(PDO::FETCH_ASSOC);
+$commandCueGroups = getTrainingCommandCueSuggestions();
 
 $recentStmt = $pdo->prepare("
     SELECT s.*, d.name AS dog_name, m.title AS module_title
@@ -140,6 +142,10 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
         .alert { padding: 10px; border-radius: 8px; background: #d1e7dd; margin-bottom: 12px; }
         .result { background: #e7f1ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
         .small { color: #666; font-size: 13px; }
+        .cue-guide { background:#f8fafc; border:1px solid #dbeafe; border-radius:10px; padding:12px; margin:12px 0; }
+        .cue-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin-top:8px; }
+        .cue-box { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:8px; }
+        .cue-pill { display:inline-block; border:1px solid #cbd5e1; border-radius:999px; padding:2px 7px; margin:2px 0; font-weight:700; background:#fff; }
         table { width: 100%; border-collapse: collapse; background: #fff; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
         th { background: #eee; }
@@ -223,6 +229,27 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="<?= h($module['id']) ?>"><?= h($module['title']) ?></option>
                     <?php endforeach; ?>
                 </select>
+
+
+                <?php if (!empty($commandCueGroups)): ?>
+                    <div class="cue-guide">
+                        <strong>Suggested command words</strong>
+                        <div class="small">Use these as a quick reference while logging. Pick one cue per behavior and stay consistent.</div>
+                        <div class="cue-grid">
+                            <?php foreach ($commandCueGroups as $groupName => $cueItems): ?>
+                                <div class="cue-box">
+                                    <strong><?= h($groupName) ?></strong>
+                                    <?php foreach (array_slice($cueItems, 0, 4) as $cueItem): ?>
+                                        <div class="small">
+                                            <?= h($cueItem['skill']) ?>:
+                                            <span class="cue-pill"><?= h($cueItem['cue']) ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <label>Context / environment</label>
                 <textarea name="context_environment" placeholder="Cab, truck stop, fuel island, home, parking lot"></textarea>

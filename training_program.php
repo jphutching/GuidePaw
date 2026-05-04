@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
+require_once __DIR__ . '/includes/training_data.php';
 require_once 'includes/feature_flags.php';
 require_once 'includes/training_goals.php';
 require_once 'includes/training_stats.php';
@@ -97,6 +98,7 @@ $progress = count(array_filter($items, fn($i) => in_array(($i['status'] ?? ''), 
 $readyPct = $total ? (int) round(($mastered / $total) * 100) : 0;
 $suggestions = getTrainingSuggestions($pdo, $userId, $dogId);
 $programGuide = getBeneficialTrainingPrograms();
+$commandCueGroups = getTrainingCommandCueSuggestions();
 $csrf = generateCsrfToken();
 ?>
 <!DOCTYPE html>
@@ -243,6 +245,42 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
         <strong>Today&apos;s Easy Win:</strong>
         <?= e($easyWin) ?>
     </div>
+
+
+    <?php if (!empty($commandCueGroups)): ?>
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+                    <div>
+                        <h2 class="h5 mb-1">Suggested command words</h2>
+                        <div class="small text-muted">Pick one cue per behavior and keep it consistent across handlers.</div>
+                    </div>
+                    <span class="badge text-bg-primary">Cue guide</span>
+                </div>
+
+                <div class="row g-2">
+                    <?php foreach ($commandCueGroups as $groupName => $cueItems): ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="border rounded p-2 h-100 bg-light">
+                                <div class="fw-bold mb-1"><?= e($groupName) ?></div>
+                                <?php foreach ($cueItems as $cueItem): ?>
+                                    <div class="small mt-2">
+                                        <strong><?= e($cueItem['skill']) ?>:</strong>
+                                        <span class="badge text-bg-white border"><?= e($cueItem['cue']) ?></span><br>
+                                        <span class="text-muted"><?= e($cueItem['use']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="small text-muted mt-3">
+                    These are suggested cue words, not required words. The most important rule is that the handler uses the same word for the same behavior every time.
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <div class="row g-3 mb-3">
         <div class="col-md-4">

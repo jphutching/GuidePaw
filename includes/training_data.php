@@ -120,4 +120,44 @@ function getTrainingProgramTemplate(): array {
         ],
     ];
 }
+// GUIDEPAW_COMMAND_CUE_GUIDE_V1
+
+if (!function_exists('getTrainingCommandCueSuggestions')) {
+function getTrainingCommandCueSuggestions(): array {
+    return [
+        'Foundation obedience' => [
+            ['skill' => 'Name response / check-in', 'cue' => 'Name, Look, Check in', 'use' => 'Use one attention cue before giving harder directions.'],
+            ['skill' => 'Sit', 'cue' => 'Sit', 'use' => 'One clear word. Reward fast response and calm position.'],
+            ['skill' => 'Down', 'cue' => 'Down', 'use' => 'Use for settling, public calm, and task-prep positions.'],
+            ['skill' => 'Stay / wait', 'cue' => 'Stay, Wait', 'use' => 'Stay means hold position. Wait means pause until released.'],
+            ['skill' => 'Recall', 'cue' => 'Come, Here', 'use' => 'Use a happy cue and reward heavily. Avoid using it for punishment.'],
+            ['skill' => 'Release', 'cue' => 'Free, Break, Okay', 'use' => 'Tells the dog the task or position is finished.'],
+        ],
+        'Public access manners' => [
+            ['skill' => 'Loose leash / heel', 'cue' => 'Heel, With me, Easy', 'use' => 'Pick one walking cue and keep leash pressure low.'],
+            ['skill' => 'Leave it', 'cue' => 'Leave it', 'use' => 'Disengage from food, people, dogs, objects, or ground distractions.'],
+            ['skill' => 'Settle', 'cue' => 'Settle, Relax', 'use' => 'Use for calm lying or quiet waiting in public.'],
+            ['skill' => 'Under-table tuck', 'cue' => 'Tuck, Under', 'use' => 'Send dog safely under chair/table and reward compact body position.'],
+            ['skill' => 'Door / curb control', 'cue' => 'Wait, Hold, Curb', 'use' => 'Pause before doors, vehicle exits, parking lots, and curb transitions.'],
+            ['skill' => 'Ignore greetings', 'cue' => 'Ignore, With me', 'use' => 'Return attention to handler instead of soliciting people or dogs.'],
+        ],
+        'Service task cues' => [
+            ['skill' => 'Deep pressure / grounding', 'cue' => 'Pressure, Lap, Ground', 'use' => 'Use only for a trained task with safe body placement and duration.'],
+            ['skill' => 'Alert / interruption', 'cue' => 'Nudge, Alert, Touch', 'use' => 'Train a clear behavior that can be recognized and logged.'],
+            ['skill' => 'Retrieval', 'cue' => 'Bring, Get it, Take it', 'use' => 'Pair object names with a consistent retrieve-to-hand behavior.'],
+            ['skill' => 'Targeting', 'cue' => 'Touch, Target', 'use' => 'Useful for alerts, positioning, buttons, doors, and confidence games.'],
+            ['skill' => 'Directional work', 'cue' => 'Left, Right, Forward, Back', 'use' => 'Use for positioning and send-outs without protection or bite work.'],
+            ['skill' => 'Task finished', 'cue' => 'All done, Thank you', 'use' => 'Ends task behavior cleanly and prevents nagging or repeated alerts.'],
+        ],
+        'Handler consistency rules' => [
+            ['skill' => 'Cue timing', 'cue' => 'Say it once', 'use' => 'Avoid repeating the cue. Help the dog, reset, then try easier.'],
+            ['skill' => 'Marker word', 'cue' => 'Yes, Good', 'use' => 'Use one marker to tell the dog the exact moment that earned reward.'],
+            ['skill' => 'No-reward reset', 'cue' => 'Try again, Reset', 'use' => 'Use calmly when the dog misses a rep; reduce difficulty.'],
+            ['skill' => 'Emergency stop', 'cue' => 'Stop, Down', 'use' => 'Practice separately and keep it highly rewarded.'],
+        ],
+    ];
+}
+}
+
+
 }
