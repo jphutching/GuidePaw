@@ -62,6 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e(appName()) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* GUIDEPAW_PASSWORD_UX_V1 */
+        .password-toggle-btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body class="container p-5 bg-light">
 <?php guidepawBrandHeader(); ?>
@@ -80,7 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="username">
         </div>
         <div class="mb-3">
-            <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+            <div class="input-group">
+                <input id="login-password" type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+                <button class="btn btn-outline-secondary password-toggle-btn" type="button" data-toggle-password="login-password" aria-label="Show password">Show</button>
+            </div>
         </div>
         <button class="btn btn-success w-100 py-2">Login</button>
         
@@ -90,6 +101,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </form>
     <script src="app.js"></script>
+    <script>
+    // GUIDEPAW_PASSWORD_UX_V1
+    document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var input = document.getElementById(button.getAttribute('data-toggle-password'));
+            if (!input) return;
+            var showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            button.textContent = showing ? 'Show' : 'Hide';
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        });
+    });
+    </script>
 <?php guidepawFormUx(); ?>
 </body>
 </html>

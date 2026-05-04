@@ -80,6 +80,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Create GuidePaw Handler Account</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* GUIDEPAW_PASSWORD_UX_V1 */
+        .password-toggle-btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            white-space: nowrap;
+        }
+        .password-match-note {
+            font-size: .875rem;
+            margin-top: .35rem;
+        }
+    </style>
 </head>
 <body class="bg-light">
 <main class="container py-5" style="max-width: 680px;">
@@ -110,17 +122,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input class="form-control" type="email" name="confirm_email" required value="<?= e($_POST['confirm_email'] ?? $prefillEmail) ?>" <?= $prefillEmail ? 'readonly' : '' ?>>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input class="form-control" type="password" name="password" required autocomplete="new-password">
+                    <label class="form-label" for="register-password">Password</label>
+                    <div class="input-group">
+                        <input id="register-password" class="form-control" type="password" name="password" required autocomplete="new-password" minlength="10">
+                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" data-toggle-password="register-password" aria-label="Show password">Show</button>
+                    </div>
+                    <div class="form-text">Use at least 10 characters.</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Verify password</label>
-                    <input class="form-control" type="password" name="confirm_password" required autocomplete="new-password">
+                    <label class="form-label" for="register-confirm-password">Verify password</label>
+                    <div class="input-group">
+                        <input id="register-confirm-password" class="form-control" type="password" name="confirm_password" required autocomplete="new-password" minlength="10">
+                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" data-toggle-password="register-confirm-password" aria-label="Show password">Show</button>
+                    </div>
+                    <div id="password-match-note" class="password-match-note text-muted">Re-enter the same password to confirm it before creating the account.</div>
                 </div>
                 <button class="btn btn-primary w-100">Create account</button>
             </form>
         <?php endif; ?>
     </div>
 </main>
+<script>
+// GUIDEPAW_PASSWORD_UX_V1
+document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        var input = document.getElementById(button.getAttribute('data-toggle-password'));
+        if (!input) return;
+        var showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        button.textContent = showing ? 'Show' : 'Hide';
+        button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+});
+
+(function () {
+    var password = document.getElementById('register-password');
+    var confirm = document.getElementById('register-confirm-password');
+    var note = document.getElementById('password-match-note');
+
+    if (!password || !confirm || !note) return;
+
+    function updateMatchNote() {
+        if (!confirm.value) {
+            note.textContent = 'Re-enter the same password to confirm it before creating the account.';
+            note.className = 'password-match-note text-muted';
+            confirm.setCustomValidity('');
+            return;
+        }
+
+        if (password.value === confirm.value) {
+            note.textContent = 'Passwords match.';
+            note.className = 'password-match-note text-success fw-semibold';
+            confirm.setCustomValidity('');
+        } else {
+            note.textContent = 'Passwords do not match yet.';
+            note.className = 'password-match-note text-danger fw-semibold';
+            confirm.setCustomValidity('Password confirmation does not match.');
+        }
+    }
+
+    password.addEventListener('input', updateMatchNote);
+    confirm.addEventListener('input', updateMatchNote);
+})();
+</script>
 </body>
 </html>
