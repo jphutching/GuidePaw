@@ -5,6 +5,8 @@
   const STORE_NAME = 'queuedLogs';
   const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
   const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+  // GUIDEPAW_AUDIO_UPLOAD_V1
+  const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
   const MAX_IMAGE_DIMENSION = 1600;
   const REMINDER_CHECK_MS = 60 * 1000;
   const NOTIFICATION_KEY_PREFIX = 'psd-notified:';
@@ -119,6 +121,22 @@
     return !!file && ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
   }
 
+  function isSupportedAudio(file) {
+    return !!file && [
+      'audio/mpeg',
+      'audio/mp4',
+      'audio/x-m4a',
+      'audio/aac',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/webm',
+      'audio/ogg',
+      'audio/3gpp',
+      'audio/3gpp2',
+      'audio/amr'
+    ].includes(file.type);
+  }
+
   function loadImageFromFile(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -210,7 +228,14 @@
       return { file, message: `Video ready at ${formatBytes(file.size)}.` };
     }
 
-    throw new Error('Only JPG, PNG, WEBP, MP4, WEBM, and MOV files are allowed.');
+    if (isSupportedAudio(file)) {
+      if (file.size > MAX_AUDIO_BYTES) {
+        throw new Error(`Audio file is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_AUDIO_BYTES)}.`);
+      }
+      return { file, message: `Audio ready at ${formatBytes(file.size)}.` };
+    }
+
+    throw new Error('Only JPG, PNG, WEBP, MP4, WEBM, MOV, MP3, M4A, AAC, WAV, WEBM audio, OGG, 3GP, 3G2, and AMR files are allowed.');
   }
 
   async function prepareFormMedia(form) {

@@ -71,6 +71,7 @@ function ensureUploadDirectories(string $basePath): void {
         $basePath . '/uploads',
         $basePath . '/uploads/images',
         $basePath . '/uploads/videos',
+        $basePath . '/uploads/audio',
     ];
 
     foreach ($paths as $path) {
@@ -104,8 +105,24 @@ function handleTrainingMediaUpload(array $file, string $basePath): array {
         'video/quicktime' => 'mov',
     ];
 
+    // GUIDEPAW_AUDIO_UPLOAD_V1
+    $audioTypes = [
+        'audio/mpeg' => 'mp3',
+        'audio/mp4' => 'm4a',
+        'audio/x-m4a' => 'm4a',
+        'audio/aac' => 'aac',
+        'audio/wav' => 'wav',
+        'audio/x-wav' => 'wav',
+        'audio/webm' => 'webm',
+        'audio/ogg' => 'ogg',
+        'audio/3gpp' => '3gp',
+        'audio/3gpp2' => '3g2',
+        'audio/amr' => 'amr',
+    ];
+
     $maxImageBytes = 8 * 1024 * 1024;
     $maxVideoBytes = 50 * 1024 * 1024;
+    $maxAudioBytes = 25 * 1024 * 1024;
 
     if (isset($imageTypes[$mimeType])) {
         if (($file['size'] ?? 0) > $maxImageBytes) {
@@ -121,8 +138,15 @@ function handleTrainingMediaUpload(array $file, string $basePath): array {
         $folder = 'videos';
         $extension = $videoTypes[$mimeType];
         $mediaType = 'video';
+    } elseif (isset($audioTypes[$mimeType])) {
+        if (($file['size'] ?? 0) > $maxAudioBytes) {
+            throw new RuntimeException('Audio files must be 25MB or smaller.');
+        }
+        $folder = 'audio';
+        $extension = $audioTypes[$mimeType];
+        $mediaType = 'audio';
     } else {
-        throw new RuntimeException('Only JPG, PNG, WEBP, MP4, WEBM, and MOV files are allowed.');
+        throw new RuntimeException('Only JPG, PNG, WEBP, MP4, WEBM, MOV, MP3, M4A, AAC, WAV, WEBM audio, OGG, 3GP, 3G2, and AMR files are allowed.');
     }
 
     ensureUploadDirectories($basePath);

@@ -88,10 +88,10 @@ $csrfToken = generateCsrfToken();
         <div class="mb-3"><label class="form-label fw-bold d-block">Skills Practiced</label><div class="row g-2"><?php $selectedSkills = $_POST['skills'] ?? []; foreach ($allowedSkills as $skill): ?><div class="col-6"><div class="form-check"><input class="form-check-input" type="checkbox" name="skills[]" value="<?= e($skill) ?>" id="skill_<?= md5($skill) ?>" <?= in_array($skill, $selectedSkills, true) ? 'checked' : '' ?>><label class="form-check-label" for="skill_<?= md5($skill) ?>"><?= e($skill) ?></label></div></div><?php endforeach; ?></div></div>
         <div class="mb-3"><label class="form-label fw-bold">Handler Notes</label><textarea name="handler_notes" class="form-control" rows="4"><?= e($_POST['handler_notes'] ?? '') ?></textarea></div>
         <div class="mb-4">
-                    <label class="form-label fw-bold">Photo or Video</label>
+                    <!-- GUIDEPAW_AUDIO_UPLOAD_V1 -->\n                    <label class="form-label fw-bold">Photo, video, or audio</label>
                     <?php if (featureEnabled($pdo, 'media_upload_enabled')): ?>
-                        <input type="file" name="training_media" class="form-control" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime">
-                        <small class="text-muted d-block">Allowed: JPG, PNG, WEBP, MP4, WEBM, MOV. Images up to 8MB, videos up to 50MB.</small>
+                        <input type="file" name="training_media" class="form-control" accept="image/*,video/*,audio/*,image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/webm,audio/ogg,audio/3gpp,audio/3gpp2,audio/amr">
+                        <small class="text-muted d-block">Allowed: JPG, PNG, WEBP, MP4, WEBM, MOV, MP3, M4A, AAC, WAV, OGG, 3GP, 3G2, AMR. Images up to 8MB, videos up to 50MB, audio up to 25MB.</small>
                         <small class="text-muted d-block" data-media-status>No media attached.</small>
                     <?php else: ?>
                         <input type="file" class="form-control" disabled>
