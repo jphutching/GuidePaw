@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/beta_access.php';
 
@@ -30,6 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $token !== '') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+<?php guidepawBrandHeader(); ?>
+
 <main class="container py-5" style="max-width: 640px;">
     <div class="card shadow p-4">
         <h1 class="h3">Validate Beta Access Token</h1>

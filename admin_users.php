@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 
 checkLogin();
@@ -257,6 +258,8 @@ $csrf = generateCsrfToken();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+<?php guidepawBrandHeader(); ?>
+
 <main class="container-fluid py-4">
     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
         <div>

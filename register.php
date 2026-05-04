@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/beta_access.php';
 
@@ -94,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body class="bg-light">
+<?php guidepawBrandHeader(); ?>
+
 <main class="container py-5" style="max-width: 680px;">
     <div class="card shadow p-4">
         <?php if ($success): ?>
