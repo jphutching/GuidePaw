@@ -19,3 +19,10 @@ render.yaml.backup.*
 .env
 .env.*
 !.env.render.example
+
+# Local one-off backups
+*.bak
+*.bak.*
+*.backup
+*.backup.*
+*_backup.*
