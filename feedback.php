@@ -260,5 +260,6 @@ document.getElementById('attachments')?.addEventListener('change', function () {
 });
 </script>
 <?php guidepawFormUx(); ?>
+<?php include __DIR__ . '/includes/mobile_nav.php'; ?>
 </body>
 </html>

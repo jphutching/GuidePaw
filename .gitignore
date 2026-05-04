@@ -26,3 +26,6 @@ render.yaml.backup.*
 *.backup
 *.backup.*
 *_backup.*
+
+# Local exports
+exports/

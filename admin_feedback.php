@@ -172,5 +172,6 @@ function formatBytes($bytes): string {
         </div>
     <?php endforeach; ?>
 </div>
+<?php include __DIR__ . '/includes/mobile_nav.php'; ?>
 </body>
 </html>
