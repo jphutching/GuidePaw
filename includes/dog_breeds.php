@@ -711,5 +711,8 @@ function getDogBreedsCatalog(): array
     }
     unset($breedInfo);
 
+    // GUIDEPAW_BREED_CATALOG_SORT_V1
+    ksort($catalog, SORT_NATURAL | SORT_FLAG_CASE);
+
     return $catalog;
 }

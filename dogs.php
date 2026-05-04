@@ -76,6 +76,37 @@ $csrf = generateCsrfToken();
 <style>
 .breed-card{border:1px solid #dfe3e8;border-radius:12px;background:#f8fafc;padding:12px;}
 .breed-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#6c757d;}
+
+.breed-suggestions{
+    max-height:15rem;
+    overflow-y:auto;
+    border:1px solid #dfe3e8;
+    border-radius:12px;
+    background:#fff;
+    box-shadow:0 8px 22px rgba(15,23,42,.12);
+    -webkit-overflow-scrolling:touch;
+}
+.breed-suggestion{
+    text-align:left;
+    padding:.58rem .75rem;
+    border-left:0;
+    border-right:0;
+}
+.breed-suggestion:first-child{border-top:0;}
+.breed-suggestion:last-child{border-bottom:0;}
+.breed-suggestion.active,
+.breed-suggestion:focus{
+    background:#eef6ff;
+}
+
+.breed-search-results{border:1px solid #dfe3e8;border-radius:12px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.12);max-height:280px;overflow-y:auto;margin-top:6px;position:relative;z-index:40;}
+.breed-search-option{display:block;width:100%;text-align:left;border:0;background:#fff;padding:11px 12px;border-bottom:1px solid #eef2f7;}
+.breed-search-option:last-child{border-bottom:0;}
+.breed-search-option:hover,.breed-search-option:focus{background:#f8fafc;outline:0;}
+.breed-search-name{display:block;font-weight:600;}
+.breed-search-meta{display:block;color:#6c757d;font-size:.82rem;margin-top:2px;}
+.breed-search-empty{padding:11px 12px;color:#6c757d;}
+
 </style>
 
 <style>
@@ -166,8 +197,9 @@ $csrf = generateCsrfToken();
                         <div class="col-12"><label class="form-label">Dog Name</label><input type="text" name="name" class="form-control" required></div>
                         <div class="col-12">
                             <label class="form-label">Breed</label>
-                            <input type="text" name="breed" class="form-control breed-input" list="breed-options" autocomplete="off" placeholder="Search breed or type your own">
-                            <div class="form-text">Search the list or type any custom breed/mix.</div>
+                            <input type="text" name="breed" class="form-control breed-input" autocomplete="off" placeholder="Type 2+ letters or enter a custom breed/mix">
+                            <div class="form-text">Type at least 2 letters to search. You can still type any custom breed/mix.</div>
+                    <div class="breed-search-results d-none" role="listbox" aria-label="Breed search results"></div>
                         </div>
                         <div class="col-12">
                             <div class="breed-card breed-card-live">
@@ -212,13 +244,320 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 </div>
-<datalist id="breed-options">
-    <?php foreach (array_keys($breedCatalog) as $breedName): ?>
-        <option value="<?= e($breedName) ?>"></option>
-    <?php endforeach; ?>
-</datalist>
 <script>
 const breedCatalog = <?= json_encode($breedCatalog, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
+// GUIDEPAW_BREED_SEARCH_V1
+const guidepawBreedNames = Object.keys(breedCatalog).sort((a, b) =>
+  a.localeCompare(b, undefined, { sensitivity: 'base' })
+);
+
+function guidepawEscapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, function (char) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[char];
+  });
+}
+
+function guidepawBreedMatches(query) {
+  const q = String(query ?? '').trim().toLowerCase();
+
+  if (!q) {
+    return guidepawBreedNames;
+  }
+
+  const starts = [];
+  const wordStarts = [];
+  const contains = [];
+
+  for (const name of guidepawBreedNames) {
+    const lower = name.toLowerCase();
+
+    if (lower.startsWith(q)) {
+      starts.push(name);
+      continue;
+    }
+
+    // For 1 letter, do not show every breed containing that letter.
+    if (q.length >= 2) {
+      const parts = lower.split(/[\s\/\-()]+/).filter(Boolean);
+      if (parts.some(part => part.startsWith(q))) {
+        wordStarts.push(name);
+        continue;
+      }
+    }
+
+    // Only allow broad contains search once the user typed enough to be intentional.
+    if (q.length >= 3 && lower.includes(q)) {
+      contains.push(name);
+    }
+  }
+
+  return [...starts, ...wordStarts, ...contains];
+}
+
+function initGuidepawBreedSearch(scope = document) {
+  scope.querySelectorAll('.breed-input').forEach(input => {
+    if (input.dataset.breedSearchReady === '1') {
+      return;
+    }
+    input.dataset.breedSearchReady = '1';
+
+    const container = input.closest('.mb-3') || input.parentElement || scope;
+    let box = container.querySelector('.breed-suggestions');
+
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'breed-suggestions list-group mt-1 d-none';
+      box.setAttribute('role', 'listbox');
+      box.setAttribute('aria-label', 'Breed search results');
+      input.insertAdjacentElement('afterend', box);
+    }
+
+    let activeIndex = -1;
+
+    function closeBox() {
+      box.classList.add('d-none');
+      activeIndex = -1;
+    }
+
+    function buttons() {
+      return Array.from(box.querySelectorAll('.breed-suggestion'));
+    }
+
+    function setActive(index) {
+      const items = buttons();
+      if (!items.length) {
+        activeIndex = -1;
+        return;
+      }
+
+      activeIndex = Math.max(0, Math.min(index, items.length - 1));
+      items.forEach((button, i) => {
+        button.classList.toggle('active', i === activeIndex);
+        button.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false');
+      });
+
+      items[activeIndex].scrollIntoView({ block: 'nearest' });
+    }
+
+    function renderBox() {
+      const matches = guidepawBreedMatches(input.value);
+      box.innerHTML = '';
+
+      if (!matches.length) {
+        closeBox();
+        return;
+      }
+
+      matches.forEach(name => {
+        const info = breedCatalog[name] || {};
+        const group = info.group || 'Breed reference';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'breed-suggestion list-group-item list-group-item-action';
+        button.dataset.breedName = name;
+        button.setAttribute('role', 'option');
+        button.innerHTML =
+          '<span class="fw-semibold">' + guidepawEscapeHtml(name) + '</span>' +
+          '<span class="text-muted small ms-2">' + guidepawEscapeHtml(group) + '</span>';
+
+        box.appendChild(button);
+      });
+
+      box.classList.remove('d-none');
+      activeIndex = -1;
+    }
+
+    input.addEventListener('focus', renderBox);
+    input.addEventListener('input', renderBox);
+
+    input.addEventListener('keydown', event => {
+      if (box.classList.contains('d-none')) {
+        if (event.key === 'ArrowDown') {
+          renderBox();
+          setActive(0);
+          event.preventDefault();
+        }
+        return;
+      }
+
+      const items = buttons();
+
+      if (event.key === 'ArrowDown') {
+        setActive(activeIndex + 1);
+        event.preventDefault();
+      } else if (event.key === 'ArrowUp') {
+        setActive(activeIndex <= 0 ? items.length - 1 : activeIndex - 1);
+        event.preventDefault();
+      } else if (event.key === 'Enter' && activeIndex >= 0 && items[activeIndex]) {
+        input.value = items[activeIndex].dataset.breedName;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        closeBox();
+        event.preventDefault();
+      } else if (event.key === 'Escape') {
+        closeBox();
+        event.preventDefault();
+      }
+    });
+
+    box.addEventListener('mousedown', event => {
+      const button = event.target.closest('.breed-suggestion');
+      if (!button) {
+        return;
+      }
+
+      event.preventDefault();
+      input.value = button.dataset.breedName;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      closeBox();
+    });
+
+    input.addEventListener('blur', () => {
+      window.setTimeout(closeBox, 150);
+    });
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => initGuidepawBreedSearch(document));
+} else {
+  initGuidepawBreedSearch(document);
+}
+
+
+// GUIDEPAW_BREED_SEARCH_UI_V1
+const GUIDEPAW_BREED_SEARCH_MIN_CHARS = 2;
+const GUIDEPAW_BREED_SEARCH_LIMIT = 12;
+
+function normalizeBreedSearch(value) {
+  return (value || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function rankBreedName(name, query) {
+  const normalized = normalizeBreedSearch(name);
+  if (normalized === query) return 0;
+  if (normalized.startsWith(query)) return 1;
+  if (normalized.split(' ').some((word) => word.startsWith(query))) return 2;
+  if (normalized.includes(query)) return 3;
+  return 99;
+}
+
+function setupBreedSearch(scope) {
+  const input = scope.querySelector('.breed-input');
+  const results = scope.querySelector('.breed-search-results');
+
+  if (!input || !results || input.dataset.breedSearchReady === '1') {
+    return;
+  }
+
+  input.dataset.breedSearchReady = '1';
+  const breedNames = Object.keys(breedCatalog).sort((a, b) => a.localeCompare(b));
+
+  function hideResults() {
+    results.classList.add('d-none');
+    results.innerHTML = '';
+  }
+
+  function chooseBreed(name) {
+    input.value = name;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    hideResults();
+    input.focus();
+  }
+
+  function renderResults() {
+    const raw = input.value.trim();
+    const query = normalizeBreedSearch(raw);
+
+    if (query.length < GUIDEPAW_BREED_SEARCH_MIN_CHARS) {
+      hideResults();
+      return;
+    }
+
+    const matches = breedNames
+      .map((name) => ({ name, rank: rankBreedName(name, query) }))
+      .filter((item) => item.rank < 99)
+      .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
+
+    results.innerHTML = '';
+
+    if (!matches.length) {
+      const empty = document.createElement('div');
+      empty.className = 'breed-search-empty';
+      empty.textContent = 'No matching breed found. You can still save the breed exactly as typed.';
+      results.appendChild(empty);
+      results.classList.remove('d-none');
+      return;
+    }
+
+    matches.slice(0, GUIDEPAW_BREED_SEARCH_LIMIT).forEach((item) => {
+      const info = breedCatalog[item.name] || {};
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'breed-search-option';
+      button.setAttribute('role', 'option');
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'breed-search-name';
+      nameSpan.textContent = item.name;
+
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'breed-search-meta';
+      metaSpan.textContent = info.group ? info.group : 'Breed reference';
+
+      button.appendChild(nameSpan);
+      button.appendChild(metaSpan);
+
+      button.addEventListener('mousedown', (event) => event.preventDefault());
+      button.addEventListener('click', () => chooseBreed(item.name));
+
+      results.appendChild(button);
+    });
+
+    if (matches.length > GUIDEPAW_BREED_SEARCH_LIMIT) {
+      const more = document.createElement('div');
+      more.className = 'breed-search-empty';
+      more.textContent = 'Keep typing to narrow the list.';
+      results.appendChild(more);
+    }
+
+    results.classList.remove('d-none');
+  }
+
+  input.addEventListener('input', renderResults);
+  input.addEventListener('focus', renderResults);
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      hideResults();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!results.contains(event.target) && event.target !== input) {
+      hideResults();
+    }
+  });
+}
+
+document.querySelectorAll('.breed-input').forEach((input) => {
+  setupBreedSearch(input.closest('form') || document);
+});
+
 function wireBreedCard(scope){
   const input = scope.querySelector('.breed-input');
   const card = scope.querySelector('.breed-card-live');
