@@ -700,6 +700,363 @@ function getDogBreedsCatalog(): array
         $catalog[$breedName] = array_merge($catalog[$breedName] ?? [], $breedInfo);
     }
 
+
+    // GUIDEPAW_BREED_FAMILY_SERVICE_WORK_DETAILS_V1
+    // Family-level profiles improve generic entries without replacing hand-written breed-specific notes.
+    $genericNeedlesForFamilyProfiles = [
+        'Generally active, social, responsive',
+        'Often independent, scent- or sight-driven',
+        'Often powerful, confident, loyal',
+        'Often bold, alert, clever',
+        'Often portable, attentive',
+        'Varies widely by breed and line',
+        'Often intelligent, responsive',
+        'Breed traits vary widely',
+        'Mixed traits from parent breeds',
+        'Individual temperament',
+        'Breed-specific notes are not available',
+    ];
+
+    $isGenericBreedEntryForFamilyProfile = function (array $info) use ($genericNeedlesForFamilyProfiles): bool {
+        $joined = implode(' | ', [
+            $info['temperament'] ?? '',
+            $info['traits'] ?? '',
+            $info['notes'] ?? '',
+        ]);
+
+        foreach ($genericNeedlesForFamilyProfiles as $needle) {
+            if (stripos($joined, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    $breedFamilyProfiles = [
+        'Retriever Family' => [
+            'breeds' => [
+                "Chesapeake Bay Retriever", "Curly-Coated Retriever", "Flat-Coated Retriever",
+                "Nova Scotia Duck Tolling Retriever"
+            ],
+            'profile' => [
+                'temperament' => 'Often social, biddable, handler-oriented, and motivated by food, toys, or retrieving',
+                'traits' => 'Retriever-type dogs are often practical service-work candidates when they have stable nerves, good public neutrality, and an off-switch',
+                'size' => 'Medium to large',
+                'weight' => '35-90 lb depending on breed and sex',
+                'coat' => 'Usually water-resistant double coat; coat length varies',
+                'shedding' => 'Moderate to heavy',
+                'exercise' => 'Moderate to high; needs daily exercise and calm settling practice',
+                'notes' => 'Common service-work fit: retrieval, item delivery, guide-style foundations, public access, medical response, psychiatric response, and handler-focused tasking. Watch points: mouthiness, adolescent energy, food scavenging, shedding, orthopedic health, and weight management.',
+            ],
+        ],
+        'Spaniel Family' => [
+            'breeds' => [
+                "American Water Spaniel", "Boykin Spaniel", "Clumber Spaniel", "English Cocker Spaniel",
+                "Field Spaniel", "Irish Water Spaniel", "Sussex Spaniel", "Welsh Springer Spaniel",
+                "Nederlandse Kooikerhondje"
+            ],
+            'profile' => [
+                'temperament' => 'Often cheerful, affectionate, responsive, and people-oriented',
+                'traits' => 'Spaniel-type dogs can suit alert, response, hearing, psychiatric, and smaller-to-medium service roles when confidence and focus are solid',
+                'size' => 'Small to medium',
+                'weight' => '20-70 lb depending on breed',
+                'coat' => 'Medium coat with feathering or curl depending on breed',
+                'shedding' => 'Low to moderate; grooming and ear care often matter',
+                'exercise' => 'Moderate; some field lines need more',
+                'notes' => 'Common service-work fit: hearing alerts, medical alerts, psychiatric response, interruption tasks, and close handler routines. Watch points: ear health, grooming, softness/sensitivity, excitement, scent distraction, and confidence in busy public settings.',
+            ],
+        ],
+        'Pointer / Setter Family' => [
+            'breeds' => [
+                "Bracco Italiano", "German Wirehaired Pointer", "Gordon Setter", "Irish Red and White Setter",
+                "Irish Setter", "Pointer", "Spinone Italiano", "Wirehaired Pointing Griffon",
+                "Wirehaired Vizsla", "English Setter", "German Longhaired Pointer",
+                "Slovakian Wirehaired Pointer", "Braque du Bourbonnais", "Braque Francais Pyrenean"
+            ],
+            'profile' => [
+                'temperament' => 'Often athletic, sensitive, social, and responsive, with strong outdoor or scent interests',
+                'traits' => 'Can work well for active handlers, especially when the dog has good recovery, focus, and public-settling ability',
+                'size' => 'Medium to large',
+                'weight' => '35-85 lb depending on breed',
+                'coat' => 'Short, medium, wire, or feathered depending on breed',
+                'shedding' => 'Low to moderate',
+                'exercise' => 'High; usually needs structured exercise plus mental work',
+                'notes' => 'Common service-work fit: active-handler public access, medical/psychiatric response, and complex trained tasks. Watch points: exercise needs, environmental sensitivity, prey/scent distraction, restlessness indoors, and whether the dog can settle calmly for long periods.',
+            ],
+        ],
+        'Scent Hound Family' => [
+            'breeds' => [
+                "American English Coonhound", "American Foxhound", "Basset Fauve de Bretagne",
+                "Black and Tan Coonhound", "Bloodhound", "Bluetick Coonhound", "Dachshund",
+                "English Foxhound", "Grand Basset Griffon Vendeen", "Hamiltonstovare", "Harrier",
+                "Otterhound", "Petit Basset Griffon Vendeen", "Plott Hound", "Redbone Coonhound",
+                "Treeing Walker Coonhound", "Bavarian Mountain Scent Hound", "Transylvanian Hound"
+            ],
+            'profile' => [
+                'temperament' => 'Often friendly, persistent, scent-driven, and independent-minded',
+                'traits' => 'Can be steady companions and may suit some alert/response work, but scent focus can compete with handler focus',
+                'size' => 'Small to large depending on breed',
+                'weight' => '15-110 lb depending on breed',
+                'coat' => 'Usually short to medium; some rough or longer coats',
+                'shedding' => 'Low to moderate',
+                'exercise' => 'Moderate to high; scent enrichment helps',
+                'notes' => 'Common service-work fit: calm companionship, some medical/psychiatric response, and handler routines for the right individual. Watch points: scent distraction, recall/focus, vocalizing, food motivation, independence, and off-leash safety.',
+            ],
+        ],
+        'Sighthound Family' => [
+            'breeds' => [
+                "Afghan Hound", "Azawakh", "Basenji", "Borzoi", "Cirneco dell'Etna",
+                "Ibizan Hound", "Irish Wolfhound", "Italian Greyhound", "Pharaoh Hound",
+                "Saluki", "Scottish Deerhound", "Sloughi"
+            ],
+            'profile' => [
+                'temperament' => 'Often gentle, quiet indoors, sensitive, and independent',
+                'traits' => 'May suit low-key handlers when the individual dog is confident and environmentally stable',
+                'size' => 'Toy to giant depending on breed',
+                'weight' => '8-140 lb depending on breed',
+                'coat' => 'Short, smooth, wire, or long depending on breed',
+                'shedding' => 'Low to moderate',
+                'exercise' => 'Moderate; safe sprint outlets may help many sighthounds',
+                'notes' => 'Common service-work fit: calm public access, psychiatric grounding, and close-handler routines for stable candidates. Watch points: prey drive, cold sensitivity, startle recovery, environmental softness, recall safety, and limited suitability for physical support tasks.',
+            ],
+        ],
+        'Herding / Shepherd Family' => [
+            'breeds' => [
+                "Australian Cattle Dog", "Australian Kelpie", "Australian Stumpy Tail Cattle Dog",
+                "Bearded Collie", "Beauceron", "Belgian Laekenois", "Belgian Sheepdog",
+                "Belgian Tervuren", "Bergamasco Sheepdog", "Berger Picard", "Bohemian Shepherd",
+                "Bouvier des Flandres", "Briard", "Canaan Dog", "Cardigan Welsh Corgi",
+                "Dutch Shepherd", "Entlebucher Mountain Dog", "Finnish Lapphund", "Icelandic Sheepdog",
+                "Lancashire Heeler", "Lapponian Herder", "Miniature American Shepherd", "Mudi",
+                "Norwegian Buhund", "Old English Sheepdog", "Pembroke Welsh Corgi",
+                "Polish Lowland Sheepdog", "Puli", "Pumi", "Pyrenean Shepherd", "Schapendoes",
+                "Spanish Water Dog", "Swedish Lapphund", "Swedish Vallhund"
+            ],
+            'profile' => [
+                'temperament' => 'Often intelligent, observant, responsive, and handler-aware',
+                'traits' => 'Can excel at complex trained behaviors, alerts, interruption tasks, and handler monitoring when nerves are stable',
+                'size' => 'Small to large depending on breed',
+                'weight' => '15-100 lb depending on breed',
+                'coat' => 'Varies widely; many have double coats or high-maintenance coats',
+                'shedding' => 'Low to heavy depending on breed',
+                'exercise' => 'Moderate to very high; mental work and an off-switch are critical',
+                'notes' => 'Common service-work fit: medical alerts, psychiatric interruption, complex task chains, and active-handler teams. Watch points: motion sensitivity, environmental scanning, herding/nipping, vocalizing, reactivity risk, startle recovery, and difficulty settling in public.',
+            ],
+        ],
+        'Livestock Guardian / Guardian Working Family' => [
+            'breeds' => [
+                "Anatolian Shepherd Dog", "Caucasian Shepherd Dog", "Central Asian Shepherd Dog",
+                "Estrela Mountain Dog", "Great Pyrenees", "Komondor", "Kuvasz", "Pyrenean Mastiff",
+                "Rafeiro do Alentejo", "Romanian Mioritic Shepherd Dog", "Tornjak"
+            ],
+            'profile' => [
+                'temperament' => 'Often calm, watchful, independent, and deeply bonded to their people or territory',
+                'traits' => 'May be emotionally steady but are often less suited to precision public-access work than classic service breeds',
+                'size' => 'Large to giant',
+                'weight' => '70-150+ lb depending on breed',
+                'coat' => 'Usually dense or heavy coat',
+                'shedding' => 'Moderate to heavy',
+                'exercise' => 'Low to moderate, but space and management needs are high',
+                'notes' => 'Possible fit: grounding, home-based support, and some calm public work for unusually neutral individuals. Watch points: independence, guarding instincts, suspicion of strangers, size, coat/drool, heat tolerance, slower handler responsiveness, and public perception.',
+            ],
+        ],
+        'Northern / Spitz Family' => [
+            'breeds' => [
+                "Akita", "American Eskimo Dog", "Chinook", "Finnish Spitz", "German Spitz",
+                "Hokkaido", "Jindo", "Kai Ken", "Karelian Bear Dog", "Keeshond", "Kishu Ken",
+                "Norwegian Elkhound", "Norrbottenspets", "Samoyed", "Shiba Inu", "Shikoku",
+                "Swedish Lapphund", "Taiwan Dog", "Thai Ridgeback", "Yakutian Laika", "Eurasier"
+            ],
+            'profile' => [
+                'temperament' => 'Often alert, clean, independent, loyal, and environmentally aware',
+                'traits' => 'Can be devoted partners but may be more independent and less naturally biddable than retrievers or poodles',
+                'size' => 'Small to large depending on breed',
+                'weight' => '15-100 lb depending on breed',
+                'coat' => 'Usually double coat; some primitive breeds have seasonal heavy shedding',
+                'shedding' => 'Moderate to very heavy',
+                'exercise' => 'Moderate to high depending on breed',
+                'notes' => 'Possible fit: alert/response work, psychiatric routines, and active-handler teams for stable candidates. Watch points: independence, prey drive, dog selectivity, vocalizing, heavy shedding, heat tolerance, recall reliability, and public neutrality.',
+            ],
+        ],
+        'Terrier Family' => [
+            'breeds' => [
+                "Airedale Terrier", "American Hairless Terrier", "Australian Terrier", "Bedlington Terrier",
+                "Border Terrier", "Bull Terrier", "Cairn Terrier", "Cesky Terrier", "Dandie Dinmont Terrier",
+                "Glen of Imaal Terrier", "Irish Terrier", "Jagdterrier", "Kerry Blue Terrier",
+                "Lakeland Terrier", "Manchester Terrier", "Miniature Bull Terrier", "Miniature Schnauzer",
+                "Norfolk Terrier", "Norwich Terrier", "Parson Russell Terrier", "Rat Terrier",
+                "Russell Terrier", "Scottish Terrier", "Sealyham Terrier", "Skye Terrier",
+                "Smooth Fox Terrier", "Soft Coated Wheaten Terrier", "Teddy Roosevelt Terrier",
+                "Welsh Terrier", "West Highland White Terrier", "Wire Fox Terrier"
+            ],
+            'profile' => [
+                'temperament' => 'Often bold, clever, persistent, alert, and energetic',
+                'traits' => 'Can learn quickly and suit alert/response work, but terrier intensity must be manageable for public access',
+                'size' => 'Small to large depending on breed',
+                'weight' => '8-70 lb depending on breed',
+                'coat' => 'Smooth, wire, broken, or soft coat depending on breed',
+                'shedding' => 'Low to moderate; some need hand-stripping or grooming',
+                'exercise' => 'Moderate to high; enrichment helps reduce frustration',
+                'notes' => 'Common service-work fit: medical alerts, psychiatric response, routine interruption, and compact public-access teams. Watch points: prey drive, barking, dog reactivity, digging, persistence, arousal control, and neutrality around movement or small animals.',
+            ],
+        ],
+        'Toy / Companion Family' => [
+            'breeds' => [
+                "Affenpinscher", "Biewer Terrier", "Bolognese", "Brussels Griffon", "Chinese Crested",
+                "English Toy Spaniel", "Japanese Chin", "Maltese", "Manchester Terrier (Toy)",
+                "Miniature Pinscher", "Pekingese", "Russian Toy", "Russian Tsvetnaya Bolonka",
+                "Silky Terrier", "Toy Fox Terrier"
+            ],
+            'profile' => [
+                'temperament' => 'Often portable, companion-oriented, alert, and closely bonded',
+                'traits' => 'Best suited for alert, response, psychiatric, hearing, and close-monitoring tasks rather than physical support',
+                'size' => 'Toy to small',
+                'weight' => '4-20 lb depending on breed',
+                'coat' => 'Varies from smooth to long or high-maintenance',
+                'shedding' => 'Low to moderate depending on breed',
+                'exercise' => 'Low to moderate',
+                'notes' => 'Common service-work fit: medical alerts, psychiatric response, hearing alerts, grounding routines, interruption tasks, and travel-friendly public access. Watch points: fragility, barking, confidence in crowds, dental/knee health, house-training consistency, and safe handling around larger dogs.',
+            ],
+        ],
+        'Short-Nosed / Heat-Sensitive Companion Family' => [
+            'breeds' => [
+                "Boston Terrier", "Bulldog", "French Bulldog", "Pug", "Chinese Shar-Pei", "Chow Chow",
+                "Lhasa Apso", "Tibetan Spaniel"
+            ],
+            'profile' => [
+                'temperament' => 'Often affectionate, companionable, and people-focused, but physical tolerance varies',
+                'traits' => 'May suit light alert/response or psychiatric roles if health, breathing, heat tolerance, and public stamina are strong',
+                'size' => 'Small to medium',
+                'weight' => '12-70 lb depending on breed',
+                'coat' => 'Short, dense, or long depending on breed',
+                'shedding' => 'Low to heavy depending on breed',
+                'exercise' => 'Low to moderate; heat and breathing safety matter',
+                'notes' => 'Possible fit: light public-access work, alert/response, grounding, and routine interruption. Watch points: heat intolerance, breathing limitations, exercise tolerance, travel stress, skin/eye issues, and whether the dog can work without physical distress.',
+            ],
+        ],
+        'Large / Giant Working Family' => [
+            'breeds' => [
+                "Black Russian Terrier", "Boerboel", "Bullmastiff", "Cane Corso", "Dogo Argentino",
+                "Dogue de Bordeaux", "Giant Schnauzer", "Greater Swiss Mountain Dog", "Leonberger",
+                "Neapolitan Mastiff", "Standard Schnauzer", "Tibetan Mastiff", "Tosa", "Broholmer"
+            ],
+            'profile' => [
+                'temperament' => 'Often powerful, loyal, confident, and serious-minded',
+                'traits' => 'May provide size and steadiness, but service work requires exceptional neutrality, body control, and non-protective behavior',
+                'size' => 'Large to giant',
+                'weight' => '60-180+ lb depending on breed',
+                'coat' => 'Short, medium, wire, or heavy depending on breed',
+                'shedding' => 'Low to heavy depending on breed',
+                'exercise' => 'Moderate; conditioning and joint care matter',
+                'notes' => 'Possible fit: grounding, retrieval, item carry, and some mobility-adjacent support for physically sound, neutral candidates. Watch points: guarding instincts, public perception, size management, drool, orthopedic health, heat tolerance, insurance/housing barriers, and avoiding unsafe bracing.',
+            ],
+        ],
+        'Bully / Power Breed Family' => [
+            'breeds' => [
+                "American Staffordshire Terrier", "Staffordshire Bull Terrier", "Labrastaff", "Perro de Presa Canario"
+            ],
+            'profile' => [
+                'temperament' => 'Often people-oriented, strong, enthusiastic, and deeply bonded when well bred and socialized',
+                'traits' => 'Can be trainable and affectionate, but public neutrality and dog-social stability must be carefully assessed',
+                'size' => 'Medium to large',
+                'weight' => '25-120 lb depending on breed or mix',
+                'coat' => 'Usually short coat',
+                'shedding' => 'Low to moderate',
+                'exercise' => 'Moderate to high; impulse control and calm settling are important',
+                'notes' => 'Possible fit: psychiatric response, grounding, retrieval, item carry, and handler-focused tasks for stable candidates. Watch points: strength, arousal, dog selectivity, public bias, housing/insurance restrictions, heat tolerance, and polished manners in tight spaces.',
+            ],
+        ],
+        'Small Companion Designer Cross Family' => [
+            'breeds' => [
+                "Aussalier", "Beaglier", "Bichpoo", "Cavachon", "Chiweenie", "Chorkie",
+                "Cockalier", "Corgipoo", "Doxiepoo", "Havapoo", "Jackapoo", "Morkie",
+                "Peekapoo", "Pomapoo", "Pomchi", "Poochon", "Puggle", "Shih-Poo",
+                "Shorkie", "Yorkipoo"
+            ],
+            'profile' => [
+                'temperament' => 'Often companion-oriented, alert, portable, and closely bonded; predictability varies by parent breeds',
+                'traits' => 'May suit alert/response, psychiatric, hearing, and travel-friendly work when confidence and public neutrality are strong',
+                'size' => 'Toy to small',
+                'weight' => '5-35 lb depending on parent breeds',
+                'coat' => 'Varies widely; many need regular grooming',
+                'shedding' => 'Variable; low-shed is not guaranteed',
+                'exercise' => 'Low to moderate depending on parent breeds',
+                'notes' => 'Common service-work fit: medical alerts, psychiatric response, hearing alerts, interruption tasks, and close handler monitoring. Watch points: barking, fragility, grooming, dental/knee health, confidence in crowds, separation distress, and limits for physical task work.',
+            ],
+        ],
+        'Large Designer / Working Cross Family' => [
+            'breeds' => [
+                "Boxador", "Cavador", "Danoodle", "Double Doodle", "Gerberian Shepsky",
+                "Golden Mountain Doodle", "Huskydoodle", "Irish Doodle", "Miniature Labradoodle",
+                "Newfypoo", "Pitsky", "Pomsky", "Rottle", "Saint Berdoodle",
+                "Springerdoodle", "Vizsladoodle", "Weimardoodle"
+            ],
+            'profile' => [
+                'temperament' => 'Mixed traits from parent breeds; may be social and trainable or energetic and sensitive depending on the cross',
+                'traits' => 'Service-work potential depends heavily on parent breeds, generation, health testing, structure, public confidence, and individual temperament',
+                'size' => 'Small to giant depending on parent breeds',
+                'weight' => '15-120+ lb depending on cross',
+                'coat' => 'Highly variable; many poodle crosses require significant grooming',
+                'shedding' => 'Variable; low-shed is not guaranteed',
+                'exercise' => 'Moderate to very high depending on parent breeds',
+                'notes' => 'Possible fit: psychiatric response, medical alerts, retrieval, grounding, and active-handler public access for stable individuals. Watch points: unpredictable size/coat, grooming burden, adolescent energy, prey drive, sensitivity, orthopedic health, public neutrality, and whether both parent breeds support the intended service role.',
+            ],
+        ],
+        'Rare / International Breed Family' => [
+            'breeds' => [
+                "Aidi", "Appenzeller Sennenhund", "Barbado da Terceira", "Carolina Dog",
+                "Catahoula Leopard Dog", "Czechoslovakian Vlcak", "Danish-Swedish Farmdog",
+                "Kromfohrlander", "Mountain Cur", "Peruvian Inca Orchid", "Portuguese Podengo",
+                "Xoloitzcuintli"
+            ],
+            'profile' => [
+                'temperament' => 'Breed purpose and temperament vary widely; individual evaluation is essential',
+                'traits' => 'Rare or regional breeds may have traits shaped for hunting, guarding, herding, primitive survival, or companionship',
+                'size' => 'Varies by breed',
+                'weight' => 'Varies by breed',
+                'coat' => 'Varies by breed',
+                'shedding' => 'Varies by breed',
+                'exercise' => 'Varies by breed and original purpose',
+                'notes' => 'Use breed history as context, not a decision by itself. Assess health, structure, startle recovery, public neutrality, handler focus, task aptitude, grooming/environment needs, and whether the dog can work calmly without distress.',
+            ],
+        ],
+        'Mixed / Unknown Breed Family' => [
+            'breeds' => [
+                "Mixed Breed", "Mixed Breed - Large", "Mixed Breed - Medium", "Mixed Breed - Small",
+                "Unknown Breed", "Other / Not Listed"
+            ],
+            'profile' => [
+                'temperament' => 'Individual temperament, health, structure, and training history matter more than the label',
+                'traits' => 'Mixed or unknown dogs should be evaluated through observed behavior, physical soundness, confidence, task aptitude, and handler needs',
+                'size' => 'Varies',
+                'weight' => 'Varies',
+                'coat' => 'Varies',
+                'shedding' => 'Varies',
+                'exercise' => 'Varies by individual dog',
+                'notes' => 'Common service-work fit depends entirely on the individual dog. Evaluate nerves, recovery from stress, public neutrality, handler focus, task aptitude, grooming needs, soundness, and whether the dog can work calmly and safely in public.',
+            ],
+        ],
+    ];
+
+    foreach ($breedFamilyProfiles as $familyName => $familyData) {
+        foreach ($familyData['breeds'] as $breedName) {
+            if (!isset($catalog[$breedName])) {
+                continue;
+            }
+
+            if (!$isGenericBreedEntryForFamilyProfile($catalog[$breedName])) {
+                continue;
+            }
+
+            $catalog[$breedName] = array_merge(
+                $catalog[$breedName],
+                ['breed_family' => $familyName],
+                $familyData['profile']
+            );
+        }
+    }
+
     foreach ($catalog as $breedName => &$breedInfo) {
         $breedInfo = array_merge([
             'size' => 'Varies',
