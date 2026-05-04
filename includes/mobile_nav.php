@@ -31,7 +31,7 @@ if (function_exists('currentUserIsAdmin') && currentUserIsAdmin()) {
     $navItems[] = ['href' => 'admin.php', 'label' => 'Admin', 'emoji' => '🛠️', 'match' => ['admin.php','admin_feedback.php','admin_feature_roadmap.php','admin_audit_log.php','admin_beta_requests.php','admin_users.php','db_status.php','api_tokens.php']];
 }
 
-    ['href' => 'feedback.php', 'label' => 'Feedback', 'emoji' => '💬', 'match' => ['feedback.php']],
+$navItems[] = ['href' => 'feedback.php', 'label' => 'Feedback', 'emoji' => '💬', 'match' => ['feedback.php']];
 
 $navItems[] = ['href' => 'logout.php', 'label' => 'Logout', 'emoji' => '🚪', 'match' => ['logout.php']];
 
