@@ -1,0 +1,33 @@
+{
+  "name": "gpb3",
+  "version": "1.0.0",
+  "description": "This is the current PostgreSQL-only GuidePaw package prepared from the latest working build we stabilized in sandbox.",
+  "main": "app.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jphutching/GuidePaw.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jphutching/GuidePaw/issues"
+  },
+  "homepage": "https://github.com/jphutching/GuidePaw#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  },
+  "dependencies": {
+    "playwright": "^1.59.1",
+    "playwright-core": "^1.59.1"
+  }
+}
