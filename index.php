@@ -16,6 +16,7 @@ $dogs = getAccessibleDogs($pdo, $userId);
 $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
+$attentionCount = count($activeAlerts) + count($upcomingReminders);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,10 +31,13 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <style>
     .dashboard-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 0 0 28px 28px; padding: 1.25rem 1rem 1.5rem; box-shadow: 0 10px 24px rgba(15,23,42,.18); }
     .dashboard-hero .btn-outline-light { border-color: rgba(255,255,255,.45); }
+    .command-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; }
+    .command-title { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
     .today-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
     @media (min-width: 760px) { .today-grid { grid-template-columns: repeat(4, 1fr); } }
-    .today-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 92px; border-radius: 18px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 800; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
+    .today-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 92px; border-radius: 18px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 850; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
     .today-action span { font-size: 1.65rem; line-height: 1; margin-bottom: .35rem; }
+    .attention-empty { border: 1px dashed rgba(22,163,74,.36); background: #f0fdf4; border-radius: 16px; padding: 1rem; color: #166534; }
     .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
 </style>
 </head>
@@ -76,10 +80,13 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
     <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
 
     <?php if ($dogs): ?>
-        <div class="card shadow-sm mb-3">
+        <section class="card command-card mb-3">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Dog Switcher</h5>
+                <div class="command-title">
+                    <div>
+                        <h2 class="h5 mb-1">Active Dog</h2>
+                        <div class="small text-muted">Switch dogs or manage dog profiles.</div>
+                    </div>
                     <a href="dogs.php" class="btn btn-outline-primary btn-sm">Manage Dogs</a>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
@@ -90,17 +97,17 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
                     <?php endforeach; ?>
                 </div>
             </div>
-        </div>
+        </section>
     <?php else: ?>
         <div class="alert alert-warning">No dog profiles yet. <a href="dogs.php" class="alert-link">Create your first dog</a>.</div>
     <?php endif; ?>
 
-    <section class="card shadow-sm mb-3">
+    <section class="card command-card mb-3">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="command-title">
                 <div>
                     <h2 class="h5 mb-1">Today</h2>
-                    <div class="small text-muted">Quick actions stay here. Everything else is grouped in Menu.</div>
+                    <div class="small text-muted">Fast actions for what handlers do most often.</div>
                 </div>
             </div>
             <div class="today-grid">
@@ -118,16 +125,25 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
         </div>
     </section>
 
-    <?php if ($activeDog): ?>
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Smart Alerts</h5>
-                    <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
+    <section class="card command-card mb-3">
+        <div class="card-body">
+            <div class="command-title">
+                <div>
+                    <h2 class="h5 mb-1">Needs Attention</h2>
+                    <div class="small text-muted"><?= (int) $attentionCount ?> item<?= $attentionCount === 1 ? '' : 's' ?> needing review.</div>
                 </div>
-                <?php if (!$activeAlerts): ?>
-                    <div class="small text-muted mb-0">No active alerts for this dog right now.</div>
-                <?php else: ?>
+            </div>
+
+            <?php if (!$activeAlerts && !$upcomingReminders): ?>
+                <div class="attention-empty">✅ No active alerts or upcoming vet reminders right now.</div>
+            <?php endif; ?>
+
+            <?php if ($activeAlerts): ?>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="h6 mb-0">Smart Alerts</h3>
+                        <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
+                    </div>
                     <div class="vstack gap-2">
                         <?php foreach (array_slice($activeAlerts, 0, 3) as $alert): ?>
                             <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
@@ -136,29 +152,27 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
                             </div>
                         <?php endforeach; ?>
                     </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
-    <?php if ($upcomingReminders): ?>
-        <div class="card shadow-sm mb-3 border-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0">Upcoming Vet Reminders</h5>
-                    <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
+            <?php if ($upcomingReminders): ?>
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="h6 mb-0">Vet Reminders</h3>
+                        <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <?php foreach ($upcomingReminders as $item): ?>
+                            <div class="list-group-item px-0">
+                                <div class="fw-semibold"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
+                                <div class="small text-muted"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <div class="list-group list-group-flush">
-                    <?php foreach ($upcomingReminders as $item): ?>
-                        <div class="list-group-item px-0">
-                            <div class="fw-semibold"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
-                            <div class="small text-muted"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
+    </section>
 
     <?php if (($_GET['msg'] ?? '') === 'feature_disabled'): ?>
         <div class="alert alert-info">That GuidePaw feature is not enabled yet. It is on the roadmap and may be available in a future beta.</div>
@@ -168,10 +182,10 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
         <div class="alert alert-warning">Detailed Log is temporarily disabled during beta.</div>
     <?php endif; ?>
 
-    <div class="menu-hint mb-4">
+    <section class="menu-hint mb-4">
         <div class="fw-bold mb-1">Need another tool?</div>
-        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now nested under Dogs & Dashboard, Training & Logs, Health & Care, Access & Certification, and Admin.</div>
-    </div>
+        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now grouped under Dog, Logs, Training, Care, Access, Support, and Admin.</div>
+    </section>
 </main>
 
 <script src="app.js"></script>
