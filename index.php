@@ -16,7 +16,6 @@ $dogs = getAccessibleDogs($pdo, $userId);
 $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,20 +27,27 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 <title><?= e(appName()) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
-
+<style>
+    .dashboard-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 0 0 28px 28px; padding: 1.25rem 1rem 1.5rem; box-shadow: 0 10px 24px rgba(15,23,42,.18); }
+    .dashboard-hero .btn-outline-light { border-color: rgba(255,255,255,.45); }
+    .today-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    @media (min-width: 760px) { .today-grid { grid-template-columns: repeat(4, 1fr); } }
+    .today-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 92px; border-radius: 18px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 800; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
+    .today-action span { font-size: 1.65rem; line-height: 1; margin-bottom: .35rem; }
+    .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
+</style>
 </head>
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
-
-
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
-    <div class="topbar p-4 shadow-sm">
-    </div>
+
+<header class="dashboard-hero">
+    <div class="container px-0" style="max-width: 960px;">
         <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
                 <div class="small opacity-75"><?= e(appName()) ?> • Signed in as <?= e($user['username'] ?? 'handler') ?></div>
-                <h2 class="mb-1">🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h2>
+                <h1 class="h2 mb-1">🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h1>
                 <div class="small opacity-75">
                     <?php if ($activeDog): ?>
                         <?= e($activeDog['breed'] ?: 'Breed Not Set') ?>
@@ -55,187 +61,119 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <a href="settings.php" class="btn btn-outline-light btn-sm">Settings</a>
         </div>
     </div>
+</header>
 
-    <div class="page-shell mt-3">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <span data-network-status class="badge bg-secondary">Checking...</span>
-            <span class="badge bg-dark" data-queue-count style="display:none;">0</span>
-            <span data-notification-state class="badge bg-secondary">Notifications off</span>
-            <small class="text-muted">Queued offline logs/media & vet reminders</small>
-            <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-sync-queued>Sync queued logs</button>
-            <button type="button" class="btn btn-outline-success btn-sm" data-enable-notifications>Enable reminders</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-test-notification>Test alert</button>
+<main class="page-shell mt-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span data-network-status class="badge bg-secondary">Checking...</span>
+        <span class="badge bg-dark" data-queue-count style="display:none;">0</span>
+        <span data-notification-state class="badge bg-secondary">Notifications off</span>
+        <small class="text-muted">Queued offline logs/media & vet reminders</small>
+        <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-sync-queued>Sync queued logs</button>
+        <button type="button" class="btn btn-outline-success btn-sm" data-enable-notifications>Enable reminders</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-test-notification>Test alert</button>
+    </div>
+    <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
+
+    <?php if ($dogs): ?>
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Dog Switcher</h5>
+                    <a href="dogs.php" class="btn btn-outline-primary btn-sm">Manage Dogs</a>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <?php foreach ($dogs as $dog): ?>
+                        <a href="index.php?set_dog=<?= (int) $dog['id'] ?>" class="btn <?= ($activeDog && (int) $activeDog['id'] === (int) $dog['id']) ? 'btn-primary' : 'btn-outline-secondary' ?> btn-sm">
+                            <?= e($dog['name']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
-        <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
+    <?php else: ?>
+        <div class="alert alert-warning">No dog profiles yet. <a href="dogs.php" class="alert-link">Create your first dog</a>.</div>
+    <?php endif; ?>
 
-        <?php if ($dogs): ?>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Dog Switcher</h5>
-                        <a href="dogs.php" class="btn btn-outline-primary btn-sm">Manage Dogs</a>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <?php foreach ($dogs as $dog): ?>
-                            <a href="index.php?set_dog=<?= (int) $dog['id'] ?>" class="btn <?= ($activeDog && (int) $activeDog['id'] === (int) $dog['id']) ? 'btn-primary' : 'btn-outline-secondary' ?> btn-sm">
-                                <?= e($dog['name']) ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+    <section class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 mb-1">Today</h2>
+                    <div class="small text-muted">Quick actions stay here. Everything else is grouped in Menu.</div>
                 </div>
             </div>
-        <?php else: ?>
-            <div class="alert alert-warning">No dog profiles yet. <a href="dogs.php" class="alert-link">Create your first dog</a>.</div>
-        <?php endif; ?>
-
-
-        <?php if ($activeDog): ?>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Smart Alerts</h5>
-                        <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
-                    </div>
-                    <?php if (!$activeAlerts): ?>
-                        <div class="small text-muted mb-0">No active alerts for this dog right now.</div>
-                    <?php else: ?>
-                        <div class="vstack gap-2">
-                            <?php foreach (array_slice($activeAlerts, 0, 3) as $alert): ?>
-                                <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
-                                    <div class="fw-semibold"><?= e($alert['title']) ?></div>
-                                    <div class="small text-muted"><?= e($alert['detail']) ?></div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
+            <div class="today-grid">
+                <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
+                    <a class="today-action" href="quick_log.php"><span>⚡</span>Quick Session</a>
+                <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
+                    <a class="today-action" href="log_entry.php"><span>📝</span>Detailed Log</a>
+                <?php endif; ?>
+                <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
+                <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
+                    <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
-        <?php if ($upcomingReminders): ?>
-            <div class="card shadow-sm mb-3 border-warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="mb-0">Upcoming Vet Reminders</h5>
-                        <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($upcomingReminders as $item): ?>
-                            <div class="list-group-item px-0">
-                                <div class="fw-semibold"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
-                                <div class="small text-muted"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+        </div>
+    </section>
+
+    <?php if ($activeDog): ?>
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Smart Alerts</h5>
+                    <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
+                </div>
+                <?php if (!$activeAlerts): ?>
+                    <div class="small text-muted mb-0">No active alerts for this dog right now.</div>
+                <?php else: ?>
+                    <div class="vstack gap-2">
+                        <?php foreach (array_slice($activeAlerts, 0, 3) as $alert): ?>
+                            <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
+                                <div class="fw-semibold"><?= e($alert['title']) ?></div>
+                                <div class="small text-muted"><?= e($alert['detail']) ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($upcomingReminders): ?>
+        <div class="card shadow-sm mb-3 border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Upcoming Vet Reminders</h5>
+                    <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
+                </div>
+                <div class="list-group list-group-flush">
+                    <?php foreach ($upcomingReminders as $item): ?>
+                        <div class="list-group-item px-0">
+                            <div class="fw-semibold"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
+                            <div class="small text-muted"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-        <?php endif; ?>
-
-        <?php if (($_GET['msg'] ?? '') === 'feature_disabled'): ?>
-                <div class="alert alert-info">That GuidePaw feature is not enabled yet. It is on the roadmap and may be available in a future beta.</div>
-            <?php elseif (($_GET['msg'] ?? '') === 'quick_session_disabled'): ?>
-            <div class="alert alert-warning">Quick Session is temporarily disabled during beta.</div>
-        <?php elseif (($_GET['msg'] ?? '') === 'detailed_log_disabled'): ?>
-            <div class="alert alert-warning">Detailed Log is temporarily disabled during beta.</div>
-        <?php endif; ?>
-
-        <div class="row g-3">
-            <div class="col-6 col-md-4"><a href="dogs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🐕<br>Dogs</a></div>
-            <div class="col-6 col-md-4"><a href="dog_profile.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>Dog Profile</a></div>
-            <div class="col-6 col-md-4"><a href="view_logs.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📋<br>History</a></div>
-            <div class="col-6 col-md-4"><a href="stats.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📊<br>Stats</a></div>
-            <div class="col-6 col-md-4"><a href="settings.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚙️<br>Settings</a></div>
-            <div class="col-6 col-md-4"><a href="feedback.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💬<br>Feedback<br>Bug Report</a></div>
-
-            <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="quick_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">⚡<br>Quick Session</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="log_entry.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📝<br>Detailed Log</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'training_program_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="training_program.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎓<br>Training</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="dog_health.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>Health Docs</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="appointments.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📅<br>Vet Appts</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="alerts.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🧠<br>Alerts</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="medications.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💊<br>Meds</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="certification.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Certification</a></div>
-            <?php endif; ?>
-
-            <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="ada_access_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Access Card</a></div>
-            <?php endif; ?>
-
-            <?php if (currentUserIsAdmin()): ?>
-                <div class="col-6 col-md-4"><a href="admin.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🛠️<br>Admin</a></div>
-                <div class="col-6 col-md-4"><a href="api_tokens.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🔐<br>API Tokens</a></div>
-                <div class="col-6 col-md-4"><a href="db_status.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🩺<br>System<br>Health</a></div>
-                <?php if (featureEnabled($pdo, 'backup_tools_enabled')): ?>
-                    <div class="col-6 col-md-4"><a href="backup.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">💾<br>Backup</a></div>
-                <?php endif; ?>
-            <?php endif; ?>
         </div>
+    <?php endif; ?>
 
+    <?php if (($_GET['msg'] ?? '') === 'feature_disabled'): ?>
+        <div class="alert alert-info">That GuidePaw feature is not enabled yet. It is on the roadmap and may be available in a future beta.</div>
+    <?php elseif (($_GET['msg'] ?? '') === 'quick_session_disabled'): ?>
+        <div class="alert alert-warning">Quick Session is temporarily disabled during beta.</div>
+    <?php elseif (($_GET['msg'] ?? '') === 'detailed_log_disabled'): ?>
+        <div class="alert alert-warning">Detailed Log is temporarily disabled during beta.</div>
+    <?php endif; ?>
+
+    <div class="menu-hint mb-4">
+        <div class="fw-bold mb-1">Need another tool?</div>
+        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now nested under Dogs & Dashboard, Training & Logs, Health & Care, Access & Certification, and Admin.</div>
     </div>
+</main>
 
-    <script src="app.js"></script>
-
-<div class="container my-4">
-    <h2 class="h5 mb-3">Training Core</h2>
-    <div class="row g-3">
-        <?php if (featureEnabled($pdo, 'candidate_scoring_enabled')): ?>
-            <div class="col-6 col-md-3">
-                <a href="candidate_assessment.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🐾<br>Candidate<br>Assessment</a>
-            </div>
-        <?php endif; ?>
-
-        <?php if (featureEnabled($pdo, 'goal_intake_enabled')): ?>
-            <div class="col-6 col-md-3">
-                <a href="training_goal_intake.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🎯<br>Goal<br>Intake</a>
-            </div>
-        <?php endif; ?>
-
-        <?php if (featureEnabled($pdo, 'habit_repair_enabled')): ?>
-            <div class="col-6 col-md-3">
-                <a href="habit_repair.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🛠️<br>Habit<br>Repair</a>
-            </div>
-        <?php endif; ?>
-
-        <?php if (featureEnabled($pdo, 'training_progression_enabled')): ?>
-            <div class="col-6 col-md-3">
-                <a href="training_session_log.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">✅<br>Session<br>Log</a>
-            </div>
-        <?php endif; ?>
-
-        <?php if (featureEnabled($pdo, 'training_progression_enabled')): ?>
-            <div class="col-6 col-md-3">
-                <a href="training_history.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">📚<br>Training<br>History</a>
-            </div>
-        <?php endif; ?>
-
-        <?php if (currentUserIsAdmin()): ?>
-            <div class="col-6 col-md-3">
-                <a href="admin_feature_roadmap.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🗺️<br>Feature<br>Roadmap</a>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
-
+<script src="app.js"></script>
 </body>
 </html>
