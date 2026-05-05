@@ -54,7 +54,24 @@ $federalLaw = adaFederalLawProfile();
         .screenshot { --gp-bg:#f8fafc; --gp-card:#fff; --gp-card2:#fff; --gp-text:#0f172a; --gp-muted:#475569; --gp-border:rgba(15,23,42,.16); --gp-accent:#0f766e; --gp-good:#166534; background:#f8fafc; }
         .screenshot .access-card { background:#fff; box-shadow:0 10px 24px rgba(15,23,42,.08); }
         .screenshot select.form-select { background:#fff; color:#111827; }
-        .lockscreen .hide-lock { display:none !important; }
+
+        body.lockscreen { background:#000 !important; color:#fff !important; overflow:auto; }
+        body.lockscreen .beta-banner,
+        body.lockscreen .gp-mobile-nav-shell,
+        body.lockscreen .hide-lock,
+        body.lockscreen .hide-lockscreen { display:none !important; }
+        body.lockscreen .access-shell { max-width: 100%; min-height: 100svh; padding: calc(.75rem + env(safe-area-inset-top)) .75rem calc(.75rem + env(safe-area-inset-bottom)); display:flex; flex-direction:column; justify-content:center; }
+        body.lockscreen .access-card { background:#000 !important; border:2px solid rgba(255,255,255,.42); border-radius:18px; box-shadow:none; padding: clamp(.9rem, 3vw, 1.35rem); }
+        body.lockscreen .access-hero { border-color:#22c55e; }
+        body.lockscreen h1 { font-size: clamp(2.55rem, 11vw, 5rem); }
+        body.lockscreen .kicker { color:#fff; font-size:.9rem; }
+        body.lockscreen .script { font-size: clamp(1.75rem, 7vw, 3.4rem); }
+        body.lockscreen .qa { font-size: clamp(1.35rem, 5.5vw, 2.4rem); }
+        body.lockscreen .pill { color:#fff; border-color:rgba(255,255,255,.6); }
+        body.lockscreen .grid { margin-top:.75rem; gap:.75rem; }
+        body.lockscreen .lockscreen-exit { display:block !important; position:fixed; right:.75rem; bottom:calc(.75rem + env(safe-area-inset-bottom)); z-index:9999; opacity:.85; }
+        .lockscreen-exit { display:none; }
+
         @media print { .hide-print, .beta-banner, .gp-mobile-nav-shell { display:none !important; } body { background:#fff !important; color:#000 !important; } .access-shell { padding:0; max-width:100%; } .access-card { box-shadow:none !important; border-color:#ddd !important; background:#fff !important; page-break-inside:avoid; } }
     </style>
 </head>
@@ -62,20 +79,22 @@ $federalLaw = adaFederalLawProfile();
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 
+<button class="btn btn-light lockscreen-exit" type="button" id="floatingExitBtn">Exit</button>
+
 <div class="access-shell">
     <section class="access-card access-hero">
         <div class="kicker">Service dog public-access reference</div>
         <h1 class="mb-2">ADA Access Card</h1>
-        <p class="muted mb-3">Fast access reminders for <?= e($dogName) ?> with federal ADA notes and selected state guidance.</p>
-        <div class="hide-print d-grid gap-2 d-md-flex mb-3">
-            <button class="btn btn-success flex-fill" id="lockBtn" type="button">Enter lockscreen mode</button>
+        <p class="muted mb-3 hide-lock">Fast access reminders for <?= e($dogName) ?> with federal ADA notes and selected state guidance.</p>
+        <div class="hide-print d-grid gap-2 d-md-flex mb-3 hide-lock">
+            <button class="btn btn-success flex-fill" id="lockBtn" type="button">Enter lockscreen display</button>
             <button class="btn btn-outline-light flex-fill" id="contrastBtn" type="button">High contrast</button>
             <button class="btn btn-outline-light flex-fill" id="screenshotBtn" type="button">Screenshot-ready</button>
         </div>
         <div>
             <span class="pill">Handler: <?= e($handlerName) ?></span>
             <span class="pill">Dog: <?= e($dogName) ?></span>
-            <span class="pill">State: <?= e($stateLaw['state_name']) ?></span>
+            <span class="pill hide-lock">State: <?= e($stateLaw['state_name']) ?></span>
         </div>
     </section>
 
@@ -96,16 +115,15 @@ $federalLaw = adaFederalLawProfile();
         </div>
         <div class="access-card">
             <div class="kicker">Not required</div>
-            <ul class="mb-0">
+            <ul class="mb-0 qa">
                 <li>Certification or registry papers</li>
-                <li>A special ID card or proof of training</li>
                 <li>Medical records or diagnosis details</li>
                 <li>A task demonstration on demand</li>
             </ul>
         </div>
     </section>
 
-    <section class="grid two">
+    <section class="grid two hide-lockscreen">
         <div class="access-card">
             <div class="d-flex justify-content-between gap-2 flex-wrap align-items-start">
                 <div>
@@ -161,7 +179,7 @@ $federalLaw = adaFederalLawProfile();
         </div>
     </section>
 
-    <section class="grid">
+    <section class="grid hide-lockscreen">
         <div class="access-card note">Access decisions should be based on the dog’s actual behavior and control, not on stereotypes, missing paperwork, or the fact that the dog is not wearing a vest.</div>
         <div class="access-card">
             <div class="kicker">Need help now?</div>
@@ -183,16 +201,70 @@ $federalLaw = adaFederalLawProfile();
     var profiles = <?= json_encode($stateProfiles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
     var body = document.body;
     var lockBtn = document.getElementById('lockBtn');
+    var floatingExitBtn = document.getElementById('floatingExitBtn');
     var contrastBtn = document.getElementById('contrastBtn');
     var screenshotBtn = document.getElementById('screenshotBtn');
     var stateSelect = document.getElementById('stateSelect');
     var gpsBtn = document.getElementById('gpsBtn');
     var gpsStatus = document.getElementById('gpsStatus');
+    var wakeLock = null;
 
     function status(msg) { if (gpsStatus) gpsStatus.textContent = msg || ''; }
     function go(code) { if (!profiles[code]) return; var url = new URL(window.location.href); url.searchParams.set('state', code); window.location.href = url.toString(); }
 
-    if (lockBtn) lockBtn.addEventListener('click', function () { body.classList.toggle('lockscreen'); lockBtn.textContent = body.classList.contains('lockscreen') ? 'Exit lockscreen mode' : 'Enter lockscreen mode'; });
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator && navigator.wakeLock && navigator.wakeLock.request) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (e) {
+            wakeLock = null;
+        }
+    }
+
+    async function releaseWakeLock() {
+        try {
+            if (wakeLock && wakeLock.release) await wakeLock.release();
+        } catch (e) {}
+        wakeLock = null;
+    }
+
+    async function enterLockscreen() {
+        body.classList.add('lockscreen');
+        if (lockBtn) lockBtn.textContent = 'Exit lockscreen display';
+        try {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch (e) {}
+        await requestWakeLock();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    async function exitLockscreen() {
+        body.classList.remove('lockscreen');
+        if (lockBtn) lockBtn.textContent = 'Enter lockscreen display';
+        await releaseWakeLock();
+        try {
+            if (document.fullscreenElement && document.exitFullscreen) {
+                await document.exitFullscreen();
+            }
+        } catch (e) {}
+    }
+
+    if (lockBtn) lockBtn.addEventListener('click', function () { body.classList.contains('lockscreen') ? exitLockscreen() : enterLockscreen(); });
+    if (floatingExitBtn) floatingExitBtn.addEventListener('click', exitLockscreen);
+    document.addEventListener('fullscreenchange', function () {
+        if (!document.fullscreenElement && body.classList.contains('lockscreen')) {
+            body.classList.remove('lockscreen');
+            if (lockBtn) lockBtn.textContent = 'Enter lockscreen display';
+            releaseWakeLock();
+        }
+    });
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && body.classList.contains('lockscreen') && !wakeLock) requestWakeLock();
+    });
+
     if (contrastBtn) contrastBtn.addEventListener('click', function () { body.classList.toggle('high-contrast'); });
     if (screenshotBtn) screenshotBtn.addEventListener('click', function () { body.classList.toggle('screenshot'); });
     if (stateSelect) stateSelect.addEventListener('change', function () { go(stateSelect.value); });
