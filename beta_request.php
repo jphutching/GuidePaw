@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/beta_access.php';
+require_once 'includes/beta_notifications.php';
 
 $success = false;
 $error = '';
@@ -20,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($email !== $confirmEmail) {
         $error = 'Email confirmation does not match.';
     } else {
-        betaCreateRequest($pdo, $fullName, $email, $phone, $reason);
+        $requestId = betaCreateRequest($pdo, $fullName, $email, $phone, $reason);
+        betaNotifyAdminOfBetaRequest($pdo, $requestId);
         $success = true;
     }
 }
