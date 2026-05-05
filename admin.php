@@ -75,6 +75,14 @@ $csrf = generateCsrfToken();
     </div>
 
     <div class="card">
+        <div class="label">Notifications</div>
+        <div class="desc">Send test beta request notifications through email and Telegram.</div>
+        <div style="margin-top:12px;">
+            <a class="btn" href="admin_notification_test.php">Open Notification Test</a>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="label">Backup Snapshot</div>
         <div class="desc">Download a current GuidePaw backup package or manage backup imports.</div>
         <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
