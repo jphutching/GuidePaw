@@ -74,8 +74,13 @@ test('GuidePaw authenticated link crawl', async ({ page }) => {
     }
 
     const bodyText = await page.locator('body').innerText().catch(() => '');
-    if (/Fatal error|Parse error|Warning:|Application error|SQLSTATE|Undefined function/i.test(bodyText)) {
-      broken.push({ url, status, detail: 'PHP/application error text found on page' });
+    const errorMatch = bodyText.match(/.{0,120}(Fatal error|Parse error|Warning:|Application error|SQLSTATE|Undefined function).{0,240}/is);
+    if (errorMatch) {
+      broken.push({
+        url,
+        status,
+        detail: `PHP/application error text found on page: ${errorMatch[0].replace(/\\s+/g, ' ').trim()}`
+      });
     }
 
     const links = await page.locator('a[href]').evaluateAll(anchors =>

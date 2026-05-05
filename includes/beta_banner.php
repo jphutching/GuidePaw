@@ -14,8 +14,14 @@ if (!function_exists('renderBetaBanner')) {
             if ($qs) {
                 $target .= '?' . http_build_query($qs);
             }
-            header('Location: ' . ($target ?: 'index.php'));
-            exit;
+            if (!headers_sent()) {
+                header('Location: ' . ($target ?: 'index.php'));
+                exit;
+            }
+
+            // If this file is included after page output has started, do not try
+            // to redirect. The session flag is already set, so just hide the banner.
+            return;
         }
         if (!empty($_SESSION['hide_beta_banner'])) {
             return;
