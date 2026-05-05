@@ -14,7 +14,7 @@ projects:
             runtime: docker
             repo: https://github.com/jphutching/GuidePaw
             branch: main
-            plan: free
+            plan: starter
             region: oregon
             dockerContext: .
             dockerfilePath: ./Dockerfile
