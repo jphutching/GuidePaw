@@ -126,6 +126,86 @@ function adaStateLawProfiles(): array
         'https://law.justia.com/codes/colorado/title-24/principal-departments/article-34/part-8/section-24-34-803/'
     );
 
+    $profiles['ID'] = adaReviewedStateProfile(
+        'ID',
+        'Idaho',
+        'Idaho law requires public accommodations to modify policies to permit service dogs for individuals with disabilities or authorized handlers. Idaho also separately protects access for dogs-in-training, with control, grooming, liability, and visible-identification requirements.',
+        [
+            'Idaho public accommodations must permit service dogs used by individuals with disabilities or authorized handlers.',
+            'Idaho allows exclusion when the service dog is out of control and not effectively corrected, or is not housebroken.',
+            'A person may not be denied public accommodation or public transportation access because they are accompanied by a dog-in-training.',
+            'Idaho dogs-in-training must be leashed/controlled and visually identified as dogs-in-training.',
+        ],
+        'Idaho gives access for dogs-in-training, but the dog must be controlled, properly leashed, and visually identified as a dog-in-training.',
+        'Housing may involve Idaho public-accommodation/service-dog rules plus federal FHA reasonable-accommodation rules; verify the housing context before relying on this card.',
+        'Idaho Code §§ 56-704A and 18-5812B',
+        'https://law.justia.com/codes/idaho/title-18/chapter-58/section-18-5812b/'
+    );
+
+    $profiles['KS'] = adaReviewedStateProfile(
+        'KS',
+        'Kansas',
+        'Kansas law gives professional trainers from recognized training centers access rights while training assistance dogs in the listed public places, without an extra charge. Kansas also has assistance-dog public-access protections for people with disabilities, while federal ADA rules still apply in covered public accommodations.',
+        [
+            'Kansas allows a professional trainer from a recognized training center to be accompanied by an assistance dog while training in listed public places.',
+            'The trainer is liable for damage done to the premises or facilities by the dog.',
+            'Kansas public materials distinguish assistance dogs from comfort or emotional-support animals that are not trained for disability-related work.',
+            'Federal ADA rules still control covered public accommodations and limit required documentation/certification demands.',
+        ],
+        'Kansas service-dog-in-training access is narrower than some states: the cited training-access statute applies to professional trainers from recognized training centers.',
+        'Housing may involve separate federal FHA accommodation rules and Kansas-specific housing issues; this profile focuses on public access/training access.',
+        'Kansas Statutes § 39-1109',
+        'https://www.kslegislature.gov/li/b2025_26/statute/039_000_0000_chapter/039_011_0000_article/039_011_0009_section/039_011_0009_k/'
+    );
+
+    $profiles['MT'] = adaReviewedStateProfile(
+        'MT',
+        'Montana',
+        'Montana law gives a person with a disability the right to be accompanied by a service animal, and recognizes access for service animals in training with visible identification. A person training a service animal has the same rights and responsibilities as the person with a disability under the cited section.',
+        [
+            'Montana recognizes access for a service animal or service animal in training in listed public places without extra charge.',
+            'A person training a service animal has the same rights and responsibilities granted in the cited section.',
+            'A service animal in training must wear visible, legible written identification on a leash, collar, cape, harness, or backpack.',
+            'The handler/person is liable for damage done by the animal.',
+        ],
+        'Montana service-animal-in-training access includes a visible-identification requirement readable from a distance under the cited statute.',
+        'Montana housing access is included for people with disabilities who have or obtain a service animal, with no extra compensation but liability for damage.',
+        'Montana Code § 49-4-214',
+        'https://law.justia.com/codes/montana/title-49/chapter-4/part-2/section-49-4-214/'
+    );
+
+    $profiles['NE'] = adaReviewedStateProfile(
+        'NE',
+        'Nebraska',
+        'Nebraska law gives a person with a disability full and equal access to public places and public accommodations, and the right to be accompanied by a service animal. It also gives a bona fide trainer of a service animal the right to be accompanied by that animal in training in the listed places without an extra charge.',
+        [
+            'Nebraska covers streets, public buildings, public facilities, public places, common carriers, lodging, places of public accommodation, amusement, or resort, and places to which the general public is invited.',
+            'A person with a disability has the right to be accompanied by a service animal in the covered places.',
+            'A bona fide trainer of a service animal has access rights with the animal in training in the same listed places.',
+            'The person is liable for damage done by the animal to premises, facilities, or a person.',
+        ],
+        'Nebraska service-animal-in-training access applies to a bona fide trainer of a service animal in the listed public places.',
+        'Nebraska housing statute gives a person with a disability full and equal access to housing accommodations with a service animal and bars extra deposits, while allowing liability for damage.',
+        'Nebraska Revised Statutes §§ 20-127 and 20-131.04',
+        'https://nebraskalegislature.gov/laws/statutes.php?statute=20-127'
+    );
+
+    $profiles['NM'] = adaReviewedStateProfile(
+        'NM',
+        'New Mexico',
+        'New Mexico law requires that a person with a disability using a qualified service animal be admitted to buildings open to the public, public accommodations, and common carriers when the animal is under the control of an owner, trainer, or handler. New Mexico also prohibits certain interference with qualified service animals.',
+        [
+            'New Mexico protects access to buildings open to the public, public accommodations, and common carriers for a person with a disability using a qualified service animal.',
+            'The qualified service animal must be under the control of an owner, trainer, or handler.',
+            'Entry may not be denied because of a no-pets policy when the animal qualifies under the statute.',
+            'New Mexico has separate language prohibiting intentional interference with the use of a qualified service animal.',
+        ],
+        'New Mexico’s access statute references control by an owner, trainer, or handler; verify specific service-animal-in-training scenarios against current state law and setting-specific rules.',
+        'Housing may involve New Mexico law plus federal FHA reasonable-accommodation rules; this profile focuses on public access and common carrier language.',
+        'New Mexico Statutes §§ 28-11-3 and 28-11-5',
+        'https://law.justia.com/codes/new-mexico/chapter-28/article-11/section-28-11-3/'
+    );
+
     $profiles['NV'] = adaReviewedStateProfile(
         'NV',
         'Nevada',
@@ -140,6 +220,22 @@ function adaStateLawProfiles(): array
         'Nevada housing language includes service animals and service animals in training, while allowing liability for damage in applicable circumstances.',
         'Nevada NRS Chapter 426 service-animal provisions',
         'https://www.leg.state.nv.us/statutes/73rd/Stats200507.html'
+    );
+
+    $profiles['OK'] = adaReviewedStateProfile(
+        'OK',
+        'Oklahoma',
+        'Oklahoma public-accommodation law uses the federal ADA definitions for public accommodation and service animal, excludes emotional support and therapy animals from service-animal status, and directs public accommodations that ask qualification questions to comply with the federal ADA inquiry rule.',
+        [
+            'Oklahoma public-accommodation law uses 28 C.F.R. § 36.104 definitions for public accommodation and service animal.',
+            'Oklahoma excludes emotional support animals and therapy animals from the service-animal definition in the cited public-accommodation section.',
+            'If a public accommodation asks about service-animal qualification, it must comply with the federal ADA question limits.',
+            'Oklahoma has 2025 misrepresentation language with an effective date of November 1, 2025 in the cited statute source.',
+        ],
+        'Oklahoma public-accommodation statute does not appear to create a broad service-animal-in-training access right in the cited public-accommodation section; use federal ADA baseline unless another setting-specific rule applies.',
+        'Oklahoma has a separate assistance-animal housing accommodation statute that includes service animals and emotional support animals in reasonable-accommodation requests.',
+        'Oklahoma Statutes Title 4 § 801 and Title 41 § 113.2',
+        'https://law.justia.com/codes/oklahoma/title-4/section-4-801/'
     );
 
     $profiles['OR'] = adaReviewedStateProfile(
