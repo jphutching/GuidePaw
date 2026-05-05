@@ -20,9 +20,10 @@ function publicDogColumnExists(PDO $pdo, string $column): bool
 }
 
 $possibleColumns = [
-    'id', 'user_id', 'name', 'breed', 'weight_lbs', 'access_role', 'microchip_id', 'chip_number', 'chip_registry',
+    'id', 'user_id', 'owner_user_id', 'name', 'breed', 'weight_lbs', 'access_role', 'microchip_id', 'chip_number', 'chip_registry',
     'microchip_registry', 'photo_url', 'profile_photo_url', 'handler_photo_url', 'public_notes', 'emergency_notes',
-    'handler_name', 'handler_phone', 'handler_email', 'service_tasks', 'medical_alert_notes', 'created_at', 'updated_at'
+    'handler_name', 'handler_phone', 'handler_email', 'backup_contact_name', 'backup_contact_phone', 'found_dog_instructions',
+    'service_tasks', 'medical_alert_notes', 'critical_allergies', 'created_at', 'updated_at'
 ];
 $selectColumns = [];
 foreach ($possibleColumns as $column) {
@@ -45,22 +46,36 @@ if (!$dog) {
 }
 
 $user = null;
-if (!empty($dog['user_id'])) {
+$ownerId = !empty($dog['owner_user_id']) ? (int) $dog['owner_user_id'] : (!empty($dog['user_id']) ? (int) $dog['user_id'] : 0);
+if ($ownerId > 0) {
     $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? LIMIT 1');
-    $stmt->execute([(int) $dog['user_id']]);
+    $stmt->execute([$ownerId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+$vet = null;
+try {
+    $stmt = $pdo->prepare('SELECT * FROM dog_vets WHERE dog_id = ? ORDER BY is_primary DESC, clinic_name ASC LIMIT 1');
+    $stmt->execute([$dogId]);
+    $vet = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+} catch (Throwable $e) {
+    $vet = null;
 }
 
 $dogName = $dog['name'] ?? 'Service Dog';
 $handlerName = $dog['handler_name'] ?? ($user['username'] ?? 'Handler');
 $handlerEmail = $dog['handler_email'] ?? ($user['email'] ?? '');
 $handlerPhone = $dog['handler_phone'] ?? '';
+$backupName = $dog['backup_contact_name'] ?? '';
+$backupPhone = $dog['backup_contact_phone'] ?? '';
 $chipNumber = $dog['chip_number'] ?? ($dog['microchip_id'] ?? '');
 $chipRegistry = $dog['chip_registry'] ?? ($dog['microchip_registry'] ?? '');
 $dogPhoto = $dog['profile_photo_url'] ?? ($dog['photo_url'] ?? '');
 $handlerPhoto = $dog['handler_photo_url'] ?? '';
 $tasks = $dog['service_tasks'] ?? '';
 $publicNotes = $dog['public_notes'] ?? ($dog['emergency_notes'] ?? '');
+$foundInstructions = $dog['found_dog_instructions'] ?? '';
+$criticalAllergies = $dog['critical_allergies'] ?? ($dog['medical_alert_notes'] ?? '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -78,6 +93,7 @@ body { background: #f1f5f9; color:#0f172a; }
 .label { font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; font-weight:800; color:#64748b; }
 .value { font-weight:700; }
 .btn-call { border-radius:16px; padding:.85rem 1rem; font-weight:800; }
+.warning-note { border-left: 4px solid #dc3545; background:#fff5f5; border-radius:14px; padding:.85rem; }
 </style>
 </head>
 <body>
@@ -97,6 +113,13 @@ body { background: #f1f5f9; color:#0f172a; }
         </div>
     </section>
 
+    <?php if ($foundInstructions): ?>
+        <section class="cardx mb-3 warning-note">
+            <h2 class="h5 mb-2">If Found / Emergency Instructions</h2>
+            <div><?= nl2br(e($foundInstructions)) ?></div>
+        </section>
+    <?php endif; ?>
+
     <section class="cardx mb-3">
         <h2 class="h5 mb-3">Handler Contact</h2>
         <div class="d-flex gap-3 align-items-center mb-3">
@@ -111,9 +134,24 @@ body { background: #f1f5f9; color:#0f172a; }
         <div class="d-grid gap-2">
             <?php if ($handlerPhone): ?><a class="btn btn-success btn-call" href="tel:<?= e(preg_replace('/[^0-9+]/', '', $handlerPhone)) ?>">Call Handler</a><?php endif; ?>
             <?php if ($handlerEmail): ?><a class="btn btn-outline-primary btn-call" href="mailto:<?= e($handlerEmail) ?>">Email Handler</a><?php endif; ?>
-            <?php if (!$handlerPhone && !$handlerEmail): ?><div class="text-muted">No public contact method has been added yet.</div><?php endif; ?>
+            <?php if ($backupPhone): ?><a class="btn btn-outline-success btn-call" href="tel:<?= e(preg_replace('/[^0-9+]/', '', $backupPhone)) ?>">Call Backup<?= $backupName ? ': ' . e($backupName) : '' ?></a><?php endif; ?>
+            <?php if (!$handlerPhone && !$handlerEmail && !$backupPhone): ?><div class="text-muted">No public contact method has been added yet.</div><?php endif; ?>
         </div>
     </section>
+
+    <?php if ($vet): ?>
+        <section class="cardx mb-3">
+            <h2 class="h5 mb-3">Primary Vet</h2>
+            <div class="row g-3">
+                <div class="col-12 col-md-6"><div class="label">Clinic</div><div class="value"><?= e($vet['clinic_name'] ?? 'Not listed') ?></div></div>
+                <div class="col-12 col-md-6"><div class="label">Veterinarian</div><div class="value"><?= !empty($vet['vet_name']) ? e($vet['vet_name']) : 'Not listed' ?></div></div>
+                <?php if (!empty($vet['phone'])): ?><div class="col-12"><a class="btn btn-outline-success btn-call w-100" href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string) $vet['phone'])) ?>">Call Vet: <?= e($vet['phone']) ?></a></div><?php endif; ?>
+                <?php if (!empty($vet['email'])): ?><div class="col-12"><a class="btn btn-outline-primary btn-call w-100" href="mailto:<?= e($vet['email']) ?>">Email Vet</a></div><?php endif; ?>
+                <?php if (!empty($vet['address_text'])): ?><div class="col-12"><div class="label">Address</div><div><?= nl2br(e($vet['address_text'])) ?></div></div><?php endif; ?>
+                <?php if (!empty($vet['notes'])): ?><div class="col-12"><div class="label">Vet notes</div><div><?= nl2br(e($vet['notes'])) ?></div></div><?php endif; ?>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="cardx mb-3">
         <h2 class="h5 mb-3">Identification</h2>
@@ -125,6 +163,13 @@ body { background: #f1f5f9; color:#0f172a; }
         </div>
     </section>
 
+    <?php if ($criticalAllergies): ?>
+        <section class="cardx mb-3 warning-note">
+            <h2 class="h5 mb-2">Critical Medical / Allergy Note</h2>
+            <div><?= nl2br(e($criticalAllergies)) ?></div>
+        </section>
+    <?php endif; ?>
+
     <?php if ($tasks || $publicNotes): ?>
         <section class="cardx mb-3">
             <h2 class="h5 mb-3">Public Notes</h2>
@@ -134,7 +179,7 @@ body { background: #f1f5f9; color:#0f172a; }
     <?php endif; ?>
 
     <section class="cardx small text-muted mb-3">
-        This public profile is intended to help return or identify a service dog and contact the handler. It does not display private training logs, medical records, account data, or full app history.
+        This public profile is intended to help return or identify a service dog and contact the handler or vet. It does not display private training logs, medical records, account data, or full app history.
     </section>
 </main>
 </body>
