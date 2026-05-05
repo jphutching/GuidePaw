@@ -81,6 +81,12 @@ projects:
               - key: ADMIN_EMAIL
                 value: admin@guidepaw.app
 
+              - key: ADMIN_NOTIFY_EMAIL
+                value: admin@guidepaw.app
+
+              - key: BETA_NOTIFY_EMAIL_ENABLED
+                value: "true"
+
         databases:
           - name: guidepaw_db
             databaseName: guidepaw_db_z9vv
