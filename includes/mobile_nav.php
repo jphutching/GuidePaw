@@ -52,6 +52,10 @@ if (!function_exists('gpNavLink')) {
     .gp-menu-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
     .gp-menu-title { font-weight: 900; font-size: 1.2rem; color: #111827; }
     .gp-menu-close { border: 0; background: #e5e7eb; color: #111827; border-radius: 999px; padding: .45rem .75rem; font-weight: 850; }
+    .gp-menu-root-actions { display:grid; grid-template-columns: 1fr 1fr; gap:.6rem; margin-bottom:.85rem; }
+    .gp-menu-root-actions a { display:flex; align-items:center; justify-content:center; gap:.45rem; border-radius:16px; padding:.8rem; font-weight:850; text-decoration:none; }
+    .gp-menu-root-actions .settings { background:#e8f1ff; color:#0d6efd; border:1px solid #bfdbfe; }
+    .gp-menu-root-actions .logout { background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; }
     .gp-menu-section { background: #fff; border: 1px solid rgba(15,23,42,.08); border-radius: 18px; margin-bottom: .75rem; overflow: hidden; }
     .gp-menu-section summary { cursor: pointer; list-style: none; padding: .9rem 1rem .35rem; font-weight: 900; color: #111827; display: flex; align-items: center; justify-content: space-between; }
     .gp-menu-section summary::-webkit-details-marker { display: none; }
@@ -86,6 +90,11 @@ if (!function_exists('gpNavLink')) {
         <button type="button" class="gp-menu-close" id="gpMenuClose">Close</button>
     </div>
 
+    <div class="gp-menu-root-actions">
+        <a class="settings" href="settings.php">⚙️ Settings</a>
+        <a class="logout" href="logout.php">🚪 Logout</a>
+    </div>
+
     <details class="gp-menu-section" open>
         <summary>🐾 Dog</summary>
         <div class="gp-menu-description">Manage the active dog, profile details, app setup, and progress snapshot.</div>
@@ -94,7 +103,6 @@ if (!function_exists('gpNavLink')) {
             <?php gpNavLink('dogs.php', '🐕', 'Dogs'); ?>
             <?php gpNavLink('dog_profile.php', '🪪', 'Dog Profile'); ?>
             <?php gpNavLink('stats.php', '📊', 'Stats'); ?>
-            <?php gpNavLink('settings.php', '⚙️', 'Settings'); ?>
         </div>
     </details>
 
