@@ -29,3 +29,8 @@ render.yaml.backup.*
 
 # Local exports
 exports/
+
+# Playwright / Node test artifacts
+node_modules/
+playwright-report/
+test-results/
