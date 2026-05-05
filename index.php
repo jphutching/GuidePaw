@@ -179,7 +179,7 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
             <?php endif; ?>
 
             <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
-                <div class="col-6 col-md-4"><a href="ada_wallet_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Wallet Card</a></div>
+                <div class="col-6 col-md-4"><a href="ada_access_card.php" class="btn btn-tile w-100 shadow-sm text-decoration-none text-dark text-center">🪪<br>ADA Access Card</a></div>
             <?php endif; ?>
 
             <?php if (currentUserIsAdmin()): ?>
