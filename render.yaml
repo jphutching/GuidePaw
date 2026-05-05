@@ -87,6 +87,12 @@ projects:
               - key: BETA_NOTIFY_EMAIL_ENABLED
                 value: "true"
 
+              - key: BETA_NOTIFY_TELEGRAM_ENABLED
+                value: "false"
+
+              # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID directly in Render Environment.
+              # Do not commit real Telegram tokens to Git.
+
         databases:
           - name: guidepaw_db
             databaseName: guidepaw_db_z9vv
