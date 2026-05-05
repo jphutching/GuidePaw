@@ -16,29 +16,43 @@ if (userCount($pdo) === 0) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Normalize input to lowercase to match registration
     $user_input = strtolower(trim($_POST['username']));
     $pass_input = $_POST['password'];
+    $rememberMe = !empty($_POST['remember_me']);
 
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$user_input]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($pass_input, $user['password_hash'])) {
-        // Redirect to 2FA verification if enabled
         if ($user['is_2fa_enabled']) {
             unset($_SESSION['temp_secret']);
             $_SESSION['2fa_pending_id'] = (int) $user['id'];
             $_SESSION['2fa_pending_dog'] = $user['dog_name'];
+            $_SESSION['remember_me_after_2fa'] = $rememberMe ? 1 : 0;
             header("Location: verify_2fa.php");
             exit;
         }
 
-        // Standard direct login
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['dog_name'] = $user['dog_name'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['is_admin'] = !empty($user['is_admin']) ? 1 : 0;
+        $_SESSION['remember_me'] = $rememberMe ? 1 : 0;
+        $_SESSION['login_expires_at'] = time() + ($rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 12);
+
+        if ($rememberMe) {
+            $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+            setcookie(session_name(), session_id(), [
+                'expires' => time() + 60 * 60 * 24 * 30,
+                'path' => '/',
+                'secure' => $secure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+
         getActiveDogId($pdo, (int) $user['id']);
         header("Location: index.php");
         exit;
@@ -61,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <?php require_once 'includes/beta_banner.php'; ?>
     <form method="POST" class="card p-4 mx-auto shadow" style="max-width:400px;">
         <h3 class="text-center mb-4">Handler Login</h3>
-        <?php if(isset($error)) echo "<div class='alert alert-danger py-2 small'>$error</div>"; ?>
+        <?php if(isset($error)) echo "<div class='alert alert-danger py-2 small'>" . e($error) . "</div>"; ?>
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'reset_success') echo "<div class='alert alert-success py-2 small'>Password updated. Please login.</div>"; ?>
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'session_expired') echo "<div class='alert alert-warning py-2 small'>Your previous session no longer matches this database. Please sign in again.</div>"; ?>
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'session_invalid') echo "<div class='alert alert-warning py-2 small'>Your session was invalid. Please sign in again.</div>"; ?>
@@ -71,7 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="text" name="username" class="form-control" placeholder="Username" required autocomplete="username">
         </div>
         <div class="mb-3">
-            <input type="password" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+            <div class="input-group">
+                <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Password" required autocomplete="current-password">
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword">Show</button>
+            </div>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="1" id="rememberMe" name="remember_me">
+            <label class="form-check-label small" for="rememberMe">Remember me on this device for 30 days</label>
         </div>
         <button class="btn btn-success w-100 py-2">Login</button>
         
@@ -80,6 +101,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="register.php" class="text-decoration-none small">New Account</a>
         </div>
     </form>
+    <script>
+    (function () {
+        var btn = document.getElementById('togglePassword');
+        var input = document.getElementById('passwordInput');
+        if (!btn || !input) return;
+        btn.addEventListener('click', function () {
+            var hidden = input.type === 'password';
+            input.type = hidden ? 'text' : 'password';
+            btn.textContent = hidden ? 'Hide' : 'Show';
+        });
+    })();
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
