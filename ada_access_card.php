@@ -18,6 +18,7 @@ $_SESSION['ada_access_state'] = $stateCode;
 $stateProfiles = adaStateLawProfiles();
 $stateLaw = $stateProfiles[$stateCode] ?? adaDefaultStateLawProfile($stateCode, $stateNames[$stateCode]);
 $federalLaw = adaFederalLawProfile();
+$calmScript = 'This is my service dog. You may ask whether the dog is required because of a disability and what work or task the dog is trained to perform.';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,6 +51,9 @@ $federalLaw = adaFederalLawProfile();
         .status { border:1px solid var(--gp-border); border-radius:999px; padding:.35rem .65rem; color:var(--gp-muted); font-size:.82rem; }
         a { color: var(--gp-accent); }
         .note { border-left:4px solid var(--gp-good); background: rgba(34,197,94,.08); border-radius: 14px; padding:.85rem; }
+        .script-tools { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; margin-top:1rem; }
+        .script-feedback { min-height:1.25rem; margin-top:.55rem; font-size:.9rem; color:var(--gp-muted); }
+        .access-mode-badge { display:none; border:2px solid #22c55e; color:#fff; background:rgba(34,197,94,.12); border-radius:999px; padding:.48rem .85rem; font-weight:900; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.85rem; text-align:center; }
         .high-contrast { --gp-bg:#000; --gp-card:#000; --gp-card2:#000; --gp-text:#fff; --gp-muted:#fff; --gp-border:#fff; --gp-accent:#00e5ff; --gp-good:#00ff66; }
         .screenshot { --gp-bg:#f8fafc; --gp-card:#fff; --gp-card2:#fff; --gp-text:#0f172a; --gp-muted:#475569; --gp-border:rgba(15,23,42,.16); --gp-accent:#0f766e; --gp-good:#166534; background:#f8fafc; }
         .screenshot .access-card { background:#fff; box-shadow:0 10px 24px rgba(15,23,42,.08); }
@@ -60,6 +64,7 @@ $federalLaw = adaFederalLawProfile();
         body.lockscreen .gp-mobile-nav-shell,
         body.lockscreen .hide-lock,
         body.lockscreen .hide-lockscreen { display:none !important; }
+        body.lockscreen .access-mode-badge { display:block; }
         body.lockscreen .access-shell { max-width: 100%; min-height: 100svh; padding: calc(.75rem + env(safe-area-inset-top)) .75rem calc(.75rem + env(safe-area-inset-bottom)); display:flex; flex-direction:column; justify-content:center; }
         body.lockscreen .access-card { background:#000 !important; border:2px solid rgba(255,255,255,.42); border-radius:18px; box-shadow:none; padding: clamp(.9rem, 3vw, 1.35rem); }
         body.lockscreen .access-hero { border-color:#22c55e; }
@@ -82,6 +87,8 @@ $federalLaw = adaFederalLawProfile();
 <button class="btn btn-light lockscreen-exit" type="button" id="floatingExitBtn">Exit</button>
 
 <div class="access-shell">
+    <div class="access-mode-badge">Access Mode</div>
+
     <section class="access-card access-hero">
         <div class="kicker">Service dog public-access reference</div>
         <h1 class="mb-2">ADA Access Card</h1>
@@ -101,7 +108,12 @@ $federalLaw = adaFederalLawProfile();
     <section class="grid">
         <div class="access-card">
             <div class="kicker">Calm script</div>
-            <p class="script mb-0">“This is my service dog. You may ask whether the dog is required because of a disability and what work or task the dog is trained to perform.”</p>
+            <p class="script mb-0" id="calmScript">“<?= e($calmScript) ?>”</p>
+            <div class="script-tools hide-print hide-lock">
+                <button class="btn btn-outline-light" type="button" id="copyScriptBtn">Copy script</button>
+                <button class="btn btn-outline-light" type="button" id="shareScriptBtn">Share script</button>
+            </div>
+            <div class="script-feedback hide-lock" id="scriptFeedback" aria-live="polite"></div>
         </div>
     </section>
 
@@ -199,6 +211,7 @@ $federalLaw = adaFederalLawProfile();
 <script>
 (function () {
     var profiles = <?= json_encode($stateProfiles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    var calmScript = <?= json_encode($calmScript, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
     var body = document.body;
     var lockBtn = document.getElementById('lockBtn');
     var floatingExitBtn = document.getElementById('floatingExitBtn');
@@ -207,9 +220,13 @@ $federalLaw = adaFederalLawProfile();
     var stateSelect = document.getElementById('stateSelect');
     var gpsBtn = document.getElementById('gpsBtn');
     var gpsStatus = document.getElementById('gpsStatus');
+    var copyScriptBtn = document.getElementById('copyScriptBtn');
+    var shareScriptBtn = document.getElementById('shareScriptBtn');
+    var scriptFeedback = document.getElementById('scriptFeedback');
     var wakeLock = null;
 
     function status(msg) { if (gpsStatus) gpsStatus.textContent = msg || ''; }
+    function scriptStatus(msg) { if (scriptFeedback) scriptFeedback.textContent = msg || ''; }
     function go(code) { if (!profiles[code]) return; var url = new URL(window.location.href); url.searchParams.set('state', code); window.location.href = url.toString(); }
 
     async function requestWakeLock() {
@@ -252,6 +269,43 @@ $federalLaw = adaFederalLawProfile();
         } catch (e) {}
     }
 
+    async function copyScript() {
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(calmScript);
+                scriptStatus('Script copied.');
+                return;
+            }
+            var textarea = document.createElement('textarea');
+            textarea.value = calmScript;
+            textarea.setAttribute('readonly', 'readonly');
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            scriptStatus('Script copied.');
+        } catch (e) {
+            scriptStatus('Copy failed. You can still press and hold the script text to copy it.');
+        }
+    }
+
+    async function shareScript() {
+        try {
+            if (navigator.share) {
+                await navigator.share({title: 'ADA Access Card calm script', text: calmScript});
+                scriptStatus('Share sheet opened.');
+            } else {
+                await copyScript();
+                scriptStatus('Sharing is not available here, so the script was copied instead.');
+            }
+        } catch (e) {
+            if (e && e.name === 'AbortError') return;
+            scriptStatus('Share failed. Try copy instead.');
+        }
+    }
+
     if (lockBtn) lockBtn.addEventListener('click', function () { body.classList.contains('lockscreen') ? exitLockscreen() : enterLockscreen(); });
     if (floatingExitBtn) floatingExitBtn.addEventListener('click', exitLockscreen);
     document.addEventListener('fullscreenchange', function () {
@@ -265,6 +319,8 @@ $federalLaw = adaFederalLawProfile();
         if (document.visibilityState === 'visible' && body.classList.contains('lockscreen') && !wakeLock) requestWakeLock();
     });
 
+    if (copyScriptBtn) copyScriptBtn.addEventListener('click', copyScript);
+    if (shareScriptBtn) shareScriptBtn.addEventListener('click', shareScript);
     if (contrastBtn) contrastBtn.addEventListener('click', function () { body.classList.toggle('high-contrast'); });
     if (screenshotBtn) screenshotBtn.addEventListener('click', function () { body.classList.toggle('screenshot'); });
     if (stateSelect) stateSelect.addEventListener('change', function () { go(stateSelect.value); });
