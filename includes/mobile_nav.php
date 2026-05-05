@@ -70,123 +70,18 @@ if (!function_exists('gpNavLink')) {
     @media print { .gp-mobile-nav-shell, .gp-menu-backdrop, .gp-menu-panel { display: none !important; } }
 </style>
 
-<div class="gp-mobile-nav-shell">
-    <nav class="gp-bottom-nav" aria-label="Primary navigation">
-        <a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>"><span class="ico">🏠</span><span>Home</span></a>
-        <a href="quick_log.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'quick_log.php' ? 'active' : '' ?>"><span class="ico">⚡</span><span>Log</span></a>
-        <a href="view_logs.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'view_logs.php' ? 'active' : '' ?>"><span class="ico">📋</span><span>History</span></a>
-        <a href="alerts.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'alerts.php' ? 'active' : '' ?>"><span class="ico">🧠</span><span>Alerts</span></a>
-        <button type="button" id="gpMenuOpen" aria-controls="gpAppMenu" aria-expanded="false"><span class="ico">☰</span><span>Menu</span></button>
-    </nav>
-</div>
+<div class="gp-mobile-nav-shell"><nav class="gp-bottom-nav" aria-label="Primary navigation"><a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>"><span class="ico">🏠</span><span>Home</span></a><a href="quick_log.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'quick_log.php' ? 'active' : '' ?>"><span class="ico">⚡</span><span>Log</span></a><a href="view_logs.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'view_logs.php' ? 'active' : '' ?>"><span class="ico">📋</span><span>History</span></a><a href="alerts.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'alerts.php' ? 'active' : '' ?>"><span class="ico">🧠</span><span>Alerts</span></a><button type="button" id="gpMenuOpen" aria-controls="gpAppMenu" aria-expanded="false"><span class="ico">☰</span><span>Menu</span></button></nav></div>
 
 <div class="gp-menu-backdrop" id="gpMenuBackdrop" aria-hidden="true"></div>
 <aside class="gp-menu-panel" id="gpAppMenu" aria-label="GuidePaw menu">
-    <div class="gp-menu-header">
-        <div>
-            <div class="gp-menu-title">GuidePaw Menu</div>
-            <div class="text-muted small">Tools grouped by job, not by feature list.</div>
-        </div>
-        <button type="button" class="gp-menu-close" id="gpMenuClose">Close</button>
-    </div>
-
-    <div class="gp-menu-root-actions">
-        <a class="settings" href="settings.php">⚙️ Settings</a>
-        <a class="logout" href="logout.php">🚪 Logout</a>
-    </div>
-
-    <details class="gp-menu-section" open>
-        <summary>🐾 Dog</summary>
-        <div class="gp-menu-description">Manage the active dog, profile details, app setup, and progress snapshot.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('index.php', '🏠', 'Dashboard'); ?>
-            <?php gpNavLink('dogs.php', '🐕', 'Dogs'); ?>
-            <?php gpNavLink('dog_profile.php', '🪪', 'Dog Profile'); ?>
-            <?php gpNavLink('stats.php', '📊', 'Stats'); ?>
-        </div>
-    </details>
-
-    <details class="gp-menu-section">
-        <summary>📝 Logs</summary>
-        <div class="gp-menu-description">Daily handler notes, sessions, media, and history.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('quick_log.php', '⚡', 'Quick Session', 'quick_session_enabled'); ?>
-            <?php gpNavLink('log_entry.php', '📝', 'Detailed Log', 'detailed_log_enabled'); ?>
-            <?php gpNavLink('view_logs.php', '📋', 'History'); ?>
-        </div>
-    </details>
-
-    <details class="gp-menu-section">
-        <summary>🎓 Training</summary>
-        <div class="gp-menu-description">Plan, repair, assess, and track training progress.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('training_program.php', '🎓', 'Training Program', 'training_program_enabled'); ?>
-            <?php gpNavLink('candidate_assessment.php', '🐾', 'Candidate Assessment', 'candidate_scoring_enabled'); ?>
-            <?php gpNavLink('training_goal_intake.php', '🎯', 'Goal Intake', 'goal_intake_enabled'); ?>
-            <?php gpNavLink('habit_repair.php', '🛠️', 'Habit Repair', 'habit_repair_enabled'); ?>
-            <?php gpNavLink('training_session_log.php', '✅', 'Session Log', 'training_progression_enabled'); ?>
-            <?php gpNavLink('training_history.php', '📚', 'Training History', 'training_progression_enabled'); ?>
-        </div>
-    </details>
-
-    <details class="gp-menu-section">
-        <summary>🩺 Care</summary>
-        <div class="gp-menu-description">Health documents, appointments, medications, and active care alerts.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('dog_health.php', '🩺', 'Health Docs', 'health_docs_enabled'); ?>
-            <?php gpNavLink('appointments.php', '📅', 'Vet Appointments', 'vet_appointments_enabled'); ?>
-            <?php gpNavLink('medications.php', '💊', 'Medications', 'medications_enabled'); ?>
-            <?php gpNavLink('alerts.php', '🧠', 'Smart Alerts', 'alerts_enabled'); ?>
-        </div>
-    </details>
-
-    <details class="gp-menu-section">
-        <summary>🪪 Access</summary>
-        <div class="gp-menu-description">Public-access references, ADA notes, and certification tools.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('ada_access_card.php', '🪪', 'ADA Access Card', 'ada_wallet_enabled'); ?>
-            <?php gpNavLink('service_dog_rights.php', '⚖️', 'Detailed ADA Notes'); ?>
-            <?php gpNavLink('certification.php', '✅', 'Certification', 'certification_enabled'); ?>
-        </div>
-    </details>
-
-    <details class="gp-menu-section">
-        <summary>💬 Support</summary>
-        <div class="gp-menu-description">Send feedback, bug reports, and beta notes.</div>
-        <div class="gp-menu-link-grid">
-            <?php gpNavLink('feedback.php', '💬', 'Feedback / Bug Report'); ?>
-        </div>
-    </details>
-
-    <?php if (gpNavIsAdmin()): ?>
-        <details class="gp-menu-section">
-            <summary>🛠️ Admin</summary>
-            <div class="gp-menu-description">Beta access, system health, feature flags, and backups.</div>
-            <div class="gp-menu-link-grid">
-                <?php gpNavLink('admin.php', '🛠️', 'Admin Home'); ?>
-                <?php gpNavLink('admin_beta_requests.php', '📨', 'Beta Requests'); ?>
-                <?php gpNavLink('admin_notification_test.php', '🔔', 'Notification Test'); ?>
-                <?php gpNavLink('admin_feedback.php', '💬', 'Feedback Reports'); ?>
-                <?php gpNavLink('admin_users.php', '👥', 'User Management'); ?>
-                <?php gpNavLink('admin_feature_roadmap.php', '🗺️', 'Feature Roadmap'); ?>
-                <?php gpNavLink('api_tokens.php', '🔐', 'API Tokens'); ?>
-                <?php gpNavLink('db_status.php', '🩺', 'System Health'); ?>
-                <?php gpNavLink('backup.php', '💾', 'Backup Tools', 'backup_tools_enabled'); ?>
-            </div>
-        </details>
-    <?php endif; ?>
+    <div class="gp-menu-header"><div><div class="gp-menu-title">GuidePaw Menu</div><div class="text-muted small">Tools grouped by job, not by feature list.</div></div><button type="button" class="gp-menu-close" id="gpMenuClose">Close</button></div>
+    <div class="gp-menu-root-actions"><a class="settings" href="settings.php">⚙️ Settings</a><a class="logout" href="logout.php">🚪 Logout</a></div>
+    <details class="gp-menu-section" open><summary>🐾 Dog</summary><div class="gp-menu-description">Manage the active dog, handler profile, dog details, and progress snapshot.</div><div class="gp-menu-link-grid"><?php gpNavLink('index.php', '🏠', 'Dashboard'); ?><?php gpNavLink('handler_profile.php', '👤', 'Handler Profile'); ?><?php gpNavLink('dogs.php', '🐕', 'Dogs'); ?><?php gpNavLink('dog_profile.php', '🪪', 'Dog Profile'); ?><?php gpNavLink('stats.php', '📊', 'Stats'); ?></div></details>
+    <details class="gp-menu-section"><summary>📝 Logs</summary><div class="gp-menu-description">Daily handler notes, sessions, media, and history.</div><div class="gp-menu-link-grid"><?php gpNavLink('quick_log.php', '⚡', 'Quick Session', 'quick_session_enabled'); ?><?php gpNavLink('log_entry.php', '📝', 'Detailed Log', 'detailed_log_enabled'); ?><?php gpNavLink('view_logs.php', '📋', 'History'); ?></div></details>
+    <details class="gp-menu-section"><summary>🎓 Training</summary><div class="gp-menu-description">Plan, repair, assess, and track training progress.</div><div class="gp-menu-link-grid"><?php gpNavLink('training_program.php', '🎓', 'Training Program', 'training_program_enabled'); ?><?php gpNavLink('candidate_assessment.php', '🐾', 'Candidate Assessment', 'candidate_scoring_enabled'); ?><?php gpNavLink('training_goal_intake.php', '🎯', 'Goal Intake', 'goal_intake_enabled'); ?><?php gpNavLink('habit_repair.php', '🛠️', 'Habit Repair', 'habit_repair_enabled'); ?><?php gpNavLink('training_session_log.php', '✅', 'Session Log', 'training_progression_enabled'); ?><?php gpNavLink('training_history.php', '📚', 'Training History', 'training_progression_enabled'); ?></div></details>
+    <details class="gp-menu-section"><summary>🩺 Care</summary><div class="gp-menu-description">Health documents, appointments, medications, and active care alerts.</div><div class="gp-menu-link-grid"><?php gpNavLink('dog_health.php', '🩺', 'Health Docs', 'health_docs_enabled'); ?><?php gpNavLink('appointments.php', '📅', 'Vet Appointments', 'vet_appointments_enabled'); ?><?php gpNavLink('medications.php', '💊', 'Medications', 'medications_enabled'); ?><?php gpNavLink('alerts.php', '🧠', 'Smart Alerts', 'alerts_enabled'); ?></div></details>
+    <details class="gp-menu-section"><summary>🪪 Access</summary><div class="gp-menu-description">Public-access references, ADA notes, and certification tools.</div><div class="gp-menu-link-grid"><?php gpNavLink('ada_access_card.php', '🪪', 'ADA Access Card', 'ada_wallet_enabled'); ?><?php gpNavLink('service_dog_rights.php', '⚖️', 'Detailed ADA Notes'); ?><?php gpNavLink('certification.php', '✅', 'Certification', 'certification_enabled'); ?></div></details>
+    <details class="gp-menu-section"><summary>💬 Support</summary><div class="gp-menu-description">Send feedback, bug reports, and beta notes.</div><div class="gp-menu-link-grid"><?php gpNavLink('feedback.php', '💬', 'Feedback / Bug Report'); ?></div></details>
+    <?php if (gpNavIsAdmin()): ?><details class="gp-menu-section"><summary>🛠️ Admin</summary><div class="gp-menu-description">Beta access, system health, feature flags, and backups.</div><div class="gp-menu-link-grid"><?php gpNavLink('admin.php', '🛠️', 'Admin Home'); ?><?php gpNavLink('admin_beta_requests.php', '📨', 'Beta Requests'); ?><?php gpNavLink('admin_notification_test.php', '🔔', 'Notification Test'); ?><?php gpNavLink('admin_feedback.php', '💬', 'Feedback Reports'); ?><?php gpNavLink('admin_users.php', '👥', 'User Management'); ?><?php gpNavLink('admin_feature_roadmap.php', '🗺️', 'Feature Roadmap'); ?><?php gpNavLink('api_tokens.php', '🔐', 'API Tokens'); ?><?php gpNavLink('db_status.php', '🩺', 'System Health'); ?><?php gpNavLink('backup.php', '💾', 'Backup Tools', 'backup_tools_enabled'); ?></div></details><?php endif; ?>
 </aside>
-
-<script>
-(function () {
-    var openBtn = document.getElementById('gpMenuOpen');
-    var closeBtn = document.getElementById('gpMenuClose');
-    var backdrop = document.getElementById('gpMenuBackdrop');
-    function openMenu() { document.body.classList.add('gp-menu-open'); if (openBtn) openBtn.setAttribute('aria-expanded', 'true'); }
-    function closeMenu() { document.body.classList.remove('gp-menu-open'); if (openBtn) openBtn.setAttribute('aria-expanded', 'false'); }
-    if (openBtn) openBtn.addEventListener('click', openMenu);
-    if (closeBtn) closeBtn.addEventListener('click', closeMenu);
-    if (backdrop) backdrop.addEventListener('click', closeMenu);
-    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') closeMenu(); });
-})();
-</script>
+<script>(function(){var openBtn=document.getElementById('gpMenuOpen'),closeBtn=document.getElementById('gpMenuClose'),backdrop=document.getElementById('gpMenuBackdrop');function openMenu(){document.body.classList.add('gp-menu-open');if(openBtn)openBtn.setAttribute('aria-expanded','true');}function closeMenu(){document.body.classList.remove('gp-menu-open');if(openBtn)openBtn.setAttribute('aria-expanded','false');}if(openBtn)openBtn.addEventListener('click',openMenu);if(closeBtn)closeBtn.addEventListener('click',closeMenu);if(backdrop)backdrop.addEventListener('click',closeMenu);document.addEventListener('keydown',function(event){if(event.key==='Escape')closeMenu();});})();</script>
