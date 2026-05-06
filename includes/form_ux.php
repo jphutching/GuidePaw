@@ -100,6 +100,49 @@ if (!function_exists('guidepawFormUx')) {
         event.returnValue = "";
     });
 })();
+
+(function () {
+    if (!/\/dogs\.php$/.test(window.location.pathname)) return;
+    if (document.querySelector(".alert-danger")) return;
+
+    const addAction = document.querySelector("form input[name=\"action\"][value=\"add_dog\"]");
+    if (!addAction) return;
+
+    const addForm = addAction.closest("form");
+    const cardBody = addForm ? addForm.closest(".card-body") : null;
+    const cardTitle = cardBody ? cardBody.querySelector(".card-title") : null;
+    const dogCount = document.querySelectorAll(".col-lg-7 .list-group > .list-group-item").length;
+
+    if (!addForm || !cardBody || !cardTitle || dogCount < 1) return;
+
+    addForm.classList.add("d-none");
+    cardTitle.textContent = "Manage Dogs";
+
+    const note = document.createElement("div");
+    note.className = "text-muted small mb-3";
+    note.textContent = dogCount === 1
+        ? "Your existing dog is used as the active dog by default. Open this section only when adding another dog."
+        : "Open this section only when adding another dog.";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn btn-outline-primary w-100 mb-3";
+    button.textContent = "Add Another Dog";
+    button.setAttribute("aria-expanded", "false");
+
+    button.addEventListener("click", function () {
+        const isHidden = addForm.classList.toggle("d-none");
+        button.textContent = isHidden ? "Add Another Dog" : "Hide Add Dog Form";
+        button.setAttribute("aria-expanded", isHidden ? "false" : "true");
+        if (!isHidden) {
+            const nameField = addForm.querySelector("input[name=\"name\"]");
+            if (nameField) nameField.focus();
+        }
+    });
+
+    cardTitle.insertAdjacentElement("afterend", note);
+    note.insertAdjacentElement("afterend", button);
+})();
 </script>';
     }
 }
