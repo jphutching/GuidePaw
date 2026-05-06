@@ -22,8 +22,8 @@ function gpSaveCroppedProfileImage(string $field, ?string $existingPath, array &
         return $existingPath;
     }
     $binary = base64_decode(substr($data, strpos($data, ',') + 1), true);
-    if ($binary === false || strlen($binary) > 6 * 1024 * 1024) {
-        $errors[] = 'Cropped image was too large or invalid.';
+    if ($binary === false || strlen($binary) > 1024 * 1024) {
+        $errors[] = 'Cropped image was too large or invalid. Please use a smaller photo.';
         return $existingPath;
     }
     $info = @getimagesizefromstring($binary);
@@ -31,21 +31,15 @@ function gpSaveCroppedProfileImage(string $field, ?string $existingPath, array &
         $errors[] = 'Cropped image must be a valid image.';
         return $existingPath;
     }
-    $extMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($extMap[$info['mime']])) {
+    $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!in_array($info['mime'], $allowed, true)) {
         $errors[] = 'Images must be JPG, PNG, or WebP.';
         return $existingPath;
     }
-    $dir = gpProfileImageDir();
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0775, true);
-    }
-    $filename = date('Ymd_His') . '_' . bin2hex(random_bytes(6)) . '.' . $extMap[$info['mime']];
-    if (file_put_contents($dir . '/' . $filename, $binary) === false) {
-        $errors[] = 'Could not save cropped image.';
-        return $existingPath;
-    }
-    return gpProfileImagePublicPath($filename);
+
+    // Store small cropped handler/profile images directly in the database as a data URI.
+    // This prevents Render redeploys or ephemeral filesystem resets from breaking profile pictures.
+    return 'data:' . $info['mime'] . ';base64,' . base64_encode($binary);
 }
 
 function gpProfileCropperScript(): string
@@ -78,7 +72,7 @@ function gpInitProfileCroppers(){
       if(h>size) y=Math.min(maxY, Math.max(minY, y)); else y=(size-h)/2;
       offsetX=x-(size-w)/2; offsetY=y-(size-h)/2;
       ctx.drawImage(img,x,y,w,h);
-      var data=canvas.toDataURL('image/jpeg',0.88);
+      var data=canvas.toDataURL('image/jpeg',0.86);
       if(target) target.value=data;
       if(preview) preview.src=data;
     }
