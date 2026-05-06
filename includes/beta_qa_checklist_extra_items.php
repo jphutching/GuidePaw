@@ -51,5 +51,37 @@ function gpBetaQaChecklistExtraItems(): array
                 ],
             ],
         ],
+        [
+            'id' => 'project_history_upkeep',
+            'title' => 'Project History Upkeep',
+            'description' => 'Keep the durable GuidePaw handoff file current so future work can resume without backtracking.',
+            'items' => [
+                [
+                    'id' => 'history_file_exists',
+                    'text' => 'Confirm GUIDEPAW_PROJECT_HISTORY.md exists in the repo.',
+                    'expected' => 'The file is present on GitHub main and can be used as the durable handoff source.',
+                ],
+                [
+                    'id' => 'history_read_before_work',
+                    'text' => 'Read GUIDEPAW_PROJECT_HISTORY.md before starting a new coding session.',
+                    'expected' => 'Current status, in-progress items, and next recommended work are understood before making changes.',
+                ],
+                [
+                    'id' => 'history_updated_after_work',
+                    'text' => 'Update GUIDEPAW_PROJECT_HISTORY.md after meaningful feature, bug, migration, or checklist work.',
+                    'expected' => 'The file reflects what changed, what remains in progress, and the next recommended step.',
+                ],
+                [
+                    'id' => 'history_no_secrets',
+                    'text' => 'Check that no secrets were added to the project history file.',
+                    'expected' => 'No passwords, API tokens, Telegram bot tokens, ZeptoMail tokens, or DB credentials are present.',
+                ],
+                [
+                    'id' => 'history_matches_checklist',
+                    'text' => 'Confirm major new work has matching Beta QA Checklist items.',
+                    'expected' => 'Any new feature or workflow has a test item or section in the checklist.',
+                ],
+            ],
+        ],
     ];
 }
