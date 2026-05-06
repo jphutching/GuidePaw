@@ -21,7 +21,7 @@ foreach ($sections as $section) {
 <link href="styles.css" rel="stylesheet">
 <style>
 .qa-hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.25rem 1rem 1.5rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}
-.qa-shell{max-width:1040px;margin:0 auto;padding:1rem}.qa-card{border-radius:20px;border:1px solid rgba(15,23,42,.08);box-shadow:0 8px 20px rgba(15,23,42,.07);overflow:hidden}.qa-section{scroll-margin-top:1rem}.qa-section-header{background:#fff;padding:1rem;border-bottom:1px solid rgba(15,23,42,.08)}.qa-item{display:grid;grid-template-columns:auto 1fr;gap:.75rem;padding:1rem;border-bottom:1px solid rgba(15,23,42,.07);background:#fff}.qa-item:last-child{border-bottom:0}.qa-item.done{background:#f0fdf4}.qa-checkbox{width:1.35rem;height:1.35rem;margin-top:.15rem}.qa-item-title{font-weight:850;color:#0f172a}.qa-expected{font-size:.86rem;color:#64748b;margin-top:.25rem}.qa-pill{display:inline-flex;align-items:center;border-radius:999px;padding:.25rem .55rem;font-size:.74rem;font-weight:900;background:#eef2ff;color:#4338ca}.qa-controls{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.96);backdrop-filter:blur(12px);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:.75rem;box-shadow:0 8px 18px rgba(15,23,42,.08)}.qa-progress{height:.85rem;border-radius:999px;overflow:hidden;background:#e5e7eb}.qa-progress-bar{height:100%;width:0;background:#0d6efd;transition:width .2s ease}.qa-search{border-radius:14px}.qa-nav a{font-size:.85rem}.qa-print-note{display:none}.qa-notes{min-height:4.5rem;border-radius:14px}
+.qa-shell{max-width:1040px;margin:0 auto;padding:1rem}.qa-card{border-radius:20px;border:1px solid rgba(15,23,42,.08);box-shadow:0 8px 20px rgba(15,23,42,.07);overflow:hidden}.qa-section{scroll-margin-top:1rem}.qa-section-header{background:#fff;padding:1rem;border-bottom:1px solid rgba(15,23,42,.08)}.qa-item{display:grid;grid-template-columns:auto 1fr;gap:.75rem;padding:1rem;border-bottom:1px solid rgba(15,23,42,.07);background:#fff}.qa-item:last-child{border-bottom:0}.qa-item.done{background:#f0fdf4}.qa-checkbox{width:1.35rem;height:1.35rem;margin-top:.15rem}.qa-item-title{font-weight:850;color:#0f172a}.qa-expected{font-size:.86rem;color:#64748b;margin-top:.25rem}.qa-pill{display:inline-flex;align-items:center;border-radius:999px;padding:.25rem .55rem;font-size:.74rem;font-weight:900;background:#eef2ff;color:#4338ca}.qa-controls{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.96);backdrop-filter:blur(12px);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:.75rem;box-shadow:0 8px 18px rgba(15,23,42,.08)}.qa-progress{height:.85rem;border-radius:999px;overflow:hidden;background:#e5e7eb}.qa-progress-bar{height:100%;width:0;background:#0d6efd;transition:width .2s ease}.qa-search{border-radius:14px}.qa-nav a{font-size:.85rem}.qa-print-note{display:none}.qa-notes{min-height:4.5rem;border-radius:14px}.qa-save-status{font-size:.82rem;font-weight:800;color:#64748b}.qa-save-status.saved{color:#047857}.qa-save-status.error{color:#b91c1c}
 @media print{.gp-mobile-nav-shell,.gp-menu-backdrop,.gp-menu-panel,.qa-controls,.btn,.qa-search,.no-print{display:none!important}.qa-hero{box-shadow:none;border-radius:0;color:#000;background:#fff}.qa-print-note{display:block}.qa-card{box-shadow:none;border:1px solid #ccc}.qa-item{break-inside:avoid}.qa-shell{max-width:none;padding:0}.qa-section{page-break-inside:avoid}}
 </style>
 </head>
@@ -46,10 +46,11 @@ foreach ($sections as $section) {
         <div class="row g-2 align-items-center">
             <div class="col-12 col-md-4"><input type="search" class="form-control qa-search" id="qaSearch" placeholder="Search checklist…"></div>
             <div class="col-12 col-md-4"><select class="form-select qa-search" id="qaFilter"><option value="all">Show all</option><option value="open">Open only</option><option value="done">Completed only</option></select></div>
-            <div class="col-12 col-md-4 d-flex gap-2"><button type="button" class="btn btn-outline-secondary w-100" id="qaExpand">Expand all</button><button type="button" class="btn btn-outline-danger w-100" id="qaReset">Reset checks</button></div>
+            <div class="col-12 col-md-4 d-flex gap-2"><button type="button" class="btn btn-outline-secondary w-100" id="qaExpand">Top</button><button type="button" class="btn btn-outline-danger w-100" id="qaReset">Reset checks</button></div>
             <div class="col-12">
                 <div class="d-flex justify-content-between small fw-bold mb-1"><span id="qaProgressText">0 of <?= (int) $totalItems ?> complete</span><span id="qaProgressPct">0%</span></div>
                 <div class="qa-progress"><div class="qa-progress-bar" id="qaProgressBar"></div></div>
+                <div class="qa-save-status mt-1" id="qaSaveStatus">Loading saved checklist…</div>
             </div>
         </div>
     </section>
@@ -57,8 +58,8 @@ foreach ($sections as $section) {
     <section class="card qa-card mb-3">
         <div class="card-body">
             <h2 class="h5">How to use this checklist</h2>
-            <p class="mb-2 text-muted">Use this after each Render redeploy or major feature batch. Checkboxes save in this browser so you can come back later. Use Print for a paper copy.</p>
-            <div class="qa-print-note small">Printed copy. Browser-saved checkbox state may not print in every browser; use this as a manual testing worksheet.</div>
+            <p class="mb-2 text-muted">Use this after each Render redeploy or major feature batch. Progress saves to your GuidePaw account when online and falls back to this browser if needed. Use Print for a paper copy.</p>
+            <div class="qa-print-note small">Printed copy. Checkbox state may not print in every browser; use this as a manual testing worksheet.</div>
             <textarea class="form-control qa-notes no-print" id="qaNotes" placeholder="Testing notes, account names, dog IDs, bugs found, or follow-up work…"></textarea>
         </div>
     </section>
@@ -91,8 +92,8 @@ foreach ($sections as $section) {
 (function(){
 const STORAGE_KEY='guidepaw_beta_qa_checklist_v1';
 const NOTES_KEY='guidepaw_beta_qa_notes_v1';
+const STATE_URL='beta_qa_checklist_state.php';
 const checks=Array.from(document.querySelectorAll('[data-qa-check]'));
-const items=Array.from(document.querySelectorAll('[data-qa-item]'));
 const sections=Array.from(document.querySelectorAll('[data-section]'));
 const search=document.getElementById('qaSearch');
 const filter=document.getElementById('qaFilter');
@@ -100,17 +101,24 @@ const notes=document.getElementById('qaNotes');
 const progressText=document.getElementById('qaProgressText');
 const progressPct=document.getElementById('qaProgressPct');
 const progressBar=document.getElementById('qaProgressBar');
-function readState(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')||{}}catch(e){return{}}}
-function writeState(state){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}
-function update(){const state=readState();let done=0;checks.forEach(cb=>{const item=cb.closest('[data-qa-item]');const id=item.dataset.itemId;cb.checked=!!state[id];item.classList.toggle('done',cb.checked);if(cb.checked)done++;});const total=checks.length;const pct=total?Math.round(done/total*100):0;progressText.textContent=done+' of '+total+' complete';progressPct.textContent=pct+'%';progressBar.style.width=pct+'%';sections.forEach(section=>{const sectionChecks=Array.from(section.querySelectorAll('[data-qa-check]'));const sectionDone=sectionChecks.filter(cb=>cb.checked).length;const count=section.querySelector('[data-section-count]');if(count)count.textContent=sectionDone+' / '+sectionChecks.length;});applyFilter();}
-function applyFilter(){const q=(search?search.value:'').trim().toLowerCase();const mode=filter?filter.value:'all';sections.forEach(section=>{let visibleCount=0;section.querySelectorAll('[data-qa-item]').forEach(item=>{const text=item.textContent.toLowerCase();const checked=item.querySelector('[data-qa-check]').checked;let show=true;if(q&& !text.includes(q))show=false;if(mode==='open'&&checked)show=false;if(mode==='done'&&!checked)show=false;item.style.display=show?'grid':'none';if(show)visibleCount++;});section.style.display=visibleCount?'block':'none';});}
-checks.forEach(cb=>cb.addEventListener('change',()=>{const state=readState();const item=cb.closest('[data-qa-item]');state[item.dataset.itemId]=cb.checked;if(!cb.checked)delete state[item.dataset.itemId];writeState(state);update();}));
+const saveStatus=document.getElementById('qaSaveStatus');
+let state={};
+let saveTimer=null;
+function setStatus(text,kind){if(!saveStatus)return;saveStatus.textContent=text;saveStatus.className='qa-save-status mt-1 '+(kind||'');}
+function readLocal(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')||{}}catch(e){return{}}}
+function writeLocal(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state));if(notes)localStorage.setItem(NOTES_KEY,notes.value||'');}
+function applyState(){let done=0;checks.forEach(cb=>{const item=cb.closest('[data-qa-item]');const id=item.dataset.itemId;cb.checked=!!state[id];item.classList.toggle('done',cb.checked);if(cb.checked)done++;});const total=checks.length;const pct=total?Math.round(done/total*100):0;progressText.textContent=done+' of '+total+' complete';progressPct.textContent=pct+'%';progressBar.style.width=pct+'%';sections.forEach(section=>{const sectionChecks=Array.from(section.querySelectorAll('[data-qa-check]'));const sectionDone=sectionChecks.filter(cb=>cb.checked).length;const count=section.querySelector('[data-section-count]');if(count)count.textContent=sectionDone+' / '+sectionChecks.length;});applyFilter();}
+function applyFilter(){const q=(search?search.value:'').trim().toLowerCase();const mode=filter?filter.value:'all';sections.forEach(section=>{let visibleCount=0;section.querySelectorAll('[data-qa-item]').forEach(item=>{const text=item.textContent.toLowerCase();const checked=item.querySelector('[data-qa-check]').checked;let show=true;if(q&&!text.includes(q))show=false;if(mode==='open'&&checked)show=false;if(mode==='done'&&!checked)show=false;item.style.display=show?'grid':'none';if(show)visibleCount++;});section.style.display=visibleCount?'block':'none';});}
+async function loadRemote(){state=readLocal();if(notes)notes.value=localStorage.getItem(NOTES_KEY)||'';applyState();try{const res=await fetch(STATE_URL,{credentials:'same-origin'});const data=await res.json();if(data&&data.ok){state=data.checked_items||{};if(notes)notes.value=data.notes||'';writeLocal();applyState();setStatus(data.updated_at?'Saved to GuidePaw account. Last update: '+data.updated_at:'Ready. Progress will save to your GuidePaw account.','saved');}else{setStatus('Using browser-only checklist storage.','error');}}catch(e){setStatus('Offline or save endpoint unavailable. Using browser-only checklist storage.','error');}}
+async function saveRemote(){writeLocal();setStatus('Saving checklist…','');try{const res=await fetch(STATE_URL,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({checked_items:state,notes:notes?notes.value:''})});const data=await res.json();if(data&&data.ok){setStatus('Saved to GuidePaw account.','saved');}else{setStatus('Could not save to account. Browser copy saved.','error');}}catch(e){setStatus('Could not save to account. Browser copy saved.','error');}}
+function queueSave(){writeLocal();window.clearTimeout(saveTimer);saveTimer=window.setTimeout(saveRemote,450);}
+checks.forEach(cb=>cb.addEventListener('change',()=>{const item=cb.closest('[data-qa-item]');state[item.dataset.itemId]=cb.checked;if(!cb.checked)delete state[item.dataset.itemId];applyState();queueSave();}));
 if(search)search.addEventListener('input',applyFilter);if(filter)filter.addEventListener('change',applyFilter);
-const reset=document.getElementById('qaReset');if(reset)reset.addEventListener('click',()=>{if(confirm('Clear all saved checklist checks in this browser?')){localStorage.removeItem(STORAGE_KEY);update();}});
+const reset=document.getElementById('qaReset');if(reset)reset.addEventListener('click',()=>{if(confirm('Clear all saved checklist checks for this account/browser?')){state={};localStorage.removeItem(STORAGE_KEY);applyState();queueSave();}});
 const expand=document.getElementById('qaExpand');if(expand)expand.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});
 const printBtn=document.getElementById('qaPrint');if(printBtn)printBtn.addEventListener('click',()=>window.print());
-if(notes){notes.value=localStorage.getItem(NOTES_KEY)||'';notes.addEventListener('input',()=>localStorage.setItem(NOTES_KEY,notes.value));}
-update();
+if(notes)notes.addEventListener('input',queueSave);
+loadRemote();
 })();
 </script>
 </body>
