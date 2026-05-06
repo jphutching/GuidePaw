@@ -76,6 +76,7 @@ $tasks = $dog['service_tasks'] ?? '';
 $publicNotes = $dog['public_notes'] ?? ($dog['emergency_notes'] ?? '');
 $foundInstructions = $dog['found_dog_instructions'] ?? '';
 $criticalAllergies = $dog['critical_allergies'] ?? ($dog['medical_alert_notes'] ?? '');
+$reportUrl = 'report_found_dog.php?dog=' . (int) $dogId . '&token=' . rawurlencode($token);
 ?>
 <!doctype html>
 <html lang="en">
@@ -94,6 +95,7 @@ body { background: #f1f5f9; color:#0f172a; }
 .value { font-weight:700; }
 .btn-call { border-radius:16px; padding:.85rem 1rem; font-weight:800; }
 .warning-note { border-left: 4px solid #dc3545; background:#fff5f5; border-radius:14px; padding:.85rem; }
+.found-card { border: 1px solid #bfdbfe; background: #eff6ff; }
 </style>
 </head>
 <body>
@@ -113,6 +115,12 @@ body { background: #f1f5f9; color:#0f172a; }
         </div>
     </section>
 
+    <section class="cardx found-card mb-3">
+        <h2 class="h5 mb-2">Found or saw <?= e($dogName) ?>?</h2>
+        <p class="text-muted mb-3">Send the handler a one-time location report. Your location is not continuously tracked.</p>
+        <a class="btn btn-primary btn-call w-100" href="<?= e($reportUrl) ?>">Share Found Location</a>
+    </section>
+
     <?php if ($foundInstructions): ?>
         <section class="cardx mb-3 warning-note">
             <h2 class="h5 mb-2">If Found / Emergency Instructions</h2>
@@ -126,10 +134,7 @@ body { background: #f1f5f9; color:#0f172a; }
             <?php if ($handlerPhoto): ?>
                 <img src="<?= e($handlerPhoto) ?>" alt="<?= e($handlerName) ?>" style="width:72px;height:72px;border-radius:18px;object-fit:cover;">
             <?php endif; ?>
-            <div>
-                <div class="label">Handler</div>
-                <div class="value"><?= e($handlerName) ?></div>
-            </div>
+            <div><div class="label">Handler</div><div class="value"><?= e($handlerName) ?></div></div>
         </div>
         <div class="d-grid gap-2">
             <?php if ($handlerPhone): ?><a class="btn btn-success btn-call" href="tel:<?= e(preg_replace('/[^0-9+]/', '', $handlerPhone)) ?>">Call Handler</a><?php endif; ?>
@@ -140,47 +145,15 @@ body { background: #f1f5f9; color:#0f172a; }
     </section>
 
     <?php if ($vet): ?>
-        <section class="cardx mb-3">
-            <h2 class="h5 mb-3">Primary Vet</h2>
-            <div class="row g-3">
-                <div class="col-12 col-md-6"><div class="label">Clinic</div><div class="value"><?= e($vet['clinic_name'] ?? 'Not listed') ?></div></div>
-                <div class="col-12 col-md-6"><div class="label">Veterinarian</div><div class="value"><?= !empty($vet['vet_name']) ? e($vet['vet_name']) : 'Not listed' ?></div></div>
-                <?php if (!empty($vet['phone'])): ?><div class="col-12"><a class="btn btn-outline-success btn-call w-100" href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string) $vet['phone'])) ?>">Call Vet: <?= e($vet['phone']) ?></a></div><?php endif; ?>
-                <?php if (!empty($vet['email'])): ?><div class="col-12"><a class="btn btn-outline-primary btn-call w-100" href="mailto:<?= e($vet['email']) ?>">Email Vet</a></div><?php endif; ?>
-                <?php if (!empty($vet['address_text'])): ?><div class="col-12"><div class="label">Address</div><div><?= nl2br(e($vet['address_text'])) ?></div></div><?php endif; ?>
-                <?php if (!empty($vet['notes'])): ?><div class="col-12"><div class="label">Vet notes</div><div><?= nl2br(e($vet['notes'])) ?></div></div><?php endif; ?>
-            </div>
-        </section>
+        <section class="cardx mb-3"><h2 class="h5 mb-3">Primary Vet</h2><div class="row g-3"><div class="col-12 col-md-6"><div class="label">Clinic</div><div class="value"><?= e($vet['clinic_name'] ?? 'Not listed') ?></div></div><div class="col-12 col-md-6"><div class="label">Veterinarian</div><div class="value"><?= !empty($vet['vet_name']) ? e($vet['vet_name']) : 'Not listed' ?></div></div><?php if (!empty($vet['phone'])): ?><div class="col-12"><a class="btn btn-outline-success btn-call w-100" href="tel:<?= e(preg_replace('/[^0-9+]/', '', (string) $vet['phone'])) ?>">Call Vet: <?= e($vet['phone']) ?></a></div><?php endif; ?><?php if (!empty($vet['email'])): ?><div class="col-12"><a class="btn btn-outline-primary btn-call w-100" href="mailto:<?= e($vet['email']) ?>">Email Vet</a></div><?php endif; ?><?php if (!empty($vet['address_text'])): ?><div class="col-12"><div class="label">Address</div><div><?= nl2br(e($vet['address_text'])) ?></div></div><?php endif; ?><?php if (!empty($vet['notes'])): ?><div class="col-12"><div class="label">Vet notes</div><div><?= nl2br(e($vet['notes'])) ?></div></div><?php endif; ?></div></section>
     <?php endif; ?>
 
-    <section class="cardx mb-3">
-        <h2 class="h5 mb-3">Identification</h2>
-        <div class="row g-3">
-            <div class="col-12 col-md-6"><div class="label">Dog name</div><div class="value"><?= e($dogName) ?></div></div>
-            <div class="col-12 col-md-6"><div class="label">Breed</div><div class="value"><?= e($dog['breed'] ?? 'Not listed') ?></div></div>
-            <div class="col-12 col-md-6"><div class="label">Microchip number</div><div class="value"><?= $chipNumber ? e($chipNumber) : 'Not listed' ?></div></div>
-            <div class="col-12 col-md-6"><div class="label">Chip registry</div><div class="value"><?= $chipRegistry ? e($chipRegistry) : 'Not listed' ?></div></div>
-        </div>
-    </section>
+    <section class="cardx mb-3"><h2 class="h5 mb-3">Identification</h2><div class="row g-3"><div class="col-12 col-md-6"><div class="label">Dog name</div><div class="value"><?= e($dogName) ?></div></div><div class="col-12 col-md-6"><div class="label">Breed</div><div class="value"><?= e($dog['breed'] ?? 'Not listed') ?></div></div><div class="col-12 col-md-6"><div class="label">Microchip number</div><div class="value"><?= $chipNumber ? e($chipNumber) : 'Not listed' ?></div></div><div class="col-12 col-md-6"><div class="label">Chip registry</div><div class="value"><?= $chipRegistry ? e($chipRegistry) : 'Not listed' ?></div></div></div></section>
 
-    <?php if ($criticalAllergies): ?>
-        <section class="cardx mb-3 warning-note">
-            <h2 class="h5 mb-2">Critical Medical / Allergy Note</h2>
-            <div><?= nl2br(e($criticalAllergies)) ?></div>
-        </section>
-    <?php endif; ?>
+    <?php if ($criticalAllergies): ?><section class="cardx mb-3 warning-note"><h2 class="h5 mb-2">Critical Medical / Allergy Note</h2><div><?= nl2br(e($criticalAllergies)) ?></div></section><?php endif; ?>
+    <?php if ($tasks || $publicNotes): ?><section class="cardx mb-3"><h2 class="h5 mb-3">Public Notes</h2><?php if ($tasks): ?><div class="mb-3"><div class="label">Service tasks</div><div><?= nl2br(e($tasks)) ?></div></div><?php endif; ?><?php if ($publicNotes): ?><div><div class="label">Handler notes</div><div><?= nl2br(e($publicNotes)) ?></div></div><?php endif; ?></section><?php endif; ?>
 
-    <?php if ($tasks || $publicNotes): ?>
-        <section class="cardx mb-3">
-            <h2 class="h5 mb-3">Public Notes</h2>
-            <?php if ($tasks): ?><div class="mb-3"><div class="label">Service tasks</div><div><?= nl2br(e($tasks)) ?></div></div><?php endif; ?>
-            <?php if ($publicNotes): ?><div><div class="label">Handler notes</div><div><?= nl2br(e($publicNotes)) ?></div></div><?php endif; ?>
-        </section>
-    <?php endif; ?>
-
-    <section class="cardx small text-muted mb-3">
-        This public profile is intended to help return or identify a service dog and contact the handler or vet. It does not display private training logs, medical records, account data, or full app history.
-    </section>
+    <section class="cardx small text-muted mb-3">This public profile is intended to help return or identify a service dog and contact the handler or vet. It does not display private training logs, medical records, account data, or full app history.</section>
 </main>
 </body>
 </html>
