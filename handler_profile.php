@@ -35,6 +35,19 @@ function gpSafeProfileReturnTo(string $returnTo): string
     return $returnTo;
 }
 
+function gpProfileMissingLabelsVisible(array $labels): array
+{
+    return array_values(array_filter($labels, static function ($label): bool {
+        return !in_array((string) $label, ['Backup contact name', 'Backup contact phone'], true);
+    }));
+}
+
+function gpOptionalBackupDisplay(?string $value): string
+{
+    $value = trim((string) $value);
+    return $value === 'Not applicable' ? '' : $value;
+}
+
 gpEnsureHandlerProfileColumns($pdo);
 $userId = (int) $_SESSION['user_id'];
 $errors = [];
@@ -69,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=? WHERE id=?');
-        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName ?: null, $backupPhone ?: null, $publicNotes ?: null, $userId]);
+        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -88,10 +101,10 @@ $csrf = generateCsrfToken();
 $completionRequired = (($_GET['required'] ?? '') === '1') || !empty($_SESSION['handler_profile_required_missing']);
 $missingLabels = [];
 if (function_exists('gpMissingRequiredHandlerProfileFields')) {
-    $missingLabels = array_values(gpMissingRequiredHandlerProfileFields($user ?: []));
+    $missingLabels = gpProfileMissingLabelsVisible(array_values(gpMissingRequiredHandlerProfileFields($user ?: [])));
 }
 if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
-    $missingLabels = array_values((array) $_SESSION['handler_profile_required_missing']);
+    $missingLabels = gpProfileMissingLabelsVisible(array_values((array) $_SESSION['handler_profile_required_missing']));
 }
 ?>
 <!doctype html>
@@ -135,6 +148,8 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <ul>
                     <?php foreach ($missingLabels as $label): ?><li><?= e($label) ?></li><?php endforeach; ?>
                 </ul>
+            <?php else: ?>
+                <div class="small mt-2">Backup contacts are optional. Save the profile to continue.</div>
             <?php endif; ?>
         </div>
     <?php endif; ?>
@@ -172,8 +187,8 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
                 <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e($user['backup_contact_name'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e($user['backup_contact_phone'] ?? '') ?>"></div>
+                <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_name'] ?? '')) ?>"></div>
+                <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_phone'] ?? '')) ?>"></div>
                 <div class="col-12"><label class="form-label">Public Handler Notes</label><textarea name="public_notes" class="form-control" rows="4" placeholder="Optional public note, such as preferred contact method or return instructions."><?= e($user['public_notes'] ?? '') ?></textarea></div>
                 <div class="col-12"><button class="btn btn-primary w-100"><?= $completionRequired ? 'Save and Continue' : 'Save Handler Profile' ?></button></div>
             </form>
