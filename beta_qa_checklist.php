@@ -2,10 +2,17 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/beta_qa_checklist_items.php';
+$extraChecklistFile = __DIR__ . '/includes/beta_qa_checklist_extra_items.php';
+if (is_file($extraChecklistFile)) {
+    require_once $extraChecklistFile;
+}
 require_once 'includes/app_config.php';
 checkLogin();
 
 $sections = gpBetaQaChecklistItems();
+if (function_exists('gpBetaQaChecklistExtraItems')) {
+    $sections = array_merge($sections, gpBetaQaChecklistExtraItems());
+}
 $totalItems = 0;
 foreach ($sections as $section) {
     $totalItems += count($section['items'] ?? []);
