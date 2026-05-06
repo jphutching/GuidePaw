@@ -31,6 +31,12 @@ function gpFoundDogColumnExists(PDO $pdo, string $table, string $column): bool
     return (bool) $stmt->fetchColumn();
 }
 
+function gpFoundDogFlag(string $key, bool $fallback = false): bool
+{
+    $value = strtolower(trim((string) gpEnv($key, $fallback ? 'true' : 'false')));
+    return in_array($value, ['1', 'true', 'yes', 'on'], true);
+}
+
 function gpFoundDogFetchPublicDog(PDO $pdo, int $dogId): ?array
 {
     $possibleColumns = [
@@ -75,6 +81,65 @@ function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location): string
         return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lng);
     }
     return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location);
+}
+
+function gpFoundDogTelegramText(array $dog, array $report, string $mapUrl): string
+{
+    $dogName = (string) ($dog['name'] ?? 'Service Dog');
+    $location = (string) ($report['finder_location'] ?? 'Not provided');
+    $phone = (string) ($report['finder_phone'] ?? 'Not provided');
+    $name = trim((string) ($report['finder_name'] ?? ''));
+    $text = "🐾 Found dog location report\n\nDog: {$dogName}\nLocation: {$location}\nFinder phone: {$phone}";
+    if ($name !== '') {
+        $text .= "\nFinder: {$name}";
+    }
+    return $text . "\nMap: {$mapUrl}";
+}
+
+function gpSendFoundDogTelegram(array $dog, array $report, string $mapUrl): bool
+{
+    if (!gpFoundDogFlag('FOUND_DOG_NOTIFY_TELEGRAM_ENABLED', gpFoundDogFlag('BETA_NOTIFY_TELEGRAM_ENABLED', false))) {
+        return false;
+    }
+
+    $token = trim((string) gpEnv('TELEGRAM_BOT_TOKEN', ''));
+    $chatId = trim((string) gpEnv('TELEGRAM_CHAT_ID', ''));
+    if ($token === '' || $chatId === '') {
+        error_log('GuidePaw found dog Telegram enabled but TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.');
+        return false;
+    }
+
+    $payload = json_encode([
+        'chat_id' => $chatId,
+        'text' => gpFoundDogTelegramText($dog, $report, $mapUrl),
+        'disable_web_page_preview' => false,
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($payload === false) {
+        return false;
+    }
+
+    $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
+    if ($ch === false) {
+        return false;
+    }
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_HTTPHEADER => ['Accept: application/json', 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => $payload,
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($response === false || $httpCode < 200 || $httpCode >= 300) {
+        error_log('GuidePaw found dog Telegram notification failed: ' . ($curlError ?: ('HTTP ' . $httpCode . ' ' . substr((string) $response, 0, 300))));
+        return false;
+    }
+    return true;
 }
 
 function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
@@ -124,7 +189,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
         }
 
         $sent = false;
-        if (strtolower((string) gpEnv('FOUND_DOG_NOTIFY_EMAIL_ENABLED', 'true')) !== 'false') {
+        if (gpFoundDogFlag('FOUND_DOG_NOTIFY_EMAIL_ENABLED', true)) {
             foreach (array_keys($recipients) as $email) {
                 try {
                     $sent = gpSendMail($email, 'GuidePaw found dog location report: ' . $dogName, $body) || $sent;
@@ -133,6 +198,8 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
                 }
             }
         }
+
+        $sent = gpSendFoundDogTelegram($dog, $report, $mapUrl) || $sent;
 
         $stmt = $pdo->prepare('UPDATE found_dog_reports SET notification_sent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $stmt->execute([$sent ? 1 : 0, $reportId]);
