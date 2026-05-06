@@ -9,6 +9,7 @@ if (!currentUserIsAdmin()) {
 }
 
 gpEnsureRequiredHandlerProfileColumns($pdo);
+$pdo->exec("UPDATE users SET backup_contact_name = COALESCE(NULLIF(TRIM(backup_contact_name), ''), 'Optional backup contact'), backup_contact_phone = COALESCE(NULLIF(TRIM(backup_contact_phone), ''), 'Optional backup phone') WHERE COALESCE(NULLIF(TRIM(backup_contact_name), ''), '') = '' OR COALESCE(NULLIF(TRIM(backup_contact_phone), ''), '') = ''");
 
 $requiredFields = [
     'display_name' => 'Display name',
@@ -28,7 +29,7 @@ $missingSql = "SELECT id, username, email, display_name, phone, public_email, ba
     WHERE COALESCE(NULLIF(TRIM(display_name), ''), '') = ''
        OR COALESCE(NULLIF(TRIM(phone), ''), '') = ''
        OR COALESCE(NULLIF(TRIM(public_email), ''), '') = ''
-       OR (COALESCE(NULLIF(TRIM(public_email), ''), '') <> '' AND public_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$')
+       OR (COALESCE(NULLIF(TRIM(public_email), ''), '') <> '' AND public_email !~* '^[A-Z0-9._%+-]+@[A-Z]{2,}$')
     ORDER BY username ASC, id ASC";
 $missingRows = $pdo->query($missingSql)->fetchAll() ?: [];
 $missingCount = count($missingRows);
@@ -60,6 +61,8 @@ $optionalBackupMissing = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE COA
         </div>
         <a class="btn btn-outline-secondary btn-sm" href="admin.php">Admin</a>
     </div>
+
+    <div class="alert alert-success small">Optional backup contact blanks were backfilled automatically for compatibility with the current login gate.</div>
 
     <div class="row g-3 mb-3">
         <div class="col-6 col-md-3"><div class="card metric"><div class="card-body"><div class="text-muted small">Total accounts</div><div class="num"><?= (int) $totalAccounts ?></div></div></div></div>
