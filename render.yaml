@@ -88,7 +88,13 @@ projects:
                 value: "true"
 
               - key: BETA_NOTIFY_TELEGRAM_ENABLED
-                value: "false"
+                value: "true"
+
+              - key: FOUND_DOG_NOTIFY_EMAIL_ENABLED
+                value: "true"
+
+              - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
+                value: "true"
 
               # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID directly in Render Environment.
               # Do not commit real Telegram tokens to Git.
