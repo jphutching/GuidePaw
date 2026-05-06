@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/db_connect.php';
 require_once 'includes/public_dog_profile_token.php';
+require_once 'includes/public_contact_defaults.php';
 require_once 'includes/app_config.php';
 
 $dogId = isset($_GET['dog']) ? (int) $_GET['dog'] : 0;
@@ -45,13 +46,9 @@ if (!$dog) {
     exit;
 }
 
-$user = null;
-$ownerId = !empty($dog['owner_user_id']) ? (int) $dog['owner_user_id'] : (!empty($dog['user_id']) ? (int) $dog['user_id'] : 0);
-if ($ownerId > 0) {
-    $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? LIMIT 1');
-    $stmt->execute([$ownerId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-}
+$ownerId = gpDogOwnerIdFromPublicDog($dog);
+$user = $ownerId > 0 ? gpFetchUserPublicContact($pdo, $ownerId) : [];
+$publicContact = gpDogPublicContactDefaults($pdo, $dog, $user);
 
 $vet = null;
 try {
@@ -63,17 +60,17 @@ try {
 }
 
 $dogName = $dog['name'] ?? 'Service Dog';
-$handlerName = $dog['handler_name'] ?? ($user['username'] ?? 'Handler');
-$handlerEmail = $dog['handler_email'] ?? ($user['email'] ?? '');
-$handlerPhone = $dog['handler_phone'] ?? '';
-$backupName = $dog['backup_contact_name'] ?? '';
-$backupPhone = $dog['backup_contact_phone'] ?? '';
+$handlerName = $publicContact['handler_name'] ?? 'Handler';
+$handlerEmail = $publicContact['handler_email'] ?? '';
+$handlerPhone = $publicContact['handler_phone'] ?? '';
+$backupName = $publicContact['backup_contact_name'] ?? '';
+$backupPhone = $publicContact['backup_contact_phone'] ?? '';
 $chipNumber = $dog['chip_number'] ?? ($dog['microchip_id'] ?? '');
 $chipRegistry = $dog['chip_registry'] ?? ($dog['microchip_registry'] ?? '');
 $dogPhoto = $dog['profile_photo_url'] ?? ($dog['photo_url'] ?? '');
-$handlerPhoto = $dog['handler_photo_url'] ?? '';
+$handlerPhoto = $publicContact['handler_photo_url'] ?? '';
 $tasks = $dog['service_tasks'] ?? '';
-$publicNotes = $dog['public_notes'] ?? ($dog['emergency_notes'] ?? '');
+$publicNotes = $publicContact['public_notes'] ?? '';
 $foundInstructions = $dog['found_dog_instructions'] ?? '';
 $criticalAllergies = $dog['critical_allergies'] ?? ($dog['medical_alert_notes'] ?? '');
 $reportUrl = 'report_found_dog.php?dog=' . (int) $dogId . '&token=' . rawurlencode($token);
@@ -96,6 +93,7 @@ body { background: #f1f5f9; color:#0f172a; }
 .btn-call { border-radius:16px; padding:.85rem 1rem; font-weight:800; }
 .warning-note { border-left: 4px solid #dc3545; background:#fff5f5; border-radius:14px; padding:.85rem; }
 .found-card { border: 1px solid #bfdbfe; background: #eff6ff; }
+.inherited-hint { font-size:.78rem; color:#64748b; margin-top:.35rem; }
 </style>
 </head>
 <body>
@@ -134,7 +132,13 @@ body { background: #f1f5f9; color:#0f172a; }
             <?php if ($handlerPhoto): ?>
                 <img src="<?= e($handlerPhoto) ?>" alt="<?= e($handlerName) ?>" style="width:72px;height:72px;border-radius:18px;object-fit:cover;">
             <?php endif; ?>
-            <div><div class="label">Handler</div><div class="value"><?= e($handlerName) ?></div></div>
+            <div>
+                <div class="label">Handler</div>
+                <div class="value"><?= e($handlerName) ?></div>
+                <?php if (($publicContact['handler_email_source'] ?? '') === 'handler_profile' || ($publicContact['handler_phone_source'] ?? '') === 'handler_profile'): ?>
+                    <div class="inherited-hint">Using handler profile defaults.</div>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="d-grid gap-2">
             <?php if ($handlerPhone): ?><a class="btn btn-success btn-call" href="tel:<?= e(preg_replace('/[^0-9+]/', '', $handlerPhone)) ?>">Call Handler</a><?php endif; ?>
