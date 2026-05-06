@@ -10,6 +10,19 @@ if (!function_exists('guidepawFormUx')) {
             'roadmap_updated' => 'Roadmap item updated successfully.',
         ];
 
+        $currentPage = basename(parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '');
+        $dogAccessExpiryPages = ['dogs.php', 'dog_access.php', 'dog_access_audit.php'];
+        $expiredSharedDogAccess = 0;
+        if (in_array($currentPage, $dogAccessExpiryPages, true) && empty($_GET['shared_access_expired']) && isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+            $expiryHelper = __DIR__ . '/dog_access_expiry.php';
+            if (is_file($expiryHelper)) {
+                require_once $expiryHelper;
+                if (function_exists('gpExpireDogHandlerAccess')) {
+                    $expiredSharedDogAccess = gpExpireDogHandlerAccess($GLOBALS['pdo']);
+                }
+            }
+        }
+
         $msgKey = $_GET['msg'] ?? '';
         $message = $messages[$msgKey] ?? '';
 
@@ -27,6 +40,16 @@ if (!function_exists('guidepawFormUx')) {
 
         if ($message !== '') {
             echo '<div class="gp-form-toast">✅ ' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</div>';
+        }
+
+        if ($expiredSharedDogAccess > 0) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? '';
+            $uri = $_SERVER['REQUEST_URI'] ?? $currentPage;
+            $separator = str_contains($uri, '?') ? '&' : '?';
+            $reloadUrl = ($host !== '' ? $scheme . '://' . $host : '') . $uri . $separator . 'shared_access_expired=1';
+            echo '<div class="gp-form-toast">🔒 Expired shared dog access was cleaned up. Refreshing…</div>';
+            echo '<script>window.setTimeout(function(){ window.location.replace(' . json_encode($reloadUrl) . '); }, 250);</script>';
         }
 
         echo '
