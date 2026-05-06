@@ -148,6 +148,19 @@ if (!function_exists('guidepawFormUx')) {
         if (!nameEl) return;
         nameEl.classList.add("gp-dog-name-large");
 
+        const profileLink = row.querySelector("a[href*=\"dog_profile.php?dog_id=\"]");
+        const actionWrap = profileLink ? profileLink.parentElement : null;
+        if (profileLink && actionWrap && !actionWrap.querySelector("a[href*=\"dog_access.php\"]")) {
+            const match = profileLink.getAttribute("href").match(/dog_id=(\d+)/);
+            if (match) {
+                const accessLink = document.createElement("a");
+                accessLink.href = "dog_access.php?dog_id=" + match[1];
+                accessLink.className = "btn btn-outline-success btn-sm";
+                accessLink.textContent = "Access";
+                actionWrap.appendChild(accessLink);
+            }
+        }
+
         const activeBadge = nameEl.querySelector(".badge");
         if (activeBadge && activeBadge.textContent.trim().toLowerCase() === "active") {
             row.classList.add("gp-active-dog-row");
