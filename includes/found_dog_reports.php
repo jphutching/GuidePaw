@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/smtp_mailer.php';
+require_once __DIR__ . '/public_contact_defaults.php';
 
 function gpEnsureFoundDogReportsTable(PDO $pdo): void
 {
@@ -26,9 +27,7 @@ function gpEnsureFoundDogReportsTable(PDO $pdo): void
 
 function gpFoundDogColumnExists(PDO $pdo, string $table, string $column): bool
 {
-    $stmt = $pdo->prepare("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? AND column_name = ? LIMIT 1");
-    $stmt->execute([$table, $column]);
-    return (bool) $stmt->fetchColumn();
+    return gpPublicContactColumnExists($pdo, $table, $column);
 }
 
 function gpFoundDogFlag(string $key, bool $fallback = false): bool
@@ -43,7 +42,7 @@ function gpFoundDogFetchPublicDog(PDO $pdo, int $dogId): ?array
         'id', 'user_id', 'owner_user_id', 'name', 'breed', 'access_role', 'chip_number', 'microchip_id',
         'chip_registry', 'microchip_registry', 'handler_name', 'handler_phone', 'handler_email',
         'backup_contact_name', 'backup_contact_phone', 'found_dog_instructions', 'profile_photo_url',
-        'photo_url', 'handler_photo_url'
+        'photo_url', 'handler_photo_url', 'public_notes', 'emergency_notes'
     ];
     $columns = [];
     foreach ($possibleColumns as $column) {
@@ -59,19 +58,11 @@ function gpFoundDogFetchPublicDog(PDO $pdo, int $dogId): ?array
         return null;
     }
 
-    $ownerId = !empty($dog['owner_user_id']) ? (int) $dog['owner_user_id'] : (!empty($dog['user_id']) ? (int) $dog['user_id'] : 0);
-    if ($ownerId > 0) {
-        try {
-            $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? LIMIT 1');
-            $stmt->execute([$ownerId]);
-            $owner = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-            $dog['owner_username'] = $owner['username'] ?? '';
-            $dog['owner_email'] = $owner['email'] ?? '';
-        } catch (Throwable $e) {
-            $dog['owner_username'] = '';
-            $dog['owner_email'] = '';
-        }
-    }
+    $owner = gpFetchUserPublicContact($pdo, gpDogOwnerIdFromPublicDog($dog));
+    $dog['owner_username'] = $owner['username'] ?? '';
+    $dog['owner_email'] = $owner['email'] ?? '';
+    $dog['_owner_public_contact'] = $owner;
+    $dog['_public_contact_defaults'] = gpDogPublicContactDefaults($pdo, $dog, $owner);
     return $dog;
 }
 
@@ -85,13 +76,18 @@ function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location): string
 
 function gpFoundDogTelegramText(array $dog, array $report, string $mapUrl): string
 {
+    $contact = $dog['_public_contact_defaults'] ?? [];
     $dogName = (string) ($dog['name'] ?? 'Service Dog');
     $location = (string) ($report['finder_location'] ?? 'Not provided');
     $phone = (string) ($report['finder_phone'] ?? 'Not provided');
     $name = trim((string) ($report['finder_name'] ?? ''));
+    $handler = trim((string) ($contact['handler_name'] ?? ''));
     $text = "🐾 Found dog location report\n\nDog: {$dogName}\nLocation: {$location}\nFinder phone: {$phone}";
     if ($name !== '') {
         $text .= "\nFinder: {$name}";
+    }
+    if ($handler !== '') {
+        $text .= "\nHandler: {$handler}";
     }
     return $text . "\nMap: {$mapUrl}";
 }
@@ -157,6 +153,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
             return false;
         }
 
+        $contact = $dog['_public_contact_defaults'] ?? gpDogPublicContactDefaults($pdo, $dog);
         $dogName = (string) ($dog['name'] ?? 'Service Dog');
         $location = (string) ($report['finder_location'] ?? 'Not provided');
         $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
@@ -167,6 +164,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
         $message = trim((string) ($report['finder_message'] ?? ''));
 
         $body = "A location report was submitted for {$dogName}.\n\n" .
+            "Handler: " . (string) ($contact['handler_name'] ?? 'Not provided') . "\n" .
             "Location / cross street: {$location}\n" .
             "Map: {$mapUrl}\n";
         if ($lat !== '' && $lng !== '') {
@@ -181,7 +179,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
         $body .= "\nReview reports: {$adminUrl}\n\nGuidePaw found dog notification\n";
 
         $recipients = [];
-        foreach ([$dog['handler_email'] ?? '', $dog['owner_email'] ?? '', gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'))] as $email) {
+        foreach ([$contact['handler_email'] ?? '', $dog['owner_email'] ?? '', gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'))] as $email) {
             $email = trim((string) $email);
             if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $recipients[$email] = true;
