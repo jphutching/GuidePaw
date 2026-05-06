@@ -66,16 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($publicEmail !== '' && !filter_var($publicEmail, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Public email must be valid.';
     }
-    if ($backupName === '') {
-        $errors[] = 'Backup contact name is required.';
-    }
-    if ($backupPhone === '') {
-        $errors[] = 'Backup contact phone is required.';
-    }
 
     if (!$errors) {
         $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=? WHERE id=?');
-        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName, $backupPhone, $publicNotes ?: null, $userId]);
+        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName ?: null, $backupPhone ?: null, $publicNotes ?: null, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -116,6 +110,7 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 .required-note{border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:16px;padding:1rem;}
 .required-note ul{margin-bottom:0;}
 .req{color:#dc2626;font-weight:900;}
+.opt{color:#64748b;font-size:.82rem;font-weight:700;}
 </style>
 </head>
 <body class="pb-5 bg-light">
@@ -177,8 +172,8 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
                 <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="req">*</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e($user['backup_contact_name'] ?? '') ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="req">*</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e($user['backup_contact_phone'] ?? '') ?>" required></div>
+                <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e($user['backup_contact_name'] ?? '') ?>"></div>
+                <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e($user['backup_contact_phone'] ?? '') ?>"></div>
                 <div class="col-12"><label class="form-label">Public Handler Notes</label><textarea name="public_notes" class="form-control" rows="4" placeholder="Optional public note, such as preferred contact method or return instructions."><?= e($user['public_notes'] ?? '') ?></textarea></div>
                 <div class="col-12"><button class="btn btn-primary w-100"><?= $completionRequired ? 'Save and Continue' : 'Save Handler Profile' ?></button></div>
             </form>
