@@ -84,6 +84,138 @@ function logoutSessionState(): void {
     }
 }
 
+function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+
+    $columns = [
+        'display_name' => 'TEXT',
+        'phone' => 'TEXT',
+        'public_email' => 'TEXT',
+        'profile_photo_url' => 'TEXT',
+        'backup_contact_name' => 'TEXT',
+        'backup_contact_phone' => 'TEXT',
+        'public_notes' => 'TEXT',
+    ];
+    foreach ($columns as $column => $type) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS ' . $column . ' ' . $type);
+    }
+
+    $ensured = true;
+}
+
+function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
+    static $backfilled = false;
+    if ($backfilled) {
+        return;
+    }
+    gpEnsureRequiredHandlerProfileColumns($pdo);
+
+    $rows = [
+        [
+            'usernames' => ['admin'],
+            'display_name' => 'GuidePaw Admin',
+            'phone' => '555-0100',
+            'public_email' => 'admin@guidepaw.app',
+            'backup_contact_name' => 'GuidePaw Backup Contact',
+            'backup_contact_phone' => '555-0101',
+            'public_notes' => 'Generic beta admin contact profile. Update before production use.',
+        ],
+        [
+            'usernames' => ['test acct', 'test_acct', 'test account', 'test'],
+            'display_name' => 'Test Handler',
+            'phone' => '555-0102',
+            'public_email' => 'test@example.com',
+            'backup_contact_name' => 'Test Backup Contact',
+            'backup_contact_phone' => '555-0103',
+            'public_notes' => 'Generic beta test contact profile. Update before production use.',
+        ],
+    ];
+
+    $stmt = $pdo->prepare("UPDATE users
+        SET
+            display_name = COALESCE(NULLIF(display_name, ''), ?),
+            phone = COALESCE(NULLIF(phone, ''), ?),
+            public_email = COALESCE(NULLIF(public_email, ''), NULLIF(email, ''), ?),
+            backup_contact_name = COALESCE(NULLIF(backup_contact_name, ''), ?),
+            backup_contact_phone = COALESCE(NULLIF(backup_contact_phone, ''), ?),
+            public_notes = COALESCE(NULLIF(public_notes, ''), ?)
+        WHERE lower(username) = ANY(?)
+    ");
+
+    foreach ($rows as $row) {
+        $stmt->execute([
+            $row['display_name'],
+            $row['phone'],
+            $row['public_email'],
+            $row['backup_contact_name'],
+            $row['backup_contact_phone'],
+            $row['public_notes'],
+            '{' . implode(',', array_map(static fn($v) => '"' . str_replace('"', '\\"', strtolower($v)) . '"', $row['usernames'])) . '}',
+        ]);
+    }
+
+    $backfilled = true;
+}
+
+function gpRequiredHandlerProfileFields(): array {
+    return [
+        'display_name' => 'Display name',
+        'phone' => 'Public phone',
+        'public_email' => 'Public email',
+        'backup_contact_name' => 'Backup contact name',
+        'backup_contact_phone' => 'Backup contact phone',
+    ];
+}
+
+function gpMissingRequiredHandlerProfileFields(array $user): array {
+    $missing = [];
+    foreach (gpRequiredHandlerProfileFields() as $field => $label) {
+        if (trim((string) ($user[$field] ?? '')) === '') {
+            $missing[$field] = $label;
+        }
+    }
+    if (!empty($user['public_email']) && !filter_var((string) $user['public_email'], FILTER_VALIDATE_EMAIL)) {
+        $missing['public_email'] = 'Valid public email';
+    }
+    return $missing;
+}
+
+function gpCurrentPageName(): string {
+    $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    return basename($path) ?: 'index.php';
+}
+
+function gpProfileCompletionGateAllowedPage(): bool {
+    $allowed = [
+        'handler_profile.php',
+        'logout.php',
+        'login.php',
+        'register.php',
+        'forgot_password.php',
+        'reset_password.php',
+    ];
+    return in_array(gpCurrentPageName(), $allowed, true);
+}
+
+function gpEnforceHandlerProfileCompletion(PDO $pdo, array $user): void {
+    if (gpProfileCompletionGateAllowedPage()) {
+        return;
+    }
+
+    $missing = gpMissingRequiredHandlerProfileFields($user);
+    if (!$missing) {
+        return;
+    }
+
+    $_SESSION['handler_profile_required_missing'] = array_values($missing);
+    $returnTo = $_SERVER['REQUEST_URI'] ?? 'index.php';
+    header('Location: handler_profile.php?required=1&return_to=' . rawurlencode((string) $returnTo));
+    exit;
+}
+
 function checkLogin(): void {
     if (empty($_SESSION['user_id'])) {
         redirectToAuth();
@@ -94,6 +226,8 @@ function checkLogin(): void {
         logoutSessionState();
         redirectToAuth('session_invalid');
     }
+
+    gpBackfillKnownRequiredHandlerProfiles($GLOBALS['pdo']);
 
     $user = getUserRecord($GLOBALS['pdo'], $userId);
     if (!$user) {
@@ -110,6 +244,8 @@ function checkLogin(): void {
     $_SESSION['dog_name'] = $user['dog_name'] ?? '';
     $_SESSION['username'] = $user['username'] ?? '';
     $_SESSION['is_admin'] = !empty($user['is_admin']) ? 1 : 0;
+
+    gpEnforceHandlerProfileCompletion($GLOBALS['pdo'], $user);
 }
 
 function e($value): string {
