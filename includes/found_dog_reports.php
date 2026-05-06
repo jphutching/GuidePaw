@@ -1,0 +1,144 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/smtp_mailer.php';
+
+function gpEnsureFoundDogReportsTable(PDO $pdo): void
+{
+    $pdo->exec("CREATE TABLE IF NOT EXISTS found_dog_reports (
+        id SERIAL PRIMARY KEY,
+        dog_id INTEGER NOT NULL REFERENCES dogs(id) ON DELETE CASCADE,
+        finder_location TEXT,
+        finder_latitude DECIMAL(10,7),
+        finder_longitude DECIMAL(10,7),
+        finder_accuracy_m INTEGER,
+        finder_name TEXT,
+        finder_phone TEXT,
+        finder_message TEXT,
+        status TEXT NOT NULL DEFAULT 'new',
+        ip_hash TEXT,
+        user_agent TEXT,
+        notification_sent BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )");
+}
+
+function gpFoundDogColumnExists(PDO $pdo, string $table, string $column): bool
+{
+    $stmt = $pdo->prepare("SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? AND column_name = ? LIMIT 1");
+    $stmt->execute([$table, $column]);
+    return (bool) $stmt->fetchColumn();
+}
+
+function gpFoundDogFetchPublicDog(PDO $pdo, int $dogId): ?array
+{
+    $possibleColumns = [
+        'id', 'user_id', 'owner_user_id', 'name', 'breed', 'access_role', 'chip_number', 'microchip_id',
+        'chip_registry', 'microchip_registry', 'handler_name', 'handler_phone', 'handler_email',
+        'backup_contact_name', 'backup_contact_phone', 'found_dog_instructions', 'profile_photo_url',
+        'photo_url', 'handler_photo_url'
+    ];
+    $columns = [];
+    foreach ($possibleColumns as $column) {
+        if ($column === 'id' || gpFoundDogColumnExists($pdo, 'dogs', $column)) {
+            $columns[] = $column;
+        }
+    }
+    $sql = 'SELECT ' . implode(', ', array_map(static fn($c) => '"' . str_replace('"', '""', $c) . '"', $columns ?: ['id'])) . ' FROM dogs WHERE id = ? LIMIT 1';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$dogId]);
+    $dog = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$dog) {
+        return null;
+    }
+
+    $ownerId = !empty($dog['owner_user_id']) ? (int) $dog['owner_user_id'] : (!empty($dog['user_id']) ? (int) $dog['user_id'] : 0);
+    if ($ownerId > 0) {
+        try {
+            $stmt = $pdo->prepare('SELECT username, email FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([$ownerId]);
+            $owner = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $dog['owner_username'] = $owner['username'] ?? '';
+            $dog['owner_email'] = $owner['email'] ?? '';
+        } catch (Throwable $e) {
+            $dog['owner_username'] = '';
+            $dog['owner_email'] = '';
+        }
+    }
+    return $dog;
+}
+
+function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location): string
+{
+    if ($lat !== null && $lat !== '' && $lng !== null && $lng !== '') {
+        return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lng);
+    }
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location);
+}
+
+function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
+{
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM found_dog_reports WHERE id = ? LIMIT 1');
+        $stmt->execute([$reportId]);
+        $report = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$report) {
+            return false;
+        }
+
+        $dog = gpFoundDogFetchPublicDog($pdo, (int) $report['dog_id']);
+        if (!$dog) {
+            return false;
+        }
+
+        $dogName = (string) ($dog['name'] ?? 'Service Dog');
+        $location = (string) ($report['finder_location'] ?? 'Not provided');
+        $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
+        $lng = isset($report['finder_longitude']) ? (string) $report['finder_longitude'] : '';
+        $accuracy = (string) ($report['finder_accuracy_m'] ?? '');
+        $mapUrl = gpFoundDogMapUrl($lat, $lng, $location);
+        $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_found_dog_reports.php';
+        $message = trim((string) ($report['finder_message'] ?? ''));
+
+        $body = "A location report was submitted for {$dogName}.\n\n" .
+            "Location / cross street: {$location}\n" .
+            "Map: {$mapUrl}\n";
+        if ($lat !== '' && $lng !== '') {
+            $body .= "GPS: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
+        }
+        $body .= "\nFinder name: " . (string) ($report['finder_name'] ?? 'Not provided') . "\n" .
+            "Finder phone: " . (string) ($report['finder_phone'] ?? 'Not provided') . "\n" .
+            "Submitted: " . (string) ($report['created_at'] ?? date('Y-m-d H:i:s')) . "\n";
+        if ($message !== '') {
+            $body .= "\nMessage:\n{$message}\n";
+        }
+        $body .= "\nReview reports: {$adminUrl}\n\nGuidePaw found dog notification\n";
+
+        $recipients = [];
+        foreach ([$dog['handler_email'] ?? '', $dog['owner_email'] ?? '', gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'))] as $email) {
+            $email = trim((string) $email);
+            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $recipients[$email] = true;
+            }
+        }
+
+        $sent = false;
+        if (strtolower((string) gpEnv('FOUND_DOG_NOTIFY_EMAIL_ENABLED', 'true')) !== 'false') {
+            foreach (array_keys($recipients) as $email) {
+                try {
+                    $sent = gpSendMail($email, 'GuidePaw found dog location report: ' . $dogName, $body) || $sent;
+                } catch (Throwable $e) {
+                    error_log('GuidePaw found dog email notification failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        $stmt = $pdo->prepare('UPDATE found_dog_reports SET notification_sent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $stmt->execute([$sent ? 1 : 0, $reportId]);
+        return $sent;
+    } catch (Throwable $e) {
+        error_log('GuidePaw found dog notification failed: ' . $e->getMessage());
+        return false;
+    }
+}
