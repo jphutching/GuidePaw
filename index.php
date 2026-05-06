@@ -2,6 +2,7 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once 'includes/app_config.php';
 checkLogin();
 
@@ -16,7 +17,8 @@ $dogs = getAccessibleDogs($pdo, $userId);
 $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
-$attentionCount = count($activeAlerts) + count($upcomingReminders);
+$incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -79,6 +81,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders);
     </div>
     <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
 
+    <?php gpDashboardRenderDogTransferAlerts($incomingDogTransfers); ?>
+
     <?php if ($dogs): ?>
         <section class="card command-card mb-3">
             <div class="card-body">
@@ -134,8 +138,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders);
                 </div>
             </div>
 
-            <?php if (!$activeAlerts && !$upcomingReminders): ?>
-                <div class="attention-empty">✅ No active alerts or upcoming vet reminders right now.</div>
+            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers): ?>
+                <div class="attention-empty">✅ No active alerts, transfer requests, or upcoming vet reminders right now.</div>
             <?php endif; ?>
 
             <?php if ($activeAlerts): ?>
