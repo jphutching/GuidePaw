@@ -46,6 +46,41 @@ if (!function_exists('guidepawFormUx')) {
     font-weight: 800;
     box-shadow: 0 8px 18px rgba(0,0,0,.12);
 }
+.gp-dog-name-large {
+    display: inline-block;
+    font-size: clamp(1.35rem, 5vw, 2rem);
+    line-height: 1.12;
+    font-weight: 900;
+    letter-spacing: -.02em;
+}
+.gp-active-dog-row {
+    border: 2px solid #0d6efd !important;
+    background: linear-gradient(90deg, rgba(13,110,253,.14), rgba(34,197,94,.08)) !important;
+    box-shadow: 0 8px 20px rgba(13,110,253,.14);
+}
+.gp-active-dog-row .gp-dog-name-large {
+    font-size: clamp(1.65rem, 6.2vw, 2.35rem);
+}
+.gp-active-dog-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    border-radius: 999px;
+    padding: .32rem .6rem;
+    background: #0d6efd;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+.gp-active-profile-note {
+    margin-top: .35rem;
+    color: #0f5132;
+    font-size: .9rem;
+    font-weight: 800;
+}
 </style>';
 
         if ($message !== '') {
@@ -105,13 +140,35 @@ if (!function_exists('guidepawFormUx')) {
     if (!/\/dogs\.php$/.test(window.location.pathname)) return;
     if (document.querySelector(".alert-danger")) return;
 
+    const dogRows = Array.from(document.querySelectorAll(".col-lg-7 .list-group > .list-group-item"));
+    const dogCount = dogRows.length;
+
+    dogRows.forEach(function (row) {
+        const nameEl = row.querySelector(".fw-semibold");
+        if (!nameEl) return;
+        nameEl.classList.add("gp-dog-name-large");
+
+        const activeBadge = nameEl.querySelector(".badge");
+        if (activeBadge && activeBadge.textContent.trim().toLowerCase() === "active") {
+            row.classList.add("gp-active-dog-row");
+            activeBadge.className = "gp-active-dog-badge";
+            activeBadge.textContent = "Active Profile";
+
+            if (!row.querySelector(".gp-active-profile-note")) {
+                const note = document.createElement("div");
+                note.className = "gp-active-profile-note";
+                note.textContent = "GuidePaw is currently using this dog profile.";
+                nameEl.insertAdjacentElement("afterend", note);
+            }
+        }
+    });
+
     const addAction = document.querySelector("form input[name=\"action\"][value=\"add_dog\"]");
     if (!addAction) return;
 
     const addForm = addAction.closest("form");
     const cardBody = addForm ? addForm.closest(".card-body") : null;
     const cardTitle = cardBody ? cardBody.querySelector(".card-title") : null;
-    const dogCount = document.querySelectorAll(".col-lg-7 .list-group > .list-group-item").length;
 
     if (!addForm || !cardBody || !cardTitle || dogCount < 1) return;
 
