@@ -58,6 +58,26 @@ function gpDogAccessFindUser(PDO $pdo, string $identity): ?array
 function gpDogAccessOwnerOnly(array $dog, int $userId): bool { return (int) ($dog['owner_user_id'] ?? 0) === $userId; }
 function gpDogAccessCanEdit(PDO $pdo, array $dog, int $userId): bool { return gpDogAccessOwnerOnly($dog, $userId) || userCanEditDog($pdo, $userId, (int) $dog['id']); }
 function gpDogAccessStatusLabels(): array { return ['active'=>'Active','in_training'=>'In training','retired'=>'Retired','archived'=>'Archived','deceased'=>'Deceased','transferred'=>'Transferred']; }
+function gpDogAccessCurrentStatuses(): array { return ['active', 'in_training']; }
+
+function gpDogAccessSelectReplacementActiveDog(PDO $pdo, int $userId, int $excludeDogId = 0): void
+{
+    $stmt = $pdo->prepare("SELECT DISTINCT d.id
+        FROM dogs d
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        WHERE (d.owner_user_id = ? OR dh.id IS NOT NULL)
+          AND d.id <> ?
+          AND COALESCE(NULLIF(d.lifecycle_status, ''), 'active') IN ('active', 'in_training')
+        ORDER BY d.name ASC, d.id ASC
+        LIMIT 1");
+    $stmt->execute([$userId, $userId, $excludeDogId]);
+    $replacement = (int) ($stmt->fetchColumn() ?: 0);
+    if ($replacement > 0) {
+        $_SESSION['active_dog_id'] = $replacement;
+    } else {
+        unset($_SESSION['active_dog_id']);
+    }
+}
 
 function gpDogAccessFetchHandlers(PDO $pdo, int $dogId): array
 {
@@ -134,8 +154,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newStatus = $_POST['lifecycle_status'] ?? 'active';
             if (!in_array($newStatus, $allowed, true)) $newStatus = 'active';
             $note = cleanTextarea($_POST['lifecycle_note'] ?? '', 1200);
-            $stmt = $pdo->prepare("UPDATE dogs SET lifecycle_status = ?, lifecycle_note = ?, retired_at = CASE WHEN ? IN ('retired','archived','deceased') THEN COALESCE(retired_at, CURRENT_TIMESTAMP) ELSE NULL END WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE dogs SET lifecycle_status = ?, lifecycle_note = ?, retired_at = CASE WHEN ? IN ('retired','archived','deceased','transferred') THEN COALESCE(retired_at, CURRENT_TIMESTAMP) ELSE NULL END WHERE id = ?");
             $stmt->execute([$newStatus, $note ?: null, $newStatus, $dogId]);
+            if (!in_array($newStatus, gpDogAccessCurrentStatuses(), true) && (int)($_SESSION['active_dog_id'] ?? 0) === $dogId) {
+                gpDogAccessSelectReplacementActiveDog($pdo, $userId, $dogId);
+            }
             header('Location: dog_access.php?dog_id=' . $dogId . '&status=dog_status_updated');
             exit;
         }
