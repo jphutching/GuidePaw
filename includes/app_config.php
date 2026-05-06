@@ -17,6 +17,12 @@ function appEnv(string $key, ?string $default = null): ?string {
     return $default;
 }
 
+if (!function_exists('gpEnv')) {
+    function gpEnv(string $key, ?string $fallback = null): ?string {
+        return appEnv($key, $fallback);
+    }
+}
+
 function appName(): string {
     return appEnv('APP_NAME', 'GuidePaw Beta');
 }
