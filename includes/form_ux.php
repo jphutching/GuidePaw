@@ -81,6 +81,27 @@ if (!function_exists('guidepawFormUx')) {
     font-size: .9rem;
     font-weight: 800;
 }
+.gp-dog-row-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .45rem;
+}
+.gp-dog-row-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: .28rem .55rem;
+    font-size: .76rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+    border: 1px solid transparent;
+}
+.gp-dog-row-badge.owner { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.gp-dog-row-badge.shared { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+.gp-dog-row-badge.editor { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.gp-dog-row-badge.viewer { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+.gp-dog-row-badge.status { background: #fefce8; color: #854d0e; border-color: #fde68a; }
 </style>';
 
         if ($message !== '') {
@@ -143,8 +164,16 @@ if (!function_exists('guidepawFormUx')) {
     const dogRows = Array.from(document.querySelectorAll(".col-lg-7 .list-group > .list-group-item"));
     const dogCount = dogRows.length;
 
+    function makeBadge(text, kind) {
+        const badge = document.createElement("span");
+        badge.className = "gp-dog-row-badge " + kind;
+        badge.textContent = text;
+        return badge;
+    }
+
     dogRows.forEach(function (row) {
         const nameEl = row.querySelector(".fw-semibold");
+        const metaEl = row.querySelector(".small.text-muted");
         if (!nameEl) return;
         nameEl.classList.add("gp-dog-name-large");
 
@@ -159,6 +188,29 @@ if (!function_exists('guidepawFormUx')) {
                 accessLink.textContent = "Access";
                 actionWrap.appendChild(accessLink);
             }
+        }
+
+        if (metaEl && !row.querySelector(".gp-dog-row-badges")) {
+            const metaText = metaEl.textContent.toLowerCase();
+            const badges = document.createElement("div");
+            badges.className = "gp-dog-row-badges";
+
+            if (metaText.includes("owner:")) {
+                badges.appendChild(makeBadge("Shared with you", "shared"));
+            } else {
+                badges.appendChild(makeBadge("Owner", "owner"));
+            }
+
+            if (metaText.includes("editor")) {
+                badges.appendChild(makeBadge("Editor access", "editor"));
+            } else if (metaText.includes("viewer")) {
+                badges.appendChild(makeBadge("Viewer access", "viewer"));
+            } else if (metaText.includes("owner")) {
+                badges.appendChild(makeBadge("Full control", "owner"));
+            }
+
+            badges.appendChild(makeBadge("Status in Access", "status"));
+            metaEl.insertAdjacentElement("afterend", badges);
         }
 
         const activeBadge = nameEl.querySelector(".badge");
