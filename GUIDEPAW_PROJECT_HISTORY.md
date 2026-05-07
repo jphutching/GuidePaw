@@ -1,6 +1,6 @@
 # GuidePaw Project History / Handoff
 
-Last updated: 2026-05-06
+Last updated: 2026-05-07
 
 This file is the durable project memory for GuidePaw. Use it before starting or resuming work so the project can continue without backtracking when a chat gets long, scattered, or sidetracked.
 
@@ -9,7 +9,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 1. Read this file before starting a new GuidePaw coding session.
 2. Check **Current status**, **In progress**, **Known issues**, and **Next recommended work**.
 3. Update this file after meaningful changes, especially if code is committed, a workflow changes, a bug is found, or testing reveals a blocker.
-4. Do not store secrets, passwords, API tokens, private bot tokens, or database credentials in this file.
+4. Do not store secrets, passwords, API tokens, private bot tokens, SMS provider secrets, or database credentials in this file.
 5. Historical chat exports can be used for reference, but the current GitHub repository is the source of truth for code.
 
 ## Project source of truth
@@ -24,12 +24,13 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Render PostgreSQL database plan should remain `basic-256mb`.
 - Email provider: Zoho ZeptoMail API.
 - Admin sender configuration has been tested with `admin@guidepaw.app`.
-- Telegram bot notifications are used for beta request alerts when enabled, but bot tokens must never be committed.
+- Telegram bot notifications are admin-oriented and should remain optional/admin-only. Bot tokens must never be committed.
+- SMS notifications are now an opt-in handler/user alert layer using configurable Twilio support. Twilio credentials and phone numbers must never be committed.
 
 ## Important operating rules
 
 - Do not overwrite the current repo with historical chat zip files.
-- Do not commit secrets, API keys, Telegram bot tokens, ZeptoMail tokens, database passwords, or private credentials.
+- Do not commit secrets, API keys, Telegram bot tokens, ZeptoMail tokens, Twilio tokens, database passwords, or private credentials.
 - Before committing `render.yaml`, verify indentation and plans:
   - Web service: `plan: starter` under the web service.
   - Database: `plan: basic-256mb` under the database.
@@ -51,10 +52,40 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Beta request admin email notifications were added.
 - Telegram beta request notifications were added and tested.
 - Admin notification test page exists.
+- Admin notification test page now includes SMS test support.
+
+### SMS notifications
+
+Added SMS implementation:
+
+- `includes/sms_notifications.php` helper.
+- Twilio-compatible SMS sending via REST API.
+- Global SMS flag: `SMS_NOTIFY_ENABLED`.
+- Provider flag: `SMS_PROVIDER=twilio`.
+- Dog access SMS flag: `DOG_ACCESS_NOTIFY_SMS_ENABLED`.
+- Found-dog SMS flag: `FOUND_DOG_NOTIFY_SMS_ENABLED`.
+- Required Render secrets/placeholders:
+  - `TWILIO_ACCOUNT_SID`
+  - `TWILIO_AUTH_TOKEN`
+  - `TWILIO_FROM_NUMBER`
+  - `ADMIN_NOTIFY_SMS_PHONE`
+- Handler Profile opt-in fields:
+  - `sms_phone`
+  - `sms_notifications_enabled`
+- Migration added: `sql/migrations/pgsql/20260507_sms_notifications.sql`.
+- SMS is opt-in per handler/user.
+- SMS is wired for:
+  - Shared/co-op dog access granted
+  - Dog ownership transfer request
+  - Transfer accepted/declined result
+  - Public found-dog report for opted-in owner/handler
+- SMS failures are designed to log and fail safely without blocking the underlying action.
+- Telegram remains admin-only / admin-oriented.
 
 ### Render blueprint
 
 - `render.yaml` was corrected so the web service is `starter` and the database remains `basic-256mb`.
+- SMS/Twilio environment placeholders were added with `sync: false` for secrets.
 - Past issue: bad indentation accidentally changed both web and database plans. Watch this carefully.
 
 ### Handler profile / required fields
@@ -73,6 +104,7 @@ Fixes completed:
 - Safe placeholder behavior was added so legacy completion gate no longer blocks over missing backup contacts.
 - Admin profile completion report exists at `admin_profile_completion.php`.
 - Handler profile images are now stored as small cropped database data URIs to avoid Render ephemeral filesystem loss.
+- SMS opt-in controls were added to Handler Profile.
 
 ### Manage Dogs / active dog behavior
 
@@ -112,6 +144,7 @@ Major feature stack added:
   - Transfer request sent
   - Transfer accepted
   - Transfer declined
+- Dog access SMS notifications added for opted-in handlers/users.
 - Dashboard pending-transfer alert added.
 - Inactive dogs are cleared from active selection when marked retired/archived/deceased/transferred.
 - Temporary shared access expiry helper added.
@@ -158,6 +191,7 @@ Checklist behavior:
 - Database-backed notes.
 - Print support.
 - Extension-file support for future checklist sections.
+- SMS notification QA section added.
 
 ### ADA Access Card
 
@@ -192,10 +226,13 @@ These items need beta testing after Render redeploy:
 8. Confirm transfer request appears on receiving handler dashboard.
 9. Confirm transfer accept/decline updates ownership and audit trail correctly.
 10. Confirm email notifications fire for dog access/transfer actions.
-11. Confirm retired/archived dogs do not remain active working profiles.
-12. Confirm Handler Profile picture persists after login/refresh/redeploy.
-13. Confirm backup contacts are still optional and not blocking login.
-14. Confirm Render web/database plans stayed correct after all commits.
+11. Confirm SMS notifications fire for opted-in handler/user actions.
+12. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
+13. Confirm retired/archived dogs do not remain active working profiles.
+14. Confirm Handler Profile picture persists after login/refresh/redeploy.
+15. Confirm backup contacts are still optional and not blocking login.
+16. Confirm Handler Profile SMS opt-in saves correctly.
+17. Confirm Render web/database plans stayed correct after all commits.
 
 ## Known risks / areas to watch
 
@@ -204,6 +241,8 @@ These items need beta testing after Render redeploy:
 - If database migrations are not automatically run on Render, new tables/columns may not exist until migrations are applied.
 - Dog audit triggers log database-level changes, but actor attribution may not always identify the exact acting user for all status changes because triggers only see table values. Page-level audit events may be added later for more precise actor logging.
 - Handler profile images already saved before the database-image change may still point to missing filesystem paths. Re-upload after deploy if old profile images are broken.
+- SMS requires external Twilio configuration and costs money per message. Keep it opt-in and test with limited recipients.
+- Twilio trial accounts may only send to verified recipient numbers.
 - GPS/state-law service dog information should be treated carefully and sourced from authoritative legal references before release.
 
 ## Next recommended work
@@ -211,17 +250,20 @@ These items need beta testing after Render redeploy:
 Recommended immediate order:
 
 1. Let Render redeploy.
-2. Open and use `beta_qa_checklist.php`.
-3. Run the Beta QA Checklist against the latest Dog Access/Audit/Checklist features.
-4. Fix any application errors or broken workflows found by the checklist.
-5. Add page-level audit events if database-trigger audit detail is not specific enough.
-6. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
-7. Add notification badges/counts for pending transfers or shared-access changes if dashboard alerts are not visible enough.
-8. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
+2. Configure Twilio/SMS Render env vars if SMS testing is desired now.
+3. Open and use `beta_qa_checklist.php`.
+4. Run the Beta QA Checklist against the latest Dog Access/Audit/Checklist/SMS features.
+5. Fix any application errors or broken workflows found by the checklist.
+6. Add page-level audit events if database-trigger audit detail is not specific enough.
+7. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
+8. Add notification badges/counts for pending transfers or shared-access changes if dashboard alerts are not visible enough.
+9. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
 
 ## Recently added files / important files
 
 - `GUIDEPAW_PROJECT_HISTORY.md` — this file.
+- `includes/sms_notifications.php`
+- `sql/migrations/pgsql/20260507_sms_notifications.sql`
 - `beta_qa_checklist.php`
 - `beta_qa_checklist_state.php`
 - `includes/beta_qa_checklist_items.php`
@@ -240,6 +282,14 @@ Recommended immediate order:
 
 Recent feature commits include:
 
+- Add configurable SMS notification helper.
+- Add handler SMS notification opt in.
+- Send SMS for dog access notifications.
+- Send SMS for found dog reports.
+- Add SMS notification preference migration.
+- Add SMS notification environment placeholders.
+- Add admin SMS notification test.
+- Add SMS notification QA checklist items.
 - Add beta QA checklist state migration.
 - Add beta QA checklist state endpoint.
 - Persist beta QA checklist progress to database.
@@ -309,6 +359,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether retired/archived dogs should have a dedicated archive list rather than appearing in normal Manage Dogs.
 - Whether ADA Access Card should auto-detect state and show state-specific service dog law summaries.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
+- Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
 
 ## Update log template
 
