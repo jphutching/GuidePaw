@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/smtp_mailer.php';
 require_once __DIR__ . '/public_contact_defaults.php';
+require_once __DIR__ . '/sms_notifications.php';
 
 function gpEnsureFoundDogReportsTable(PDO $pdo): void
 {
@@ -138,6 +139,26 @@ function gpSendFoundDogTelegram(array $dog, array $report, string $mapUrl): bool
     return true;
 }
 
+function gpFoundDogNotifyOwnerSms(array $dog, array $report, string $mapUrl): bool
+{
+    $owner = $dog['_owner_public_contact'] ?? [];
+    if (!$owner) {
+        return false;
+    }
+    $dogName = (string) ($dog['name'] ?? 'your dog');
+    $location = trim((string) ($report['finder_location'] ?? ''));
+    $finderPhone = trim((string) ($report['finder_phone'] ?? ''));
+    $body = "GuidePaw FOUND DOG alert for {$dogName}.";
+    if ($location !== '') {
+        $body .= " Location: {$location}.";
+    }
+    if ($finderPhone !== '') {
+        $body .= " Finder phone: {$finderPhone}.";
+    }
+    $body .= " Map/details: {$mapUrl}";
+    return gpSmsNotifyUser($owner, $body, 'FOUND_DOG_NOTIFY_SMS_ENABLED');
+}
+
 function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
 {
     try {
@@ -198,6 +219,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
         }
 
         $sent = gpSendFoundDogTelegram($dog, $report, $mapUrl) || $sent;
+        $sent = gpFoundDogNotifyOwnerSms($dog, $report, $mapUrl) || $sent;
 
         $stmt = $pdo->prepare('UPDATE found_dog_reports SET notification_sent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $stmt->execute([$sent ? 1 : 0, $reportId]);
