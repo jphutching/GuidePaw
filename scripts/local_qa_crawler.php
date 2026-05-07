@@ -153,9 +153,10 @@ if ($regularUser !== '' && $regularPass !== '') {
         gpQaResult($results, 'regular_user_blocked_from_admin_users', $blocked, 'HTTP ' . $adminPage['status']);
 
         $qaUser = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $regularCookie, $insecureLocalSsl);
+        $qaUserBody = strtolower($qaUser['body']);
         $userHidesAdmin = gpQaPageLooksOk($qaUser)
-            && str_contains($qaUser['body'], 'admin-only beta checks are hidden')
-            && !str_contains($qaUser['body'], 'User Role Permissions');
+            && str_contains($qaUserBody, 'admin-only beta checks are hidden')
+            && !str_contains($qaUserBody, 'user role permissions');
         gpQaResult($results, 'qa_regular_hides_admin_sections', $userHidesAdmin, 'regular checklist visibility');
     }
 } else {
