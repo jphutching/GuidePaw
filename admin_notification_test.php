@@ -3,6 +3,7 @@ require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/beta_notifications.php';
+require_once __DIR__ . '/includes/sms_notifications.php';
 
 checkLogin();
 requireAdmin();
@@ -41,6 +42,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (($_POST['test'] ?? '') === 'email') {
             betaNotifyAdminEmail($sampleRequest);
             $message = 'Email test sent. Check the admin notification inbox.';
+        } elseif (($_POST['test'] ?? '') === 'sms') {
+            $smsPhone = trim((string) gpEnv('ADMIN_NOTIFY_SMS_PHONE', ''));
+            if ($smsPhone === '') {
+                throw new RuntimeException('ADMIN_NOTIFY_SMS_PHONE is missing in Render Environment.');
+            }
+            if (!gpSmsSendRaw($smsPhone, 'GuidePaw SMS test: Twilio/text notifications are configured.')) {
+                throw new RuntimeException('SMS test failed. Check SMS_NOTIFY_ENABLED, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, and Render logs.');
+            }
+            $message = 'SMS test sent. Check the admin notification phone.';
         } else {
             throw new RuntimeException('Unknown notification test.');
         }
@@ -55,6 +65,12 @@ $emailEnabled = betaAdminNotificationEmailEnabled();
 $telegramToken = gpEnv('TELEGRAM_BOT_TOKEN', '');
 $telegramChatId = gpEnv('TELEGRAM_CHAT_ID', '');
 $adminNotifyEmail = gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'));
+$smsEnabled = gpSmsGlobalEnabled();
+$smsProvider = gpSmsProvider();
+$twilioSid = gpEnv('TWILIO_ACCOUNT_SID', '');
+$twilioToken = gpEnv('TWILIO_AUTH_TOKEN', '');
+$twilioFrom = gpEnv('TWILIO_FROM_NUMBER', '');
+$adminSmsPhone = gpEnv('ADMIN_NOTIFY_SMS_PHONE', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -84,8 +100,14 @@ $adminNotifyEmail = gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guid
                 <tr><th>Telegram enabled</th><td><?= $telegramEnabled ? 'yes' : 'no' ?></td></tr>
                 <tr><th>Telegram token</th><td><?= e(gpMaskSecret($telegramToken)) ?></td></tr>
                 <tr><th>Telegram chat ID</th><td><?= e((string) ($telegramChatId ?: 'missing')) ?></td></tr>
+                <tr><th>SMS enabled</th><td><?= $smsEnabled ? 'yes' : 'no' ?></td></tr>
+                <tr><th>SMS provider</th><td><?= e($smsProvider ?: 'missing') ?></td></tr>
+                <tr><th>Twilio account SID</th><td><?= e(gpMaskSecret($twilioSid)) ?></td></tr>
+                <tr><th>Twilio auth token</th><td><?= e(gpMaskSecret($twilioToken)) ?></td></tr>
+                <tr><th>Twilio from number</th><td><?= e(gpMaskSecret($twilioFrom)) ?></td></tr>
+                <tr><th>Admin SMS phone</th><td><?= e(gpMaskSecret($adminSmsPhone)) ?></td></tr>
             </table>
-            <p class="text-muted mb-0">The token is masked on purpose. Real tokens should only live in Render Environment.</p>
+            <p class="text-muted mb-0">Tokens and phone numbers are masked on purpose. Real credentials should only live in Render Environment.</p>
         </div>
     </div>
 
@@ -96,6 +118,7 @@ $adminNotifyEmail = gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guid
                 <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                 <button class="btn btn-primary" name="test" value="telegram">Send Telegram Test</button>
                 <button class="btn btn-outline-primary" name="test" value="email">Send Email Test</button>
+                <button class="btn btn-outline-success" name="test" value="sms">Send SMS Test</button>
             </form>
         </div>
     </div>
