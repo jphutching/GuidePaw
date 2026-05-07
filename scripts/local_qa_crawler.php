@@ -5,11 +5,12 @@ declare(strict_types=1);
  * Local GuidePaw QA crawler / smoke tester.
  *
  * Usage:
- *   php scripts/local_qa_crawler.php --base-url=http://10.147.18.184 --admin-user=admin --admin-pass='password'
+ *   php scripts/local_qa_crawler.php --base-url=https://10.147.18.184 --admin-user=admin --admin-pass='password'
  *
  * Optional:
  *   --regular-user=test --regular-pass='password'
  *   --mark-checklist=yes
+ *   --insecure-local-ssl=yes
  *
  * This script is intentionally conservative. It does not change user roles or delete data.
  */
@@ -21,14 +22,16 @@ $options = getopt('', [
     'regular-user::',
     'regular-pass::',
     'mark-checklist::',
+    'insecure-local-ssl::',
 ]);
 
-$baseUrl = rtrim((string)($options['base-url'] ?? getenv('GUIDEPAW_BASE_URL') ?: 'http://10.147.18.184'), '/');
+$baseUrl = rtrim((string)($options['base-url'] ?? getenv('GUIDEPAW_BASE_URL') ?: 'https://10.147.18.184'), '/');
 $adminUser = (string)($options['admin-user'] ?? getenv('GUIDEPAW_ADMIN_USER') ?: 'admin');
 $adminPass = (string)($options['admin-pass'] ?? getenv('GUIDEPAW_ADMIN_PASS') ?: '');
 $regularUser = (string)($options['regular-user'] ?? getenv('GUIDEPAW_REGULAR_USER') ?: '');
 $regularPass = (string)($options['regular-pass'] ?? getenv('GUIDEPAW_REGULAR_PASS') ?: '');
 $markChecklist = strtolower((string)($options['mark-checklist'] ?? 'no')) === 'yes';
+$insecureLocalSsl = strtolower((string)($options['insecure-local-ssl'] ?? getenv('GUIDEPAW_INSECURE_LOCAL_SSL') ?: 'yes')) !== 'no';
 
 if ($adminPass === '') {
     fwrite(STDERR, "Missing --admin-pass or GUIDEPAW_ADMIN_PASS.\n");
@@ -43,7 +46,7 @@ function gpQaResult(array &$results, string $id, bool $passed, string $detail = 
     echo ($passed ? 'PASS' : 'FAIL') . " {$id}" . ($detail !== '' ? " — {$detail}" : '') . PHP_EOL;
 }
 
-function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', array $fields = [], string $cookieFile = ''): array
+function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', array $fields = [], string $cookieFile = '', bool $insecureLocalSsl = true): array
 {
     $url = $baseUrl . '/' . ltrim($path, '/');
     $ch = curl_init($url);
@@ -57,6 +60,10 @@ function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', arra
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_HEADER => true,
     ]);
+    if ($insecureLocalSsl) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    }
     if ($cookieFile !== '') {
         curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
         curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
@@ -77,17 +84,21 @@ function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', arra
     return ['status' => $status, 'headers' => substr($raw, 0, $headerSize), 'body' => substr($raw, $headerSize), 'url' => $finalUrl, 'error' => $err];
 }
 
-function gpQaLogin(string $baseUrl, string $username, string $password, string $cookieFile): bool
+function gpQaLogin(string $baseUrl, string $username, string $password, string $cookieFile, bool $insecureLocalSsl): bool
 {
-    $res = gpQaRequest($baseUrl, 'login.php', 'POST', ['username' => $username, 'password' => $password], $cookieFile);
-    return $res['status'] >= 200 && $res['status'] < 400 && !str_contains(strtolower($res['body']), 'invalid username or password');
+    $res = gpQaRequest($baseUrl, 'login.php', 'POST', ['username' => $username, 'password' => $password], $cookieFile, $insecureLocalSsl);
+    $body = strtolower($res['body']);
+    if ($res['status'] < 200 || $res['status'] >= 400) return false;
+    if (str_contains($body, 'invalid username or password')) return false;
+    if (str_contains($body, 'handler login') && !str_contains($body, 'dashboard')) return false;
+    return true;
 }
 
 function gpQaPageLooksOk(array $res): bool
 {
     $body = strtolower($res['body']);
     if ($res['status'] < 200 || $res['status'] >= 400) return false;
-    foreach (['fatal error', 'application error', 'database connection failed', 'uncaught error', 'warning: require'] as $bad) {
+    foreach (['fatal error', 'application error', 'database connection failed', 'uncaught error', 'warning: require', 'curl failed to verify'] as $bad) {
         if (str_contains($body, $bad)) return false;
     }
     return true;
@@ -96,7 +107,9 @@ function gpQaPageLooksOk(array $res): bool
 $adminCookie = tempnam(sys_get_temp_dir(), 'gpqa_admin_');
 $regularCookie = tempnam(sys_get_temp_dir(), 'gpqa_user_');
 
-$adminLoggedIn = gpQaLogin($baseUrl, $adminUser, $adminPass, $adminCookie);
+echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' with local SSL verification disabled' : '') . PHP_EOL;
+
+$adminLoggedIn = gpQaLogin($baseUrl, $adminUser, $adminPass, $adminCookie, $insecureLocalSsl);
 gpQaResult($results, 'crawler_admin_login', $adminLoggedIn, $adminLoggedIn ? 'admin login succeeded' : 'admin login failed');
 
 if ($adminLoggedIn) {
@@ -111,30 +124,30 @@ if ($adminLoggedIn) {
         'feedback_page_loads' => 'feedback.php',
     ];
     foreach ($pages as $id => $path) {
-        $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie);
-        gpQaResult($results, $id, gpQaPageLooksOk($res), 'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path));
+        $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie, $insecureLocalSsl);
+        gpQaResult($results, $id, gpQaPageLooksOk($res), 'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : ''));
     }
 
-    $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie);
+    $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl);
     $adminProtected = gpQaPageLooksOk($adminUsers)
         && str_contains(strtolower($adminUsers['body']), 'protected')
         && str_contains(strtolower($adminUsers['body']), 'built-in admin cannot be downgraded');
     gpQaResult($results, 'builtin_admin_protected_in_ui', $adminProtected, $adminProtected ? 'protected badge/message found' : 'protected marker missing');
 
-    $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie);
+    $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie, $insecureLocalSsl);
     $adminSeesRoleChecks = str_contains($qaAdmin['body'], 'User Role Permissions') && str_contains($qaAdmin['body'], 'Admin/beta checks');
     gpQaResult($results, 'qa_admin_sees_admin_sections', gpQaPageLooksOk($qaAdmin) && $adminSeesRoleChecks, 'admin checklist visibility');
 }
 
 if ($regularUser !== '' && $regularPass !== '') {
-    $regularLoggedIn = gpQaLogin($baseUrl, $regularUser, $regularPass, $regularCookie);
+    $regularLoggedIn = gpQaLogin($baseUrl, $regularUser, $regularPass, $regularCookie, $insecureLocalSsl);
     gpQaResult($results, 'crawler_regular_login', $regularLoggedIn, $regularLoggedIn ? 'regular login succeeded' : 'regular login failed');
     if ($regularLoggedIn) {
-        $adminPage = gpQaRequest($baseUrl, 'admin_users.php', 'GET', [], $regularCookie);
+        $adminPage = gpQaRequest($baseUrl, 'admin_users.php', 'GET', [], $regularCookie, $insecureLocalSsl);
         $blocked = $adminPage['status'] === 403 || str_contains(strtolower($adminPage['body']), 'admin access required') || str_contains($adminPage['url'], 'index.php');
         gpQaResult($results, 'regular_user_blocked_from_admin_users', $blocked, 'HTTP ' . $adminPage['status']);
 
-        $qaUser = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $regularCookie);
+        $qaUser = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $regularCookie, $insecureLocalSsl);
         $userHidesAdmin = gpQaPageLooksOk($qaUser)
             && str_contains($qaUser['body'], 'admin-only beta checks are hidden')
             && !str_contains($qaUser['body'], 'User Role Permissions');
@@ -161,6 +174,8 @@ if ($markChecklist && $adminLoggedIn) {
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'User-Agent: GuidePawLocalQACrawler/1.0'],
         CURLOPT_POSTFIELDS => $payload,
         CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => !$insecureLocalSsl,
+        CURLOPT_SSL_VERIFYHOST => $insecureLocalSsl ? 0 : 2,
     ]);
     $body = curl_exec($ch);
     $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
