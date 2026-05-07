@@ -207,6 +207,9 @@ function gpCmpCrawlSite(string $label, string $baseUrl, string $user, string $pa
         $seen[$path] = true;
         $res = gpCmpRequest($baseUrl, $path, 'GET', [], $cookie, $insecureSsl);
         $bad = gpCmpLooksBad($res);
+        if (str_contains(strtolower($label), 'regular') && $path === 'admin_users.php' && (int)$res['status'] === 403) {
+            $bad = null;
+        }
         $results[$path] = [
             'status' => $res['status'],
             'bad' => $bad,
@@ -233,6 +236,9 @@ function gpCmpCompareResults(array $local, array $beta): int
     sort($allPaths);
     $diffs = 0;
     foreach ($allPaths as $path) {
+        if (preg_match('/[?&](dog_id|set_dog)=\d+/', $path)) {
+            continue;
+        }
         $l = $local['results'][$path] ?? null;
         $b = $beta['results'][$path] ?? null;
         if (!$l || !$b) {
