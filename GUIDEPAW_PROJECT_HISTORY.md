@@ -41,6 +41,24 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 
 ## Current stable status
 
+### User roles and permissions
+
+Added role system:
+
+- Migration: `sql/migrations/pgsql/20260507_user_roles.sql`.
+- Helper: `includes/roles.php`.
+- Roles supported:
+  - `admin`
+  - `moderator`
+  - `user`
+- Legacy `is_admin=1` remains compatible and maps to `admin`.
+- `includes/authz.php` now uses the role helper for admin and moderator authorization.
+- Admin User Management now lets an admin change another account's role at any time.
+- Current admin account cannot be changed from the user management page.
+- Admin/beta/system QA checklist sections are hidden from regular users.
+- Regular users can still access regular site feature QA checks.
+- User Role Permissions QA checklist section added and marked admin-only.
+
 ### In-app Notification Center
 
 Added user-facing in-app notifications:
@@ -51,13 +69,7 @@ Added user-facing in-app notifications:
 - Dashboard unread notification summary.
 - Bottom nav Alerts now points to Notification Center.
 - Menu section added for Notifications.
-- Notification Center supports:
-  - unread/read state
-  - mark one read
-  - mark all read
-  - action routing
-  - priority styling
-  - dog association when available
+- Notification Center supports unread/read state, mark one read, mark all read, action routing, priority styling, and dog association when available.
 - Events wired into Notification Center:
   - shared/co-op dog access granted
   - dog transfer request
@@ -108,11 +120,7 @@ Added SMS implementation:
   - `sms_notifications_enabled`
 - Migration added: `sql/migrations/pgsql/20260507_sms_notifications.sql`.
 - SMS is opt-in per handler/user.
-- SMS is wired for:
-  - Shared/co-op dog access granted
-  - Dog ownership transfer request
-  - Transfer accepted/declined result
-  - Public found-dog report for opted-in owner/handler
+- SMS is wired for shared/co-op dog access granted, dog ownership transfer request, transfer accepted/declined result, and public found-dog report for opted-in owner/handler.
 - SMS failures are designed to log and fail safely without blocking the underlying action.
 - Telegram remains admin-only / admin-oriented.
 
@@ -124,13 +132,7 @@ Added SMS implementation:
 
 ### Handler profile / required fields
 
-Required Handler Profile fields are:
-
-- Display name
-- Public phone
-- Public email
-
-Backup contact name and phone are optional.
+Required Handler Profile fields are display name, public phone, and public email. Backup contact name and phone are optional.
 
 Fixes completed:
 
@@ -162,45 +164,23 @@ Major feature stack added:
 - Viewer and Contributor/Editor permission choices.
 - Temporary access end date.
 - Revocation of shared access.
-- Dog lifecycle statuses:
-  - Active
-  - In training
-  - Retired
-  - Archived
-  - Deceased
-  - Transferred
+- Dog lifecycle statuses: Active, In training, Retired, Archived, Deceased, Transferred.
 - Ownership transfer request workflow.
 - Receiving handler can accept or decline transfer.
 - Dog history stays attached to the dog profile.
 - Previous owner can optionally remain as editor.
-- Dog access email notifications added for:
-  - Shared/co-op access granted
-  - Transfer request sent
-  - Transfer accepted
-  - Transfer declined
-- Dog access SMS notifications added for opted-in handlers/users.
-- Dog access in-app notifications added.
+- Dog access email, SMS, and in-app notifications added.
 - Dashboard pending-transfer alert added.
 - Inactive dogs are cleared from active selection when marked retired/archived/deceased/transferred.
 - Temporary shared access expiry helper added.
-- Expired access cleanup runs from:
-  - Dashboard
-  - Manage Dogs
-  - Dog Access & Status
-  - Dog Audit timeline
+- Expired access cleanup runs from Dashboard, Manage Dogs, Dog Access & Status, and Dog Audit timeline.
 
 ### Dog Access audit trail
 
 Added:
 
 - Migration for `dog_access_audit_events`.
-- Database triggers for:
-  - Dog lifecycle status changes
-  - Dog owner changes
-  - Shared/co-op handler access added
-  - Shared/co-op handler access changed/revoked
-  - Transfer request created
-  - Transfer accepted/declined/cancelled
+- Database triggers for dog lifecycle status changes, owner changes, shared/co-op handler access changes, and transfer request lifecycle.
 - `dog_access_audit.php` timeline page.
 - Audit button linked from Manage Dogs.
 
@@ -226,9 +206,8 @@ Checklist behavior:
 - Database-backed notes.
 - Print support.
 - Extension-file support for future checklist sections.
-- SMS notification QA section added.
-- Notification Center QA section added.
-- Mobile viewport safety QA section added.
+- Role-aware visibility: admin/beta/system checks are visible only to admins.
+- SMS notification, Notification Center, Mobile viewport safety, and User Role Permissions QA sections added.
 
 ### ADA Access Card
 
@@ -254,36 +233,40 @@ Completed changes from prior work:
 These items need beta testing after Render redeploy:
 
 1. Confirm migrations have applied on Render.
-2. Open `beta_qa_checklist.php` and verify account-backed save/load works.
-3. Confirm Menu → Support → Beta QA Checklist opens.
-4. Confirm Notification Center opens from bottom nav and menu.
-5. Confirm notification create/read/open flows work.
-6. Confirm mobile viewport safety on Dashboard, Menu, Dog Access, Handler Profile, Dog Profile, Feedback, Admin pages, and checklist.
-7. Confirm Dog Access page opens from Manage Dogs.
-8. Confirm Dog Audit page opens from Manage Dogs.
-9. Confirm shared/co-op access grant works.
-10. Confirm temporary access end date expires as expected.
-11. Confirm transfer request appears on receiving handler dashboard and Notification Center.
-12. Confirm transfer accept/decline updates ownership, audit trail, and notifications correctly.
-13. Confirm email notifications fire for dog access/transfer actions.
-14. Confirm SMS notifications fire for opted-in handler/user actions after Twilio env vars are configured.
-15. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
-16. Confirm retired/archived dogs do not remain active working profiles.
-17. Confirm Handler Profile picture persists after login/refresh/redeploy.
-18. Confirm backup contacts are still optional and not blocking login.
-19. Confirm Handler Profile SMS opt-in saves correctly.
-20. Confirm Render web/database plans stayed correct after all commits.
+2. Confirm `users.user_role` exists and existing admins still map to admin.
+3. Confirm Admin User Management can change another user's role.
+4. Confirm regular users cannot access admin-only pages.
+5. Confirm beta QA checklist hides admin-only sections from regular users.
+6. Open `beta_qa_checklist.php` and verify account-backed save/load works.
+7. Confirm Notification Center opens from bottom nav and menu.
+8. Confirm notification create/read/open flows work.
+9. Confirm mobile viewport safety on Dashboard, Menu, Dog Access, Handler Profile, Dog Profile, Feedback, Admin pages, and checklist.
+10. Confirm Dog Access page opens from Manage Dogs.
+11. Confirm Dog Audit page opens from Manage Dogs.
+12. Confirm shared/co-op access grant works.
+13. Confirm temporary access end date expires as expected.
+14. Confirm transfer request appears on receiving handler dashboard and Notification Center.
+15. Confirm transfer accept/decline updates ownership, audit trail, and notifications correctly.
+16. Confirm email notifications fire for dog access/transfer actions.
+17. Confirm SMS notifications fire for opted-in handler/user actions after Twilio env vars are configured.
+18. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
+19. Confirm retired/archived dogs do not remain active working profiles.
+20. Confirm Handler Profile picture persists after login/refresh/redeploy.
+21. Confirm backup contacts are still optional and not blocking login.
+22. Confirm Handler Profile SMS opt-in saves correctly.
+23. Confirm Render web/database plans stayed correct after all commits.
 
 ## Known risks / areas to watch
 
 - Large shared files like `includes/db_connect.php` are hard to safely patch through tool calls. Avoid broad rewrites unless necessary.
+- Some pages still directly check `$_SESSION['is_admin']`; legacy compatibility should keep admin behavior working, but role-specific moderator access may need page-by-page refinement.
 - Some dog access behavior may still depend on existing helper functions inside `db_connect.php`. Test viewer/editor permission boundaries carefully.
 - If database migrations are not automatically run on Render, new tables/columns may not exist until migrations are applied.
 - Dog audit triggers log database-level changes, but actor attribution may not always identify the exact acting user for all status changes because triggers only see table values. Page-level audit events may be added later for more precise actor logging.
 - Handler profile images already saved before the database-image change may still point to missing filesystem paths. Re-upload after deploy if old profile images are broken.
 - SMS requires external Twilio configuration and costs money per message. Keep it opt-in and test with limited recipients.
 - Twilio trial accounts may only send to verified recipient numbers.
-- The new viewport safety CSS should reduce off-screen content, but individual pages with unusual inline styles may still need page-specific cleanup after testing.
+- The viewport safety CSS should reduce off-screen content, but individual pages with unusual inline styles may still need page-specific cleanup after testing.
 - GPS/state-law service dog information should be treated carefully and sourced from authoritative legal references before release.
 
 ## Next recommended work
@@ -294,17 +277,20 @@ Recommended immediate order:
 2. Let Render redeploy.
 3. Confirm Render web/database plans stayed correct.
 4. Confirm migrations apply on Render.
-5. Open and use `beta_qa_checklist.php`.
-6. Run the Beta QA Checklist against Notification Center, viewport safety, Dog Access/Audit/Checklist/SMS features.
-7. Fix any application errors or broken workflows found by the checklist.
-8. Configure Twilio/SMS Render env vars later if SMS testing is desired.
-9. Add page-level audit events if database-trigger audit detail is not specific enough.
-10. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
-11. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
+5. Test user roles: admin, moderator, regular user.
+6. Open and use `beta_qa_checklist.php` as admin and regular user to confirm role-aware QA visibility.
+7. Run the Beta QA Checklist against Role Permissions, Notification Center, viewport safety, Dog Access/Audit/Checklist/SMS features.
+8. Fix any application errors or broken workflows found by the checklist.
+9. Configure Twilio/SMS Render env vars later if SMS testing is desired.
+10. Add page-level audit events if database-trigger audit detail is not specific enough.
+11. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
+12. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
 
 ## Recently added files / important files
 
 - `GUIDEPAW_PROJECT_HISTORY.md` — this file.
+- `includes/roles.php`
+- `sql/migrations/pgsql/20260507_user_roles.sql`
 - `notifications.php`
 - `includes/notifications.php`
 - `sql/migrations/pgsql/20260507_in_app_notifications.sql`
@@ -328,6 +314,12 @@ Recommended immediate order:
 
 Recent feature commits include:
 
+- Add user role permission migration.
+- Add user role authorization helper.
+- Use role helper for admin authorization.
+- Add admin user role management.
+- Restrict admin QA sections by role.
+- Add user role QA checklist items.
 - Add in-app notifications migration.
 - Add in-app notification center page.
 - Show notification center on dashboard.
@@ -345,32 +337,6 @@ Recent feature commits include:
 - Add SMS notification environment placeholders.
 - Add admin SMS notification test.
 - Add SMS notification QA checklist items.
-- Add beta QA checklist state migration.
-- Add beta QA checklist state endpoint.
-- Persist beta QA checklist progress to database.
-- Add QA checklist persistence test items.
-- Load beta QA checklist extension items.
-- Enforce expired shared access on dog pages.
-- Add dog shared access expiry helper.
-- Expire shared dog access on dashboard load.
-- Add dog access audit trail migration.
-- Add dog access audit timeline page.
-- Link dog audit timeline from manage dogs.
-- Add dog access dashboard alerts helper.
-- Show pending dog transfers on dashboard.
-- Add dog access badges on manage dogs.
-- Add dog access status transfer migration.
-- Clear inactive dogs from current active selection.
-- Add dog access email notifications.
-- Send notifications for dog access changes.
-- Add dog access status and transfer management.
-- Link dog access management from dog rows.
-- Improve active dog visibility on manage dogs.
-- Collapse add dog form after first dog.
-- Stop backup contacts from blocking profile completion.
-- Store handler profile images in database.
-- Backfill optional backup contacts from admin report.
-- Add admin handler profile completion report.
 
 ## Testing command reminders
 
@@ -408,6 +374,7 @@ php scripts/cleanup_e2e_data.php --yes
 
 ## Open decisions / ideas
 
+- Which exact admin pages moderators should be allowed to access.
 - Whether Dog Access should use invite-only pending acceptance for shared co-op access, instead of immediately accepted shared access.
 - Whether to add stronger owner-only restrictions inside the central helper functions.
 - Whether transfer requests should also trigger Telegram/admin notifications.
