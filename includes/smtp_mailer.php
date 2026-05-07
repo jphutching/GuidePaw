@@ -1,13 +1,15 @@
 <?php
 declare(strict_types=1);
 
-function gpEnv(string $key, ?string $fallback = null): ?string
-{
-    if (function_exists('appEnv')) {
-        return appEnv($key, $fallback);
+if (!function_exists('gpEnv')) {
+    function gpEnv(string $key, ?string $fallback = null): ?string
+    {
+        if (function_exists('appEnv')) {
+            return appEnv($key, $fallback);
+        }
+        $value = getenv($key);
+        return ($value === false || $value === '') ? $fallback : $value;
     }
-    $value = getenv($key);
-    return ($value === false || $value === '') ? $fallback : $value;
 }
 
 function gpMailHeaders(string $fromEmail, string $fromName, string $toEmail, string $subject): string
