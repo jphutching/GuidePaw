@@ -4,6 +4,7 @@ require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
+require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
 checkLogin();
 
@@ -21,7 +22,8 @@ $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers);
+$unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + $unreadNotifications;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,13 +39,14 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
     .dashboard-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 0 0 28px 28px; padding: 1.25rem 1rem 1.5rem; box-shadow: 0 10px 24px rgba(15,23,42,.18); }
     .dashboard-hero .btn-outline-light { border-color: rgba(255,255,255,.45); }
     .command-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; }
-    .command-title { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
+    .command-title { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; flex-wrap:wrap; }
     .today-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
     @media (min-width: 760px) { .today-grid { grid-template-columns: repeat(4, 1fr); } }
     .today-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 92px; border-radius: 18px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 850; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
     .today-action span { font-size: 1.65rem; line-height: 1; margin-bottom: .35rem; }
     .attention-empty { border: 1px dashed rgba(22,163,74,.36); background: #f0fdf4; border-radius: 16px; padding: 1rem; color: #166534; }
     .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
+    .notification-summary{border:1px solid #bfdbfe;background:#eff6ff;border-radius:18px;padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;}
 </style>
 </head>
 <body class="pb-5">
@@ -53,11 +56,11 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 
 <header class="dashboard-hero">
     <div class="container px-0" style="max-width: 960px;">
-        <div class="d-flex justify-content-between align-items-start gap-3">
-            <div>
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div class="min-w-0">
                 <div class="small opacity-75"><?= e(appName()) ?> • Signed in as <?= e($user['username'] ?? 'handler') ?></div>
-                <h1 class="h2 mb-1">🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h1>
-                <div class="small opacity-75">
+                <h1 class="h2 mb-1 text-break">🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h1>
+                <div class="small opacity-75 text-break">
                     <?php if ($activeDog): ?>
                         <?= e($activeDog['breed'] ?: 'Breed Not Set') ?>
                         <?= !empty($activeDog['weight_lbs']) ? ' • ' . e((string) $activeDog['weight_lbs']) . ' lbs' : '' ?>
@@ -83,6 +86,13 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
         <button type="button" class="btn btn-outline-secondary btn-sm" data-test-notification>Test alert</button>
     </div>
     <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
+
+    <?php if ($unreadNotifications > 0): ?>
+        <section class="notification-summary mb-3">
+            <div><div class="fw-bold">🔔 <?= (int) $unreadNotifications ?> unread GuidePaw notification<?= $unreadNotifications === 1 ? '' : 's' ?></div><div class="small text-muted">Transfers, access changes, found-dog reports, and important account notices will appear here.</div></div>
+            <a href="notifications.php" class="btn btn-primary btn-sm">Open Notifications</a>
+        </section>
+    <?php endif; ?>
 
     <?php gpDashboardRenderDogTransferAlerts($incomingDogTransfers); ?>
 
@@ -141,13 +151,13 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 </div>
             </div>
 
-            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers): ?>
-                <div class="attention-empty">✅ No active alerts, transfer requests, or upcoming vet reminders right now.</div>
+            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && $unreadNotifications === 0): ?>
+                <div class="attention-empty">✅ No active alerts, transfer requests, notifications, or upcoming vet reminders right now.</div>
             <?php endif; ?>
 
             <?php if ($activeAlerts): ?>
                 <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
                         <h3 class="h6 mb-0">Smart Alerts</h3>
                         <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
                     </div>
@@ -164,15 +174,15 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 
             <?php if ($upcomingReminders): ?>
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
                         <h3 class="h6 mb-0">Vet Reminders</h3>
                         <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
                     </div>
                     <div class="list-group list-group-flush">
                         <?php foreach ($upcomingReminders as $item): ?>
                             <div class="list-group-item px-0">
-                                <div class="fw-semibold"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
-                                <div class="small text-muted"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                                <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
+                                <div class="small text-muted text-break"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
