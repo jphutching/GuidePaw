@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/smtp_mailer.php';
+require_once __DIR__ . '/sms_notifications.php';
 
 function gpDogAccessNotificationsEnabled(): bool
 {
@@ -32,21 +33,30 @@ function gpDogAccessLink(array $dog): string
     return rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/dog_access.php?dog_id=' . (int) ($dog['id'] ?? 0);
 }
 
-function gpDogAccessNotify(array $recipient, string $subject, string $body): bool
+function gpDogAccessNotify(array $recipient, string $subject, string $body, string $smsBody = ''): bool
 {
-    if (!gpDogAccessNotificationsEnabled()) {
-        return false;
+    $sent = false;
+
+    if (gpDogAccessNotificationsEnabled()) {
+        $email = gpDogAccessRecipientEmail($recipient);
+        if ($email !== '') {
+            try {
+                $sent = gpSendMail($email, $subject, $body) || $sent;
+            } catch (Throwable $e) {
+                error_log('GuidePaw dog access email notification failed: ' . $e->getMessage());
+            }
+        }
     }
-    $email = gpDogAccessRecipientEmail($recipient);
-    if ($email === '') {
-        return false;
+
+    if ($smsBody !== '') {
+        try {
+            $sent = gpSmsNotifyUser($recipient, $smsBody, 'DOG_ACCESS_NOTIFY_SMS_ENABLED') || $sent;
+        } catch (Throwable $e) {
+            error_log('GuidePaw dog access SMS notification failed: ' . $e->getMessage());
+        }
     }
-    try {
-        return gpSendMail($email, $subject, $body);
-    } catch (Throwable $e) {
-        error_log('GuidePaw dog access notification failed: ' . $e->getMessage());
-        return false;
-    }
+
+    return $sent;
 }
 
 function gpDogAccessNotifySharedGranted(array $dog, array $owner, array $handler, string $role, string $permission, ?string $endDate): bool
@@ -58,7 +68,8 @@ function gpDogAccessNotifySharedGranted(array $dog, array $owner, array $handler
         "Permission: {$permission}\n" .
         "End date: " . ($endDate ?: 'not set') . "\n\n" .
         "Open: " . gpDogAccessLink($dog) . "\n";
-    return gpDogAccessNotify($handler, "GuidePaw dog access: {$dogName}", $body);
+    $sms = "GuidePaw: " . gpDogAccessDisplayName($owner) . " added you to {$dogName}. Role: {$role}. Open GuidePaw to review.";
+    return gpDogAccessNotify($handler, "GuidePaw dog access: {$dogName}", $body, $sms);
 }
 
 function gpDogAccessNotifyTransferSent(array $dog, array $fromUser, array $toUser, string $note): bool
@@ -68,7 +79,8 @@ function gpDogAccessNotifyTransferSent(array $dog, array $fromUser, array $toUse
         "Dog: {$dogName}\n" .
         ($note !== '' ? "Note: {$note}\n\n" : "\n") .
         "Review: " . gpDogAccessLink($dog) . "\n";
-    return gpDogAccessNotify($toUser, "GuidePaw transfer request: {$dogName}", $body);
+    $sms = "GuidePaw: " . gpDogAccessDisplayName($fromUser) . " sent you a dog transfer request for {$dogName}. Open GuidePaw to accept or decline.";
+    return gpDogAccessNotify($toUser, "GuidePaw transfer request: {$dogName}", $body, $sms);
 }
 
 function gpDogAccessNotifyTransferResult(array $dog, array $fromUser, array $toUser, string $result): bool
@@ -77,5 +89,6 @@ function gpDogAccessNotifyTransferResult(array $dog, array $fromUser, array $toU
     $body = gpDogAccessDisplayName($toUser) . " {$result} the GuidePaw dog transfer request.\n\n" .
         "Dog: {$dogName}\n" .
         "Open: " . gpDogAccessLink($dog) . "\n";
-    return gpDogAccessNotify($fromUser, "GuidePaw transfer {$result}: {$dogName}", $body);
+    $sms = "GuidePaw: " . gpDogAccessDisplayName($toUser) . " {$result} the dog transfer request for {$dogName}.";
+    return gpDogAccessNotify($fromUser, "GuidePaw transfer {$result}: {$dogName}", $body, $sms);
 }
