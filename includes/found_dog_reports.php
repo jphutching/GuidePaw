@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/smtp_mailer.php';
 require_once __DIR__ . '/public_contact_defaults.php';
 require_once __DIR__ . '/sms_notifications.php';
+require_once __DIR__ . '/notifications.php';
 
 function gpEnsureFoundDogReportsTable(PDO $pdo): void
 {
@@ -159,6 +160,22 @@ function gpFoundDogNotifyOwnerSms(array $dog, array $report, string $mapUrl): bo
     return gpSmsNotifyUser($owner, $body, 'FOUND_DOG_NOTIFY_SMS_ENABLED');
 }
 
+function gpFoundDogNotifyOwnerInApp(PDO $pdo, array $dog, array $report, string $mapUrl, string $body): bool
+{
+    $owner = $dog['_owner_public_contact'] ?? [];
+    $ownerId = (int) ($owner['id'] ?? gpDogOwnerIdFromPublicDog($dog));
+    if ($ownerId <= 0) {
+        return false;
+    }
+    $dogName = (string) ($dog['name'] ?? 'your dog');
+    try {
+        return gpCreateNotification($pdo, $ownerId, 'Found-dog report: ' . $dogName, $body, 'admin_found_dog_reports.php', 'found_dog_report', 'high', (int) ($dog['id'] ?? 0), ['map_url' => $mapUrl, 'report_id' => (int) ($report['id'] ?? 0)]);
+    } catch (Throwable $e) {
+        error_log('GuidePaw found dog in-app notification failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
 {
     try {
@@ -207,7 +224,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
             }
         }
 
-        $sent = false;
+        $sent = gpFoundDogNotifyOwnerInApp($pdo, $dog, $report, $mapUrl, $body);
         if (gpFoundDogFlag('FOUND_DOG_NOTIFY_EMAIL_ENABLED', true)) {
             foreach (array_keys($recipients) as $email) {
                 try {
