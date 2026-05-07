@@ -25,7 +25,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Email provider: Zoho ZeptoMail API.
 - Admin sender configuration has been tested with `admin@guidepaw.app`.
 - Telegram bot notifications are admin-oriented and should remain optional/admin-only. Bot tokens must never be committed.
-- SMS notifications are now an opt-in handler/user alert layer using configurable Twilio support. Twilio credentials and phone numbers must never be committed.
+- SMS notifications are an opt-in handler/user alert layer using configurable Twilio support. Twilio credentials and phone numbers must never be committed.
 
 ## Important operating rules
 
@@ -47,17 +47,35 @@ Added role system:
 
 - Migration: `sql/migrations/pgsql/20260507_user_roles.sql`.
 - Helper: `includes/roles.php`.
-- Roles supported:
-  - `admin`
-  - `moderator`
-  - `user`
+- Roles supported: `admin`, `moderator`, `user`.
 - Legacy `is_admin=1` remains compatible and maps to `admin`.
 - `includes/authz.php` now uses the role helper for admin and moderator authorization.
-- Admin User Management now lets an admin change another account's role at any time.
+- Admin User Management lets an admin change another account's role at any time.
 - Current admin account cannot be changed from the user management page.
+- Built-in username `admin` is protected at the database level and application level:
+  - Migration: `sql/migrations/pgsql/20260507_protect_admin_account.sql`.
+  - Database trigger blocks downgrade, deactivation, username change, or delete of username `admin`.
+  - Admin User Management shows protected status and blocks downgrade/deactivation/purge before submission.
 - Admin/beta/system QA checklist sections are hidden from regular users.
 - Regular users can still access regular site feature QA checks.
 - User Role Permissions QA checklist section added and marked admin-only.
+
+### Local QA crawler
+
+Added local smoke-test crawler:
+
+- `scripts/local_qa_crawler.php`
+- `scripts/run_local_qa_crawler.sh`
+
+The crawler can:
+
+- Log in as admin.
+- Optionally log in as a regular test user.
+- Check core pages for application/fatal errors.
+- Confirm built-in `admin` protection appears in Admin User Management.
+- Confirm admin sees admin QA sections.
+- Confirm regular users are blocked from admin pages and do not see admin-only QA sections.
+- Optionally post a crawler summary to the QA checklist state endpoint.
 
 ### In-app Notification Center
 
@@ -70,11 +88,7 @@ Added user-facing in-app notifications:
 - Bottom nav Alerts now points to Notification Center.
 - Menu section added for Notifications.
 - Notification Center supports unread/read state, mark one read, mark all read, action routing, priority styling, and dog association when available.
-- Events wired into Notification Center:
-  - shared/co-op dog access granted
-  - dog transfer request
-  - transfer accepted/declined result
-  - found-dog report
+- Events wired into Notification Center: shared/co-op dog access granted, dog transfer request, transfer accepted/declined result, and found-dog report.
 
 ### Mobile viewport safety
 
@@ -98,7 +112,7 @@ Global responsive/viewport hardening added in `styles.css` and mobile menu style
 - Beta request admin email notifications were added.
 - Telegram beta request notifications were added and tested.
 - Admin notification test page exists.
-- Admin notification test page now includes SMS test support.
+- Admin notification test page includes SMS test support.
 
 ### SMS notifications
 
@@ -110,14 +124,8 @@ Added SMS implementation:
 - Provider flag: `SMS_PROVIDER=twilio`.
 - Dog access SMS flag: `DOG_ACCESS_NOTIFY_SMS_ENABLED`.
 - Found-dog SMS flag: `FOUND_DOG_NOTIFY_SMS_ENABLED`.
-- Required Render secrets/placeholders:
-  - `TWILIO_ACCOUNT_SID`
-  - `TWILIO_AUTH_TOKEN`
-  - `TWILIO_FROM_NUMBER`
-  - `ADMIN_NOTIFY_SMS_PHONE`
-- Handler Profile opt-in fields:
-  - `sms_phone`
-  - `sms_notifications_enabled`
+- Required Render secrets/placeholders: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `ADMIN_NOTIFY_SMS_PHONE`.
+- Handler Profile opt-in fields: `sms_phone`, `sms_notifications_enabled`.
 - Migration added: `sql/migrations/pgsql/20260507_sms_notifications.sql`.
 - SMS is opt-in per handler/user.
 - SMS is wired for shared/co-op dog access granted, dog ownership transfer request, transfer accepted/declined result, and public found-dog report for opted-in owner/handler.
@@ -207,7 +215,7 @@ Checklist behavior:
 - Print support.
 - Extension-file support for future checklist sections.
 - Role-aware visibility: admin/beta/system checks are visible only to admins.
-- SMS notification, Notification Center, Mobile viewport safety, and User Role Permissions QA sections added.
+- SMS notification, Notification Center, Mobile viewport safety, User Role Permissions, and Local QA Crawler sections added.
 
 ### ADA Access Card
 
@@ -234,34 +242,38 @@ These items need beta testing after Render redeploy:
 
 1. Confirm migrations have applied on Render.
 2. Confirm `users.user_role` exists and existing admins still map to admin.
-3. Confirm Admin User Management can change another user's role.
-4. Confirm regular users cannot access admin-only pages.
-5. Confirm beta QA checklist hides admin-only sections from regular users.
-6. Open `beta_qa_checklist.php` and verify account-backed save/load works.
-7. Confirm Notification Center opens from bottom nav and menu.
-8. Confirm notification create/read/open flows work.
-9. Confirm mobile viewport safety on Dashboard, Menu, Dog Access, Handler Profile, Dog Profile, Feedback, Admin pages, and checklist.
-10. Confirm Dog Access page opens from Manage Dogs.
-11. Confirm Dog Audit page opens from Manage Dogs.
-12. Confirm shared/co-op access grant works.
-13. Confirm temporary access end date expires as expected.
-14. Confirm transfer request appears on receiving handler dashboard and Notification Center.
-15. Confirm transfer accept/decline updates ownership, audit trail, and notifications correctly.
-16. Confirm email notifications fire for dog access/transfer actions.
-17. Confirm SMS notifications fire for opted-in handler/user actions after Twilio env vars are configured.
-18. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
-19. Confirm retired/archived dogs do not remain active working profiles.
-20. Confirm Handler Profile picture persists after login/refresh/redeploy.
-21. Confirm backup contacts are still optional and not blocking login.
-22. Confirm Handler Profile SMS opt-in saves correctly.
-23. Confirm Render web/database plans stayed correct after all commits.
+3. Confirm username `admin` is active/admin and cannot be downgraded, disabled, or deleted.
+4. Confirm Admin User Management can change another user's role.
+5. Confirm regular users cannot access admin-only pages.
+6. Confirm beta QA checklist hides admin-only sections from regular users.
+7. Run local QA crawler from the laptop.
+8. Open `beta_qa_checklist.php` and verify account-backed save/load works.
+9. Confirm Notification Center opens from bottom nav and menu.
+10. Confirm notification create/read/open flows work.
+11. Confirm mobile viewport safety on Dashboard, Menu, Dog Access, Handler Profile, Dog Profile, Feedback, Admin pages, and checklist.
+12. Confirm Dog Access page opens from Manage Dogs.
+13. Confirm Dog Audit page opens from Manage Dogs.
+14. Confirm shared/co-op access grant works.
+15. Confirm temporary access end date expires as expected.
+16. Confirm transfer request appears on receiving handler dashboard and Notification Center.
+17. Confirm transfer accept/decline updates ownership, audit trail, and notifications correctly.
+18. Confirm email notifications fire for dog access/transfer actions.
+19. Confirm SMS notifications fire for opted-in handler/user actions after Twilio env vars are configured.
+20. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
+21. Confirm retired/archived dogs do not remain active working profiles.
+22. Confirm Handler Profile picture persists after login/refresh/redeploy.
+23. Confirm backup contacts are still optional and not blocking login.
+24. Confirm Handler Profile SMS opt-in saves correctly.
+25. Confirm Render web/database plans stayed correct after all commits.
 
 ## Known risks / areas to watch
 
+- `admin_users.php` was compacted during role/protection work; retest export/deactivate/reactivate/role-change flows carefully.
+- Hard purge was temporarily disabled in the compact admin user management page pending full retention review; use deactivate during beta.
 - Large shared files like `includes/db_connect.php` are hard to safely patch through tool calls. Avoid broad rewrites unless necessary.
 - Some pages still directly check `$_SESSION['is_admin']`; legacy compatibility should keep admin behavior working, but role-specific moderator access may need page-by-page refinement.
 - Some dog access behavior may still depend on existing helper functions inside `db_connect.php`. Test viewer/editor permission boundaries carefully.
-- If database migrations are not automatically run on Render, new tables/columns may not exist until migrations are applied.
+- If database migrations are not automatically run on Render, new tables/columns/triggers may not exist until migrations are applied.
 - Dog audit triggers log database-level changes, but actor attribution may not always identify the exact acting user for all status changes because triggers only see table values. Page-level audit events may be added later for more precise actor logging.
 - Handler profile images already saved before the database-image change may still point to missing filesystem paths. Re-upload after deploy if old profile images are broken.
 - SMS requires external Twilio configuration and costs money per message. Keep it opt-in and test with limited recipients.
@@ -277,20 +289,24 @@ Recommended immediate order:
 2. Let Render redeploy.
 3. Confirm Render web/database plans stayed correct.
 4. Confirm migrations apply on Render.
-5. Test user roles: admin, moderator, regular user.
-6. Open and use `beta_qa_checklist.php` as admin and regular user to confirm role-aware QA visibility.
-7. Run the Beta QA Checklist against Role Permissions, Notification Center, viewport safety, Dog Access/Audit/Checklist/SMS features.
-8. Fix any application errors or broken workflows found by the checklist.
-9. Configure Twilio/SMS Render env vars later if SMS testing is desired.
-10. Add page-level audit events if database-trigger audit detail is not specific enough.
-11. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
-12. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
+5. Run local QA crawler on the laptop against the local site.
+6. Test user roles: admin, moderator, regular user.
+7. Open and use `beta_qa_checklist.php` as admin and regular user to confirm role-aware QA visibility.
+8. Run the Beta QA Checklist against Local QA Crawler, Role Permissions, Notification Center, viewport safety, Dog Access/Audit/Checklist/SMS features.
+9. Fix any application errors or broken workflows found by the checklist.
+10. Configure Twilio/SMS Render env vars later if SMS testing is desired.
+11. Add page-level audit events if database-trigger audit detail is not specific enough.
+12. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
+13. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
 
 ## Recently added files / important files
 
 - `GUIDEPAW_PROJECT_HISTORY.md` — this file.
+- `scripts/local_qa_crawler.php`
+- `scripts/run_local_qa_crawler.sh`
 - `includes/roles.php`
 - `sql/migrations/pgsql/20260507_user_roles.sql`
+- `sql/migrations/pgsql/20260507_protect_admin_account.sql`
 - `notifications.php`
 - `includes/notifications.php`
 - `sql/migrations/pgsql/20260507_in_app_notifications.sql`
@@ -314,6 +330,11 @@ Recommended immediate order:
 
 Recent feature commits include:
 
+- Protect built-in admin account role.
+- Protect built-in admin in user management.
+- Add local QA crawler smoke test.
+- Add local QA crawler runner.
+- Add crawler and admin protection QA items.
 - Add user role permission migration.
 - Add user role authorization helper.
 - Use role helper for admin authorization.
@@ -354,6 +375,29 @@ git log --oneline -12
 grep -n "plan:" render.yaml
 ```
 
+Run local QA crawler:
+
+```bash
+GUIDEPAW_ADMIN_PASS='your-admin-password' bash scripts/run_local_qa_crawler.sh
+```
+
+Run crawler with a regular test account too:
+
+```bash
+GUIDEPAW_ADMIN_PASS='your-admin-password' \
+GUIDEPAW_REGULAR_USER='test' \
+GUIDEPAW_REGULAR_PASS='test-password' \
+bash scripts/run_local_qa_crawler.sh
+```
+
+Optional: write crawler summary to QA checklist state:
+
+```bash
+GUIDEPAW_ADMIN_PASS='your-admin-password' \
+GUIDEPAW_MARK_CHECKLIST=yes \
+bash scripts/run_local_qa_crawler.sh
+```
+
 E2E cleanup dry run example:
 
 ```bash
@@ -375,6 +419,7 @@ php scripts/cleanup_e2e_data.php --yes
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
+- Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
 - Whether Dog Access should use invite-only pending acceptance for shared co-op access, instead of immediately accepted shared access.
 - Whether to add stronger owner-only restrictions inside the central helper functions.
 - Whether transfer requests should also trigger Telegram/admin notifications.
