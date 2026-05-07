@@ -98,7 +98,7 @@ function gpQaPageLooksOk(array $res): bool
 {
     $body = strtolower($res['body']);
     if ($res['status'] < 200 || $res['status'] >= 400) return false;
-    foreach (['fatal error', 'database connection failed', 'uncaught error', 'warning: require', 'curl failed to verify'] as $bad) {
+    foreach (['fatal error:', 'php fatal error', '<b>fatal error</b>', 'database connection failed', 'uncaught error:', 'uncaught exception', 'warning: require(', 'failed opening required', 'curl failed to verify'] as $bad) {
         if (str_contains($body, $bad)) return false;
     }
     return true;
