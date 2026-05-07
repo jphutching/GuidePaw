@@ -5,6 +5,7 @@ require_once 'includes/db_connect.php';
 require_once 'includes/validation.php';
 require_once 'includes/profile_image_tools.php';
 require_once 'includes/app_config.php';
+require_once __DIR__ . '/includes/sms_notifications.php';
 checkLogin();
 
 function gpEnsureHandlerProfileColumns(PDO $pdo): void
@@ -17,6 +18,8 @@ function gpEnsureHandlerProfileColumns(PDO $pdo): void
         'backup_contact_name' => 'TEXT',
         'backup_contact_phone' => 'TEXT',
         'public_notes' => 'TEXT',
+        'sms_phone' => 'TEXT',
+        'sms_notifications_enabled' => 'BOOLEAN NOT NULL DEFAULT FALSE',
     ];
     foreach ($columns as $column => $type) {
         $pdo->exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS ' . $column . ' ' . $type);
@@ -65,6 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $backupName = cleanText($_POST['backup_contact_name'] ?? '', 120);
     $backupPhone = cleanText($_POST['backup_contact_phone'] ?? '', 80);
     $publicNotes = cleanTextarea($_POST['public_notes'] ?? '', 1200);
+    $smsEnabled = !empty($_POST['sms_notifications_enabled']) ? 1 : 0;
+    $smsPhone = cleanText($_POST['sms_phone'] ?? '', 80);
+    if ($smsPhone === '') {
+        $smsPhone = $phone;
+    }
+    $smsPhoneNormalized = gpSmsNormalizePhone($smsPhone);
     $profilePhoto = gpSaveCroppedProfileImage('profile_photo_cropped', $user['profile_photo_url'] ?? null, $errors);
 
     if ($displayName === '') {
@@ -79,10 +88,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($publicEmail !== '' && !filter_var($publicEmail, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Public email must be valid.';
     }
+    if ($smsEnabled && $smsPhoneNormalized === '') {
+        $errors[] = 'SMS notifications require a valid mobile phone number.';
+    }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=? WHERE id=?');
-        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $userId]);
+        $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
+        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -124,6 +136,7 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 .required-note ul{margin-bottom:0;}
 .req{color:#dc2626;font-weight:900;}
 .opt{color:#64748b;font-size:.82rem;font-weight:700;}
+.sms-box{border:1px solid #bfdbfe;background:#eff6ff;border-radius:16px;padding:1rem;}
 </style>
 </head>
 <body class="pb-5 bg-light">
@@ -189,6 +202,15 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_name'] ?? '')) ?>"></div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_phone'] ?? '')) ?>"></div>
+                <div class="col-12 sms-box">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="sms_notifications_enabled" name="sms_notifications_enabled" value="1" <?= !empty($user['sms_notifications_enabled']) ? 'checked' : '' ?>>
+                        <label class="form-check-label fw-bold" for="sms_notifications_enabled">Send important GuidePaw alerts by SMS text message</label>
+                    </div>
+                    <label class="form-label">SMS Mobile Phone <span class="opt">optional unless SMS is enabled</span></label>
+                    <input type="text" name="sms_phone" class="form-control" value="<?= e($user['sms_phone'] ?? ($user['phone'] ?? '')) ?>" placeholder="Example: +15551234567">
+                    <div class="form-text">SMS is opt-in and may be used for found-dog alerts, transfer requests, and urgent access changes. Message/data rates may apply. Telegram remains admin-only.</div>
+                </div>
                 <div class="col-12"><label class="form-label">Public Handler Notes</label><textarea name="public_notes" class="form-control" rows="4" placeholder="Optional public note, such as preferred contact method or return instructions."><?= e($user['public_notes'] ?? '') ?></textarea></div>
                 <div class="col-12"><button class="btn btn-primary w-100"><?= $completionRequired ? 'Save and Continue' : 'Save Handler Profile' ?></button></div>
             </form>
