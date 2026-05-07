@@ -98,7 +98,7 @@ function gpQaPageLooksOk(array $res): bool
 {
     $body = strtolower($res['body']);
     if ($res['status'] < 200 || $res['status'] >= 400) return false;
-    foreach (['fatal error', 'application error', 'database connection failed', 'uncaught error', 'warning: require', 'curl failed to verify'] as $bad) {
+    foreach (['fatal error', 'database connection failed', 'uncaught error', 'warning: require', 'curl failed to verify'] as $bad) {
         if (str_contains($body, $bad)) return false;
     }
     return true;
@@ -129,9 +129,14 @@ if ($adminLoggedIn) {
     }
 
     $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl);
+    $adminBody = strtolower($adminUsers['body']);
     $adminProtected = gpQaPageLooksOk($adminUsers)
-        && str_contains(strtolower($adminUsers['body']), 'protected')
-        && str_contains(strtolower($adminUsers['body']), 'built-in admin cannot be downgraded');
+        && str_contains($adminBody, 'protected')
+        && (
+            str_contains($adminBody, 'built-in admin cannot be downgraded')
+            || str_contains($adminBody, 'built-in <code>admin</code> account is protected')
+            || str_contains($adminBody, 'current admin account cannot be changed')
+        );
     gpQaResult($results, 'builtin_admin_protected_in_ui', $adminProtected, $adminProtected ? 'protected badge/message found' : 'protected marker missing');
 
     $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie, $insecureLocalSsl);

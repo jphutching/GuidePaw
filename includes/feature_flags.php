@@ -1,6 +1,8 @@
 <?php
-function currentUserIsAdmin(): bool {
-    return !empty($_SESSION['is_admin']);
+if (!function_exists('currentUserIsAdmin')) {
+    function currentUserIsAdmin(): bool {
+        return !empty($_SESSION['is_admin']);
+    }
 }
 
 function getFeatureFlags(PDO $pdo): array {
