@@ -41,6 +41,40 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 
 ## Current stable status
 
+### In-app Notification Center
+
+Added user-facing in-app notifications:
+
+- Migration: `sql/migrations/pgsql/20260507_in_app_notifications.sql`.
+- Helper: `includes/notifications.php`.
+- Page: `notifications.php`.
+- Dashboard unread notification summary.
+- Bottom nav Alerts now points to Notification Center.
+- Menu section added for Notifications.
+- Notification Center supports:
+  - unread/read state
+  - mark one read
+  - mark all read
+  - action routing
+  - priority styling
+  - dog association when available
+- Events wired into Notification Center:
+  - shared/co-op dog access granted
+  - dog transfer request
+  - transfer accepted/declined result
+  - found-dog report
+
+### Mobile viewport safety
+
+Global responsive/viewport hardening added in `styles.css` and mobile menu styles:
+
+- Prevents page-wide horizontal overflow.
+- Wraps long text, email addresses, dog names, notes, links, errors, and code blocks.
+- Keeps cards, forms, buttons, modals, dropdowns, menu panels, images, videos, canvases, and SVGs inside screen width.
+- Makes tables scroll inside `.table-responsive` instead of forcing the whole page sideways.
+- Improves bottom nav/menu grid behavior on narrow screens.
+- Adds QA checklist coverage for mobile viewport safety.
+
 ### Beta access and notifications
 
 - Beta invite email flow works on Render using ZeptoMail API.
@@ -145,6 +179,7 @@ Major feature stack added:
   - Transfer accepted
   - Transfer declined
 - Dog access SMS notifications added for opted-in handlers/users.
+- Dog access in-app notifications added.
 - Dashboard pending-transfer alert added.
 - Inactive dogs are cleared from active selection when marked retired/archived/deceased/transferred.
 - Temporary shared access expiry helper added.
@@ -192,6 +227,8 @@ Checklist behavior:
 - Print support.
 - Extension-file support for future checklist sections.
 - SMS notification QA section added.
+- Notification Center QA section added.
+- Mobile viewport safety QA section added.
 
 ### ADA Access Card
 
@@ -219,20 +256,23 @@ These items need beta testing after Render redeploy:
 1. Confirm migrations have applied on Render.
 2. Open `beta_qa_checklist.php` and verify account-backed save/load works.
 3. Confirm Menu → Support → Beta QA Checklist opens.
-4. Confirm Dog Access page opens from Manage Dogs.
-5. Confirm Dog Audit page opens from Manage Dogs.
-6. Confirm shared/co-op access grant works.
-7. Confirm temporary access end date expires as expected.
-8. Confirm transfer request appears on receiving handler dashboard.
-9. Confirm transfer accept/decline updates ownership and audit trail correctly.
-10. Confirm email notifications fire for dog access/transfer actions.
-11. Confirm SMS notifications fire for opted-in handler/user actions.
-12. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
-13. Confirm retired/archived dogs do not remain active working profiles.
-14. Confirm Handler Profile picture persists after login/refresh/redeploy.
-15. Confirm backup contacts are still optional and not blocking login.
-16. Confirm Handler Profile SMS opt-in saves correctly.
-17. Confirm Render web/database plans stayed correct after all commits.
+4. Confirm Notification Center opens from bottom nav and menu.
+5. Confirm notification create/read/open flows work.
+6. Confirm mobile viewport safety on Dashboard, Menu, Dog Access, Handler Profile, Dog Profile, Feedback, Admin pages, and checklist.
+7. Confirm Dog Access page opens from Manage Dogs.
+8. Confirm Dog Audit page opens from Manage Dogs.
+9. Confirm shared/co-op access grant works.
+10. Confirm temporary access end date expires as expected.
+11. Confirm transfer request appears on receiving handler dashboard and Notification Center.
+12. Confirm transfer accept/decline updates ownership, audit trail, and notifications correctly.
+13. Confirm email notifications fire for dog access/transfer actions.
+14. Confirm SMS notifications fire for opted-in handler/user actions after Twilio env vars are configured.
+15. Confirm Admin Notification Test can send SMS after Twilio env vars are configured.
+16. Confirm retired/archived dogs do not remain active working profiles.
+17. Confirm Handler Profile picture persists after login/refresh/redeploy.
+18. Confirm backup contacts are still optional and not blocking login.
+19. Confirm Handler Profile SMS opt-in saves correctly.
+20. Confirm Render web/database plans stayed correct after all commits.
 
 ## Known risks / areas to watch
 
@@ -243,25 +283,31 @@ These items need beta testing after Render redeploy:
 - Handler profile images already saved before the database-image change may still point to missing filesystem paths. Re-upload after deploy if old profile images are broken.
 - SMS requires external Twilio configuration and costs money per message. Keep it opt-in and test with limited recipients.
 - Twilio trial accounts may only send to verified recipient numbers.
+- The new viewport safety CSS should reduce off-screen content, but individual pages with unusual inline styles may still need page-specific cleanup after testing.
 - GPS/state-law service dog information should be treated carefully and sourced from authoritative legal references before release.
 
 ## Next recommended work
 
 Recommended immediate order:
 
-1. Let Render redeploy.
-2. Configure Twilio/SMS Render env vars if SMS testing is desired now.
-3. Open and use `beta_qa_checklist.php`.
-4. Run the Beta QA Checklist against the latest Dog Access/Audit/Checklist/SMS features.
-5. Fix any application errors or broken workflows found by the checklist.
-6. Add page-level audit events if database-trigger audit detail is not specific enough.
-7. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
-8. Add notification badges/counts for pending transfers or shared-access changes if dashboard alerts are not visible enough.
-9. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
+1. Pull latest GitHub changes to the laptop.
+2. Let Render redeploy.
+3. Confirm Render web/database plans stayed correct.
+4. Confirm migrations apply on Render.
+5. Open and use `beta_qa_checklist.php`.
+6. Run the Beta QA Checklist against Notification Center, viewport safety, Dog Access/Audit/Checklist/SMS features.
+7. Fix any application errors or broken workflows found by the checklist.
+8. Configure Twilio/SMS Render env vars later if SMS testing is desired.
+9. Add page-level audit events if database-trigger audit detail is not specific enough.
+10. Harden access checks in the central shared dog helper functions if viewer/editor boundaries are not strict enough.
+11. Revisit state service-dog law detection for ADA Access Card with authoritative sources.
 
 ## Recently added files / important files
 
 - `GUIDEPAW_PROJECT_HISTORY.md` — this file.
+- `notifications.php`
+- `includes/notifications.php`
+- `sql/migrations/pgsql/20260507_in_app_notifications.sql`
 - `includes/sms_notifications.php`
 - `sql/migrations/pgsql/20260507_sms_notifications.sql`
 - `beta_qa_checklist.php`
@@ -282,6 +328,15 @@ Recommended immediate order:
 
 Recent feature commits include:
 
+- Add in-app notifications migration.
+- Add in-app notification center page.
+- Show notification center on dashboard.
+- Link notification center in app menu.
+- Add global mobile viewport safety styles.
+- Add in-app notification helper.
+- Create in-app notifications for dog access events.
+- Create in-app notifications for found dog reports.
+- Add notification center and viewport QA checklist items.
 - Add configurable SMS notification helper.
 - Add handler SMS notification opt in.
 - Send SMS for dog access notifications.
@@ -360,6 +415,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether ADA Access Card should auto-detect state and show state-specific service dog law summaries.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
+- Whether Notification Center should later add user preferences, categories, bulk delete, or persistent notification badges.
 
 ## Update log template
 
