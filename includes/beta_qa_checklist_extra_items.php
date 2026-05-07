@@ -14,9 +14,25 @@ function gpBetaQaChecklistExtraItems(): array
                 ['id' => 'checklist_notes_save', 'text' => 'Add testing notes and refresh the page.', 'expected' => 'Notes reload from the GuidePaw account save.'],
                 ['id' => 'checklist_refresh_persists', 'text' => 'Refresh the checklist after checking items.', 'expected' => 'Checked items remain checked after refresh.'],
                 ['id' => 'checklist_cross_device', 'text' => 'Open the checklist from another browser or device while logged into the same account.', 'expected' => 'Saved progress and notes follow the GuidePaw account.'],
+                ['id' => 'checklist_role_filtering', 'text' => 'Open checklist as admin and as regular user.', 'expected' => 'Admin sees admin/beta/system sections; regular user sees regular feature checks only.'],
                 ['id' => 'checklist_fallback_storage', 'text' => 'Simulate network/save endpoint failure if possible.', 'expected' => 'Checklist falls back to browser storage and shows a clear save warning instead of losing progress.'],
-                ['id' => 'checklist_reset', 'text' => 'Use Reset checks only after confirming it is safe.', 'expected' => 'Saved checks clear for the account/browser and progress returns to zero.'],
+                ['id' => 'checklist_reset', 'text' => 'Use Reset checks only after confirming it is safe.', 'expected' => 'Saved visible checks clear for the account/browser and progress returns to zero.'],
                 ['id' => 'checklist_print', 'text' => 'Use Print button for a paper/manual copy.', 'expected' => 'Printable checklist opens without bottom nav/menu clutter.'],
+            ],
+        ],
+        [
+            'id' => 'user_role_permissions',
+            'title' => 'User Role Permissions',
+            'description' => 'Validate Admin, Moderator, and User permission behavior.',
+            'required_role' => 'admin',
+            'items' => [
+                ['id' => 'role_migration', 'text' => 'Confirm user_role migration applied.', 'expected' => 'users.user_role exists and supports admin, moderator, and user. Existing is_admin accounts map to admin.'],
+                ['id' => 'role_admin_management', 'text' => 'Open Admin → User Management and change a test account role.', 'expected' => 'Admin can change another account to user, moderator, or admin after confirmation.'],
+                ['id' => 'role_self_protection', 'text' => 'Attempt to change the currently logged-in admin account from User Management.', 'expected' => 'Current admin account cannot be changed from that page.'],
+                ['id' => 'role_admin_access', 'text' => 'Log in as admin and open admin-only pages.', 'expected' => 'Admin can access admin dashboard, user management, beta/admin QA checks, and system tools.'],
+                ['id' => 'role_user_blocked', 'text' => 'Log in as regular user and attempt admin-only pages.', 'expected' => 'Regular user is blocked from admin-only pages and does not see admin-only QA sections.'],
+                ['id' => 'role_moderator_behavior', 'text' => 'Log in as moderator and review visible tools.', 'expected' => 'Moderator can access moderator-permitted support/review tools when enabled, but not full admin/system controls.'],
+                ['id' => 'role_legacy_is_admin', 'text' => 'Confirm old is_admin compatibility still works.', 'expected' => 'Accounts with is_admin=1 are treated as admin even with the new user_role system.'],
             ],
         ],
         [
@@ -53,6 +69,7 @@ function gpBetaQaChecklistExtraItems(): array
             'id' => 'sms_notifications',
             'title' => 'SMS Notifications',
             'description' => 'Validate opt-in SMS text alerts for handlers while keeping Telegram admin-only.',
+            'required_role' => 'admin',
             'items' => [
                 ['id' => 'sms_render_env', 'text' => 'Confirm Render SMS/Twilio env vars are configured.', 'expected' => 'SMS_PROVIDER, SMS_NOTIFY_ENABLED, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, and ADMIN_NOTIFY_SMS_PHONE are present in Render; secrets are not committed.'],
                 ['id' => 'sms_admin_test', 'text' => 'Run Admin Notification Test → Send SMS Test.', 'expected' => 'Admin test phone receives a GuidePaw SMS test message.'],
@@ -70,6 +87,7 @@ function gpBetaQaChecklistExtraItems(): array
             'id' => 'project_history_upkeep',
             'title' => 'Project History Upkeep',
             'description' => 'Keep the durable GuidePaw handoff file current so future work can resume without backtracking.',
+            'required_role' => 'admin',
             'items' => [
                 ['id' => 'history_file_exists', 'text' => 'Confirm GUIDEPAW_PROJECT_HISTORY.md exists in the repo.', 'expected' => 'The file is present on GitHub main and can be used as the durable handoff source.'],
                 ['id' => 'history_read_before_work', 'text' => 'Read GUIDEPAW_PROJECT_HISTORY.md before starting a new coding session.', 'expected' => 'Current status, in-progress items, and next recommended work are understood before making changes.'],
