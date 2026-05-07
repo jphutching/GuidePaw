@@ -96,8 +96,34 @@ projects:
               - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
                 value: "true"
 
+              - key: SMS_PROVIDER
+                value: twilio
+
+              - key: SMS_NOTIFY_ENABLED
+                value: "true"
+
+              - key: DOG_ACCESS_NOTIFY_SMS_ENABLED
+                value: "true"
+
+              - key: FOUND_DOG_NOTIFY_SMS_ENABLED
+                value: "true"
+
+              - key: TWILIO_ACCOUNT_SID
+                sync: false
+
+              - key: TWILIO_AUTH_TOKEN
+                sync: false
+
+              - key: TWILIO_FROM_NUMBER
+                sync: false
+
+              - key: ADMIN_NOTIFY_SMS_PHONE
+                sync: false
+
               # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID directly in Render Environment.
               # Do not commit real Telegram tokens to Git.
+              # Set Twilio values directly in Render Environment.
+              # Do not commit real Twilio credentials or phone numbers to Git.
 
         databases:
           - name: guidepaw_db
