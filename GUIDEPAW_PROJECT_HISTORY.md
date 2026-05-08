@@ -103,6 +103,9 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - The mobile menu now links to AI Training Assistant under Support, and the beta QA checklist/crawler cover the new page.
   - `feature_flags.ai_training_assistant_enabled` and `feature_roadmap.ai_training_assistant_enabled` were both promoted through `20260508_ai_training_assistant_beta_enabled.sql`.
   - The beta crawler passed `25/25` after the flag fix and deploy refresh.
+- Remaining roadmap bookkeeping was reconciled on 2026-05-08:
+  - `feature_roadmap.coach_review_enabled` and `feature_roadmap.media_reviews_enabled` were promoted to `beta_enabled`.
+  - The flag states were already enabled; this was a roadmap-history cleanup to match the shipped features.
 
 ### User roles and permissions
 
