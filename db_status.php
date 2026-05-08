@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/app_config.php';
 
 requireAdmin();
 
@@ -34,6 +35,28 @@ $schemaVersion = currentSchemaVersion($pdo);
 $appliedMigrations = appliedMigrationVersions($pdo);
 $availableMigrations = array_map(static fn(string $path): string => basename($path), availableMigrationFiles(dbDriverName()));
 $pendingMigrations = array_values(array_diff($availableMigrations, $appliedMigrations));
+$migrationMessage = '';
+$migrationApplied = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken($_POST['csrf_token'] ?? '');
+    if (!appAllowDbMigrations()) {
+        $migrationMessage = 'Database migrations are disabled in this environment.';
+    } else {
+        try {
+            $migrationApplied = applyPendingMigrations($pdo);
+            if ($migrationApplied) {
+                $migrationMessage = 'Applied ' . count($migrationApplied) . ' pending migration' . (count($migrationApplied) === 1 ? '' : 's') . '.';
+            } else {
+                $migrationMessage = 'No pending migrations were found.';
+            }
+        } catch (Throwable $e) {
+            $migrationMessage = 'Migration run failed: ' . $e->getMessage();
+        }
+    }
+}
+
+$csrf = generateCsrfToken();
 
 $paths = [
     'uploads' => __DIR__ . '/uploads',
@@ -144,6 +167,11 @@ try {
 
     <div class="card">
         <h2>Schema Migrations</h2>
+        <?php if ($migrationMessage): ?>
+            <div class="alert <?= str_starts_with($migrationMessage, 'Applied ') || str_starts_with($migrationMessage, 'No pending') ? 'alert-success' : 'alert-warning' ?>">
+                <?= h($migrationMessage) ?>
+            </div>
+        <?php endif; ?>
         <div class="grid">
             <div class="metric">
                 <div class="small">Current schema version</div>
@@ -158,6 +186,14 @@ try {
                 <strong><?= h(count($pendingMigrations)) ?></strong>
             </div>
         </div>
+
+        <form method="post" class="mt-3">
+            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+            <button class="btn btn-primary" type="submit" <?= appAllowDbMigrations() ? '' : 'disabled' ?>>Run pending migrations</button>
+            <?php if (!appAllowDbMigrations()): ?>
+                <div class="small text-muted mt-2">Enable <code>APP_ALLOW_DB_MIGRATIONS=true</code> to run migrations from this page.</div>
+            <?php endif; ?>
+        </form>
 
         <div class="mt-3">
             <table>
