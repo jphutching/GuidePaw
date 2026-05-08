@@ -176,6 +176,51 @@ function gpFoundDogNotifyOwnerInApp(PDO $pdo, array $dog, array $report, string 
     }
 }
 
+function gpFoundDogEmailSubject(array $dog): string
+{
+    return 'GuidePaw found dog location report: ' . (string) ($dog['name'] ?? 'Service Dog');
+}
+
+function gpFoundDogEmailBody(array $dog, array $report, string $mapUrl, ?string $adminUrl = null): string
+{
+    $contact = $dog['_public_contact_defaults'] ?? [];
+    $dogName = (string) ($dog['name'] ?? 'Service Dog');
+    $location = (string) ($report['finder_location'] ?? 'Not provided');
+    $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
+    $lng = isset($report['finder_longitude']) ? (string) $report['finder_longitude'] : '';
+    $accuracy = (string) ($report['finder_accuracy_m'] ?? '');
+    $message = trim((string) ($report['finder_message'] ?? ''));
+    $adminUrl = $adminUrl ?? rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_found_dog_reports.php';
+
+    $body = "A location report was submitted for {$dogName}.\n\n" .
+        "Handler: " . (string) ($contact['handler_name'] ?? 'Not provided') . "\n" .
+        "Location / cross street: {$location}\n" .
+        "Map: {$mapUrl}\n";
+    if ($lat !== '' && $lng !== '') {
+        $body .= "GPS: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
+    }
+    $body .= "\nFinder name: " . (string) ($report['finder_name'] ?? 'Not provided') . "\n" .
+        "Finder phone: " . (string) ($report['finder_phone'] ?? 'Not provided') . "\n" .
+        "Submitted: " . (string) ($report['created_at'] ?? date('Y-m-d H:i:s')) . "\n";
+    if ($message !== '') {
+        $body .= "\nMessage:\n{$message}\n";
+    }
+    return $body . "\nReview reports: {$adminUrl}\n\nGuidePaw found dog notification\n";
+}
+
+function gpFoundDogRecipientEmails(array $dog): array
+{
+    $contact = $dog['_public_contact_defaults'] ?? [];
+    $recipients = [];
+    foreach ([$contact['handler_email'] ?? '', $dog['owner_email'] ?? '', gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'))] as $email) {
+        $email = trim((string) $email);
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $recipients[$email] = $email;
+        }
+    }
+    return array_values($recipients);
+}
+
 function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
 {
     try {
@@ -191,44 +236,20 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
             return false;
         }
 
-        $contact = $dog['_public_contact_defaults'] ?? gpDogPublicContactDefaults($pdo, $dog);
         $dogName = (string) ($dog['name'] ?? 'Service Dog');
         $location = (string) ($report['finder_location'] ?? 'Not provided');
         $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
         $lng = isset($report['finder_longitude']) ? (string) $report['finder_longitude'] : '';
-        $accuracy = (string) ($report['finder_accuracy_m'] ?? '');
         $mapUrl = gpFoundDogMapUrl($lat, $lng, $location);
         $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_found_dog_reports.php';
-        $message = trim((string) ($report['finder_message'] ?? ''));
-
-        $body = "A location report was submitted for {$dogName}.\n\n" .
-            "Handler: " . (string) ($contact['handler_name'] ?? 'Not provided') . "\n" .
-            "Location / cross street: {$location}\n" .
-            "Map: {$mapUrl}\n";
-        if ($lat !== '' && $lng !== '') {
-            $body .= "GPS: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
-        }
-        $body .= "\nFinder name: " . (string) ($report['finder_name'] ?? 'Not provided') . "\n" .
-            "Finder phone: " . (string) ($report['finder_phone'] ?? 'Not provided') . "\n" .
-            "Submitted: " . (string) ($report['created_at'] ?? date('Y-m-d H:i:s')) . "\n";
-        if ($message !== '') {
-            $body .= "\nMessage:\n{$message}\n";
-        }
-        $body .= "\nReview reports: {$adminUrl}\n\nGuidePaw found dog notification\n";
-
-        $recipients = [];
-        foreach ([$contact['handler_email'] ?? '', $dog['owner_email'] ?? '', gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app'))] as $email) {
-            $email = trim((string) $email);
-            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $recipients[$email] = true;
-            }
-        }
+        $body = gpFoundDogEmailBody($dog, $report, $mapUrl, $adminUrl);
+        $recipients = gpFoundDogRecipientEmails($dog);
 
         $sent = gpFoundDogNotifyOwnerInApp($pdo, $dog, $report, $mapUrl, $body);
         if (gpFoundDogFlag('FOUND_DOG_NOTIFY_EMAIL_ENABLED', true)) {
-            foreach (array_keys($recipients) as $email) {
+            foreach ($recipients as $email) {
                 try {
-                    $sent = gpSendMail($email, 'GuidePaw found dog location report: ' . $dogName, $body) || $sent;
+                    $sent = gpSendMail($email, gpFoundDogEmailSubject($dog), $body) || $sent;
                 } catch (Throwable $e) {
                     error_log('GuidePaw found dog email notification failed: ' . $e->getMessage());
                 }
