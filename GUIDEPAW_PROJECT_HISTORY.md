@@ -71,6 +71,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - The live local host at `https://10.147.18.184` was redeployed and the QA crawler passed `media_review_page_loads` with HTTP 200.
   - The beta QA checklist was marked from the crawler run after the live host pass.
   - `scripts/deploy_local.sh` was cleaned up so the deploy smoke checks finish without the earlier false-positive warnings.
+  - The beta database schema was reconciled with the local migration set, and the system-health page now surfaces schema version and pending/applied migration files.
 
 ### User roles and permissions
 
