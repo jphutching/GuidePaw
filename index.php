@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/candidate_scoring.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
+require_once __DIR__ . '/includes/trucking_mode.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
@@ -126,7 +127,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
         <div class="alert alert-warning">No dog profiles yet. <a href="dogs.php" class="alert-link">Create your first dog</a>.</div>
     <?php endif; ?>
 
-    <section class="card command-card mb-3">
+    <section class="card command-card mb-3" id="today">
         <div class="card-body">
             <div class="command-title">
                 <div>
@@ -140,6 +141,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
                     <a class="today-action" href="log_entry.php"><span>📝</span>Detailed Log</a>
+                <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'trucking_mode_enabled')): ?>
+                    <a class="today-action" href="trucking_mode.php"><span>🚚</span>Trucking Mode</a>
                 <?php endif; ?>
                 <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
