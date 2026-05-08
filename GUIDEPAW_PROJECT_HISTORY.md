@@ -73,6 +73,11 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `scripts/deploy_local.sh` was cleaned up so the deploy smoke checks finish without the earlier false-positive warnings.
   - The beta database schema was reconciled with the local migration set, and the system-health page now surfaces schema version and pending/applied migration files.
   - The admin System Health page can now run pending migrations when `APP_ALLOW_DB_MIGRATIONS=true`, and the crawler checks that migration section explicitly.
+- Coach review workflow was added on 2026-05-08:
+  - `coach_review.php` now routes regression events into a coach review queue for the active dog.
+  - `includes/coach_reviews.php` centralizes queue, create, and update helpers for the `coach_reviews` table.
+  - The Training section menu and beta QA checklist now cover Coach Review.
+  - The local QA crawler checks the new coach review page alongside media review and System Health.
 
 ### User roles and permissions
 

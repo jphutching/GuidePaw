@@ -124,6 +124,7 @@ if ($adminLoggedIn) {
         'feedback_page_loads' => 'feedback.php',
         'db_status_page_loads' => 'db_status.php',
         'media_review_page_loads' => 'media_review.php',
+        'coach_review_page_loads' => 'coach_review.php',
     ];
     foreach ($pages as $id => $path) {
         $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie, $insecureLocalSsl);
@@ -135,16 +136,28 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'guidepaw training media review')
             )
             : true;
+        $coachPageLooksReady = $path === 'coach_review.php'
+            ? (
+                str_contains($body, 'coach review')
+                || str_contains($body, 'coach review storage has not been deployed')
+                || str_contains($body, 'review queue')
+            )
+            : true;
         $dbStatusLooksReady = $path === 'db_status.php'
             ? str_contains($body, 'schema migrations')
             : true;
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $dbStatusLooksReady,
-            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
         );
     }
+
+    $dashboard = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl);
+    $dashboardBody = strtolower($dashboard['body']);
+    $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
+    gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
 
     $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl);
     $adminBody = strtolower($adminUsers['body']);

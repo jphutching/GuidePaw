@@ -3,6 +3,7 @@ require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
+require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
@@ -22,8 +23,9 @@ $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
+$openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + $unreadNotifications;
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + $unreadNotifications;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -147,12 +149,12 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <div class="command-title">
                 <div>
                     <h2 class="h5 mb-1">Needs Attention</h2>
-                    <div class="small text-muted"><?= (int) $attentionCount ?> item<?= $attentionCount === 1 ? '' : 's' ?> needing review.</div>
-                </div>
-            </div>
+            <div class="small text-muted"><?= (int) $attentionCount ?> item<?= $attentionCount === 1 ? '' : 's' ?> needing review.</div>
+        </div>
+    </div>
 
-            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && $unreadNotifications === 0): ?>
-                <div class="attention-empty">✅ No active alerts, transfer requests, notifications, or upcoming vet reminders right now.</div>
+            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && $unreadNotifications === 0): ?>
+                <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, or upcoming vet reminders right now.</div>
             <?php endif; ?>
 
             <?php if ($activeAlerts): ?>
@@ -183,6 +185,23 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                             <div class="list-group-item px-0">
                                 <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
                                 <div class="small text-muted text-break"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($openCoachReviews): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Coach Review</h3>
+                        <a href="coach_review.php" class="btn btn-outline-primary btn-sm">Review queue</a>
+                    </div>
+                    <div class="vstack gap-2">
+                        <?php foreach (array_slice($openCoachReviews, 0, 3) as $review): ?>
+                            <div class="alert-card <?= e(($review['priority'] ?? 'normal') === 'high' ? 'danger' : 'warning') ?> rounded-3 border bg-white p-3">
+                                <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['review_type'] ?? 'coach review') ?></div>
+                                <div class="small text-muted text-break"><?= e($review['reason'] ?? 'Open coaching follow-up') ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>

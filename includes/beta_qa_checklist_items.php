@@ -133,6 +133,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'quick_session', 'text' => 'Quick Session works for active dog.', 'expected' => 'Session saves and appears in history.'],
                 ['id' => 'detailed_log', 'text' => 'Detailed Log works for active dog if feature enabled.', 'expected' => 'Log saves with selected values.'],
                 ['id' => 'media_review', 'text' => 'Media Review page opens for logs with image/video/audio attachments.', 'expected' => 'User can rate camera stability, audio clarity, and training value.'],
+                ['id' => 'coach_review', 'text' => 'Coach Review page opens and lets you queue regression items for follow-up.', 'expected' => 'Open training regressions can be promoted into a coach review queue and updated.'],
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
                 ['id' => 'candidate_assessment', 'text' => 'Candidate Assessment page loads if enabled.', 'expected' => 'Assessment can be started or viewed.'],
