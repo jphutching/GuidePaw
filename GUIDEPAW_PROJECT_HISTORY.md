@@ -84,6 +84,12 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `video_reviews_enabled` is now enabled through migration `20260508_video_reviews_enabled.sql`.
   - The dashboard, Training menu, beta QA checklist, and local crawler now cover Video Review.
   - The dashboard query was corrected to use the actual `daily_log_media_reviews` timestamps, and both local and beta crawlers passed `20/20` after the fix.
+- Candidate scoring dashboard support was added on 2026-05-08:
+  - `includes/candidate_scoring.php` now exposes a dashboard helper for the latest candidate assessment.
+  - `index.php` shows the active dog's latest candidate focus in Needs Attention.
+  - `scripts/local_qa_crawler.php` checks the candidate assessment page and dashboard hook.
+  - `feature_roadmap.candidate_scoring_enabled` was promoted to `beta_enabled` through `20260508_candidate_scoring_beta_enabled.sql`.
+  - Local and beta crawlers passed `22/22` after the candidate scoring rollout.
 
 ### User roles and permissions
 
