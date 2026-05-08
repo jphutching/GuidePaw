@@ -124,6 +124,7 @@ if ($adminLoggedIn) {
         'feedback_page_loads' => 'feedback.php',
         'db_status_page_loads' => 'db_status.php',
         'media_review_page_loads' => 'media_review.php',
+        'video_review_page_loads' => 'video_review.php',
         'coach_review_page_loads' => 'coach_review.php',
     ];
     foreach ($pages as $id => $path) {
@@ -134,6 +135,13 @@ if ($adminLoggedIn) {
                 str_contains($body, 'camera stability')
                 || str_contains($body, 'review form is unavailable')
                 || str_contains($body, 'guidepaw training media review')
+            )
+            : true;
+        $videoPageLooksReady = $path === 'video_review.php'
+            ? (
+                str_contains($body, 'checkpoint video review')
+                || str_contains($body, 'video review')
+                || str_contains($body, 'checkpoint videos')
             )
             : true;
         $coachPageLooksReady = $path === 'coach_review.php'
@@ -149,8 +157,8 @@ if ($adminLoggedIn) {
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady,
-            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
         );
     }
 

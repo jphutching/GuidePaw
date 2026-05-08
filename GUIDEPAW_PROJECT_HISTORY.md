@@ -78,6 +78,11 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `includes/coach_reviews.php` centralizes queue, create, and update helpers for the `coach_reviews` table.
   - The Training section menu and beta QA checklist now cover Coach Review.
   - The local QA crawler checks the new coach review page alongside media review and System Health.
+- Video review workflow was added on 2026-05-08:
+  - `video_review.php` filters checkpoint videos from training logs and reuses the shared media-review storage.
+  - `includes/video_reviews.php` centralizes video-specific queue and dashboard helpers.
+  - `video_reviews_enabled` is now enabled through migration `20260508_video_reviews_enabled.sql`.
+  - The dashboard, Training menu, beta QA checklist, and local crawler now cover Video Review.
 
 ### User roles and permissions
 

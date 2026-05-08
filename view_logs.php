@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/feature_flags.php';
 require 'includes/db_connect.php';
 
 checkLogin();
@@ -121,6 +122,9 @@ $logs = $stmt->fetchAll();
                                 <?php endif; ?>
                                 <div class="mt-2">
                                     <a class="btn btn-outline-primary btn-sm" href="media_review.php?log_id=<?= (int) $log['id'] ?>#log-<?= (int) $log['id'] ?>">Review media</a>
+                                    <?php if ($log['media_type'] === 'video' && featureEnabled($pdo, 'video_reviews_enabled')): ?>
+                                        <a class="btn btn-outline-info btn-sm" href="video_review.php?log_id=<?= (int) $log['id'] ?>#log-<?= (int) $log['id'] ?>">Video review</a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endif; ?>

@@ -4,6 +4,7 @@ require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
+require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
@@ -24,8 +25,9 @@ $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
+$openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + $unreadNotifications;
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $unreadNotifications;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -153,8 +155,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
         </div>
     </div>
 
-            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && $unreadNotifications === 0): ?>
-                <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, or upcoming vet reminders right now.</div>
+            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && !$openVideoReviews && $unreadNotifications === 0): ?>
+                <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, video reviews, or upcoming vet reminders right now.</div>
             <?php endif; ?>
 
             <?php if ($activeAlerts): ?>
@@ -202,6 +204,23 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                             <div class="alert-card <?= e(($review['priority'] ?? 'normal') === 'high' ? 'danger' : 'warning') ?> rounded-3 border bg-white p-3">
                                 <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['review_type'] ?? 'coach review') ?></div>
                                 <div class="small text-muted text-break"><?= e($review['reason'] ?? 'Open coaching follow-up') ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($openVideoReviews): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Video Review</h3>
+                        <a href="video_review.php" class="btn btn-outline-info btn-sm">Open videos</a>
+                    </div>
+                    <div class="vstack gap-2">
+                        <?php foreach (array_slice($openVideoReviews, 0, 3) as $review): ?>
+                            <div class="alert-card info rounded-3 border bg-white p-3">
+                                <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['location_name'] ?? 'Video checkpoint') ?></div>
+                                <div class="small text-muted text-break"><?= e(date('M j, Y', strtotime((string) $review['log_date']))) ?></div>
                             </div>
                         <?php endforeach; ?>
                     </div>
