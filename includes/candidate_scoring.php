@@ -78,3 +78,65 @@ function recommendCandidateFocusLevel(float $averageScore, string $safetyFlags =
         'recommendation' => 'Pet manners and confidence building first. Reassess after foundation work.'
     ];
 }
+
+function gpLatestCandidateAssessment(PDO $pdo, int $userId, ?int $dogId = null): ?array
+{
+    $sql = "
+        SELECT a.*, d.name AS dog_name
+        FROM dog_candidate_assessments a
+        JOIN dogs d ON d.id = a.dog_id
+        WHERE d.owner_user_id = ?
+          AND COALESCE(a.status, 'active') = 'active'
+    ";
+    $params = [$userId];
+
+    if ($dogId !== null) {
+        $sql .= " AND a.dog_id = ?";
+        $params[] = $dogId;
+    }
+
+    $sql .= " ORDER BY a.created_at DESC LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+function gpDashboardRenderCandidateAssessmentAlert(?array $assessment): void
+{
+    ?>
+    <section class="card command-card mb-3 border-warning">
+        <div class="card-body">
+            <div class="command-title">
+                <div>
+                    <h2 class="h5 mb-1">Candidate Scoring</h2>
+                    <div class="small text-muted">
+                        <?= $assessment ? 'Latest candidate assessment for the active dog.' : 'No active candidate assessment yet.' ?>
+                    </div>
+                </div>
+                <a href="candidate_assessment.php" class="btn btn-warning btn-sm">Open Assessment</a>
+            </div>
+
+            <?php if ($assessment): ?>
+                <div class="rounded-3 border bg-warning-subtle p-3">
+                    <div class="fw-bold">
+                        <?= e($assessment['dog_name'] ?? 'Active dog') ?> · Focus Level <?= e((string) ($assessment['focus_level_recommended'] ?? '—')) ?>
+                    </div>
+                    <div class="small text-muted">
+                        <?= e((string) ($assessment['recommendation'] ?? '')) ?>
+                    </div>
+                    <?php if (!empty($assessment['safety_flags'])): ?>
+                        <div class="small mt-2">
+                            <strong>Safety flags:</strong> <?= e($assessment['safety_flags']) ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <div class="attention-empty">
+                    Complete a candidate assessment to establish a starting focus level and training path.
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+    <?php
+}

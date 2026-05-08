@@ -3,6 +3,7 @@ require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
+require_once __DIR__ . '/includes/candidate_scoring.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
@@ -24,10 +25,12 @@ $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
+$latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $unreadNotifications;
+$candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -192,6 +195,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     </div>
                 </div>
             <?php endif; ?>
+
+            <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
 
             <?php if ($openCoachReviews): ?>
                 <div class="mt-3">
