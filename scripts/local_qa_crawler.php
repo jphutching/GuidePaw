@@ -125,6 +125,7 @@ if ($adminLoggedIn) {
         'db_status_page_loads' => 'db_status.php',
         'candidate_assessment_page_loads' => 'candidate_assessment.php',
         'trucking_mode_page_loads' => 'trucking_mode.php',
+        'ai_training_assistant_page_loads' => 'ai_training_assistant.php',
         'media_review_page_loads' => 'media_review.php',
         'video_review_page_loads' => 'video_review.php',
         'coach_review_page_loads' => 'coach_review.php',
@@ -170,11 +171,18 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'travel-day plan')
             )
             : true;
+        $assistantPageLooksReady = $path === 'ai_training_assistant.php'
+            ? (
+                str_contains($body, 'ai training assistant')
+                || str_contains($body, 'bounded training support')
+                || str_contains($body, 'bounded guidance')
+            )
+            : true;
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $candidatePageLooksReady && $truckingPageLooksReady,
-            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $candidatePageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
         );
     }
 
