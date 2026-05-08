@@ -50,7 +50,27 @@ gpEnsureHandlerProfileColumnsForDogProfile($pdo);
 $userId = (int) $_SESSION['user_id'];
 $dogId = isset($_GET['dog_id']) ? (int) $_GET['dog_id'] : getActiveDogId($pdo, $userId);
 if (!$dogId || !hasDogAccess($pdo, $userId, $dogId)) {
-    die('Dog not found.');
+    ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><?= e(appName()) ?></title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+</head>
+<body class="pb-5">
+<?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
+<div class="container py-4" style="max-width: 820px;">
+    <div class="alert alert-warning">Dog profile not found or not available to this account.</div>
+    <a href="dogs.php" class="btn btn-outline-secondary">Dogs</a>
+</div>
+</body>
+</html>
+<?php
+    exit;
 }
 $canEdit = userCanEditDog($pdo, $userId, $dogId);
 $errors = [];
