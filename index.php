@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/candidate_scoring.php';
 require_once __DIR__ . '/includes/candidate_comparison.php';
+require_once __DIR__ . '/includes/community_challenges.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/trucking_mode.php';
@@ -28,6 +29,7 @@ $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
+$communityChallengeState = $activeDog ? gpCommunityChallengeState($userId, (int) $activeDog['id']) : null;
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
@@ -146,6 +148,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'trucking_mode_enabled')): ?>
                     <a class="today-action" href="trucking_mode.php"><span>🚚</span>Trucking Mode</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'community_challenges_enabled')): ?>
+                    <a class="today-action" href="community_challenges.php"><span>🏅</span>Community Challenges</a>
+                <?php endif; ?>
                 <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
@@ -209,6 +214,15 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                         <a href="candidate_comparison.php" class="btn btn-outline-secondary btn-sm">Compare dogs</a>
                     </div>
                     <div class="attention-empty">Compare the active dog against other accessible dogs to see their latest candidate scores side by side.</div>
+                </div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'community_challenges_enabled') && $activeDog && $communityChallengeState): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Community Challenge</h3>
+                        <a href="community_challenges.php" class="btn btn-outline-success btn-sm">Open challenge</a>
+                    </div>
+                    <div class="attention-empty"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?> · <?= e((string) (($communityChallengeState['check_ins'] ?? 0))) ?> check-ins logged.</div>
                 </div>
             <?php endif; ?>
 

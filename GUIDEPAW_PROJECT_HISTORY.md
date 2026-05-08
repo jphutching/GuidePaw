@@ -496,6 +496,13 @@ Only run destructive cleanup after dry-run output is correct:
 php scripts/cleanup_e2e_data.php --yes
 ```
 
+2026-05-08 — Community challenges rollout
+- Commit(s): pending
+- Files changed: community_challenges.php, includes/community_challenges.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, sql/migrations/pgsql/20260508_community_challenges_beta_enabled.sql
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: commit, push, and verify beta after Render deploys
+
 2026-05-08 — Candidate comparison rollout
 - Commit(s): e9f3f8f add candidate comparison workflow
 - Files changed: candidate_comparison.php, includes/candidate_comparison.php, includes/candidate_scoring.php, candidate_assessment.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, sql/migrations/pgsql/20260508_candidate_comparison_beta_enabled.sql
