@@ -83,6 +83,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `includes/video_reviews.php` centralizes video-specific queue and dashboard helpers.
   - `video_reviews_enabled` is now enabled through migration `20260508_video_reviews_enabled.sql`.
   - The dashboard, Training menu, beta QA checklist, and local crawler now cover Video Review.
+  - The dashboard query was corrected to use the actual `daily_log_media_reviews` timestamps, and both local and beta crawlers passed `20/20` after the fix.
 
 ### User roles and permissions
 
