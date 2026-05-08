@@ -128,18 +128,7 @@ $recentStmt = $pdo->prepare("
 $recentStmt->execute([$userId]);
 $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$labels = [
-    'confidence_score' => 'Confidence',
-    'startle_recovery_score' => 'Startle recovery',
-    'handler_engagement_score' => 'Handler engagement',
-    'food_motivation_score' => 'Food motivation',
-    'toy_motivation_score' => 'Toy motivation',
-    'settle_score' => 'Ability to settle',
-    'human_neutrality_score' => 'Human neutrality',
-    'dog_neutrality_score' => 'Dog neutrality',
-    'environment_score' => 'Truck/environment confidence',
-    'handling_score' => 'Handling tolerance'
-];
+$labels = candidateScoreLabels();
 ?>
 <!doctype html>
 <html lang="en">
@@ -204,6 +193,9 @@ $labels = [
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Candidate Assessment</h1>
     <p class="small">Score 1 = major concern, 3 = acceptable foundation, 5 = excellent.</p>
+    <?php if (count($dogs) > 1 && featureEnabled($pdo, 'candidate_comparison_enabled')): ?>
+        <p><a href="candidate_comparison.php">Compare your dogs</a></p>
+    <?php endif; ?>
 
     <?php if ($message): ?>
         <div class="alert"><?= h($message) ?></div>

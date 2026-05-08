@@ -138,6 +138,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
                 ['id' => 'candidate_assessment', 'text' => 'Candidate Assessment page loads if enabled.', 'expected' => 'Assessment can be started or viewed.'],
+                ['id' => 'candidate_comparison', 'text' => 'Candidate Comparison page loads if enabled.', 'expected' => 'User can compare multiple dog candidate assessments side by side.'],
                 ['id' => 'trucking_mode', 'text' => 'Trucking Mode page opens for the active dog.', 'expected' => 'User can pick a day type and see the travel-day plan.'],
                 ['id' => 'vet_appointments', 'text' => 'Vet Appointments page loads and saves reminder.', 'expected' => 'Appointment appears on dashboard reminders.'],
                 ['id' => 'medications', 'text' => 'Medications page loads if enabled.', 'expected' => 'Medication reminder/refill behavior remains intact.'],

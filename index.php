@@ -4,6 +4,7 @@ require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/candidate_scoring.php';
+require_once __DIR__ . '/includes/candidate_comparison.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/trucking_mode.php';
@@ -201,6 +202,15 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <?php endif; ?>
 
             <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
+            <?php if (featureEnabled($pdo, 'candidate_comparison_enabled') && count($dogs) > 1): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Candidate Comparison</h3>
+                        <a href="candidate_comparison.php" class="btn btn-outline-secondary btn-sm">Compare dogs</a>
+                    </div>
+                    <div class="attention-empty">Compare the active dog against other accessible dogs to see their latest candidate scores side by side.</div>
+                </div>
+            <?php endif; ?>
 
             <?php if ($openCoachReviews): ?>
                 <div class="mt-3">

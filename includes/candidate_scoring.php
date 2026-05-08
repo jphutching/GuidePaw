@@ -16,6 +16,22 @@ function candidateScoreKeys(): array
     ];
 }
 
+function candidateScoreLabels(): array
+{
+    return [
+        'confidence_score' => 'Confidence',
+        'startle_recovery_score' => 'Startle recovery',
+        'handler_engagement_score' => 'Handler engagement',
+        'food_motivation_score' => 'Food motivation',
+        'toy_motivation_score' => 'Toy motivation',
+        'settle_score' => 'Ability to settle',
+        'human_neutrality_score' => 'Human neutrality',
+        'dog_neutrality_score' => 'Dog neutrality',
+        'environment_score' => 'Truck/environment confidence',
+        'handling_score' => 'Handling tolerance'
+    ];
+}
+
 function clampCandidateScore($value): int
 {
     return max(1, min(5, (int)$value));
@@ -114,7 +130,10 @@ function gpDashboardRenderCandidateAssessmentAlert(?array $assessment): void
                         <?= $assessment ? 'Latest candidate assessment for the active dog.' : 'No active candidate assessment yet.' ?>
                     </div>
                 </div>
-                <a href="candidate_assessment.php" class="btn btn-warning btn-sm">Open Assessment</a>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="candidate_assessment.php" class="btn btn-warning btn-sm">Open Assessment</a>
+                    <a href="candidate_comparison.php" class="btn btn-outline-warning btn-sm">Compare Dogs</a>
+                </div>
             </div>
 
             <?php if ($assessment): ?>
