@@ -68,6 +68,20 @@ if (!function_exists('gpNavLink')) {
     .gp-menu-icon { font-size: 1.2rem; width: 1.4rem; text-align: center; flex:0 0 auto; }
     @media (max-width: 420px) { .gp-menu-root-actions, .gp-menu-link-grid { grid-template-columns: 1fr; } .gp-bottom-nav a, .gp-bottom-nav button { font-size:.66rem; } }
     @media (min-width: 720px) { .gp-menu-link-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 640px) {
+        html, body { max-width: 100%; overflow-x: hidden; }
+        body { overflow-wrap: anywhere; word-break: normal; }
+        main, .container, .container-fluid, .wrap, .card, .card-body, .cardx, form, fieldset, .row, [class*="col-"] { min-width: 0; max-width: 100%; }
+        img, video, canvas, iframe, svg { max-width: 100%; height: auto; }
+        input, textarea, select, button, .btn { max-width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+        a { overflow-wrap: anywhere; word-break: break-word; }
+        .d-flex, .row, .top, .filters, .nav { min-width: 0; flex-wrap: wrap; }
+        .list-group-item { min-width: 0; flex-wrap: wrap; }
+        table { width: 100% !important; max-width: 100% !important; min-width: 0 !important; table-layout: fixed; border-collapse: collapse; }
+        th, td { max-width: 100%; min-width: 0 !important; white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; }
+        td form, td .btn, td button { width: 100%; margin-top: .25rem; }
+        [style*="min-width"] { min-width: 0 !important; }
+    }
     @media print { .gp-mobile-nav-shell, .gp-menu-backdrop, .gp-menu-panel { display: none !important; } }
 </style>
 
