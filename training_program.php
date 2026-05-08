@@ -342,17 +342,15 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
     </div>
 </div>
 
-<div class="topbar p-4 shadow-sm">
-    <div class="page-shell p-0 d-flex justify-content-between align-items-start gap-3">
-        <div>
-            <div class="small opacity-75">Structured training</div>
-            <h2 class="mb-1">🎓 <?= e($dog['name']) ?></h2>
-            <div class="small opacity-75">Progression ladder, service-dog candidate screen, AKC tracks, and trainer workflow.</div>
-        </div>
-        <a href="index.php" class="btn btn-outline-light btn-sm">Dashboard</a>
-    </div>
-</div>
 <div class="page-shell">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+        <div>
+            <div class="small-muted">Structured training</div>
+            <h1 class="h3 mb-1">🎓 <?= e($dog['name']) ?></h1>
+            <div class="small-muted">Progression ladder, service-dog candidate screen, AKC tracks, and trainer workflow.</div>
+        </div>
+        <a href="index.php" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+    </div>
     <?php if ($status): ?><div class="alert alert-success"><?= e(str_replace('_', ' ', $status)) ?>.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
