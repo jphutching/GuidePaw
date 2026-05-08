@@ -1,6 +1,6 @@
 # GuidePaw Project History / Handoff
 
-Last updated: 2026-05-07
+Last updated: 2026-05-08
 
 This file is the durable project memory for GuidePaw. Use it before starting or resuming work so the project can continue without backtracking when a chat gets long, scattered, or sidetracked.
 
@@ -40,6 +40,19 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Test or add safety checks before destructive cleanup operations.
 
 ## Current stable status
+
+### 2026-05-08 deployment checkpoint
+
+- Laptop, GitHub `main`, and Render beta are aligned on commit `a42246f` (`Stabilize Playwright crawlers for current GuidePaw UI`).
+- Render web service `srv-d7qmnj7lk1mc73cl18j0` deployed commit `a42246f512ee754b03c7430e8fd247341db93d27`.
+- Live Render deploy ID: `dep-d7uj9099rddc73fp2390`.
+- Render deploy status confirmed through the Render API as `live`.
+- Full Playwright suite passed against the Render beta environment: `9 passed`.
+- Browser specs were stabilized for the current UI:
+  - Add-dog flow opens the collapsed `dogs.php` add form before filling it.
+  - Normal-user admin protection accepts `role_required` redirects as a valid block.
+  - Authenticated crawler skips the beta QA checklist page to avoid intentional instructional false positives.
+  - QR smoke test falls back to `GUIDEPAW_TEST_BASE_URL`.
 
 ### User roles and permissions
 
@@ -330,6 +343,7 @@ Recommended immediate order:
 
 Recent feature commits include:
 
+- Stabilize Playwright crawlers for current GuidePaw UI.
 - Protect built-in admin account role.
 - Protect built-in admin in user management.
 - Add local QA crawler smoke test.
