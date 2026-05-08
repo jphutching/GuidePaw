@@ -72,6 +72,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - The beta QA checklist was marked from the crawler run after the live host pass.
   - `scripts/deploy_local.sh` was cleaned up so the deploy smoke checks finish without the earlier false-positive warnings.
   - The beta database schema was reconciled with the local migration set, and the system-health page now surfaces schema version and pending/applied migration files.
+  - The admin System Health page can now run pending migrations when `APP_ALLOW_DB_MIGRATIONS=true`, and the crawler checks that migration section explicitly.
 
 ### User roles and permissions
 
