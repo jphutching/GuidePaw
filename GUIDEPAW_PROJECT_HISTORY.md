@@ -90,6 +90,13 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `scripts/local_qa_crawler.php` checks the candidate assessment page and dashboard hook.
   - `feature_roadmap.candidate_scoring_enabled` was promoted to `beta_enabled` through `20260508_candidate_scoring_beta_enabled.sql`.
   - Local and beta crawlers passed `22/22` after the candidate scoring rollout.
+- Trucking mode planning was added on 2026-05-08:
+  - `trucking_mode.php` lets the handler choose a day type and save route-specific notes for the active dog.
+  - `includes/trucking_mode.php` holds the planner definitions and session-backed state helpers.
+  - `index.php` adds a Trucking Mode shortcut in the Today section, and the mobile menu now links to the planner.
+  - `scripts/local_qa_crawler.php` checks the Trucking Mode page and dashboard hook.
+  - `feature_roadmap.trucking_mode_enabled` was promoted to `beta_enabled` through `20260508_trucking_mode_beta_enabled.sql`.
+  - Local and beta crawlers passed `24/24` after the trucking-mode rollout.
 
 ### User roles and permissions
 
