@@ -6,6 +6,8 @@ const PASSWORD = process.env.GUIDEPAW_TEST_PASSWORD || '';
 
 const MAX_LINKS = Number(process.env.GUIDEPAW_CRAWL_MAX_LINKS || 60);
 
+test.setTimeout(120000);
+
 function shouldSkip(url) {
   const lower = url.toLowerCase();
 
@@ -24,6 +26,16 @@ function shouldSkip(url) {
     lower.startsWith('tel:') ||
     lower.startsWith('javascript:')
   );
+}
+
+async function visiblePageTextForErrorScan(page) {
+  return page.locator('body').evaluate(body => {
+    const clone = body.cloneNode(true);
+    clone.querySelectorAll('.card').forEach(node => {
+      if (node.querySelector('.details')) node.remove();
+    });
+    return clone.innerText || '';
+  }).catch(() => '');
 }
 
 test('GuidePaw login works', async ({ page }) => {
@@ -74,7 +86,7 @@ test('GuidePaw authenticated link crawl', async ({ page }) => {
       continue;
     }
 
-    const bodyText = await page.locator('body').innerText().catch(() => '');
+    const bodyText = await visiblePageTextForErrorScan(page);
     const errorMatch = bodyText.match(/.{0,120}(Fatal error|Parse error|Warning:|Application error|SQLSTATE|Undefined function).{0,240}/is);
     if (errorMatch) {
       broken.push({

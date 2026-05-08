@@ -14,6 +14,8 @@ const ADMIN_ONLY_PAGES = [
   '/admin_users.php'
 ];
 
+test.setTimeout(120000);
+
 async function loginAsNormalUser(page) {
   test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
 

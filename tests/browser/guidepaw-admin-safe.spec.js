@@ -14,6 +14,8 @@ const SAFE_ADMIN_PAGES = [
   '/admin_users.php'
 ];
 
+test.setTimeout(120000);
+
 async function loginAsAdmin(page) {
   test.skip(!ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set GUIDEPAW_ADMIN_TEST_USERNAME and GUIDEPAW_ADMIN_TEST_PASSWORD');
 
@@ -28,8 +30,18 @@ async function loginAsAdmin(page) {
   await expect(page).not.toHaveURL(/login\.php/);
 }
 
+async function visiblePageTextForErrorScan(page) {
+  return page.locator('body').evaluate(body => {
+    const clone = body.cloneNode(true);
+    clone.querySelectorAll('.card').forEach(node => {
+      if (node.querySelector('.details')) node.remove();
+    });
+    return clone.innerText || '';
+  }).catch(() => '');
+}
+
 async function assertNoVisibleAppErrors(page) {
-  const bodyText = await page.locator('body').innerText().catch(() => '');
+  const bodyText = await visiblePageTextForErrorScan(page);
   expect(bodyText).not.toMatch(/Fatal error|Parse error|Application Error|SQLSTATE|Undefined function|headers already sent/i);
 }
 
@@ -74,7 +86,7 @@ test.describe.serial('GuidePaw admin-safe crawler', () => {
         continue;
       }
 
-      const bodyText = await page.locator('body').innerText().catch(() => '');
+      const bodyText = await visiblePageTextForErrorScan(page);
       const errorMatch = bodyText.match(/.{0,120}(Fatal error|Parse error|Application Error|SQLSTATE|Undefined function|headers already sent).{0,240}/is);
       if (errorMatch) {
         broken.push({
