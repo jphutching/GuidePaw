@@ -97,6 +97,12 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `scripts/local_qa_crawler.php` checks the Trucking Mode page and dashboard hook.
   - `feature_roadmap.trucking_mode_enabled` was promoted to `beta_enabled` through `20260508_trucking_mode_beta_enabled.sql`.
   - Local and beta crawlers passed `24/24` after the trucking-mode rollout.
+- AI Training Assistant support was added on 2026-05-08:
+  - `ai_training_assistant.php` provides bounded troubleshooting guidance for active-dog training issues.
+  - `includes/training_assistant.php` contains the rule-based assistant topics and safety-aware response builder.
+  - The mobile menu now links to AI Training Assistant under Support, and the beta QA checklist/crawler cover the new page.
+  - `feature_flags.ai_training_assistant_enabled` and `feature_roadmap.ai_training_assistant_enabled` were both promoted through `20260508_ai_training_assistant_beta_enabled.sql`.
+  - The beta crawler passed `25/25` after the flag fix and deploy refresh.
 
 ### User roles and permissions
 
