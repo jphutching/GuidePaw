@@ -106,6 +106,9 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Remaining roadmap bookkeeping was reconciled on 2026-05-08:
   - `feature_roadmap.coach_review_enabled` and `feature_roadmap.media_reviews_enabled` were promoted to `beta_enabled`.
   - The flag states were already enabled; this was a roadmap-history cleanup to match the shipped features.
+- MVP training foundation roadmap rows were reconciled on 2026-05-08:
+  - `feature_roadmap.goal_intake_enabled`, `training_progression_enabled`, `regression_engine_enabled`, and `habit_repair_enabled` were promoted to `beta_enabled`.
+  - The corresponding feature flags were already enabled; this was final bookkeeping to clear the last stale roadmap rows.
 
 ### User roles and permissions
 
