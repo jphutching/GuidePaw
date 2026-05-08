@@ -170,6 +170,7 @@ function renderRows(array $rows): void {
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
 
 <div class="wrap">
     <p><a href="training_program.php">← Training Program</a></p>

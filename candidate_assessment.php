@@ -197,6 +197,7 @@ $labels = [
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
 
 
 <div class="wrap">

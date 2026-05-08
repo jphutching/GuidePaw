@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/brand_header.php';
 require_once 'includes/ada_state_laws.php';
 require_once 'includes/ada_state_laws_extra.php';
 checkLogin();
@@ -37,6 +38,7 @@ $calmScript = 'This is my service dog. You may ask whether the dog is required b
 </style>
 </head>
 <body class="pb-5">
+<?php guidepawBrandHeader(); ?>
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <button class="btn btn-light lockscreen-exit" type="button" id="floatingExitBtn">Exit</button>
