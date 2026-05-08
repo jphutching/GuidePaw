@@ -132,6 +132,7 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'quick_session', 'text' => 'Quick Session works for active dog.', 'expected' => 'Session saves and appears in history.'],
                 ['id' => 'detailed_log', 'text' => 'Detailed Log works for active dog if feature enabled.', 'expected' => 'Log saves with selected values.'],
+                ['id' => 'media_review', 'text' => 'Media Review page opens for logs with image/video/audio attachments.', 'expected' => 'User can rate camera stability, audio clarity, and training value.'],
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
                 ['id' => 'candidate_assessment', 'text' => 'Candidate Assessment page loads if enabled.', 'expected' => 'Assessment can be started or viewed.'],
@@ -161,6 +162,8 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'admin_home', 'text' => 'Admin Home loads for admin account.', 'expected' => 'admin.php opens without application error.'],
                 ['id' => 'beta_requests_admin', 'text' => 'Beta Requests admin page loads.', 'expected' => 'Submitted beta requests are visible/manageable.'],
                 ['id' => 'feedback_auto_context', 'text' => 'Feedback/Bug Report page captures relevant troubleshooting context.', 'expected' => 'Report includes page/error/account context where available.'],
+                ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches and family guidance.'],
+                ['id' => 'public_profile_questionnaire_link', 'text' => 'Public dog profile links to the Breed Questionnaire.', 'expected' => 'Public profile page exposes the questionnaire CTA.'],
                 ['id' => 'admin_feedback', 'text' => 'Admin Feedback Reports page shows submitted feedback.', 'expected' => 'Submitted bug report is visible to admin.'],
                 ['id' => 'user_management', 'text' => 'Admin User Management page loads.', 'expected' => 'Admin can inspect/manage users as expected.'],
                 ['id' => 'feature_roadmap', 'text' => 'Admin Feature Roadmap page loads.', 'expected' => 'Flags/roadmap remain visible.'],

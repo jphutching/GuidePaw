@@ -64,6 +64,13 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - Render deploy `dep-d7uko557vvec739okmsg` is live on commit `27dd8a1`.
   - Responsive audit passed against Render: normal 42 pages and admin 66 pages across all configured widths, with no overflow findings.
   - Brand/menu crawler and full Render Playwright suite also passed after the responsive changes.
+- Media review workflow was added after the responsive pass:
+  - Local migration `sql/migrations/pgsql/20260508_media_reviews.sql` was applied to the `guidepaw` database.
+  - The new `daily_log_media_reviews` table was verified present and writable.
+  - A PHP CLI smoke test saved a review row for a real training log attachment, confirming the write path.
+  - The live local host at `https://10.147.18.184` was redeployed and the QA crawler passed `media_review_page_loads` with HTTP 200.
+  - The beta QA checklist was marked from the crawler run after the live host pass.
+  - `scripts/deploy_local.sh` was cleaned up so the deploy smoke checks finish without the earlier false-positive warnings.
 
 ### User roles and permissions
 
@@ -289,6 +296,9 @@ These items need beta testing after Render redeploy:
 23. Confirm backup contacts are still optional and not blocking login.
 24. Confirm Handler Profile SMS opt-in saves correctly.
 25. Confirm Render web/database plans stayed correct after all commits.
+26. Confirm training goal intake archive/restore filters and goal history views work as intended.
+27. Confirm public Breed Questionnaire loads, ranks results, and links from public dog profile / support menu.
+28. Confirm Media Review loads for logs with attachments and saves camera/audio/training-value feedback.
 
 ## Known risks / areas to watch
 
@@ -387,6 +397,9 @@ Recent feature commits include:
 - Add SMS notification environment placeholders.
 - Add admin SMS notification test.
 - Add SMS notification QA checklist items.
+- Expand training goal intake to show active/archived/all views and restore archived goals from the intake page.
+- Add public Breed Questionnaire and link it from public dog profile and support menu.
+- Add Media Review for attached training log photos, videos, and audio.
 
 ## Testing command reminders
 

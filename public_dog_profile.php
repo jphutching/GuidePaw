@@ -157,6 +157,12 @@ body { background: #f1f5f9; color:#0f172a; }
     <?php if ($criticalAllergies): ?><section class="cardx mb-3 warning-note"><h2 class="h5 mb-2">Critical Medical / Allergy Note</h2><div><?= nl2br(e($criticalAllergies)) ?></div></section><?php endif; ?>
     <?php if ($tasks || $publicNotes): ?><section class="cardx mb-3"><h2 class="h5 mb-3">Public Notes</h2><?php if ($tasks): ?><div class="mb-3"><div class="label">Service tasks</div><div><?= nl2br(e($tasks)) ?></div></div><?php endif; ?><?php if ($publicNotes): ?><div><div class="label">Handler notes</div><div><?= nl2br(e($publicNotes)) ?></div></div><?php endif; ?></section><?php endif; ?>
 
+    <section class="cardx mb-3">
+        <h2 class="h5 mb-2">Choosing a breed?</h2>
+        <p class="text-muted mb-3">Use the public questionnaire to compare breed groups by size, energy, grooming, and the kind of work you need.</p>
+        <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
+    </section>
+
     <section class="cardx small text-muted mb-3">This public profile is intended to help return or identify a service dog and contact the handler or vet. It does not display private training logs, medical records, account data, or full app history.</section>
 </main>
 </body>

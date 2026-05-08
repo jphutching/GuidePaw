@@ -25,32 +25,48 @@ function h($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+$view = strtolower(trim((string)($_GET['view'] ?? 'active')));
+if (!in_array($view, ['active', 'archived', 'all'], true)) {
+    $view = 'active';
+}
+
 $dogsStmt = $pdo->prepare("SELECT id, name FROM dogs WHERE owner_user_id = ? ORDER BY name");
 $dogsStmt->execute([$userId]);
 $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-$message = '';
+$message = match ($_GET['msg'] ?? '') {
+    'saved' => 'Training goal saved.',
+    'updated' => 'Training goal updated.',
+    default => '',
+};
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'create';
+    $goalId = (int)($_POST['goal_id'] ?? 0);
 
     if ($action === 'archive') {
-        $goalId = (int)($_POST['goal_id'] ?? 0);
-        $stmt = $pdo->prepare("UPDATE training_goals SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?");
-        $stmt->execute([$goalId, $userId]);
-        writeAuditLog($pdo, 'training_goal_archived', 'training_goals', $goalId, 'Training goal archived.');
+        if ($goalId > 0 && updateTrainingGoalStatus($pdo, $goalId, $userId, 'archived')) {
+            writeAuditLog($pdo, 'training_goal_archived', 'training_goals', $goalId, 'Training goal archived.');
+        }
+        header('Location: training_goal_intake.php?view=' . urlencode($view) . '&msg=updated');
+        exit;
+    }
 
-        header('Location: training_goal_intake.php?msg=updated');
+    if ($action === 'restore') {
+        if ($goalId > 0 && updateTrainingGoalStatus($pdo, $goalId, $userId, 'active')) {
+            writeAuditLog($pdo, 'training_goal_restored', 'training_goals', $goalId, 'Training goal restored.');
+        }
+        header('Location: training_goal_intake.php?view=' . urlencode($view) . '&msg=updated');
         exit;
     }
 
     createTrainingGoal($pdo, $userId, $_POST);
 
-    header('Location: training_goal_intake.php?msg=saved');
+    header('Location: training_goal_intake.php?view=active&msg=saved');
     exit;
 }
 
-$recent = getRecentTrainingGoals($pdo, $userId, 8);
+$recent = getRecentTrainingGoals($pdo, $userId, 8, $view);
 ?>
 <!doctype html>
 <html lang="en">
@@ -117,6 +133,12 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
     <?php if ($message): ?>
         <div class="alert"><?= h($message) ?></div>
     <?php endif; ?>
+
+    <div style="margin-bottom:12px;">
+        <a href="?view=active" style="display:inline-block;margin-right:8px;<?= $view === 'active' ? 'font-weight:800;text-decoration:underline;' : '' ?>">Active</a>
+        <a href="?view=archived" style="display:inline-block;margin-right:8px;<?= $view === 'archived' ? 'font-weight:800;text-decoration:underline;' : '' ?>">Archived</a>
+        <a href="?view=all" style="display:inline-block;<?= $view === 'all' ? 'font-weight:800;text-decoration:underline;' : '' ?>">All</a>
+    </div>
 
     <div class="card">
         <?php if (!$dogs): ?>
@@ -200,6 +222,12 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8);
                             <input type="hidden" name="action" value="archive">
                             <input type="hidden" name="goal_id" value="<?= h($row['id']) ?>">
                             <button type="submit">Archive</button>
+                        </form>
+                    <?php elseif ($row['status'] === 'archived'): ?>
+                        <form method="post" onsubmit="return confirm('Restore this training goal?');">
+                            <input type="hidden" name="action" value="restore">
+                            <input type="hidden" name="goal_id" value="<?= h($row['id']) ?>">
+                            <button type="submit">Restore</button>
                         </form>
                     <?php endif; ?>
                 </td>

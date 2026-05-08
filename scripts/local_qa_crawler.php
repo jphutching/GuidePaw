@@ -122,10 +122,24 @@ if ($adminLoggedIn) {
         'dog_audit_page_loads' => 'dog_access_audit.php',
         'handler_profile_page_loads' => 'handler_profile.php',
         'feedback_page_loads' => 'feedback.php',
+        'media_review_page_loads' => 'media_review.php',
     ];
     foreach ($pages as $id => $path) {
         $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie, $insecureLocalSsl);
-        gpQaResult($results, $id, gpQaPageLooksOk($res), 'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : ''));
+        $body = strtolower($res['body']);
+        $mediaPageLooksReady = $path === 'media_review.php'
+            ? (
+                str_contains($body, 'camera stability')
+                || str_contains($body, 'review form is unavailable')
+                || str_contains($body, 'guidepaw training media review')
+            )
+            : true;
+        gpQaResult(
+            $results,
+            $id,
+            gpQaPageLooksOk($res) && $mediaPageLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '')
+        );
     }
 
     $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl);

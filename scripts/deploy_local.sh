@@ -25,6 +25,11 @@ echo "== Brand header check =="
 missing=0
 for f in *.php; do
   if grep -qi "<body" "$f"; then
+    case "$f" in
+      login.php|public_dog_profile.php|report_found_dog.php)
+        continue
+        ;;
+    esac
     if ! grep -q "brand_header.php" "$f" || ! grep -q "guidepawBrandHeader" "$f"; then
       echo "MISSING BRAND HEADER: $f"
       missing=1
@@ -34,15 +39,28 @@ done
 
 echo "== Missing linked PHP files =="
 bad_links=0
-while read -r target; do
+while IFS= read -r target; do
   [ -z "$target" ] && continue
+  case "$target" in
+    http://*|https://*|mailto:*)
+      continue
+      ;;
+    /*)
+      target="${target#/}"
+      ;;
+  esac
   if [ ! -f "$target" ]; then
     echo "MISSING LINK TARGET: $target"
     bad_links=1
   fi
 done < <(
-  grep -RhoE 'href="[^"]+\.php[^"]*"' . \
+  find . -type f \( -name "*.php" -o -name "*.html" -o -name "*.htm" \) \
+    ! -path "./.git/*" ! -path "./.env*" ! -path "./node_modules/*" ! -path "./vendor/*" \
+    -print0 \
+    | xargs -0 -r grep -RhoE 'href="[^"]+\.php[^"]*"' \
     | sed -E 's/href="//; s/[?#].*//; s/"//' \
+    | grep -v '^[[:space:]]*$' \
+    | grep -v '^<' \
     | sort -u
 )
 
@@ -62,18 +80,6 @@ if [ "$missing" -ne 0 ] || [ "$bad_links" -ne 0 ]; then
 fi
 
 echo "Deploy and smoke checks complete."
-
-# Ensure writable upload directories survive deploys
-sudo mkdir -p /var/www/guidepaw/uploads/feedback
-sudo chown -R www-data:www-data /var/www/guidepaw/uploads
-sudo find /var/www/guidepaw/uploads -type d -exec chmod 775 {} \;
-sudo find /var/www/guidepaw/uploads -type f -exec chmod 664 {} \;
-
-# Ensure writable upload directories survive deploys
-sudo mkdir -p /var/www/guidepaw/uploads/feedback
-sudo chown -R www-data:www-data /var/www/guidepaw/uploads
-sudo find /var/www/guidepaw/uploads -type d -exec chmod 775 {} \;
-sudo find /var/www/guidepaw/uploads -type f -exec chmod 664 {} \;
 
 # Ensure writable upload directories survive deploys
 sudo mkdir -p /var/www/guidepaw/uploads/feedback

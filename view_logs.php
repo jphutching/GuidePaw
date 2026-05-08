@@ -73,7 +73,7 @@ $logs = $stmt->fetchAll();
     <?php else: ?>
         <div class="vstack gap-3">
             <?php foreach ($logs as $log): ?>
-                <article class="card shadow-sm">
+                <article class="card shadow-sm" id="log-<?= (int) $log['id'] ?>">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                             <div class="min-w-0">
@@ -119,6 +119,9 @@ $logs = $stmt->fetchAll();
                                 <?php elseif ($log['media_type'] === 'audio'): ?>
                                     <audio controls class="w-100"><source src="<?= e($log['media_url']) ?>" type="<?= e($log['media_mime'] ?: 'audio/mpeg') ?>"></audio>
                                 <?php endif; ?>
+                                <div class="mt-2">
+                                    <a class="btn btn-outline-primary btn-sm" href="media_review.php?log_id=<?= (int) $log['id'] ?>#log-<?= (int) $log['id'] ?>">Review media</a>
+                                </div>
                             </div>
                         <?php endif; ?>
                     </div>

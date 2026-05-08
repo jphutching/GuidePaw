@@ -17,21 +17,68 @@ function getActiveTrainingGoals(PDO $pdo, int $userId, int $limit = 5): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function getRecentTrainingGoals(PDO $pdo, int $userId, int $limit = 8): array
+function normalizeTrainingGoalStatusFilter(string $status): string
 {
+    $status = strtolower(trim($status));
+    if (!in_array($status, ['active', 'archived', 'all'], true)) {
+        return 'active';
+    }
+
+    return $status;
+}
+
+function getRecentTrainingGoals(PDO $pdo, int $userId, int $limit = 8, string $status = 'active'): array
+{
+    $status = normalizeTrainingGoalStatusFilter($status);
+
+    if ($status === 'all') {
+        $stmt = $pdo->prepare("
+            SELECT g.*, d.name AS dog_name
+            FROM training_goals g
+            JOIN dogs d ON d.id = g.dog_id
+            WHERE g.user_id = ?
+            ORDER BY g.created_at DESC
+            LIMIT ?
+        ");
+        $stmt->bindValue(1, $userId, PDO::PARAM_INT);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     $stmt = $pdo->prepare("
         SELECT g.*, d.name AS dog_name
         FROM training_goals g
         JOIN dogs d ON d.id = g.dog_id
-        WHERE g.user_id = ? AND g.status = 'active'
+        WHERE g.user_id = ? AND COALESCE(g.status, 'active') = ?
         ORDER BY g.created_at DESC
         LIMIT ?
     ");
     $stmt->bindValue(1, $userId, PDO::PARAM_INT);
-    $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+    $stmt->bindValue(2, $status, PDO::PARAM_STR);
+    $stmt->bindValue(3, $limit, PDO::PARAM_INT);
     $stmt->execute();
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function updateTrainingGoalStatus(PDO $pdo, int $goalId, int $userId, string $status): bool
+{
+    $status = normalizeTrainingGoalStatusFilter($status);
+    if (!in_array($status, ['active', 'archived'], true)) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare("
+        UPDATE training_goals
+        SET status = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    ");
+    $stmt->execute([$status, $goalId, $userId]);
+
+    return $stmt->rowCount() > 0;
 }
 
 function createTrainingGoal(PDO $pdo, int $userId, array $data): int
