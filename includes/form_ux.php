@@ -29,7 +29,6 @@ if (!function_exists('guidepawFormUx')) {
         echo '
 <style>
 .gp-form-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;margin:0 auto;width:calc(100% - 28px);max-width:920px;padding:14px 16px;border-radius:12px;background:#d1e7dd;border:1px solid #badbcc;color:#0f5132;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.10)}
-.gp-unsaved-pill{display:none;position:fixed;right:14px;bottom:14px;z-index:9999;padding:10px 12px;border-radius:999px;background:#fff3cd;border:1px solid #ffecb5;color:#664d03;font-weight:800;box-shadow:0 8px 18px rgba(0,0,0,.12)}
 .gp-dog-name-large{display:inline-block;font-size:clamp(1.35rem,5vw,2rem);line-height:1.12;font-weight:900;letter-spacing:-.02em}
 .gp-active-dog-row{border:2px solid #0d6efd!important;background:linear-gradient(90deg,rgba(13,110,253,.14),rgba(34,197,94,.08))!important;box-shadow:0 8px 20px rgba(13,110,253,.14)}
 .gp-active-dog-row .gp-dog-name-large{font-size:clamp(1.65rem,6.2vw,2.35rem)}
@@ -53,11 +52,10 @@ if (!function_exists('guidepawFormUx')) {
         }
 
         echo '
-<div class="gp-unsaved-pill" id="gpUnsavedPill">⚠️ Unsaved changes</div>
 <script>
 (function(){
-let dirty=false,submitted=false;const pill=document.getElementById("gpUnsavedPill");
-function markDirty(){if(submitted)return;dirty=true;if(pill)pill.style.display="block"}function clearDirty(){dirty=false;submitted=true;if(pill)pill.style.display="none"}
+let dirty=false,submitted=false;
+function markDirty(){if(submitted)return;dirty=true}function clearDirty(){dirty=false;submitted=true}
 document.querySelectorAll("form").forEach(function(form){if(form.dataset.dirtyWatch==="off")return;form.querySelectorAll("input, textarea, select").forEach(function(field){if(field.type==="hidden")return;field.addEventListener("change",markDirty);field.addEventListener("input",markDirty)});form.addEventListener("submit",clearDirty)});
 document.querySelectorAll("a[href]").forEach(function(link){link.addEventListener("click",function(event){if(!dirty||submitted)return;const ok=confirm("You have unsaved changes. Leave this page without saving?");if(!ok)event.preventDefault()})});
 window.addEventListener("beforeunload",function(event){if(!dirty||submitted)return;event.preventDefault();event.returnValue=""});

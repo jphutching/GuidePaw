@@ -76,7 +76,11 @@ if ($fromError) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $category = ($_POST['category'] ?? 'bug') === 'feature' ? 'feature' : 'bug';
+    $allowedCategories = ['bug', 'feature', 'enhancement'];
+    $category = (string)($_POST['category'] ?? 'bug');
+    if (!in_array($category, $allowedCategories, true)) {
+        $category = 'bug';
+    }
     $pageWorkflow = trim($_POST['page_workflow'] ?? '');
     $contactEmail = trim($_POST['contact_email'] ?? '');
     $details = trim($_POST['details'] ?? '');
@@ -86,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $legacyType = $category === 'feature' ? 'feature' : 'bug';
+    $legacyType = in_array($category, ['feature', 'enhancement'], true) ? 'feature' : 'bug';
     $legacyTitle = $pageWorkflow !== '' ? $pageWorkflow : ucfirst($category) . ' report';
     $legacyDescription = $details;
 
@@ -256,11 +260,11 @@ if (($_GET['msg'] ?? '') === 'saved') {
 
 <div class="wrap">
     <div class="top">
-        <h1>Bug report / feature request</h1>
+        <h1>Feedback report</h1>
         <a class="btn secondary" href="index.php">Back</a>
     </div>
 
-    <p class="small">Use this page to log issues, feature ideas, screenshots, pasted logs, or text files during development and beta testing.</p>
+    <p class="small">Use this page to log issues, enhancements, feature ideas, screenshots, pasted logs, or text files during development and beta testing.</p>
 
     <?php if ($fromError && $errorContext): ?>
         <div class="alert warn">GuidePaw attached the application error context automatically. Add what you clicked or expected, then save the report.</div>
@@ -278,6 +282,7 @@ if (($_GET['msg'] ?? '') === 'saved') {
             <select name="category">
                 <option value="bug" <?= $prefillCategory === 'bug' ? 'selected' : '' ?>>Bug</option>
                 <option value="feature" <?= $prefillCategory === 'feature' ? 'selected' : '' ?>>Feature request</option>
+                <option value="enhancement" <?= $prefillCategory === 'enhancement' ? 'selected' : '' ?>>Enhancement</option>
             </select>
 
             <label>Page or workflow</label>

@@ -429,41 +429,41 @@ function getDogAlertItems(PDO $pdo, int $userId, int $dogId): array {
     $stmt = $pdo->prepare("SELECT MAX(log_date) FROM daily_logs WHERE dog_id = ?");
     $stmt->execute([$dogId]);
     $lastLog = $stmt->fetchColumn();
-    if (!$lastLog) $alerts[] = ['level'=>'warning','title'=>'No training logs yet','detail'=>'Add the first training log for this dog to start trends and reminders.'];
-    elseif (strtotime($lastLog) < strtotime('-3 days')) $alerts[] = ['level'=>'warning','title'=>'Training gap','detail'=>'No log has been recorded in the last 3 days.'];
+    if (!$lastLog) $alerts[] = ['level'=>'warning','title'=>'No training logs yet','detail'=>'Add the first training log for this dog to start trends and reminders.','action_url'=>'log_entry.php','action_label'=>'Add log'];
+    elseif (strtotime($lastLog) < strtotime('-3 days')) $alerts[] = ['level'=>'warning','title'=>'Training gap','detail'=>'No log has been recorded in the last 3 days.','action_url'=>'log_entry.php','action_label'=>'Add log'];
     $stmt = $pdo->prepare("SELECT ROUND(AVG(focus_level),2) FROM (SELECT focus_level FROM daily_logs WHERE dog_id = ? ORDER BY log_date DESC LIMIT 7) recent_logs");
     $stmt->execute([$dogId]);
     $avgFocus = $stmt->fetchColumn();
-    if ($avgFocus !== null && (float)$avgFocus < 3) $alerts[] = ['level'=>'danger','title'=>'Focus trend is slipping','detail'=>'Average focus across the latest 7 logs is ' . $avgFocus . '/5.'];
+    if ($avgFocus !== null && (float)$avgFocus < 3) $alerts[] = ['level'=>'danger','title'=>'Focus trend is slipping','detail'=>'Average focus across the latest 7 logs is ' . $avgFocus . '/5.','action_url'=>'log_entry.php','action_label'=>'Log training'];
     $stmt = $pdo->prepare("SELECT title, appointment_at FROM dog_vet_appointments WHERE dog_id = ? AND status='scheduled' AND appointment_at < CURRENT_TIMESTAMP ORDER BY appointment_at ASC LIMIT 1");
     $stmt->execute([$dogId]);
-    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'danger','title'=>'Overdue appointment','detail'=>$row['title'] . ' was scheduled for ' . date('M j, Y g:i A', strtotime($row['appointment_at'])) . '.'];
+    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'danger','title'=>'Overdue appointment','detail'=>$row['title'] . ' was scheduled for ' . date('M j, Y g:i A', strtotime($row['appointment_at'])) . '.','action_url'=>'appointments.php','action_label'=>'Open appointments'];
     $stmt = $pdo->prepare("SELECT title, appointment_at FROM dog_vet_appointments WHERE dog_id = ? AND status='scheduled' AND appointment_at BETWEEN CURRENT_TIMESTAMP AND " . dbDateAdd('CURRENT_TIMESTAMP', 3, 'DAY') . " ORDER BY appointment_at ASC LIMIT 1");
     $stmt->execute([$dogId]);
-    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'info','title'=>'Upcoming appointment','detail'=>$row['title'] . ' is due on ' . date('M j, Y g:i A', strtotime($row['appointment_at'])) . '.'];
+    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'info','title'=>'Upcoming appointment','detail'=>$row['title'] . ' is due on ' . date('M j, Y g:i A', strtotime($row['appointment_at'])) . '.','action_url'=>'appointments.php','action_label'=>'Open appointments'];
     $stmt = $pdo->prepare("SELECT medication_name, refill_date FROM dog_medications WHERE dog_id = ? AND status='active' AND refill_date IS NOT NULL AND refill_date <= " . dbDateAdd('CURRENT_DATE', 5, 'DAY') . " ORDER BY refill_date ASC LIMIT 1");
     $stmt->execute([$dogId]);
-    if ($row = $stmt->fetch()) { $when = strtotime($row['refill_date']) < strtotime('today') ? 'was due' : 'is due'; $alerts[] = ['level'=>'warning','title'=>'Medication refill ' . $when,'detail'=>$row['medication_name'] . ' ' . $when . ' ' . date('M j, Y', strtotime($row['refill_date'])) . '.']; }
+    if ($row = $stmt->fetch()) { $when = strtotime($row['refill_date']) < strtotime('today') ? 'was due' : 'is due'; $alerts[] = ['level'=>'warning','title'=>'Medication refill ' . $when,'detail'=>$row['medication_name'] . ' ' . $when . ' ' . date('M j, Y', strtotime($row['refill_date'])) . '.','action_url'=>'medications.php','action_label'=>'Open medications']; }
     $stmt = $pdo->prepare("SELECT medication_name, reminder_time FROM dog_medications WHERE dog_id = ? AND status='active' AND reminder_time IS NOT NULL AND reminder_time <= " . dbDateAdd('CURRENT_TIMESTAMP', 24, 'HOUR') . " ORDER BY reminder_time ASC LIMIT 1");
     $stmt->execute([$dogId]);
-    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'info','title'=>'Medication reminder','detail'=>$row['medication_name'] . ' has a reminder at ' . date('M j, g:i A', strtotime($row['reminder_time'])) . '.'];
+    if ($row = $stmt->fetch()) $alerts[] = ['level'=>'info','title'=>'Medication reminder','detail'=>$row['medication_name'] . ' has a reminder at ' . date('M j, g:i A', strtotime($row['reminder_time'])) . '.','action_url'=>'medications.php','action_label'=>'Open medications'];
     $items = getDogCertificationItems($pdo, $dogId);
-    if (!$items) $alerts[] = ['level'=>'info','title'=>'Certification checklist not started','detail'=>'Load the starter checklist to begin tracking public access and task reliability.'];
-    else { $total = count($items); $proficient = count(array_filter($items, fn($i) => ($i['status'] ?? '') === 'proficient')); if ($total > 0 && ($proficient / $total) < 0.5) $alerts[] = ['level'=>'warning','title'=>'Certification progress under 50%','detail'=>$proficient . ' of ' . $total . ' checklist items are marked proficient.']; }
+    if (!$items) $alerts[] = ['level'=>'info','title'=>'Certification checklist not started','detail'=>'Load the starter checklist to begin tracking public access and task reliability.','action_url'=>'certification.php','action_label'=>'Open certification'];
+    else { $total = count($items); $proficient = count(array_filter($items, fn($i) => ($i['status'] ?? '') === 'proficient')); if ($total > 0 && ($proficient / $total) < 0.5) $alerts[] = ['level'=>'warning','title'=>'Certification progress under 50%','detail'=>$proficient . ' of ' . $total . ' checklist items are marked proficient.','action_url'=>'certification.php','action_label'=>'Open certification']; }
     $trainingItems = getDogTrainingItems($pdo, $dogId);
     if (!$trainingItems) {
-        $alerts[] = ['level'=>'info','title'=>'Training ladder not loaded','detail'=>'Load the starter training ladder to track candidate screening, commands, CGC items, and service-task progression.'];
+        $alerts[] = ['level'=>'info','title'=>'Training ladder not loaded','detail'=>'Load the starter training ladder to track candidate screening, commands, CGC items, and service-task progression.','action_url'=>'training_program.php','action_label'=>'Open training'];
     } else {
         $inProgress = count(array_filter($trainingItems, fn($i) => in_array(($i['status'] ?? ''), ['in_progress','proofing'], true)));
         $mastered = count(array_filter($trainingItems, fn($i) => ($i['status'] ?? '') === 'mastered'));
         if ($inProgress === 0 && $mastered === 0) {
-            $alerts[] = ['level'=>'warning','title'=>'Training ladder has not been started','detail'=>'Pick one or two foundation skills and start marking progress.'];
+            $alerts[] = ['level'=>'warning','title'=>'Training ladder has not been started','detail'=>'Pick one or two foundation skills and start marking progress.','action_url'=>'training_program.php','action_label'=>'Open training'];
         }
         $cgcItems = array_values(array_filter($trainingItems, fn($i) => ($i['track_code'] ?? '') === 'akc_cgc'));
         if ($cgcItems) {
             $cgcMastered = count(array_filter($cgcItems, fn($i) => ($i['status'] ?? '') === 'mastered'));
             if ($cgcMastered >= 8) {
-                $alerts[] = ['level'=>'info','title'=>'AKC CGC may be in reach','detail'=>'This dog has ' . $cgcMastered . ' CGC items marked mastered.'];
+                $alerts[] = ['level'=>'info','title'=>'AKC CGC may be in reach','detail'=>'This dog has ' . $cgcMastered . ' CGC items marked mastered.','action_url'=>'training_program.php','action_label'=>'Open training'];
             }
         }
     }
