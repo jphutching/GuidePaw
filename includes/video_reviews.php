@@ -67,7 +67,10 @@ function gpDashboardOpenVideoReviews(PDO $pdo, int $userId): array
         WHERE d.owner_user_id = ?
           AND dl.media_type = 'video'
           AND dl.media_url IS NOT NULL
-          AND (mr.id IS NULL OR COALESCE(mr.reviewed_at, mr.updated_at, mr.created_at) >= CURRENT_TIMESTAMP - INTERVAL '14 days')
+          AND (
+            mr.id IS NULL
+            OR COALESCE(mr.reviewed_at, mr.updated_at, CURRENT_TIMESTAMP) >= CURRENT_TIMESTAMP - INTERVAL '14 days'
+          )
         ORDER BY dl.log_date DESC, dl.id DESC
         LIMIT 5
     ");
