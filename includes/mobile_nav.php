@@ -68,7 +68,7 @@ if (!function_exists('gpNavLink')) {
     .gp-menu-icon { font-size: 1.2rem; width: 1.4rem; text-align: center; flex:0 0 auto; }
     @media (max-width: 420px) { .gp-menu-root-actions, .gp-menu-link-grid { grid-template-columns: 1fr; } .gp-bottom-nav a, .gp-bottom-nav button { font-size:.66rem; } }
     @media (min-width: 720px) { .gp-menu-link-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 640px) {
+    @media (max-width: 900px) {
         html, body { max-width: 100%; overflow-x: hidden; }
         body { overflow-wrap: anywhere; word-break: normal; }
         main, .container, .container-fluid, .wrap, .card, .card-body, .cardx, form, fieldset, .row, [class*="col-"] { min-width: 0; max-width: 100%; }
@@ -81,6 +81,14 @@ if (!function_exists('gpNavLink')) {
         th, td { max-width: 100%; min-width: 0 !important; white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; }
         td form, td .btn, td button { width: 100%; margin-top: .25rem; }
         [style*="min-width"] { min-width: 0 !important; }
+    }
+    @media (max-width: 900px) {
+        table, thead, tbody, tfoot, tr, th, td { display: block; width: 100% !important; }
+        thead tr { border-bottom: 2px solid rgba(15,23,42,.18); }
+        tr { border-bottom: 1px solid rgba(15,23,42,.14); padding: .35rem 0; }
+        th, td { border-left: 0 !important; border-right: 0 !important; }
+        td form, td .d-flex, td .row { display: flex; flex-direction: column; gap: .35rem; align-items: stretch !important; }
+        td input, td textarea, td select, td button, td .btn { width: 100% !important; }
     }
     @media print { .gp-mobile-nav-shell, .gp-menu-backdrop, .gp-menu-panel { display: none !important; } }
 </style>

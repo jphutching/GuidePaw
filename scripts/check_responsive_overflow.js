@@ -92,7 +92,7 @@ async function checkUrl(context, roleName, url, viewport) {
     }
     await page.waitForLoadState('networkidle').catch(() => {});
 
-    return await page.evaluate(({ roleName, viewportName, url }) => {
+    return await page.evaluate(({ roleName, viewportName, url, maxFindingsPerPage }) => {
       const failures = [];
       const doc = document.documentElement;
       const body = document.body;
