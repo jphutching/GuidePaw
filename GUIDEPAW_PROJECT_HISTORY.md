@@ -58,6 +58,12 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - Render deploy `dep-d7uk16svikkc73beunn0` is live on commit `646f730`.
   - Brand/menu crawler passed against Render: normal checked 46 pages; admin checked 68 pages.
   - Full Render Playwright suite passed after the chrome fixes: `9 passed`.
+- Responsive overflow audit added on 2026-05-08:
+  - `scripts/check_responsive_overflow.js` crawls normal/admin pages at 320, 375, 768, and 1366 px widths.
+  - Shared mobile/tablet safeguards in `includes/mobile_nav.php` prevent horizontal page overflow and stack app tables below 900 px.
+  - Render deploy `dep-d7uko557vvec739okmsg` is live on commit `27dd8a1`.
+  - Responsive audit passed against Render: normal 42 pages and admin 66 pages across all configured widths, with no overflow findings.
+  - Brand/menu crawler and full Render Playwright suite also passed after the responsive changes.
 
 ### User roles and permissions
 
@@ -351,6 +357,8 @@ Recent feature commits include:
 - Stabilize Playwright crawlers for current GuidePaw UI.
 - Add shared brand and menu chrome to app pages.
 - Show shared chrome on missing dog profile.
+- Add responsive overflow audit and mobile safeguards.
+- Stack app tables on mobile and tablet.
 - Protect built-in admin account role.
 - Protect built-in admin in user management.
 - Add local QA crawler smoke test.
