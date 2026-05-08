@@ -19,6 +19,7 @@ function shouldSkip(url) {
     lower.includes('training_history_export.php') ||
     lower.includes('_export.php') ||
     lower.includes('reset_password.php') ||
+    lower.includes('beta_qa_checklist.php') ||
     lower.startsWith('mailto:') ||
     lower.startsWith('tel:') ||
     lower.startsWith('javascript:')

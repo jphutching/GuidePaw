@@ -103,35 +103,23 @@ test.describe.serial('GuidePaw normal user action flows', () => {
     await page.goto(`${BASE_URL}/dogs.php`);
     await assertNoVisibleAppErrors(page);
 
-    const addLink = page.getByRole('link', { name: /add.*dog|new.*dog|add profile|create.*dog/i }).first();
-    const addButton = page.getByRole('button', { name: /add.*dog|new.*dog|add profile|create.*dog/i }).first();
-
-    if (await addLink.count()) {
-      await addLink.click();
-    } else if (await addButton.count()) {
-      await addButton.click();
-    } else {
-      await page.goto(`${BASE_URL}/dog_profile.php`);
+    const addDogForm = page.locator('form:has(input[name="action"][value="add_dog"])').first();
+    if (!(await addDogForm.isVisible().catch(() => false))) {
+      const revealAddDog = page.getByRole('button', { name: /add another dog|add dog|new dog/i }).first();
+      if (await revealAddDog.count()) {
+        await revealAddDog.click();
+      }
     }
-
-    await page.waitForLoadState('networkidle').catch(() => {});
-    await assertNoVisibleAppErrors(page);
+    await expect(addDogForm).toBeVisible();
 
     const filledName = await fillFirst(page, [
-      'input[name="name"]',
-      'input[name="dog_name"]',
-      'input[id*="dog"][id*="name"]',
-      'input[placeholder*="Dog"]',
-      'input[placeholder*="dog"]'
+      'form:has(input[name="action"][value="add_dog"]) input[name="name"]'
     ], dogName);
 
     expect(filledName).toBeTruthy();
 
     await fillFirst(page, [
-      'input[name="breed"]',
-      'input[id*="breed"]',
-      'input[placeholder*="Breed"]',
-      'input[placeholder*="breed"]'
+      'form:has(input[name="action"][value="add_dog"]) input[name="breed"]'
     ], 'Labrador Retriever');
 
     const breedSelect = page.locator('select[name="breed"], select[id*="breed"]').first();

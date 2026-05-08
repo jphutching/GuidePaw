@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const baseURL = process.env.GUIDEPAW_BASE_URL || 'http://localhost';
+const baseURL = process.env.GUIDEPAW_BASE_URL || process.env.GUIDEPAW_TEST_BASE_URL || 'http://localhost';
 const username = process.env.GUIDEPAW_TEST_USERNAME;
 const password = process.env.GUIDEPAW_TEST_PASSWORD;
 

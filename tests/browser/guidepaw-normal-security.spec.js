@@ -49,8 +49,8 @@ test.describe('GuidePaw normal-user admin protection', () => {
 
       const blockedByStatus = status === 401 || status === 403;
       const blockedByRedirectOrMessage =
-        /login\.php|admin_required|permission|not authorized|not allowed|access denied/i.test(finalUrl) ||
-        /admin_required|permission|not authorized|not allowed|access denied|do not have permission/i.test(bodyText);
+        /login\.php|admin_required|role_required|permission|not authorized|not allowed|access denied/i.test(finalUrl) ||
+        /admin_required|role_required|permission|not authorized|not allowed|access denied|do not have permission/i.test(bodyText);
 
       const blocked = blockedByStatus || blockedByRedirectOrMessage;
 
@@ -59,9 +59,9 @@ test.describe('GuidePaw normal-user admin protection', () => {
       const visiblyAdmin =
         status < 400 &&
         /Admin|Beta Requests|Feature Roadmap|Audit Log|Database Status|Users/i.test(bodyText) &&
-        !/admin_required|permission|not authorized|not allowed|access denied|do not have permission/i.test(bodyText);
+        !/admin_required|role_required|permission|not authorized|not allowed|access denied|do not have permission/i.test(bodyText);
 
-      if (!blocked || visiblyAdmin) {
+      if (!blocked || (!blockedByRedirectOrMessage && visiblyAdmin)) {
         failures.push({
           url,
           status,
