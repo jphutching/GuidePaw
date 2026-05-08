@@ -30,6 +30,11 @@ $checks[] = ['PHP version', version_compare(PHP_VERSION, '8.1.0', '>='), PHP_VER
 $checks[] = ['ZipArchive support', class_exists('ZipArchive'), class_exists('ZipArchive') ? 'Available' : 'Missing php-zip extension'];
 $checks[] = ['Session active', session_status() === PHP_SESSION_ACTIVE, 'status=' . session_status()];
 
+$schemaVersion = currentSchemaVersion($pdo);
+$appliedMigrations = appliedMigrationVersions($pdo);
+$availableMigrations = array_map(static fn(string $path): string => basename($path), availableMigrationFiles(dbDriverName()));
+$pendingMigrations = array_values(array_diff($availableMigrations, $appliedMigrations));
+
 $paths = [
     'uploads' => __DIR__ . '/uploads',
     'uploads/images' => __DIR__ . '/uploads/images',
@@ -135,6 +140,44 @@ try {
                 </div>
             <?php endforeach; ?>
         </div>
+    </div>
+
+    <div class="card">
+        <h2>Schema Migrations</h2>
+        <div class="grid">
+            <div class="metric">
+                <div class="small">Current schema version</div>
+                <strong><?= h($schemaVersion) ?></strong>
+            </div>
+            <div class="metric">
+                <div class="small">Applied migrations</div>
+                <strong><?= h(count($appliedMigrations)) ?></strong>
+            </div>
+            <div class="metric">
+                <div class="small">Pending migrations</div>
+                <strong><?= h(count($pendingMigrations)) ?></strong>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <table>
+                <tr><th>Applied migration files</th></tr>
+                <?php foreach ($appliedMigrations as $version): ?>
+                    <tr><td class="small"><?= h($version) ?></td></tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
+
+        <?php if ($pendingMigrations): ?>
+            <div class="mt-3">
+                <table>
+                    <tr><th>Pending migration files</th></tr>
+                    <?php foreach ($pendingMigrations as $version): ?>
+                        <tr><td class="small"><?= h($version) ?></td></tr>
+                    <?php endforeach; ?>
+                </table>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="card">
