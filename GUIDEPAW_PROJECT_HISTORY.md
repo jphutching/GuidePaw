@@ -53,6 +53,11 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - Normal-user admin protection accepts `role_required` redirects as a valid block.
   - Authenticated crawler skips the beta QA checklist page to avoid intentional instructional false positives.
   - QR smoke test falls back to `GUIDEPAW_TEST_BASE_URL`.
+- Later on 2026-05-08, shared logo/tagline/menu chrome was verified across normal and admin logged-in pages:
+  - `scripts/check_brand_nav_presence.js` checks visible logo, tagline, primary nav, and menu button.
+  - Render deploy `dep-d7uk16svikkc73beunn0` is live on commit `646f730`.
+  - Brand/menu crawler passed against Render: normal checked 46 pages; admin checked 68 pages.
+  - Full Render Playwright suite passed after the chrome fixes: `9 passed`.
 
 ### User roles and permissions
 
@@ -344,6 +349,8 @@ Recommended immediate order:
 Recent feature commits include:
 
 - Stabilize Playwright crawlers for current GuidePaw UI.
+- Add shared brand and menu chrome to app pages.
+- Show shared chrome on missing dog profile.
 - Protect built-in admin account role.
 - Protect built-in admin in user management.
 - Add local QA crawler smoke test.
