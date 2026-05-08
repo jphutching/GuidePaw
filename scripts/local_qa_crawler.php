@@ -122,6 +122,7 @@ if ($adminLoggedIn) {
         'dog_audit_page_loads' => 'dog_access_audit.php',
         'handler_profile_page_loads' => 'handler_profile.php',
         'feedback_page_loads' => 'feedback.php',
+        'db_status_page_loads' => 'db_status.php',
         'media_review_page_loads' => 'media_review.php',
     ];
     foreach ($pages as $id => $path) {
