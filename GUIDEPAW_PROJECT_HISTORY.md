@@ -783,6 +783,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: rerun the mirror and beta crawler plus the dog-access invite/accept path to confirm the live schema no longer rejects handler writes
 
+2026-05-09 — Found-dog flow verification and feedback cleanup
+- Commit(s): pending
+- Files changed: GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: keep working through the remaining beta feedback backlog if needed; the found-dog report path and related feedback rows #38, #39, #40, and #43 are now verified fixed on beta
+
 ## Update log template
 
 When updating this file, add a short note like:
