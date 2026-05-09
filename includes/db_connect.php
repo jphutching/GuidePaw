@@ -283,6 +283,19 @@ function hasDogAccess(PDO $pdo, int $userId, int $dogId): bool {
     return (bool) $stmt->fetchColumn();
 }
 
+function userOwnsDog(PDO $pdo, int $userId, int $dogId): bool {
+    $stmt = $pdo->prepare('SELECT 1 FROM dogs WHERE id = ? AND owner_user_id = ? LIMIT 1');
+    $stmt->execute([$dogId, $userId]);
+    return (bool) $stmt->fetchColumn();
+}
+
+function requireDogOwner(PDO $pdo, int $userId, int $dogId): void {
+    if (!userOwnsDog($pdo, $userId, $dogId)) {
+        http_response_code(403);
+        die('Only the dog owner can perform this action.');
+    }
+}
+
 function getAccessibleDogs(PDO $pdo, int $userId): array {
     $stmt = $pdo->prepare("SELECT DISTINCT d.*, u.username AS owner_username,
             CASE

@@ -50,9 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("SELECT hh.*, d.owner_user_id FROM handler_handshakes hh JOIN dogs d ON d.id = hh.dog_id WHERE hh.id=? LIMIT 1");
         $stmt->execute([$handshakeId]);
         $handshake = $stmt->fetch();
-        if (!$handshake || (int) $handshake['owner_user_id'] !== $userId) {
+        if (!$handshake) {
             $errors[] = 'Handshake not found.';
         } else {
+            requireDogOwner($pdo, $userId, (int) $handshake['dog_id']);
             if ($action === 'approve' && !empty($handshake['requested_by_user_id'])) {
                 upsertDogHandlerLink($pdo, (int) $handshake['dog_id'], (int) $handshake['requested_by_user_id'], $userId, 'collaborator', (string) $handshake['requested_permission'], 'accepted');
                 $pdo->prepare("UPDATE handler_handshakes SET status='approved', decided_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$handshakeId]);

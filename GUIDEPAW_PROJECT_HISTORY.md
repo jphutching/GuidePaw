@@ -253,6 +253,7 @@ Major feature stack added:
 - Viewer and Contributor/Editor permission choices.
 - Temporary access end date.
 - Revocation of shared access.
+- Central helper now exposes owner-only checks for dog access and collaboration approval paths.
 - Dog lifecycle statuses: Active, In training, Retired, Archived, Deceased, Transferred.
 - Ownership transfer request workflow.
 - Receiving handler can accept or decline transfer.
@@ -558,7 +559,6 @@ php scripts/cleanup_e2e_data.php --yes
 
 - Which exact admin pages moderators should be allowed to access.
 - Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
-- Whether to add stronger owner-only restrictions inside the central helper functions.
 - Whether transfer requests should also trigger Telegram/admin notifications.
 - Whether retired/archived dogs should have a dedicated archive list rather than appearing in normal Manage Dogs.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.

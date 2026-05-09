@@ -56,8 +56,8 @@ function gpDogAccessFindUser(PDO $pdo, string $identity): ?array
     return $user ?: null;
 }
 
-function gpDogAccessOwnerOnly(array $dog, int $userId): bool { return (int) ($dog['owner_user_id'] ?? 0) === $userId; }
-function gpDogAccessCanEdit(PDO $pdo, array $dog, int $userId): bool { return gpDogAccessOwnerOnly($dog, $userId) || userCanEditDog($pdo, $userId, (int) $dog['id']); }
+function gpDogAccessOwnerOnly(PDO $pdo, int $userId, array $dog): bool { return userOwnsDog($pdo, $userId, (int) ($dog['id'] ?? 0)); }
+function gpDogAccessCanEdit(PDO $pdo, array $dog, int $userId): bool { return gpDogAccessOwnerOnly($pdo, $userId, $dog) || userCanEditDog($pdo, $userId, (int) $dog['id']); }
 function gpDogAccessStatusLabels(): array { return ['active'=>'Active','in_training'=>'In training','retired'=>'Retired','archived'=>'Archived','deceased'=>'Deceased','transferred'=>'Transferred']; }
 function gpDogAccessCurrentStatuses(): array { return ['active', 'in_training']; }
 
@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors && $action === 'grant_access') {
-        if (!gpDogAccessOwnerOnly($dog, $userId)) { $errors[] = 'Only the dog owner can grant handler access.'; }
+        if (!userOwnsDog($pdo, $userId, (int) $dog['id'])) { $errors[] = 'Only the dog owner can grant handler access.'; }
         else {
             $target = gpDogAccessFindUser($pdo, (string) ($_POST['handler_identity'] ?? ''));
             if (!$target) { $errors[] = 'No GuidePaw user matched that username or email.'; }
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors && $action === 'revoke_access') {
-        if (!gpDogAccessOwnerOnly($dog, $userId)) { $errors[] = 'Only the dog owner can revoke handler access.'; }
+        if (!userOwnsDog($pdo, $userId, (int) $dog['id'])) { $errors[] = 'Only the dog owner can revoke handler access.'; }
         else {
             $handlerId = (int) ($_POST['handler_id'] ?? 0);
             $stmt = $pdo->prepare("UPDATE dog_handlers SET status = 'revoked', revoked_at = CURRENT_TIMESTAMP WHERE id = ? AND dog_id = ?");
@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors && $action === 'request_transfer') {
-        if (!gpDogAccessOwnerOnly($dog, $userId)) { $errors[] = 'Only the current owner can transfer this dog profile.'; }
+        if (!userOwnsDog($pdo, $userId, (int) $dog['id'])) { $errors[] = 'Only the current owner can transfer this dog profile.'; }
         else {
             $target = gpDogAccessFindUser($pdo, (string) ($_POST['transfer_identity'] ?? ''));
             if (!$target) { $errors[] = 'No GuidePaw user matched that username or email.'; }
@@ -225,7 +225,7 @@ if ($dogId <= 0 && $dogs) $dogId = (int) $dogs[0]['id'];
 $dog = $dogId > 0 ? gpDogAccessFetchDog($pdo, $dogId, $userId) : null;
 $handlers = $dog ? gpDogAccessFetchHandlers($pdo, (int) $dog['id']) : [];
 $incomingTransfers = gpDogAccessIncomingTransfers($pdo, $userId);
-$isOwner = $dog ? gpDogAccessOwnerOnly($dog, $userId) : false;
+$isOwner = $dog ? userOwnsDog($pdo, $userId, (int) $dog['id']) : false;
 $canEdit = $dog ? gpDogAccessCanEdit($pdo, $dog, $userId) : false;
 $csrf = generateCsrfToken();
 $statusLabels = gpDogAccessStatusLabels();
