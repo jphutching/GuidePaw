@@ -579,6 +579,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; beta crawler passed 27/27 after the deploy
 
+2026-05-08 — Core account and log page QA coverage
+- Commit(s): 94e5bcc cover core account and log pages in qa crawler
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: none; local and beta crawlers passed 73/73 after the crawler session-cookie fix
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

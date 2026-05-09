@@ -135,6 +135,11 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'quick_session', 'text' => 'Quick Session works for active dog.', 'expected' => 'Session saves and appears in history.'],
                 ['id' => 'detailed_log', 'text' => 'Detailed Log works for active dog if feature enabled.', 'expected' => 'Log saves with selected values.'],
+                ['id' => 'settings_page', 'text' => 'Settings page loads and shows account controls.', 'expected' => 'User can review password, logout, and app settings options.'],
+                ['id' => 'profile_page', 'text' => 'Dog Profile page loads and shows dog details.', 'expected' => 'User can review owner details, microchip, and edit profile controls.'],
+                ['id' => 'quick_log_page', 'text' => 'Quick Log page loads and shows the fast session form.', 'expected' => 'User can start a quick session and save it from the fast entry page.'],
+                ['id' => 'log_entry_page', 'text' => 'Training Log entry page loads and shows the detailed log form.', 'expected' => 'User can log training details, media, and save the record.'],
+                ['id' => 'view_logs_page', 'text' => 'View Logs page loads and shows training history.', 'expected' => 'User can review prior logs and queued offline entries.'],
                 ['id' => 'media_review', 'text' => 'Media Review page opens for logs with image/video/audio attachments.', 'expected' => 'User can rate camera stability, audio clarity, and training value.'],
                 ['id' => 'video_review', 'text' => 'Video Review page opens for checkpoint video logs.', 'expected' => 'User can review clip quality, audio, and checkpoint readiness.'],
                 ['id' => 'coach_review', 'text' => 'Coach Review page opens and lets you queue regression items for follow-up.', 'expected' => 'Open training regressions can be promoted into a coach review queue and updated.'],
