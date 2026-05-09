@@ -854,14 +854,14 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: push the feedback picker update, let beta deploy, and confirm the report form now exposes Bug, Feature request, and Enhancement as distinct choices
 
 2026-05-09 — Crawler admin-session cleanup
-- Commit(s): pending
+- Commit(s): ea3a76c fix crawler admin session handling
 - Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: yes
 - Next recommended step: keep the admin session probe on its own cookie jar, then leave the public login/logout checks and admin-home check independent so beta smoke stays honest
 
 2026-05-09 — Found-dog location link fallback
-- Commit(s): pending
+- Commit(s): d55c4ab fix found dog location links
 - Files changed: includes/found_dog_reports.php, admin_found_dog_reports.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: yes
