@@ -825,6 +825,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the QR tracking slice, let beta deploy, then mark beta feedback #35 fixed after the live host confirms the new tracking page and scan counter
 
+2026-05-09 — Training log edit workflow
+- Commit(s): pending
+- Files changed: edit_log.php, update_log.php, view_logs.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/edit_log_smoke.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the log editor discoverable from Training History and verify the beta edit/save path stays stable across ownership and access roles
+
 ## Update log template
 
 When updating this file, add a short note like:

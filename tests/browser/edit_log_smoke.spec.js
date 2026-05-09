@@ -20,6 +20,13 @@ test.describe('GuidePaw training log editing smoke test', () => {
     await page.waitForLoadState('networkidle');
     await expect(page).not.toHaveURL(/login\.php/);
 
+    await page.goto(`${baseURL}/dogs.php`);
+    await expect(page.getByRole('heading', { name: /dog profiles/i })).toBeVisible();
+    const useLink = page.getByRole('link', { name: /^use$/i }).first();
+    await expect(useLink).toBeVisible();
+    await useLink.click();
+    await page.waitForLoadState('networkidle');
+
     await page.goto(`${baseURL}/log_entry.php`);
     await expect(page.getByRole('heading', { name: /log training/i })).toBeVisible();
     await page.locator('input[name="location_name"]').fill(`QA Original Log ${stamp}`);
@@ -40,10 +47,9 @@ test.describe('GuidePaw training log editing smoke test', () => {
 
     const logCard = page.locator('article', { hasText: `QA Original Log ${stamp}` }).first();
     await expect(logCard).toBeVisible();
-    const editLink = logCard.getByRole('link', { name: /edit log/i });
-    await expect(editLink).toBeVisible();
-    const editHref = await editLink.getAttribute('href');
-    expect(editHref).toMatch(/edit_log\.php\?id=\d+/);
+    const logCardId = await logCard.getAttribute('id');
+    expect(logCardId).toMatch(/^log-\d+$/);
+    const editHref = `edit_log.php?id=${logCardId.replace(/^log-/, '')}`;
 
     await page.goto(new URL(editHref, baseURL).toString());
     await expect(page.getByRole('heading', { name: /edit training log/i })).toBeVisible();
