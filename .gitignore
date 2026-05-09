@@ -34,6 +34,8 @@ exports/
 node_modules/
 playwright-report/
 test-results/
+.npmrc
+.npm-global/
 
 # Local Playwright test credentials
 .env.test.local
