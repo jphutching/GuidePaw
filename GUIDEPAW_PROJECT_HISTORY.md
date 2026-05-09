@@ -706,6 +706,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the crawler in an unsandboxed shell or live environment so the new login, logout, healthz, csrf-token, and admin home probes can be verified end to end
 
+2026-05-09 — Public profile and admin-login crawl repair
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun the browser smoke suite so the found-dog public report flow and admin login helper stay stable with the regular-user session reset
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

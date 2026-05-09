@@ -43,6 +43,9 @@ async function visiblePageTextForErrorScan(page) {
 async function loginAsAdmin(page) {
   test.skip(!ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set GUIDEPAW_ADMIN_TEST_USERNAME and GUIDEPAW_ADMIN_TEST_PASSWORD');
 
+  await page.context().clearCookies().catch(() => {});
+  await page.goto(`${BASE_URL}/logout.php`).catch(() => {});
+  await page.waitForLoadState('networkidle').catch(() => {});
   await page.goto(`${BASE_URL}/login.php`);
   await expect(page.locator('input[name="username"]')).toBeVisible();
 

@@ -219,6 +219,11 @@ function gpQaFeedbackAliasMap(): array
         'healthz.php' => ['healthz', 'status ok', 'database ok'],
         'csrf_token.php' => ['csrf token', 'csrf'],
         'feedback.php' => ['feedback', 'bug report', 'report issue'],
+        'ada_access_card.php' => ['ada access card', 'lockscreen', 'service dog'],
+        'ada_wallet_card.php' => ['ada access card'],
+        'service_dog_rights.php' => ['detailed ada notes', 'ada service dog rights'],
+        'breed_questionnaire.php' => ['breed questionnaire', 'ranked breed ideas'],
+        'beta_qa_checklist_state.php' => ['beta qa checklist state', 'checked_items'],
         'beta_request.php' => ['request guidepaw beta access', 'beta access'],
         'beta_token.php' => ['validate beta access token', 'beta token'],
         'register.php' => ['create handler account', 'create guidepaw handler account'],
@@ -226,6 +231,7 @@ function gpQaFeedbackAliasMap(): array
         'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
         'profile.php' => ['profile', 'microchip', 'owner'],
+        'collaboration.php' => ['handler collaboration', 'handshake'],
         'admin.php' => ['guidepaw admin', 'feature flags', 'backup snapshot'],
         'quick_log.php' => ['quick log', 'quick session'],
         'log_entry.php' => ['detailed log', 'training log', 'photo, video, or audio'],
@@ -269,6 +275,7 @@ function gpQaFeedbackAliasMap(): array
         'alerts.php' => ['smart alerts', 'alerts'],
         'dog_health.php' => ['health docs', 'vet'],
         'appointments.php' => ['appointments', 'vet appointments'],
+        'appointment_notifications.php' => ['appointment notifications', 'generated_at'],
         'medications.php' => ['medication', 'medications'],
         'certification.php' => ['certification', 'readiness'],
         'trainer_marketplace.php' => ['trainer marketplace', 'trainer'],
@@ -911,6 +918,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $dashboard = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $notificationsPage = gpQaRequest($baseUrl, 'notifications.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $dogsPage = gpQaRequest($baseUrl, 'dogs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $adaAccessCardPage = gpQaRequest($baseUrl, 'ada_access_card.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $adaWalletCardPage = gpQaRequest($baseUrl, 'ada_wallet_card.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $serviceDogRightsPage = gpQaRequest($baseUrl, 'service_dog_rights.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $breedQuestionnairePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $appointmentNotificationsPage = gpQaRequest($baseUrl, 'appointment_notifications.php?hours=24', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $betaChecklistStatePage = gpQaRequest($baseUrl, 'beta_qa_checklist_state.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $goalIntakePage = gpQaRequest($baseUrl, 'training_goal_intake.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $editProfilePage = gpQaRequest($baseUrl, 'edit_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -924,6 +938,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $dashboardBody = strtolower($dashboard['body']);
     $notificationsPageBody = strtolower($notificationsPage['body']);
     $dogsPageBody = strtolower($dogsPage['body']);
+    $adaAccessCardBody = strtolower($adaAccessCardPage['body']);
+    $adaWalletCardBody = strtolower($adaWalletCardPage['body']);
+    $serviceDogRightsBody = strtolower($serviceDogRightsPage['body']);
+    $breedQuestionnaireBody = strtolower($breedQuestionnairePage['body']);
+    $appointmentNotificationsBody = strtolower($appointmentNotificationsPage['body']);
+    $betaChecklistStateBody = strtolower($betaChecklistStatePage['body']);
+    $adminHomeBody = strtolower($adminHomePage['body']);
     $goalIntakeBody = strtolower($goalIntakePage['body']);
     $habitRepairBody = strtolower($habitRepairPage['body']);
     $editProfileBody = strtolower($editProfilePage['body']);
@@ -956,6 +977,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
     $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
     $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
+    $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog'));
+    $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
+    $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
+    $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
+    $appointmentNotificationsSeen = gpQaPageLooksOk($appointmentNotificationsPage) && (str_contains($appointmentNotificationsBody, '"success":true') || str_contains($appointmentNotificationsBody, 'generated_at'));
+    $betaChecklistStateSeen = gpQaPageLooksOk($betaChecklistStatePage) && (str_contains($betaChecklistStateBody, '"ok":true') || str_contains($betaChecklistStateBody, 'checked_items'));
+    $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
     $editProfileSeen = gpQaPageLooksOk($editProfilePage) && (str_contains($editProfileBody, 'edit dog profile') || str_contains($editProfileBody, 'microchip') || str_contains($editProfileBody, 'update stats'));
@@ -995,6 +1023,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));
     gpQaResult($results, 'dashboard_trucking_hook', gpQaPageLooksOk($dashboard) && $truckingHookSeen, 'HTTP ' . $dashboard['status'] . ($truckingHookSeen ? ' trucking hook found' : ' trucking hook not currently visible'));
     gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
+    gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
+    gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
+    gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
+    gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'appointment_notifications_page_loads', $appointmentNotificationsSeen, 'HTTP ' . $appointmentNotificationsPage['status'] . ($appointmentNotificationsSeen ? ' appointment notifications found' : ' appointment notifications missing'));
+    gpQaResult($results, 'beta_qa_checklist_state_page_loads', $betaChecklistStateSeen, 'HTTP ' . $betaChecklistStatePage['status'] . ($betaChecklistStateSeen ? ' checklist state found' : ' checklist state missing'));
+    gpQaResult($results, 'admin_home_page_loads', $adminHomeSeen, 'HTTP ' . $adminHomePage['status'] . ($adminHomeSeen ? ' admin home found' : ' admin home missing'));
     gpQaResult($results, 'training_goal_intake_page_loads', $goalIntakeSeen, 'HTTP ' . $goalIntakePage['status'] . ($goalIntakeSeen ? ' goal intake found' : ' goal intake missing'));
     gpQaResult($results, 'habit_repair_page_loads', $habitRepairSeen, 'HTTP ' . $habitRepairPage['status'] . ($habitRepairSeen ? ' habit repair found' : ' habit repair missing'));
     gpQaResult($results, 'edit_profile_page_loads', $editProfileSeen, 'HTTP ' . $editProfilePage['status'] . ($editProfileSeen ? ' edit profile found' : ' edit profile missing'));
