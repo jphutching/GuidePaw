@@ -655,6 +655,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     foreach ($pages as $id => $path) {
         $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $body = strtolower($res['body']);
+        $sharedAdminShellReady = !str_contains($body, '<body') || str_contains($body, 'gp-mobile-nav-shell');
         $mediaPageLooksReady = $path === 'media_review.php'
             ? (
                 str_contains($body, 'camera stability')
@@ -677,7 +678,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             )
             : true;
         $dbStatusLooksReady = $path === 'db_status.php'
-            ? str_contains($body, 'schema migrations')
+            ? (
+                str_contains($body, 'schema migrations')
+                && $sharedAdminShellReady
+            )
             : true;
         $notificationPageLooksReady = $path === 'notifications.php'
             ? (
@@ -743,28 +747,28 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'feedback reports')
                 || str_contains($body, 'submitted feedback')
                 || str_contains($body, 'bug report')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $adminBetaRequestsPageLooksReady = $path === 'admin_beta_requests.php'
             ? (
                 str_contains($body, 'beta access requests')
                 || str_contains($body, 'access mode')
                 || str_contains($body, 'no requests found')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $adminFeatureRoadmapPageLooksReady = $path === 'admin_feature_roadmap.php'
             ? (
                 str_contains($body, 'feature roadmap')
                 || str_contains($body, 'roadmap item updated')
                 || str_contains($body, 'tracks must / should / could roadmap items')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $adminAuditLogPageLooksReady = $path === 'admin_audit_log.php'
             ? (
                 str_contains($body, 'admin audit log')
                 || str_contains($body, 'showing latest')
                 || str_contains($body, 'no audit records found')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $adminSmtpAuditPageLooksReady = $path === 'admin_smtp_audit.php'
             ? (
@@ -785,14 +789,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'found dog location reports')
                 || str_contains($body, 'found-dog email template')
                 || str_contains($body, 'no found dog location reports yet')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $adminNotificationTestPageLooksReady = $path === 'admin_notification_test.php'
             ? (
                 str_contains($body, 'notification test')
                 || str_contains($body, 'current settings')
                 || str_contains($body, 'send test')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $foundDogNotificationTestPageLooksReady = $path === 'found_dog_notification_test.php'
             ? (
@@ -806,7 +810,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'handler profile completion')
                 || str_contains($body, 'missing required')
                 || str_contains($body, 'accounts missing required')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $betaRequestPageLooksReady = $path === 'beta_request.php'
             ? (
@@ -850,14 +854,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'api tokens')
                 || str_contains($body, 'create token')
                 || str_contains($body, 'existing tokens')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $backupToolsPageLooksReady = $path === 'backup.php'
             ? (
                 str_contains($body, 'backup & restore')
                 || str_contains($body, 'full backup package')
                 || str_contains($body, 'download json backup')
-            )
+            ) && $sharedAdminShellReady
             : true;
         $dogsPageLooksReady = $path === 'dogs.php'
             ? (

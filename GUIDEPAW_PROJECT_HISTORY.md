@@ -776,6 +776,13 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
 
+2026-05-09 — Admin shell consistency pass
+- Commit(s): pending
+- Files changed: admin_feedback.php, admin_found_dog_reports.php, admin_notification_test.php, admin_audit_log.php, admin_beta_requests.php, admin_feature_roadmap.php, db_status.php, scripts/local_qa_crawler.php
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: commit the admin shell fix, then rerun the crawler and confirm the admin pages still load with the shared menu shell asserted
+
 2026-05-09 — Dog Access state-model fix
 - Commit(s): pending
 - Files changed: includes/db_connect.php, dog_access.php, notifications.php, collaboration.php, includes/dog_access_notifications.php, includes/dog_access_expiry.php, includes/media_reviews.php, includes/video_reviews.php, GUIDEPAW_PROJECT_HISTORY.md

@@ -100,6 +100,7 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
 <div class="wrap">
     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
         <div><h1 class="h3 mb-0">Found Dog Location Reports</h1><div class="text-muted small">Public QR location reports submitted by finders.</div></div>

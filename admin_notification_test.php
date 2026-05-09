@@ -82,6 +82,7 @@ $adminSmsPhone = gpEnv('ADMIN_NOTIFY_SMS_PHONE', '');
 </head>
 <body class="bg-light">
 <?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 <main class="container py-4" style="max-width: 760px;">
     <div class="d-flex justify-content-between align-items-center mb-3">

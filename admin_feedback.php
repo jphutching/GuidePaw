@@ -109,6 +109,7 @@ function formatBytes($bytes): string {
 </head>
 <body>
 <?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
 
 <div class="wrap">
     <div class="top">
