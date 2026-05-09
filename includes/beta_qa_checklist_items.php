@@ -112,6 +112,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'dog_access_page_loads', 'text' => 'Dog Access & Status page loads from Manage Dogs.', 'expected' => 'dog_access.php opens for selected dog.'],
                 ['id' => 'grant_view_access', 'text' => 'Owner invites Viewer access to another GuidePaw account.', 'expected' => 'Recipient sees a pending invite and can accept it before the dog appears in shared/viewer access.'],
                 ['id' => 'grant_editor_access', 'text' => 'Owner invites Contributor/Editor access.', 'expected' => 'Recipient sees a pending invite and can accept it before editing allowed dog areas.'],
+                ['id' => 'collaboration_page', 'text' => 'Handler Collaboration page loads for the active dog.', 'expected' => 'collaboration.php opens and shows handshake-based sharing tools for the current active dog.'],
                 ['id' => 'temporary_access_end_date', 'text' => 'Owner sets temporary access end date.', 'expected' => 'End date saves and displays.'],
                 ['id' => 'expired_access_cleanup', 'text' => 'Expired access is cleaned up after end date.', 'expected' => 'Dashboard, Manage Dogs, Dog Access, or Audit page marks old access expired and refreshes once.'],
                 ['id' => 'revoke_access', 'text' => 'Owner revokes shared handler access.', 'expected' => 'Shared handler status becomes revoked and dog disappears from their usable list.'],

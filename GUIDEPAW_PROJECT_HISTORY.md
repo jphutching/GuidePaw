@@ -713,6 +713,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the browser smoke suite so the found-dog public report flow and admin login helper stay stable with the regular-user session reset
 
+2026-05-09 — Collaboration and public-profile crawl expansion
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler so collaboration and public-profile/report probes are verified in the HTTP path
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

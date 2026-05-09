@@ -421,6 +421,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'edit_log_history_page_loads' => 'edit_log.php',
         'edit_profile_page_loads' => 'edit_profile.php',
         'feedback_page_loads' => 'feedback.php',
+        'collaboration_page_loads' => 'collaboration.php',
         'beta_request_page_loads' => 'beta_request.php',
         'beta_token_page_loads' => 'beta_token.php',
         'register_page_loads' => 'register.php',
@@ -983,6 +984,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
     $appointmentNotificationsSeen = gpQaPageLooksOk($appointmentNotificationsPage) && (str_contains($appointmentNotificationsBody, '"success":true') || str_contains($appointmentNotificationsBody, 'generated_at'));
     $betaChecklistStateSeen = gpQaPageLooksOk($betaChecklistStatePage) && (str_contains($betaChecklistStateBody, '"ok":true') || str_contains($betaChecklistStateBody, 'checked_items'));
+    $collaborationPage = gpQaRequest($baseUrl, 'collaboration.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $collaborationBody = strtolower($collaborationPage['body']);
+    $collaborationSeen = gpQaPageLooksOk($collaborationPage) && (str_contains($collaborationBody, 'handler collaboration') || str_contains($collaborationBody, 'handshake-based sharing') || str_contains($collaborationBody, 'claim a shared dog code'));
     $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
@@ -1042,6 +1046,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'verify_2fa_redirects_to_login', $verify2faRedirectSeen, 'HTTP ' . $verify2faPage['status'] . ($verify2faRedirectSeen ? ' verify 2fa protected outside pending session' : ' verify 2fa protection missing'));
     gpQaResult($results, 'notification_prefs_controls', gpQaPageLooksOk($notificationsPage) && $notificationPrefsSeen, 'HTTP ' . $notificationsPage['status'] . ($notificationPrefsSeen ? ' notification preferences found' : ' notification preferences missing'));
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));
+    gpQaResult($results, 'collaboration_page_loads', $collaborationSeen, 'HTTP ' . $collaborationPage['status'] . ($collaborationSeen ? ' collaboration page found' : ' collaboration page missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split found' : ' archive split not currently visible'));
 
     $publicProfileQuestionnaireSeen = false;
@@ -1076,6 +1081,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $publicProfileHtml = html_entity_decode($publicProfilePage['body'], ENT_QUOTES | ENT_HTML5);
             $publicProfileQuestionnaireSeen = str_contains($publicProfileBody, 'breed questionnaire');
             $publicProfileAirTravelSeen = str_contains($publicProfileBody, 'air travel rights');
+            gpQaResult($results, 'public_dog_profile_page_loads', $publicProfileStatus === 200, 'HTTP ' . $publicProfileStatus . ($publicProfileStatus === 200 ? ' public dog profile found' : ' public dog profile missing'));
 
             if (preg_match('/href="([^"]*report_found_dog\.php\?dog=\d+&token=[^"]+)"/i', $publicProfileHtml, $reportMatch)) {
                 $foundDogReportPath = ltrim(parse_url($reportMatch[1], PHP_URL_PATH) . '?' . (parse_url($reportMatch[1], PHP_URL_QUERY) ?? ''), '/');
@@ -1108,12 +1114,19 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                     && str_contains($adminFoundDogReportsBody, strtolower($foundDogLocation))
                     && str_contains($adminFoundDogReportsBody, strtolower($foundDogMessage));
                 gpQaResult($results, 'found_dog_report_admin_listed', $foundDogReportListed, 'HTTP ' . $adminFoundDogReports['status'] . ($foundDogReportListed ? ' found-dog report listed' : ' found-dog report missing'));
+                $reportPage = gpQaRequest($baseUrl, $foundDogReportPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                $reportPageBody = strtolower($reportPage['body']);
+                $reportPageSeen = gpQaPageLooksOk($reportPage) && (str_contains($reportPageBody, 'report dog location') || str_contains($reportPageBody, 'share my current location once') || str_contains($reportPageBody, 'location report sent'));
+                gpQaResult($results, 'report_found_dog_page_loads', $reportPageSeen, 'HTTP ' . $reportPage['status'] . ($reportPageSeen ? ' report page found' : ' report page missing'));
             } else {
                 gpQaResult($results, 'found_dog_report_submit', false, 'found-dog report link missing');
                 gpQaResult($results, 'found_dog_report_admin_listed', false, 'found-dog report link missing');
+                gpQaResult($results, 'report_found_dog_page_loads', false, 'found-dog report link missing');
             }
         } else {
             $publicProfileStatus = $dogProfile['status'];
+            gpQaResult($results, 'public_dog_profile_page_loads', false, 'public profile link missing');
+            gpQaResult($results, 'report_found_dog_page_loads', false, 'public profile link missing');
         }
         gpQaResult($results, 'public_profile_questionnaire_link', $publicProfileQuestionnaireSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileQuestionnaireSeen ? ' breed questionnaire link found' : ' breed questionnaire link missing'));
         gpQaResult($results, 'public_profile_air_travel_link', $publicProfileAirTravelSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileAirTravelSeen ? ' air travel link found' : ' air travel link missing'));
@@ -1121,6 +1134,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         gpQaResult($results, 'dog_access_selected_page_loads', false, 'dog link missing on dogs page');
         gpQaResult($results, 'public_profile_questionnaire_link', false, 'dog profile link missing on dogs page');
         gpQaResult($results, 'public_profile_air_travel_link', false, 'dog profile link missing on dogs page');
+        gpQaResult($results, 'public_dog_profile_page_loads', false, 'dog profile link missing on dogs page');
+        gpQaResult($results, 'report_found_dog_page_loads', false, 'dog profile link missing on dogs page');
     }
 
     $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
