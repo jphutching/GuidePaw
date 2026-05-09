@@ -139,7 +139,7 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
             <hr>
             <div class="row g-3">
                 <div class="col-md-6"><strong>Reported location</strong><br><?= h($location ?: 'GPS only / not typed') ?></div>
-                <div class="col-md-6"><strong>Location link</strong><br><a class="maplink" href="<?= h($locationLink) ?>" target="_blank" rel="noopener"><?= h($locationLink) ?></a></div>
+                <div class="col-md-6"><strong>Open in Google Maps</strong><br><a class="maplink" href="<?= h($locationLink) ?>" target="_blank" rel="noopener"><?= h($locationLink) ?></a></div>
                 <?php if ($report['finder_latitude'] !== null && $report['finder_longitude'] !== null): ?><div class="col-md-6"><strong>GPS</strong><br><?= h($report['finder_latitude']) ?>, <?= h($report['finder_longitude']) ?><?= $report['finder_accuracy_m'] !== null ? ' ±' . h($report['finder_accuracy_m']) . 'm' : '' ?></div><?php endif; ?>
                 <div class="col-md-6"><strong>Finder</strong><br><?= h($report['finder_name'] ?: 'Name not provided') ?> · <?= h($report['finder_phone'] ?: 'Phone not provided') ?></div>
                 <div class="col-md-6"><strong>Handler</strong><br><?= h($report['handler_name'] ?: 'Not listed') ?> · <?= h($report['handler_phone'] ?: 'No phone') ?> · <?= h($report['handler_email'] ?: 'No email') ?></div>

@@ -91,7 +91,7 @@ function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location, ?array $
     if ($lat !== null && $lat !== '' && $lng !== null && $lng !== '') {
         return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lng);
     }
-    if (gpFoundDogLooksLikeMapLocation($location)) {
+    if (trim($location) !== '') {
         return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location);
     }
     $dogId = (int) ($dog['id'] ?? 0);
@@ -125,7 +125,7 @@ function gpFoundDogTelegramText(array $dog, array $report, string $mapUrl): stri
     if ($handler !== '') {
         $text .= "\nHandler: {$handler}";
     }
-    return $text . "\nLocation link: {$mapUrl}";
+    return $text . "\nOpen in Google Maps: {$mapUrl}";
 }
 
 function gpSendFoundDogTelegram(array $dog, array $report, string $mapUrl): bool
@@ -190,7 +190,7 @@ function gpFoundDogNotifyOwnerSms(array $dog, array $report, string $mapUrl): bo
     if ($finderPhone !== '') {
         $body .= " Finder phone: {$finderPhone}.";
     }
-    $body .= " Location link: {$mapUrl}";
+    $body .= " Open in Google Maps: {$mapUrl}";
     return gpSmsNotifyUser($owner, $body, 'FOUND_DOG_NOTIFY_SMS_ENABLED');
 }
 
@@ -232,9 +232,9 @@ function gpFoundDogEmailBody(array $dog, array $report, string $mapUrl, ?string 
     $body = "A location report was submitted for {$dogName}.\n\n" .
         "Handler: " . (string) ($contact['handler_name'] ?? 'Not provided') . "\n" .
         "Location / cross street: {$location}\n" .
-        "Location link: {$locationLink}\n";
+        "Open in Google Maps: {$locationLink}\n";
     if ($lat !== '' && $lng !== '') {
-        $body .= "GPS: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
+        $body .= "GPS coordinates: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
     }
     $body .= "\nFinder name: " . (string) ($report['finder_name'] ?? 'Not provided') . "\n" .
         "Finder phone: " . (string) ($report['finder_phone'] ?? 'Not provided') . "\n" .

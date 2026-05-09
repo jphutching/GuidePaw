@@ -839,6 +839,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the QR tracking slice, let beta deploy, then mark beta feedback #35 fixed after the live host confirms the new tracking page and scan counter
 
+2026-05-09 — Found-dog maps link cleanup
+- Commit(s): pending
+- Files changed: includes/found_dog_reports.php, admin_found_dog_reports.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: push the Maps-link update, then verify found-dog submissions carry either GPS coordinates or a real Google Maps search link instead of a dog-profile fallback
+
 2026-05-09 — Edit profile hardening and crawler cleanup
 - Commit(s): pending
 - Files changed: edit_profile.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md

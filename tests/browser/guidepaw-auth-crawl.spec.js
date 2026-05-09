@@ -177,6 +177,9 @@ test('GuidePaw found-dog public report submits and reaches admin queue', async (
   await page.waitForLoadState('networkidle').catch(() => {});
 
   await page.fill('input[name="finder_location"]', reportLocation);
+  await page.fill('input[name="finder_latitude"]', '39.7392000');
+  await page.fill('input[name="finder_longitude"]', '-104.9903000');
+  await page.fill('input[name="finder_accuracy_m"]', '25');
   await page.fill('input[name="finder_phone"]', '555-0100');
   await page.fill('textarea[name="finder_message"]', reportMessage);
   await page.getByRole('button', { name: /send location report/i }).click();
@@ -197,5 +200,6 @@ test('GuidePaw found-dog public report submits and reaches admin queue', async (
   const locationLink = reportSection.locator('a.maplink').first();
   await expect(locationLink).toBeVisible();
   const locationHref = (await locationLink.getAttribute('href')) || '';
-  expect(locationHref).toContain('dog_profile.php?dog_id=');
+  expect(locationHref).toContain('google.com/maps/search/?api=1&query=');
+  expect(locationHref).toContain('39.7392');
 });

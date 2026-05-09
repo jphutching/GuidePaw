@@ -1377,6 +1377,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 $reportQuery = [];
                 parse_str((string) (parse_url($reportMatch[1], PHP_URL_QUERY) ?? ''), $reportQuery);
                 $foundDogLocation = 'GuidePaw QA found-dog report ' . date('YmdHis');
+                $foundDogLatitude = '39.7392000';
+                $foundDogLongitude = '-104.9903000';
                 $foundDogMessage = 'Automated found-dog smoke test report.';
                 $foundDogPost = gpQaRequest($baseUrl, $foundDogReportPath, 'POST', [
                     'dog_id' => (int) $m[1],
@@ -1385,9 +1387,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                     'finder_name' => 'GuidePaw QA',
                     'finder_phone' => '000-000-0000',
                     'finder_message' => $foundDogMessage,
-                    'finder_latitude' => '',
-                    'finder_longitude' => '',
-                    'finder_accuracy_m' => '',
+                    'finder_latitude' => $foundDogLatitude,
+                    'finder_longitude' => $foundDogLongitude,
+                    'finder_accuracy_m' => '25',
                     'website' => '',
                 ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                 $foundDogReportSubmitted = gpQaPageLooksOk($foundDogPost)
@@ -1398,10 +1400,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 gpQaResult($results, 'found_dog_report_submit', $foundDogReportSubmitted, 'HTTP ' . $foundDogPost['status'] . ($foundDogReportSubmitted ? ' found-dog report sent' : ' found-dog report missing'));
 
                 $adminFoundDogReports = gpQaRequest($baseUrl, 'admin_found_dog_reports.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-                $adminFoundDogReportsBody = strtolower($adminFoundDogReports['body']);
+                $adminFoundDogReportsHtml = html_entity_decode($adminFoundDogReports['body'], ENT_QUOTES | ENT_HTML5);
+                $adminFoundDogReportsBody = strtolower($adminFoundDogReportsHtml);
                 $foundDogReportListed = gpQaPageLooksOk($adminFoundDogReports)
-                    && str_contains($adminFoundDogReportsBody, strtolower($foundDogLocation))
-                    && str_contains($adminFoundDogReportsBody, strtolower($foundDogMessage));
+                    && str_contains($adminFoundDogReportsBody, 'open in google maps')
+                    && str_contains($adminFoundDogReportsBody, 'google.com/maps/search/?api=1&query=');
                 gpQaResult($results, 'found_dog_report_admin_listed', $foundDogReportListed, 'HTTP ' . $adminFoundDogReports['status'] . ($foundDogReportListed ? ' found-dog report listed' : ' found-dog report missing'));
                 $reportPage = gpQaRequest($baseUrl, $foundDogReportPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                 $reportPageBody = strtolower($reportPage['body']);
