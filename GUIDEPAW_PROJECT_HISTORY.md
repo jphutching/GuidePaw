@@ -307,7 +307,7 @@ Completed changes from prior work:
 - The detailed notes page now links back with ADA Access Card wording instead of the old wallet-card label.
 - README, upgrade notes, current build notes, and the service worker cache list were normalized to the ADA Access Card name as well.
 - The legacy fix notes file now uses ADA Access Card wording too.
-- Future idea: GPS/state-law detection for service dog law information. This is not fully confirmed as complete and should remain a roadmap/testing item.
+- ADA Access Card now auto-detects the reviewed state law summary on load when geolocation access is already granted, and still offers manual/GPS overrides.
 
 ### E2E cleanup
 
@@ -560,7 +560,6 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether to add stronger owner-only restrictions inside the central helper functions.
 - Whether transfer requests should also trigger Telegram/admin notifications.
 - Whether retired/archived dogs should have a dedicated archive list rather than appearing in normal Manage Dogs.
-- Whether ADA Access Card should auto-detect state and show state-specific service dog law summaries.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
 - Whether Notification Center should later add user preferences, categories, bulk delete, or persistent notification badges.

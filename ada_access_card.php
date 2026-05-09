@@ -54,13 +54,292 @@ $calmScript = 'This is my service dog. You may ask whether the dog is required b
 <section class="grid two"><div class="access-card"><div class="kicker">Only two questions</div><ol class="qa mb-0"><li>Is the dog required because of a disability?</li><li>What work or task is it trained to perform?</li></ol></div><div class="access-card"><div class="kicker">Not required</div><ul class="mb-0 qa"><li>Certification or registry papers</li><li>Medical records or diagnosis details</li><li>A task demonstration on demand</li></ul></div></section>
 <section class="grid two hide-lockscreen">
 <div class="access-card"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">Federal ADA baseline</div><div class="law-title"><?= e($federalLaw['title']) ?></div></div><span class="status">Reviewed <?= e($federalLaw['last_reviewed']) ?></span></div><p class="muted mt-3"><?= e($federalLaw['summary']) ?></p><ul><?php foreach ($federalLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><p class="mb-0 hide-lock"><a href="<?= e($federalLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($federalLaw['source_label']) ?></a></p></div>
-<div class="access-card"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
+<div class="access-card"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div><div class="muted small mt-2">When location access is already granted, GuidePaw will try to auto-detect your state on load.</div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
 </section>
 <section class="grid hide-lockscreen"><div class="access-card note">Access decisions should be based on the dog’s actual behavior and control, not on stereotypes, missing paperwork, or the fact that the dog is not wearing a vest.</div><div class="access-card"><div class="kicker">Need help now?</div><div style="font-size:clamp(1.6rem,5vw,2.35rem);font-weight:850;">800-514-0301</div><p class="muted mb-0">DOJ ADA Information Line · TTY 833-610-1264</p></div><div class="access-card muted small">GuidePaw provides general service-animal information and official source links. This is not legal advice. Laws may vary by city, county, housing context, workplace, school, transportation setting, and facts of the situation.</div></section>
 <section class="grid utility hide-print hide-lock"><button class="btn btn-outline-light" type="button" onclick="window.print()">Print / Save PDF</button><a href="service_dog_rights.php" class="btn btn-outline-light">Detailed ADA notes</a><a href="settings.php" class="btn btn-outline-light">Settings</a></section>
 </div>
 <script>
-(function(){var profiles=<?= json_encode($stateProfiles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;var calmScript=<?= json_encode($calmScript, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;var body=document.body,lockBtn=document.getElementById('lockBtn'),floatingExitBtn=document.getElementById('floatingExitBtn'),contrastBtn=document.getElementById('contrastBtn'),screenshotBtn=document.getElementById('screenshotBtn'),stateSelect=document.getElementById('stateSelect'),gpsBtn=document.getElementById('gpsBtn'),gpsStatus=document.getElementById('gpsStatus'),copyScriptBtn=document.getElementById('copyScriptBtn'),shareScriptBtn=document.getElementById('shareScriptBtn'),scriptFeedback=document.getElementById('scriptFeedback'),wakeLock=null;function status(m){if(gpsStatus)gpsStatus.textContent=m||''}function scriptStatus(m){if(scriptFeedback)scriptFeedback.textContent=m||''}function go(c){if(!profiles[c])return;var u=new URL(window.location.href);u.searchParams.set('state',c);window.location.href=u.toString()}async function requestWakeLock(){try{if('wakeLock'in navigator&&navigator.wakeLock&&navigator.wakeLock.request)wakeLock=await navigator.wakeLock.request('screen')}catch(e){wakeLock=null}}async function releaseWakeLock(){try{if(wakeLock&&wakeLock.release)await wakeLock.release()}catch(e){}wakeLock=null}async function enterLockscreen(){body.classList.add('lockscreen');if(lockBtn)lockBtn.textContent='Exit lockscreen display';try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch(e){}await requestWakeLock();window.scrollTo({top:0,behavior:'smooth'})}async function exitLockscreen(){body.classList.remove('lockscreen');if(lockBtn)lockBtn.textContent='Enter lockscreen display';await releaseWakeLock();try{if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}}async function copyScript(){try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(calmScript);scriptStatus('Script copied.');return}var t=document.createElement('textarea');t.value=calmScript;t.setAttribute('readonly','readonly');t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);scriptStatus('Script copied.')}catch(e){scriptStatus('Copy failed. You can still press and hold the script text to copy it.')}}async function shareScript(){try{if(navigator.share){await navigator.share({title:'ADA Access Card calm script',text:calmScript});scriptStatus('Share sheet opened.')}else{await copyScript();scriptStatus('Sharing is not available here, so the script was copied instead.')}}catch(e){if(e&&e.name==='AbortError')return;scriptStatus('Share failed. Try copy instead.')}}if(lockBtn)lockBtn.addEventListener('click',function(){body.classList.contains('lockscreen')?exitLockscreen():enterLockscreen()});if(floatingExitBtn)floatingExitBtn.addEventListener('click',exitLockscreen);document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement&&body.classList.contains('lockscreen')){body.classList.remove('lockscreen');if(lockBtn)lockBtn.textContent='Enter lockscreen display';releaseWakeLock()}});document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&body.classList.contains('lockscreen')&&!wakeLock)requestWakeLock()});if(copyScriptBtn)copyScriptBtn.addEventListener('click',copyScript);if(shareScriptBtn)shareScriptBtn.addEventListener('click',shareScript);if(contrastBtn)contrastBtn.addEventListener('click',function(){body.classList.toggle('high-contrast')});if(screenshotBtn)screenshotBtn.addEventListener('click',function(){body.classList.toggle('screenshot')});if(stateSelect)stateSelect.addEventListener('change',function(){go(stateSelect.value)});function detectState(a){var c=((a['ISO3166-2-lvl4']||a['ISO3166-2-lvl6']||'')+'').split('-').pop().toUpperCase();if(profiles[c])return c;var n=((a.state||'')+'').toLowerCase();for(var k in profiles)if(profiles[k].state_name.toLowerCase()===n)return k;return''}if(gpsBtn)gpsBtn.addEventListener('click',function(){if(!navigator.geolocation){status('GPS is not available. Choose your state manually.');return}status('Requesting location permission...');navigator.geolocation.getCurrentPosition(function(pos){status('Detecting state from GPS...');var url='https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+encodeURIComponent(pos.coords.latitude)+'&lon='+encodeURIComponent(pos.coords.longitude)+'&zoom=5&addressdetails=1';fetch(url,{headers:{'Accept':'application/json'}}).then(function(r){return r.json()}).then(function(data){var c=detectState(data.address||{});if(c){status('Detected '+profiles[c].state_name+'. Loading...');go(c)}else status('Could not detect a supported state. Choose your state manually.')}).catch(function(){status('Could not reverse lookup GPS location. Choose your state manually.')})},function(err){status(err&&err.message?err.message:'Location permission was not granted. Choose your state manually.')},{enableHighAccuracy:false,timeout:12000,maximumAge:300000})})})();
+(function () {
+    var profiles = <?= json_encode($stateProfiles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    var calmScript = <?= json_encode($calmScript, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    var body = document.body;
+    var lockBtn = document.getElementById('lockBtn');
+    var floatingExitBtn = document.getElementById('floatingExitBtn');
+    var contrastBtn = document.getElementById('contrastBtn');
+    var screenshotBtn = document.getElementById('screenshotBtn');
+    var stateSelect = document.getElementById('stateSelect');
+    var gpsBtn = document.getElementById('gpsBtn');
+    var gpsStatus = document.getElementById('gpsStatus');
+    var copyScriptBtn = document.getElementById('copyScriptBtn');
+    var shareScriptBtn = document.getElementById('shareScriptBtn');
+    var scriptFeedback = document.getElementById('scriptFeedback');
+    var wakeLock = null;
+
+    function status(message) {
+        if (gpsStatus) {
+            gpsStatus.textContent = message || '';
+        }
+    }
+
+    function scriptStatus(message) {
+        if (scriptFeedback) {
+            scriptFeedback.textContent = message || '';
+        }
+    }
+
+    function go(code) {
+        if (!profiles[code]) {
+            return;
+        }
+        var url = new URL(window.location.href);
+        url.searchParams.set('state', code);
+        window.location.href = url.toString();
+    }
+
+    function detectState(address) {
+        var code = (((address['ISO3166-2-lvl4'] || address['ISO3166-2-lvl6'] || '') + '').split('-').pop() || '').toUpperCase();
+        if (profiles[code]) {
+            return code;
+        }
+        var name = ((address.state || '') + '').toLowerCase();
+        for (var key in profiles) {
+            if (profiles[key].state_name.toLowerCase() === name) {
+                return key;
+            }
+        }
+        return '';
+    }
+
+    async function reverseLookupState(lat, lon) {
+        var url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&zoom=5&addressdetails=1';
+        var response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        var data = await response.json();
+        return detectState(data.address || {});
+    }
+
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator && navigator.wakeLock && navigator.wakeLock.request) {
+                wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } catch (e) {
+            wakeLock = null;
+        }
+    }
+
+    async function releaseWakeLock() {
+        try {
+            if (wakeLock && wakeLock.release) {
+                await wakeLock.release();
+            }
+        } catch (e) {
+        }
+        wakeLock = null;
+    }
+
+    async function enterLockscreen() {
+        body.classList.add('lockscreen');
+        if (lockBtn) {
+            lockBtn.textContent = 'Exit lockscreen display';
+        }
+        try {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch (e) {
+        }
+        await requestWakeLock();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function exitLockscreen() {
+        body.classList.remove('lockscreen');
+        if (lockBtn) {
+            lockBtn.textContent = 'Enter lockscreen display';
+        }
+        await releaseWakeLock();
+        try {
+            if (document.fullscreenElement && document.exitFullscreen) {
+                await document.exitFullscreen();
+            }
+        } catch (e) {
+        }
+    }
+
+    async function copyScript() {
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(calmScript);
+                scriptStatus('Script copied.');
+                return;
+            }
+            var textarea = document.createElement('textarea');
+            textarea.value = calmScript;
+            textarea.setAttribute('readonly', 'readonly');
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            scriptStatus('Script copied.');
+        } catch (e) {
+            scriptStatus('Copy failed. You can still press and hold the script text to copy it.');
+        }
+    }
+
+    async function shareScript() {
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: 'ADA Access Card calm script', text: calmScript });
+                scriptStatus('Share sheet opened.');
+            } else {
+                await copyScript();
+                scriptStatus('Sharing is not available here, so the script was copied instead.');
+            }
+        } catch (e) {
+            if (e && e.name === 'AbortError') {
+                return;
+            }
+            scriptStatus('Share failed. Try copy instead.');
+        }
+    }
+
+    async function autoDetectStateOnLoad() {
+        if (window.location.search.indexOf('state=') !== -1) {
+            return;
+        }
+
+        try {
+            if (sessionStorage.getItem('gpAdaAutoStateAttempted') === '1') {
+                return;
+            }
+            sessionStorage.setItem('gpAdaAutoStateAttempted', '1');
+        } catch (e) {
+        }
+
+        if (!navigator.geolocation || !navigator.permissions || !navigator.permissions.query) {
+            return;
+        }
+
+        try {
+            var permission = await navigator.permissions.query({ name: 'geolocation' });
+            if (!permission || permission.state !== 'granted') {
+                return;
+            }
+        } catch (e) {
+            return;
+        }
+
+        status('Auto-detecting state from your location...');
+        navigator.geolocation.getCurrentPosition(
+            async function (position) {
+                try {
+                    status('Detecting state from GPS...');
+                    var stateCode = await reverseLookupState(position.coords.latitude, position.coords.longitude);
+                    if (stateCode) {
+                        status('Detected ' + profiles[stateCode].state_name + '. Loading...');
+                        go(stateCode);
+                    } else {
+                        status('Could not detect a supported state. Choose your state manually.');
+                    }
+                } catch (e) {
+                    status('Could not reverse lookup GPS location. Choose your state manually.');
+                }
+            },
+            function (error) {
+                status(error && error.message ? error.message : 'Location permission was not granted. Choose your state manually.');
+            },
+            { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
+        );
+    }
+
+    if (lockBtn) {
+        lockBtn.addEventListener('click', function () {
+            body.classList.contains('lockscreen') ? exitLockscreen() : enterLockscreen();
+        });
+    }
+
+    if (floatingExitBtn) {
+        floatingExitBtn.addEventListener('click', exitLockscreen);
+    }
+
+    document.addEventListener('fullscreenchange', function () {
+        if (!document.fullscreenElement && body.classList.contains('lockscreen')) {
+            body.classList.remove('lockscreen');
+            if (lockBtn) {
+                lockBtn.textContent = 'Enter lockscreen display';
+            }
+            releaseWakeLock();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && body.classList.contains('lockscreen') && !wakeLock) {
+            requestWakeLock();
+        }
+    });
+
+    if (copyScriptBtn) {
+        copyScriptBtn.addEventListener('click', copyScript);
+    }
+
+    if (shareScriptBtn) {
+        shareScriptBtn.addEventListener('click', shareScript);
+    }
+
+    if (contrastBtn) {
+        contrastBtn.addEventListener('click', function () {
+            body.classList.toggle('high-contrast');
+        });
+    }
+
+    if (screenshotBtn) {
+        screenshotBtn.addEventListener('click', function () {
+            body.classList.toggle('screenshot');
+        });
+    }
+
+    if (stateSelect) {
+        stateSelect.addEventListener('change', function () {
+            go(stateSelect.value);
+        });
+    }
+
+    if (gpsBtn) {
+        gpsBtn.addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                status('GPS is not available. Choose your state manually.');
+                return;
+            }
+
+            status('Requesting location permission...');
+            navigator.geolocation.getCurrentPosition(
+                async function (position) {
+                    try {
+                        status('Detecting state from GPS...');
+                        var stateCode = await reverseLookupState(position.coords.latitude, position.coords.longitude);
+                        if (stateCode) {
+                            status('Detected ' + profiles[stateCode].state_name + '. Loading...');
+                            go(stateCode);
+                        } else {
+                            status('Could not detect a supported state. Choose your state manually.');
+                        }
+                    } catch (e) {
+                        status('Could not reverse lookup GPS location. Choose your state manually.');
+                    }
+                },
+                function (error) {
+                    status(error && error.message ? error.message : 'Location permission was not granted. Choose your state manually.');
+                },
+                { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
+            );
+        });
+    }
+
+    autoDetectStateOnLoad();
+})();
 </script>
 </body>
 </html>
