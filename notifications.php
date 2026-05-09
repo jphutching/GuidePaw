@@ -10,6 +10,23 @@ $userId = (int) $_SESSION['user_id'];
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
+    if (($_POST['action'] ?? '') === 'save_notification_preferences') {
+        $enabled = array_fill_keys(array_keys(gpNotificationCategoryOptions()), false);
+        foreach ((array) ($_POST['categories'] ?? []) as $key) {
+            $key = strtolower(trim((string) $key));
+            if (array_key_exists($key, $enabled)) {
+                $enabled[$key] = true;
+            }
+        }
+        gpSaveNotificationPreferences($pdo, $userId, $enabled);
+        header('Location: notifications.php?status=prefs_saved');
+        exit;
+    }
+    if (($_POST['action'] ?? '') === 'delete_selected_notifications') {
+        $deleted = gpDeleteNotifications($pdo, $userId, (array) ($_POST['notification_ids'] ?? []));
+        header('Location: notifications.php?status=deleted&count=' . $deleted);
+        exit;
+    }
     if (in_array(($_POST['action'] ?? ''), ['accept_dog_access_invite', 'decline_dog_access_invite'], true)) {
         $handlerId = (int) ($_POST['handler_id'] ?? 0);
         $stmt = $pdo->prepare("SELECT dh.*, d.name AS dog_name, d.owner_user_id, owner.username AS owner_username, owner.display_name AS owner_display_name, owner.public_email AS owner_public_email, owner.email AS owner_email
@@ -80,8 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = generateCsrfToken();
+$notificationPrefs = gpFetchNotificationPreferences($pdo, $userId);
 $notifications = gpFetchUserNotifications($pdo, $userId, 100);
+$visibleNotifications = array_values(array_filter($notifications, static fn(array $notice): bool => gpNotificationVisibleByPreferences($notice, $notificationPrefs)));
+$hiddenNotificationCount = max(0, count($notifications) - count($visibleNotifications));
 $unreadCount = gpUnreadNotificationCount($pdo, $userId);
+$visibleUnreadCount = count(array_filter($visibleNotifications, static fn(array $notice): bool => empty($notice['is_read'])));
 $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
 ?>
 <!doctype html>
@@ -118,9 +139,43 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
     </div>
 
     <?php if (($_GET['status'] ?? '') === 'read'): ?><div class="alert alert-success">Notifications marked as read.</div><?php endif; ?>
+    <?php if (($_GET['status'] ?? '') === 'prefs_saved'): ?><div class="alert alert-success">Notification preferences saved.</div><?php endif; ?>
+    <?php if (($_GET['status'] ?? '') === 'deleted'): ?><div class="alert alert-info">Deleted <?= (int) ($_GET['count'] ?? 0) ?> notification<?= (int) ($_GET['count'] ?? 0) === 1 ? '' : 's' ?>.</div><?php endif; ?>
     <?php if (($_GET['status'] ?? '') === 'invite_accepted'): ?><div class="alert alert-success">Dog access invite accepted.</div><?php endif; ?>
     <?php if (($_GET['status'] ?? '') === 'invite_declined'): ?><div class="alert alert-info">Dog access invite declined.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
+
+    <section class="card notification-card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
+                <div>
+                    <h2 class="h5 mb-1">Notification Preferences</h2>
+                    <div class="text-muted small">Hide categories you do not want in the inbox. Unread badge counts still stay visible in the app chrome.</div>
+                </div>
+            </div>
+            <form method="post" class="row g-3 align-items-end">
+                <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                <input type="hidden" name="action" value="save_notification_preferences">
+                <?php foreach (gpNotificationCategoryOptions() as $key => $label): ?>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label class="form-label fw-bold d-flex align-items-center gap-2">
+                            <input class="form-check-input mt-0" type="checkbox" name="categories[]" value="<?= e($key) ?>" <?= !empty($notificationPrefs[$key]) ? 'checked' : '' ?>>
+                            <span><?= e($label) ?></span>
+                        </label>
+                        <div class="text-muted small">
+                            <?php if ($key === 'access'): ?>Dog access and transfer notices.
+                            <?php elseif ($key === 'care'): ?>Found-dog and care alerts.
+                            <?php elseif ($key === 'admin'): ?>Admin, beta, and system alerts.
+                            <?php else: ?>General app notices.<?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <div class="col-12">
+                    <button class="btn btn-outline-primary btn-sm">Save preferences</button>
+                </div>
+            </form>
+        </div>
+    </section>
 
     <?php if ($pendingInvites): ?>
         <section class="card notification-card mb-3">
@@ -170,46 +225,80 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
     <?php endif; ?>
 
     <section class="card notification-card">
-        <div class="card-body p-0">
-            <?php if (!$notifications): ?>
-                <div class="p-3"><div class="empty-state">✅ No notifications yet. Important GuidePaw alerts will appear here.</div></div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
+                <div>
+                    <h2 class="h5 mb-1">Inbox</h2>
+                    <div class="text-muted small"><?= (int) $visibleUnreadCount ?> unread visible alert<?= $visibleUnreadCount === 1 ? '' : 's' ?><?php if ($hiddenNotificationCount > 0): ?> · <?= (int) $hiddenNotificationCount ?> hidden by category preferences<?php endif; ?>.</div>
+                </div>
+            </div>
+            <form id="notificationBulkDeleteForm" method="post" class="mb-3">
+                <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                <input type="hidden" name="action" value="delete_selected_notifications">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                    <button class="btn btn-outline-danger btn-sm" <?= $visibleNotifications ? '' : 'disabled' ?>>Delete selected</button>
+                    <span class="text-muted small"><?= $visibleNotifications ? 'Bulk delete selected notifications from your inbox.' : 'Bulk delete is available once notifications are visible.' ?></span>
+                </div>
+            </form>
+            <?php if ($visibleNotifications): ?>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:48px;">Sel</th>
+                                <th>Alert</th>
+                                <th style="width:135px;">Type</th>
+                                <th style="width:210px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($visibleNotifications as $notice): ?>
+                                <?php $actionUrl = trim((string) ($notice['action_url'] ?? '')); ?>
+                                <tr class="<?= !empty($notice['is_read']) ? '' : 'table-primary' ?>">
+                                    <td>
+                                        <input class="form-check-input" type="checkbox" name="notification_ids[]" value="<?= (int) $notice['id'] ?>" form="notificationBulkDeleteForm" aria-label="Select notification <?= e($notice['title']) ?>">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold"><?= e($notice['title']) ?></div>
+                                        <div class="small text-muted">
+                                            <?= e(date('M j, Y g:i A', strtotime((string) $notice['created_at']))) ?>
+                                            <?php if (!empty($notice['dog_name'])): ?> · <?= e($notice['dog_name']) ?><?php endif; ?>
+                                            <?php if (empty($notice['is_read'])): ?> · <span class="badge text-bg-primary">Unread</span><?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($notice['body'])): ?><div class="notification-body mt-2"><?= nl2br(e($notice['body'])) ?></div><?php endif; ?>
+                                    </td>
+                                    <td><span class="badge text-bg-secondary text-wrap"><?= e($notice['notification_type'] ?? 'info') ?></span></td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <?php if ($actionUrl !== ''): ?>
+                                                <form method="post">
+                                                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                    <input type="hidden" name="action" value="mark_read">
+                                                    <input type="hidden" name="notification_id" value="<?= (int) $notice['id'] ?>">
+                                                    <input type="hidden" name="next" value="<?= e($actionUrl) ?>">
+                                                    <button class="btn btn-outline-primary btn-sm">Open</button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <?php if (empty($notice['is_read'])): ?>
+                                                <form method="post">
+                                                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                    <input type="hidden" name="action" value="mark_read">
+                                                    <input type="hidden" name="notification_id" value="<?= (int) $notice['id'] ?>">
+                                                    <button class="btn btn-outline-secondary btn-sm">Mark read</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php else: ?>
-                <?php foreach ($notifications as $notice): ?>
-                    <?php $actionUrl = trim((string) ($notice['action_url'] ?? '')); ?>
-                    <article class="notification-item <?= !empty($notice['is_read']) ? '' : 'unread' ?> priority-<?= e($notice['priority'] ?: 'normal') ?>">
-                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                            <div class="min-w-0">
-                                <div class="notification-title"><?= e($notice['title']) ?></div>
-                                <div class="notification-meta">
-                                    <?= e(date('M j, Y g:i A', strtotime((string) $notice['created_at']))) ?>
-                                    <?php if (!empty($notice['dog_name'])): ?> · <?= e($notice['dog_name']) ?><?php endif; ?>
-                                    <?php if (empty($notice['is_read'])): ?> · <span class="badge text-bg-primary">Unread</span><?php endif; ?>
-                                </div>
-                            </div>
-                            <span class="badge text-bg-secondary text-wrap"><?= e($notice['notification_type'] ?? 'info') ?></span>
-                        </div>
-                        <?php if (!empty($notice['body'])): ?><div class="notification-body mt-2"><?= nl2br(e($notice['body'])) ?></div><?php endif; ?>
-                        <div class="notification-actions">
-                            <?php if ($actionUrl !== ''): ?>
-                                <form method="post">
-                                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
-                                    <input type="hidden" name="action" value="mark_read">
-                                    <input type="hidden" name="notification_id" value="<?= (int) $notice['id'] ?>">
-                                    <input type="hidden" name="next" value="<?= e($actionUrl) ?>">
-                                    <button class="btn btn-outline-primary btn-sm">Open</button>
-                                </form>
-                            <?php endif; ?>
-                            <?php if (empty($notice['is_read'])): ?>
-                                <form method="post">
-                                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
-                                    <input type="hidden" name="action" value="mark_read">
-                                    <input type="hidden" name="notification_id" value="<?= (int) $notice['id'] ?>">
-                                    <button class="btn btn-outline-secondary btn-sm">Mark read</button>
-                                </form>
-                            <?php endif; ?>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+                <div class="empty-state">✅ No visible notifications yet. Important GuidePaw alerts will appear here.</div>
+            <?php endif; ?>
+            <?php if ($hiddenNotificationCount > 0): ?>
+                <div class="alert alert-light border mt-3 mb-0">Some alerts are hidden by your notification preferences.</div>
             <?php endif; ?>
         </div>
     </section>

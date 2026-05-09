@@ -167,7 +167,7 @@ Added user-facing in-app notifications:
 - Dashboard unread notification summary.
 - Bottom nav Alerts now points to Notification Center.
 - Menu section added for Notifications.
-- Notification Center supports unread/read state, mark one read, mark all read, action routing, priority styling, and dog association when available.
+- Notification Center supports unread/read state, mark one read, mark all read, action routing, priority styling, dog association when available, category preferences, bulk delete, and persistent unread badges.
 - Events wired into Notification Center: shared/co-op dog access granted, dog transfer request, transfer accepted/declined result, and found-dog report.
 
 ### Mobile viewport safety
@@ -550,6 +550,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; beta crawler passed 29/29 after the deploy
 
+2026-05-08 — Notification Center enhancement rollout
+- Commit(s): pending
+- Files changed: notifications.php, includes/mobile_nav.php, includes/notifications.php, includes/beta_qa_checklist_extra_items.php, scripts/local_qa_crawler.php
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: run PHP lint, deploy smoke checks, and local/beta crawlers to verify preferences, bulk delete, and nav badge behavior
+
 2026-05-08 — Candidate comparison rollout
 - Commit(s): e9f3f8f add candidate comparison workflow
 - Files changed: candidate_comparison.php, includes/candidate_comparison.php, includes/candidate_scoring.php, candidate_assessment.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, sql/migrations/pgsql/20260508_candidate_comparison_beta_enabled.sql
@@ -563,7 +570,6 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
-- Whether Notification Center should later add user preferences, categories, bulk delete, or persistent notification badges.
 
 ## Update log template
 

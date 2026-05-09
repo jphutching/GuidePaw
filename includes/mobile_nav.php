@@ -26,6 +26,24 @@ if (!function_exists('gpNavIsAdmin')) {
     }
 }
 
+if (!function_exists('gpNavUnreadNotificationCount')) {
+    function gpNavUnreadNotificationCount(): int
+    {
+        if (!isset($_SESSION['user_id']) || !isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+            return 0;
+        }
+
+        if (!function_exists('gpUnreadNotificationCount')) {
+            $notificationHelper = __DIR__ . '/notifications.php';
+            if (is_file($notificationHelper)) {
+                require_once $notificationHelper;
+            }
+        }
+
+        return function_exists('gpUnreadNotificationCount') ? gpUnreadNotificationCount($GLOBALS['pdo'], (int) $_SESSION['user_id']) : 0;
+    }
+}
+
 if (!function_exists('gpNavLink')) {
     function gpNavLink(string $href, string $icon, string $label, ?string $flagKey = null): void
     {
@@ -66,6 +84,9 @@ if (!function_exists('gpNavLink')) {
     .gp-menu-link { display: flex; align-items: center; gap: .55rem; text-decoration: none; color: #1f2937; background: #f8fafc; border: 1px solid rgba(15,23,42,.08); border-radius: 14px; padding: .75rem; font-weight: 780; min-height: 48px; min-width:0; overflow-wrap:anywhere; }
     .gp-menu-link.active { background: #e8f1ff; border-color: #bfdbfe; color: #0d6efd; }
     .gp-menu-icon { font-size: 1.2rem; width: 1.4rem; text-align: center; flex:0 0 auto; }
+    .gp-nav-icon-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .gp-nav-badge { position: absolute; top: -6px; right: -10px; min-width: 1.15rem; height: 1.15rem; padding: 0 .28rem; border-radius: 999px; background: #0d6efd; color: #fff; font-size: .64rem; line-height: 1; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px #fff; }
+    .gp-nav-badge.is-zero { background: #94a3b8; }
     @media (max-width: 420px) { .gp-menu-root-actions, .gp-menu-link-grid { grid-template-columns: 1fr; } .gp-bottom-nav a, .gp-bottom-nav button { font-size:.66rem; } }
     @media (min-width: 720px) { .gp-menu-link-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 900px) {
@@ -93,7 +114,8 @@ if (!function_exists('gpNavLink')) {
     @media print { .gp-mobile-nav-shell, .gp-menu-backdrop, .gp-menu-panel { display: none !important; } }
 </style>
 
-<div class="gp-mobile-nav-shell"><nav class="gp-bottom-nav" aria-label="Primary navigation"><a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>"><span class="ico">🏠</span><span>Home</span></a><a href="quick_log.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'quick_log.php' ? 'active' : '' ?>"><span class="ico">⚡</span><span>Log</span></a><a href="view_logs.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'view_logs.php' ? 'active' : '' ?>"><span class="ico">📋</span><span>History</span></a><a href="notifications.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'notifications.php' ? 'active' : '' ?>"><span class="ico">🔔</span><span>Alerts</span></a><button type="button" id="gpMenuOpen" aria-controls="gpAppMenu" aria-expanded="false"><span class="ico">☰</span><span>Menu</span></button></nav></div>
+<?php $gpUnreadCount = gpNavUnreadNotificationCount(); ?>
+<div class="gp-mobile-nav-shell"><nav class="gp-bottom-nav" aria-label="Primary navigation"><a href="index.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php' ? 'active' : '' ?>"><span class="ico">🏠</span><span>Home</span></a><a href="quick_log.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'quick_log.php' ? 'active' : '' ?>"><span class="ico">⚡</span><span>Log</span></a><a href="view_logs.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'view_logs.php' ? 'active' : '' ?>"><span class="ico">📋</span><span>History</span></a><a href="notifications.php" class="<?= basename($_SERVER['SCRIPT_NAME'] ?? '') === 'notifications.php' ? 'active' : '' ?>"><span class="gp-nav-icon-wrap"><span class="ico">🔔</span><span class="gp-nav-badge<?= $gpUnreadCount === 0 ? ' is-zero' : '' ?>"><?= (int) $gpUnreadCount ?></span></span><span>Alerts</span></a><button type="button" id="gpMenuOpen" aria-controls="gpAppMenu" aria-expanded="false"><span class="ico">☰</span><span>Menu</span></button></nav></div>
 
 <div class="gp-menu-backdrop" id="gpMenuBackdrop" aria-hidden="true"></div>
 <aside class="gp-menu-panel" id="gpAppMenu" aria-label="GuidePaw menu">
