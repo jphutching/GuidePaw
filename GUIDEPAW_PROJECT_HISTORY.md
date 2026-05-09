@@ -811,6 +811,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the admin-safe browser crawl aligned with the shared shell and add any newly important admin surfaces as they stabilize
 
+2026-05-09 — Admin control panel landing
+- Commit(s): pending
+- Files changed: login.php, admin.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-admin-safe.spec.js, tests/browser/guidepaw-auth-crawl.spec.js
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep admins landing on the admin control panel first and continue watching beta feedback for any other admin-first workflow gaps
+
 ## Update log template
 
 When updating this file, add a short note like:

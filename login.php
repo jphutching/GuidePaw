@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         getActiveDogId($pdo, (int) $user['id']);
-        header("Location: index.php");
+        header("Location: " . (!empty($user['is_admin']) ? "admin.php" : "index.php"));
         exit;
     } else {
         $error = "Invalid username or password.";

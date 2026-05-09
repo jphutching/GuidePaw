@@ -54,7 +54,7 @@ async function loginAsAdmin(page) {
   await page.getByRole('button', { name: /login/i }).click();
 
   await page.waitForLoadState('networkidle').catch(() => {});
-  await expect(page).not.toHaveURL(/login\.php/);
+  await expect(page).toHaveURL(/admin\.php/);
 }
 
 test('GuidePaw login works', async ({ page }) => {

@@ -61,7 +61,20 @@ $csrf = generateCsrfToken();
 <div class="wrap">
     <div class="top">
         <h1>GuidePaw Admin</h1>
-        <a class="btn" href="index.php">Back</a>
+        <a class="btn" href="index.php">Handler Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="label">Admin Control Panel</div>
+        <div class="desc">Admin-only tools appear first here after sign-in.</div>
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn" href="admin_users.php">User Management</a>
+            <a class="btn" href="admin_feedback.php">Feedback Reports</a>
+            <a class="btn" href="admin_beta_requests.php">Beta Requests</a>
+            <a class="btn" href="admin_feature_roadmap.php">Feature Roadmap</a>
+            <a class="btn" href="db_status.php">System Health</a>
+            <a class="btn" href="admin_found_dog_reports.php">Found Dog Reports</a>
+        </div>
     </div>
 
     <?php if ($message): ?>
@@ -149,9 +162,5 @@ $csrf = generateCsrfToken();
     </form>
 </div>
 <?php guidepawFormUx(); ?>
-
-<p><a class="btn btn-outline-primary" href="admin_beta_requests.php">Beta Access Requests</a></p>
-
-<p><a class="btn btn-outline-danger" href="admin_users.php">User Management / Data Deletion</a></p>
 </body>
 </html>

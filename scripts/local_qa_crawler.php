@@ -751,7 +751,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             : true;
         $adminPageLooksReady = $path === 'admin.php'
             ? (
-                str_contains($body, 'beta status')
+                str_contains($body, 'admin control panel')
+                || str_contains($body, 'handler dashboard')
+                || str_contains($body, 'beta status')
                 || str_contains($body, 'feature flags')
                 || str_contains($body, 'notifications')
             ) && $sharedAdminShellReady
