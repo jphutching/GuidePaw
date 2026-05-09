@@ -61,10 +61,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
     .dashboard-hero .btn-outline-light { border-color: rgba(255,255,255,.45); }
     .command-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; }
     .command-title { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; flex-wrap:wrap; }
-    .today-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-    @media (min-width: 760px) { .today-grid { grid-template-columns: repeat(4, 1fr); } }
-    .today-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 92px; border-radius: 18px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 850; box-shadow: 0 6px 18px rgba(15,23,42,.08); }
-    .today-action span { font-size: 1.65rem; line-height: 1; margin-bottom: .35rem; }
+    .today-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
+    .today-action { display: inline-flex; align-items: center; gap: .5rem; min-height: 0; flex: 1 1 190px; padding: .85rem 1rem; border-radius: 14px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 850; box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+    .today-action span { font-size: 1.15rem; line-height: 1; }
     .attention-empty { border: 1px dashed rgba(22,163,74,.36); background: #f0fdf4; border-radius: 16px; padding: 1rem; color: #166534; }
     .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
     .notification-summary{border:1px solid #bfdbfe;background:#eff6ff;border-radius:18px;padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;}
@@ -145,7 +144,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <div class="command-title">
                 <div>
                     <h2 class="h5 mb-1">Today</h2>
-                    <div class="small text-muted">Fast actions for what handlers do most often.</div>
+                    <div class="small text-muted">Fast actions for what handlers do most often. The full set lives in the menu.</div>
                 </div>
             </div>
             <div class="today-grid">
