@@ -720,6 +720,20 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the crawler so collaboration and public-profile/report probes are verified in the HTTP path
 
+2026-05-09 — API crawl expansion
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler so api/login, api/me, api/dogs, and api/logs are verified against the admin token path
+
+2026-05-09 — API deploy sync fix
+- Commit(s): pending
+- Files changed: scripts/deploy_local.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun deploy_local.sh so the api/ directory is copied to the live mirror before the next smoke pass
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

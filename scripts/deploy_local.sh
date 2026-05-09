@@ -12,6 +12,7 @@ find includes -name "*.php" -type f -print0 | xargs -0 -r -n1 php -l >/dev/null
 
 echo "== Syncing live files =="
 sudo cp *.php "$LIVE/"
+sudo cp -r api "$LIVE/"
 sudo cp app.js sw.js manifest.json offline.html styles.css "$LIVE/" 2>/dev/null || true
 sudo cp -r includes "$LIVE/"
 sudo cp -r assets "$LIVE/"
@@ -19,6 +20,7 @@ sudo cp -r assets "$LIVE/"
 echo "== PHP syntax: live =="
 cd "$LIVE"
 for f in *.php; do php -l "$f" >/dev/null; done
+find api -name "*.php" -type f -print0 | xargs -0 -r -n1 php -l >/dev/null
 find includes -name "*.php" -type f -print0 | xargs -0 -r -n1 php -l >/dev/null
 
 echo "== Brand header check =="
@@ -34,6 +36,14 @@ for f in *.php; do
       echo "MISSING BRAND HEADER: $f"
       missing=1
     fi
+  fi
+done
+
+for f in api/*.php; do
+  [ -f "$f" ] || continue
+  if grep -qi "<body" "$f"; then
+    echo "MISSING BRAND HEADER: $f"
+    missing=1
   fi
 done
 

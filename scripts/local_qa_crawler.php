@@ -44,6 +44,7 @@ $feedbackDbName = (string)($options['feedback-db-name'] ?? getenv('GUIDEPAW_FEED
 $feedbackDbUser = (string)($options['feedback-db-user'] ?? getenv('GUIDEPAW_FEEDBACK_DB_USER') ?? getenv('DB_USERNAME') ?: '');
 $feedbackDbPass = (string)($options['feedback-db-pass'] ?? getenv('GUIDEPAW_FEEDBACK_DB_PASSWORD') ?? getenv('DB_PASSWORD') ?: '');
 $feedbackLimit = max(1, (int)($options['feedback-limit'] ?? getenv('GUIDEPAW_FEEDBACK_LIMIT') ?: 200));
+$checkApiRoutes = strtolower((string) (getenv('GUIDEPAW_CHECK_API_ROUTES') ?: 'no')) === 'yes';
 
 if ($adminPass === '') {
     fwrite(STDERR, "Missing --admin-pass or GUIDEPAW_ADMIN_PASS.\n");
@@ -131,6 +132,46 @@ function gpQaLogin(string $baseUrl, string $username, string $password, string &
         $cookieHeader = 'PHPSESSID=' . trim($matches[1]);
     }
     return true;
+}
+
+function gpQaApiRequest(string $baseUrl, string $path, ?string $bearerToken = null, string $method = 'GET', array $jsonFields = []): array
+{
+    $url = $baseUrl . '/' . ltrim($path, '/');
+    $ch = curl_init($url);
+    $headers = ['User-Agent: GuidePawLocalQACrawler/1.0', 'Accept: application/json'];
+    if ($bearerToken !== null && $bearerToken !== '') {
+        $headers[] = 'Authorization: Bearer ' . $bearerToken;
+    }
+    $body = null;
+    if ($method === 'POST') {
+        $body = json_encode($jsonFields, JSON_UNESCAPED_SLASHES);
+        $headers[] = 'Content-Type: application/json';
+    }
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_MAXREDIRS => 0,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_HEADER => true,
+    ]);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    if ($body !== null) {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    }
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $finalUrl = (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+    $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    curl_close($ch);
+    if ($raw === false) {
+        return ['status' => 0, 'body' => '', 'headers' => '', 'url' => $finalUrl, 'error' => $err];
+    }
+    return ['status' => $status, 'headers' => substr($raw, 0, $headerSize), 'body' => substr($raw, $headerSize), 'url' => $finalUrl, 'error' => $err];
 }
 
 function gpQaPageLooksOk(array $res): bool
@@ -387,11 +428,69 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $healthzSeen = gpQaPageLooksOk($healthzPage) && (str_contains(strtolower($healthzPage['body']), '"status":"ok"') || str_contains(strtolower($healthzPage['body']), '"database":"ok"'));
         $csrfTokenSeen = gpQaPageLooksOk($csrfTokenPage) && (str_contains(strtolower($csrfTokenPage['body']), '"success":true') || str_contains(strtolower($csrfTokenPage['body']), 'csrf_token'));
         $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains(strtolower($adminHomePage['body']), 'guidepaw admin') || str_contains(strtolower($adminHomePage['body']), 'feature flags'));
+        $apiTokensPage = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiTokensSeen = false;
+        $apiLogin = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiLoginSeen = false;
+        $apiMe = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiDogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiLogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiMeSeen = false;
+        $apiDogsSeen = false;
+        $apiLogsSeen = false;
+        if ($checkApiRoutes) {
+            $apiTokensPage = gpQaRequest($baseUrl, 'api_tokens.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+            $apiTokensBody = strtolower($apiTokensPage['body']);
+            $apiTokensSeen = gpQaPageLooksOk($apiTokensPage) && (str_contains($apiTokensBody, 'api tokens') || str_contains($apiTokensBody, 'create token'));
+            $apiTokensCsrf = '';
+            if (preg_match('/name="csrf_token" value="([^"]+)"/i', $apiTokensPage['body'], $apiTokensMatch)) {
+                $apiTokensCsrf = html_entity_decode($apiTokensMatch[1], ENT_QUOTES | ENT_HTML5);
+            }
+            $apiCreateToken = $apiTokensCsrf !== '' ? gpQaRequest($baseUrl, 'api_tokens.php', 'POST', [
+                'csrf_token' => $apiTokensCsrf,
+                'create_token' => '1',
+                'token_label' => 'GuidePaw QA',
+            ], $adminCookie, $insecureLocalSsl, $adminCookieHeader, false) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing csrf'];
+            $apiCreateTokenBody = $apiCreateToken['body'];
+            $apiToken = '';
+            if (preg_match('/<code>([a-f0-9]{48})<\/code>/i', $apiCreateTokenBody, $apiCreateTokenMatch)) {
+                $apiToken = trim($apiCreateTokenMatch[1]);
+            }
+            $apiLogin = gpQaApiRequest($baseUrl, 'api/login.php', null, 'POST', ['username' => $adminUser, 'password' => $adminPass, 'token_label' => 'GuidePaw QA']);
+            $apiLoginBody = strtolower($apiLogin['body']);
+            $apiLoginJson = json_decode($apiLogin['body'], true);
+            if ($apiToken === '' && is_array($apiLoginJson)) {
+                $apiToken = (string) ($apiLoginJson['token'] ?? '');
+            }
+            $apiLoginSeen = $apiToken !== '';
+            $apiMe = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/me.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
+            $apiDogs = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/dogs.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
+            $apiLogs = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/logs.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
+            $apiMeJson = json_decode($apiMe['body'], true);
+            $apiDogsJson = json_decode($apiDogs['body'], true);
+            $apiLogsJson = json_decode($apiLogs['body'], true);
+            $apiMeSeen = gpQaPageLooksOk($apiMe) && is_array($apiMeJson) && !empty($apiMeJson['success']) && !empty($apiMeJson['user']['username']);
+            $apiDogsSeen = gpQaPageLooksOk($apiDogs) && is_array($apiDogsJson) && !empty($apiDogsJson['success']) && isset($apiDogsJson['dogs']) && is_array($apiDogsJson['dogs']);
+            $apiLogsSeen = gpQaPageLooksOk($apiLogs) && is_array($apiLogsJson) && !empty($apiLogsJson['success']) && isset($apiLogsJson['logs']) && is_array($apiLogsJson['logs']);
+        }
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
         gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));
         gpQaResult($results, 'healthz_page_loads', $healthzSeen, 'HTTP ' . $healthzPage['status'] . ($healthzSeen ? ' healthz ok found' : ' healthz ok missing'));
         gpQaResult($results, 'csrf_token_page_loads', $csrfTokenSeen, 'HTTP ' . $csrfTokenPage['status'] . ($csrfTokenSeen ? ' csrf token found' : ' csrf token missing'));
         gpQaResult($results, 'admin_home_page_loads', $adminHomeSeen, 'HTTP ' . $adminHomePage['status'] . ($adminHomeSeen ? ' admin home found' : ' admin home missing'));
+        if ($checkApiRoutes) {
+            gpQaResult($results, 'api_tokens_page_loads', $apiTokensSeen, 'HTTP ' . $apiTokensPage['status'] . ($apiTokensSeen ? ' api tokens page found' : ' api tokens page missing'));
+            gpQaResult($results, 'api_login_endpoint', $apiLoginSeen, 'HTTP ' . $apiLogin['status'] . ($apiLoginSeen ? ' api token issued' : ' api token could not be issued'));
+            gpQaResult($results, 'api_me_endpoint', $apiMeSeen, 'HTTP ' . $apiMe['status'] . ($apiMeSeen ? ' api me ok' : ' api me missing'));
+            gpQaResult($results, 'api_dogs_endpoint', $apiDogsSeen, 'HTTP ' . $apiDogs['status'] . ($apiDogsSeen ? ' api dogs ok' : ' api dogs missing'));
+            gpQaResult($results, 'api_logs_endpoint', $apiLogsSeen, 'HTTP ' . $apiLogs['status'] . ($apiLogsSeen ? ' api logs ok' : ' api logs missing'));
+        } else {
+            gpQaResult($results, 'api_tokens_page_loads', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api_tokens.php and bearer-token endpoints');
+            gpQaResult($results, 'api_login_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/login.php');
+            gpQaResult($results, 'api_me_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/me.php');
+            gpQaResult($results, 'api_dogs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/dogs.php');
+            gpQaResult($results, 'api_logs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/logs.php');
+        }
         $pages = [
             'dashboard_loads' => 'index.php',
         'dogs_page_loads' => 'dogs.php',
@@ -427,6 +526,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'register_page_loads' => 'register.php',
         'reset_password_page_loads' => 'reset_password.php',
         'setup_2fa_page_loads' => 'setup_2fa.php',
+        'api_login_endpoint' => 'api/login.php',
+        'api_me_endpoint' => 'api/me.php',
+        'api_dogs_endpoint' => 'api/dogs.php',
+        'api_logs_endpoint' => 'api/logs.php',
         'training_goal_intake_page_loads' => 'training_goal_intake.php',
         'habit_repair_page_loads' => 'habit_repair.php',
         'training_history_export_page_loads' => 'training_history_export.php',
