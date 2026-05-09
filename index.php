@@ -8,6 +8,7 @@ require_once __DIR__ . '/includes/behavior_risk_scoring.php';
 require_once __DIR__ . '/includes/candidate_comparison.php';
 require_once __DIR__ . '/includes/community_challenges.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
+require_once __DIR__ . '/includes/regression_engine.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/trucking_mode.php';
 require_once __DIR__ . '/includes/wearable_integrations.php';
@@ -34,6 +35,8 @@ $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
 $behaviorRiskState = gpBehaviorRiskAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
 $communityChallengeState = $activeDog ? gpCommunityChallengeState($userId, (int) $activeDog['id']) : null;
+$openRegressionEvents = $activeDog ? gpDashboardOpenRegressionEvents($pdo, $userId) : [];
+$openRegressionCount = $activeDog ? gpRegressionEngineOpenCount($pdo, $userId, (int) $activeDog['id']) : 0;
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
 $wearableEvents = gpWearableRecentEvents($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null, 1);
@@ -41,7 +44,7 @@ $latestWearableSync = $wearableEvents[0] ?? null;
 $trainerMarketplaceEntries = gpTrainerMarketplaceEntries($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
 $candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + $openRegressionCount + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -158,6 +161,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled')): ?>
                     <a class="today-action" href="behavior_risk_scoring.php"><span>⚠️</span>Behavior Risk</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'regression_engine_enabled')): ?>
+                    <a class="today-action" href="regression_engine.php"><span>♻️</span>Regression Engine</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
                     <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
                 <?php endif; ?>
@@ -226,6 +232,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <?php endif; ?>
 
             <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
+            <?php if (featureEnabled($pdo, 'regression_engine_enabled')): ?>
+                <?php gpDashboardRenderRegressionAlerts($openRegressionEvents, $openRegressionCount); ?>
+            <?php endif; ?>
             <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled') && $behaviorRiskState): ?>
                 <div class="mt-3">
                     <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">

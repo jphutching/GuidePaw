@@ -126,6 +126,7 @@ if ($adminLoggedIn) {
         'candidate_assessment_page_loads' => 'candidate_assessment.php',
         'candidate_comparison_page_loads' => 'candidate_comparison.php',
         'behavior_risk_scoring_page_loads' => 'behavior_risk_scoring.php',
+        'regression_engine_page_loads' => 'regression_engine.php',
         'goal_builder_page_loads' => 'goal_builder.php',
         'wearable_integrations_page_loads' => 'wearable_integrations.php',
         'trainer_marketplace_page_loads' => 'trainer_marketplace.php',
@@ -184,6 +185,13 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'recent behavior incidents')
             )
             : true;
+        $regressionEnginePageLooksReady = $path === 'regression_engine.php'
+            ? (
+                str_contains($body, 'regression engine')
+                || str_contains($body, 'reset plan')
+                || str_contains($body, 'no open regression events')
+            )
+            : true;
         $goalBuilderPageLooksReady = $path === 'goal_builder.php'
             ? (
                 str_contains($body, 'goal builder')
@@ -229,8 +237,8 @@ if ($adminLoggedIn) {
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $goalBuilderPageLooksReady && $wearablePageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
-            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'candidate_comparison.php' ? ($candidateComparisonPageLooksReady ? ' candidate comparison content found' : ' candidate comparison content missing') : '') . ($path === 'behavior_risk_scoring.php' ? ($behaviorRiskPageLooksReady ? ' behavior risk content found' : ' behavior risk content missing') : '') . ($path === 'goal_builder.php' ? ($goalBuilderPageLooksReady ? ' goal builder content found' : ' goal builder content missing') : '') . ($path === 'wearable_integrations.php' ? ($wearablePageLooksReady ? ' wearable sync content found' : ' wearable sync content missing') : '') . ($path === 'trainer_marketplace.php' ? ($trainerMarketplaceLooksReady ? ' trainer marketplace content found' : ' trainer marketplace content missing') : '') . ($path === 'community_challenges.php' ? ($communityChallengesPageLooksReady ? ' community challenges content found' : ' community challenges content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $regressionEnginePageLooksReady && $goalBuilderPageLooksReady && $wearablePageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'candidate_comparison.php' ? ($candidateComparisonPageLooksReady ? ' candidate comparison content found' : ' candidate comparison content missing') : '') . ($path === 'behavior_risk_scoring.php' ? ($behaviorRiskPageLooksReady ? ' behavior risk content found' : ' behavior risk content missing') : '') . ($path === 'regression_engine.php' ? ($regressionEnginePageLooksReady ? ' regression engine content found' : ' regression engine content missing') : '') . ($path === 'goal_builder.php' ? ($goalBuilderPageLooksReady ? ' goal builder content found' : ' goal builder content missing') : '') . ($path === 'wearable_integrations.php' ? ($wearablePageLooksReady ? ' wearable sync content found' : ' wearable sync content missing') : '') . ($path === 'trainer_marketplace.php' ? ($trainerMarketplaceLooksReady ? ' trainer marketplace content found' : ' trainer marketplace content missing') : '') . ($path === 'community_challenges.php' ? ($communityChallengesPageLooksReady ? ' community challenges content found' : ' community challenges content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '')
         );
     }
 
@@ -239,6 +247,7 @@ if ($adminLoggedIn) {
     $candidateHookSeen = str_contains($dashboardBody, 'candidate scoring') || str_contains($dashboardBody, 'candidate assessment');
     $candidateComparisonHookSeen = str_contains($dashboardBody, 'candidate comparison') || str_contains($dashboardBody, 'compare dogs');
     $behaviorRiskHookSeen = str_contains($dashboardBody, 'behavior risk');
+    $regressionEngineHookSeen = str_contains($dashboardBody, 'regression engine') || str_contains($dashboardBody, 'reset plan');
     $goalBuilderHookSeen = str_contains($dashboardBody, 'goal builder');
     $wearableHookSeen = str_contains($dashboardBody, 'wearable sync') || str_contains($dashboardBody, 'wearable snapshot');
     $trainerMarketplaceHookSeen = str_contains($dashboardBody, 'trainer marketplace') || str_contains($dashboardBody, 'trainer profiles');
@@ -248,6 +257,7 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'dashboard_candidate_hook', gpQaPageLooksOk($dashboard) && $candidateHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateHookSeen ? ' candidate hook found' : ' candidate hook not currently visible'));
     gpQaResult($results, 'dashboard_candidate_comparison_hook', gpQaPageLooksOk($dashboard) && $candidateComparisonHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateComparisonHookSeen ? ' comparison hook found' : ' comparison hook not currently visible'));
     gpQaResult($results, 'dashboard_behavior_risk_hook', gpQaPageLooksOk($dashboard) && $behaviorRiskHookSeen, 'HTTP ' . $dashboard['status'] . ($behaviorRiskHookSeen ? ' behavior risk hook found' : ' behavior risk hook not currently visible'));
+    gpQaResult($results, 'dashboard_regression_engine_hook', gpQaPageLooksOk($dashboard) && $regressionEngineHookSeen, 'HTTP ' . $dashboard['status'] . ($regressionEngineHookSeen ? ' regression engine hook found' : ' regression engine hook not currently visible'));
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
     gpQaResult($results, 'dashboard_wearable_hook', gpQaPageLooksOk($dashboard) && $wearableHookSeen, 'HTTP ' . $dashboard['status'] . ($wearableHookSeen ? ' wearable hook found' : ' wearable hook not currently visible'));
     gpQaResult($results, 'dashboard_trainer_marketplace_hook', gpQaPageLooksOk($dashboard) && $trainerMarketplaceHookSeen, 'HTTP ' . $dashboard['status'] . ($trainerMarketplaceHookSeen ? ' trainer marketplace hook found' : ' trainer marketplace hook not currently visible'));

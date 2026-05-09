@@ -135,6 +135,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'media_review', 'text' => 'Media Review page opens for logs with image/video/audio attachments.', 'expected' => 'User can rate camera stability, audio clarity, and training value.'],
                 ['id' => 'video_review', 'text' => 'Video Review page opens for checkpoint video logs.', 'expected' => 'User can review clip quality, audio, and checkpoint readiness.'],
                 ['id' => 'coach_review', 'text' => 'Coach Review page opens and lets you queue regression items for follow-up.', 'expected' => 'Open training regressions can be promoted into a coach review queue and updated.'],
+                ['id' => 'regression_engine', 'text' => 'Regression Engine page opens and shows reset plans for open regressions.', 'expected' => 'User can review open regression events and save a reset plan update.'],
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
                 ['id' => 'behavior_risk_scoring', 'text' => 'Behavior Risk Scoring page loads and summarizes the current risk picture.', 'expected' => 'User can inspect risk bands, incident reasons, and next-step recommendations.'],
