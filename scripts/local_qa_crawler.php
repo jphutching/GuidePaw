@@ -831,6 +831,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'account recovery')
                 || str_contains($body, 'password recovery')
                 || str_contains($body, 'reset password')
+                || str_contains($body, 'verify password')
+                || str_contains($body, 'password confirmation')
             )
             : true;
         $setup2faPageLooksReady = $path === 'setup_2fa.php'

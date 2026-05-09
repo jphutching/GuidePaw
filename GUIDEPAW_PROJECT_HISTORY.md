@@ -748,6 +748,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the wrapper and confirm the admin-session fallback now jumps straight to Playwright without printing the full PHP failure table
 
+2026-05-09 — Password recovery UX alignment
+- Commit(s): pending
+- Files changed: reset_password.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun the crawler and confirm the reset-password page shows visibility toggles and password confirmation before saving
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

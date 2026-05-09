@@ -30,7 +30,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'return_after_save', 'text' => 'Required profile save returns user to the originally requested page.', 'expected' => 'Save and Continue redirects correctly.'],
                 ['id' => 'beta_token_page', 'text' => 'Beta Token page loads for approved access.', 'expected' => 'beta_token.php opens and can continue to account creation.'],
                 ['id' => 'register_page', 'text' => 'Register page loads for new handlers.', 'expected' => 'register.php opens or routes through beta token without application error.'],
-                ['id' => 'reset_password_page', 'text' => 'Password recovery page loads.', 'expected' => 'reset_password.php opens without application error.'],
+                ['id' => 'reset_password_page', 'text' => 'Password recovery page loads with confirm password support.', 'expected' => 'reset_password.php opens and shows password visibility plus confirmation before saving.'],
                 ['id' => 'setup_2fa_page', 'text' => 'Setup 2FA page loads for logged-in handlers.', 'expected' => 'setup_2fa.php opens and shows the TOTP secret and verification form.'],
                 ['id' => 'verify_2fa_redirect', 'text' => 'Verify 2FA page stays protected outside a pending login flow.', 'expected' => 'verify_2fa.php redirects to login when no 2FA session is pending.'],
                 ['id' => 'logout_redirect', 'text' => 'Logout page redirects to Login.', 'expected' => 'logout.php clears the session and routes back to login.php.'],
