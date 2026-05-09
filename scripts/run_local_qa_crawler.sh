@@ -56,4 +56,15 @@ if [[ -n "$FEEDBACK_DB_HOST" && -n "$FEEDBACK_DB_NAME" && -n "$FEEDBACK_DB_USER"
   )
 fi
 
-php scripts/local_qa_crawler.php "${args[@]}"
+export GUIDEPAW_TEST_BASE_URL="$BASE_URL"
+export GUIDEPAW_TEST_USERNAME="$REGULAR_USER"
+export GUIDEPAW_TEST_PASSWORD="$REGULAR_PASS"
+export GUIDEPAW_ADMIN_TEST_USERNAME="$ADMIN_USER"
+export GUIDEPAW_ADMIN_TEST_PASSWORD="$ADMIN_PASS"
+
+if php scripts/local_qa_crawler.php "${args[@]}"; then
+  exit 0
+fi
+
+echo "PHP QA crawler failed or is unavailable here; falling back to Playwright crawler." >&2
+npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js

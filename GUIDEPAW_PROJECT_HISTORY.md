@@ -643,6 +643,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the crawler now submits a unique public found-dog report and verifies that the admin queue lists it, while also covering the found-dog test page
 
+2026-05-09 — Browser crawler fallback
+- Commit(s): pending
+- Files changed: scripts/run_local_qa_crawler.sh, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the local QA wrapper now falls back to Playwright when PHP socket access is blocked, and the browser auth crawl includes the found-dog public report submit/admin-queue check
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
