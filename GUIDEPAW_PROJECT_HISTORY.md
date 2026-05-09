@@ -497,11 +497,11 @@ php scripts/cleanup_e2e_data.php --yes
 ```
 
 2026-05-08 — Community challenges rollout
-- Commit(s): pending
+- Commit(s): 2d4064f add community challenges workflow
 - Files changed: community_challenges.php, includes/community_challenges.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, sql/migrations/pgsql/20260508_community_challenges_beta_enabled.sql
 - New checklist items added: yes
 - In-progress item changed: no
-- Next recommended step: commit, push, and verify beta after Render deploys
+- Next recommended step: none; beta crawler passed 29/29 after the deploy
 
 2026-05-08 — Candidate comparison rollout
 - Commit(s): e9f3f8f add candidate comparison workflow
