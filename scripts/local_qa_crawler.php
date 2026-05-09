@@ -226,6 +226,8 @@ function gpQaFeedbackAliasMap(): array
         'quick_log.php' => ['quick log', 'quick session'],
         'log_entry.php' => ['detailed log', 'training log', 'photo, video, or audio'],
         'view_logs.php' => ['training history', 'view logs', 'queued offline logs'],
+        'edit_log.php' => ['edit training log', 'update log entry'],
+        'edit_profile.php' => ['edit dog profile', 'update stats'],
         'dogs.php' => ['manage dogs', 'archived dogs', 'active dogs'],
         'notifications.php' => ['notification', 'alerts', 'inbox'],
         'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
@@ -241,14 +243,19 @@ function gpQaFeedbackAliasMap(): array
         'admin_notification_test.php' => ['notification test'],
         'admin_profile_completion.php' => ['profile completion'],
         'admin_users.php' => ['user management', 'admin users'],
+        'backup.php' => ['backup restore', 'backup & restore'],
+        'export_backup.php' => ['download json backup', 'full backup package'],
         'candidate_assessment.php' => ['candidate assessment', 'candidate'],
         'candidate_comparison.php' => ['candidate comparison', 'compare'],
         'behavior_risk_scoring.php' => ['behavior risk', 'risk scoring'],
         'regression_engine.php' => ['regression engine', 'reset plan'],
         'goal_builder.php' => ['goal builder', 'goal'],
         'training_program.php' => ['training program', 'training'],
+        'training_goal_intake.php' => ['training goal intake', 'goal intake'],
+        'habit_repair.php' => ['habit repair', 'behavior incident'],
         'training_session_log.php' => ['session log', 'training session'],
         'training_history.php' => ['training history', 'history'],
+        'training_history_export.php' => ['training history export', 'csv export'],
         'stats.php' => ['stats', 'progress'],
         'air_travel_rights.php' => ['air travel', 'service dog training'],
         'report_found_dog.php' => ['found dog', 'location report', 'share found location'],
@@ -383,12 +390,17 @@ if ($adminLoggedIn) {
         'quick_log_page_loads' => 'quick_log.php',
         'log_entry_page_loads' => 'log_entry.php',
         'view_logs_page_loads' => 'view_logs.php',
+        'edit_log_history_page_loads' => 'edit_log.php',
+        'edit_profile_page_loads' => 'edit_profile.php',
         'feedback_page_loads' => 'feedback.php',
         'beta_request_page_loads' => 'beta_request.php',
         'beta_token_page_loads' => 'beta_token.php',
         'register_page_loads' => 'register.php',
         'reset_password_page_loads' => 'reset_password.php',
         'setup_2fa_page_loads' => 'setup_2fa.php',
+        'training_goal_intake_page_loads' => 'training_goal_intake.php',
+        'habit_repair_page_loads' => 'habit_repair.php',
+        'training_history_export_page_loads' => 'training_history_export.php',
         'db_status_page_loads' => 'db_status.php',
         'candidate_assessment_page_loads' => 'candidate_assessment.php',
         'candidate_comparison_page_loads' => 'candidate_comparison.php',
@@ -557,6 +569,20 @@ if ($adminLoggedIn) {
                 str_contains($body, 'log training')
                 || str_contains($body, 'save training log')
                 || str_contains($body, 'photo, video, or audio')
+            )
+            : true;
+        $editLogPageLooksReady = $path === 'edit_log.php'
+            ? (
+                str_contains($body, 'edit training log')
+                || str_contains($body, 'update log entry')
+                || str_contains($body, 'permission')
+            )
+            : true;
+        $editProfilePageLooksReady = $path === 'edit_profile.php'
+            ? (
+                str_contains($body, 'edit dog profile')
+                || str_contains($body, 'microchip')
+                || str_contains($body, 'update stats')
             )
             : true;
         $viewLogsPageLooksReady = $path === 'view_logs.php'
@@ -734,6 +760,20 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'active goals')
             )
             : true;
+        $trainingGoalIntakePageLooksReady = $path === 'training_goal_intake.php'
+            ? (
+                str_contains($body, 'training goal intake')
+                || str_contains($body, 'goal intake')
+                || str_contains($body, 'open goal builder')
+            )
+            : true;
+        $habitRepairPageLooksReady = $path === 'habit_repair.php'
+            ? (
+                str_contains($body, 'habit repair')
+                || str_contains($body, 'behavior incident')
+                || str_contains($body, 'regression is not failure')
+            )
+            : true;
         $trainingSessionLogPageLooksReady = $path === 'training_session_log.php'
             ? (
                 str_contains($body, 'training session log')
@@ -746,6 +786,13 @@ if ($adminLoggedIn) {
                 str_contains($body, 'training history')
                 || str_contains($body, 'archived')
                 || str_contains($body, 'export csv')
+            )
+            : true;
+        $trainingHistoryExportPageLooksReady = $path === 'training_history_export.php'
+            ? (
+                str_contains($body, 'record_type')
+                || str_contains($body, 'created_at')
+                || str_contains($body, 'content-type: text/csv')
             )
             : true;
         $statsPageLooksReady = $path === 'stats.php'
@@ -843,9 +890,22 @@ if ($adminLoggedIn) {
     $dashboard = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $notificationsPage = gpQaRequest($baseUrl, 'notifications.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $dogsPage = gpQaRequest($baseUrl, 'dogs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $goalIntakePage = gpQaRequest($baseUrl, 'training_goal_intake.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $editProfilePage = gpQaRequest($baseUrl, 'edit_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $viewLogsForEditPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $trainingHistoryExportPage = gpQaRequest($baseUrl, 'training_history_export.php?status=active', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $backupExportPage = gpQaRequest($baseUrl, 'export_backup.php?format=csv', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $dashboardBody = strtolower($dashboard['body']);
     $notificationsPageBody = strtolower($notificationsPage['body']);
     $dogsPageBody = strtolower($dogsPage['body']);
+    $goalIntakeBody = strtolower($goalIntakePage['body']);
+    $habitRepairBody = strtolower($habitRepairPage['body']);
+    $editProfileBody = strtolower($editProfilePage['body']);
+    $viewLogsForEditBody = strtolower($viewLogsForEditPage['body']);
+    $trainingHistoryExportBody = strtolower($trainingHistoryExportPage['body']);
+    $trainingHistoryExportHeaders = strtolower($trainingHistoryExportPage['headers']);
+    $backupExportHeaders = strtolower($backupExportPage['headers']);
     $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'no archived dogs yet') || str_contains($dogsPageBody, 'active dogs stay in the working list');
     $notificationPrefsSeen = str_contains($notificationsPageBody, 'notification preferences') && str_contains($notificationsPageBody, 'delete selected') && str_contains($notificationsPageBody, 'bulk delete');
     $notificationBadgeSeen = str_contains($dashboardBody, 'gp-nav-badge') || str_contains($notificationsPageBody, 'gp-nav-badge');
@@ -867,6 +927,21 @@ if ($adminLoggedIn) {
     $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
     $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
     $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
+    $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
+    $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
+    $editProfileSeen = gpQaPageLooksOk($editProfilePage) && (str_contains($editProfileBody, 'edit dog profile') || str_contains($editProfileBody, 'microchip') || str_contains($editProfileBody, 'update stats'));
+    $trainingHistoryExportSeen = gpQaPageLooksOk($trainingHistoryExportPage) && (str_contains($trainingHistoryExportBody, 'record_type,created_at') || str_contains($trainingHistoryExportHeaders, 'content-type: text/csv') || str_contains($trainingHistoryExportHeaders, 'content-disposition'));
+    $backupExportSeen = gpQaPageLooksOk($backupExportPage) && (str_contains($backupExportHeaders, 'content-type: text/csv') || str_contains($backupExportHeaders, 'content-disposition'));
+    $editLogSeen = false;
+    if (preg_match('/href="([^"]*edit_log\.php\?id=\d+)"/i', $viewLogsForEditPage['body'], $editMatch)) {
+        $editLogPath = ltrim(parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_PATH) . '?' . (parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY) ?? ''), '/');
+        $editLogPage = gpQaRequest($baseUrl, $editLogPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $editLogBody = strtolower($editLogPage['body']);
+        $editLogSeen = gpQaPageLooksOk($editLogPage) && (str_contains($editLogBody, 'edit training log') || str_contains($editLogBody, 'update log entry') || str_contains($editLogBody, 'permission'));
+        gpQaResult($results, 'edit_log_page_loads', $editLogSeen, 'HTTP ' . $editLogPage['status'] . ($editLogSeen ? ' edit log found' : ' edit log missing'));
+    } else {
+        gpQaResult($results, 'edit_log_page_loads', false, 'edit log link missing from history page');
+    }
     $verify2faPage = gpQaRequest($baseUrl, 'verify_2fa.php', 'GET', [], '', $insecureLocalSsl, '');
     $verify2faRedirectSeen = gpQaPageLooksOk($verify2faPage) && (str_contains(strtolower($verify2faPage['url']), 'login.php') || str_contains(strtolower($verify2faPage['body']), 'guidepaw login') || str_contains(strtolower($verify2faPage['body']), 'log in'));
     gpQaResult($results, 'dashboard_candidate_hook', gpQaPageLooksOk($dashboard) && $candidateHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateHookSeen ? ' candidate hook found' : ' candidate hook not currently visible'));
@@ -887,6 +962,11 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));
     gpQaResult($results, 'dashboard_trucking_hook', gpQaPageLooksOk($dashboard) && $truckingHookSeen, 'HTTP ' . $dashboard['status'] . ($truckingHookSeen ? ' trucking hook found' : ' trucking hook not currently visible'));
     gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
+    gpQaResult($results, 'training_goal_intake_page_loads', $goalIntakeSeen, 'HTTP ' . $goalIntakePage['status'] . ($goalIntakeSeen ? ' goal intake found' : ' goal intake missing'));
+    gpQaResult($results, 'habit_repair_page_loads', $habitRepairSeen, 'HTTP ' . $habitRepairPage['status'] . ($habitRepairSeen ? ' habit repair found' : ' habit repair missing'));
+    gpQaResult($results, 'edit_profile_page_loads', $editProfileSeen, 'HTTP ' . $editProfilePage['status'] . ($editProfileSeen ? ' edit profile found' : ' edit profile missing'));
+    gpQaResult($results, 'training_history_export_page_loads', $trainingHistoryExportSeen, 'HTTP ' . $trainingHistoryExportPage['status'] . ($trainingHistoryExportSeen ? ' training history export found' : ' training history export missing'));
+    gpQaResult($results, 'export_backup_csv_download', $backupExportSeen, 'HTTP ' . $backupExportPage['status'] . ($backupExportSeen ? ' backup export csv found' : ' backup export csv missing'));
     gpQaResult($results, 'verify_2fa_redirects_to_login', $verify2faRedirectSeen, 'HTTP ' . $verify2faPage['status'] . ($verify2faRedirectSeen ? ' verify 2fa protected outside pending session' : ' verify 2fa protection missing'));
     gpQaResult($results, 'notification_prefs_controls', gpQaPageLooksOk($notificationsPage) && $notificationPrefsSeen, 'HTTP ' . $notificationsPage['status'] . ($notificationPrefsSeen ? ' notification preferences found' : ' notification preferences missing'));
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));
