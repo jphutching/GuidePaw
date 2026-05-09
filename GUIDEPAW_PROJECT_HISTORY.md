@@ -249,6 +249,7 @@ Major feature stack added:
 
 - `dog_access.php` page.
 - Co-op/shared handler access.
+- Co-op/shared handler access now uses pending invites that the recipient accepts from Notifications.
 - Viewer and Contributor/Editor permission choices.
 - Temporary access end date.
 - Revocation of shared access.
@@ -557,7 +558,6 @@ php scripts/cleanup_e2e_data.php --yes
 
 - Which exact admin pages moderators should be allowed to access.
 - Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
-- Whether Dog Access should use invite-only pending acceptance for shared co-op access, instead of immediately accepted shared access.
 - Whether to add stronger owner-only restrictions inside the central helper functions.
 - Whether transfer requests should also trigger Telegram/admin notifications.
 - Whether retired/archived dogs should have a dedicated archive list rather than appearing in normal Manage Dogs.

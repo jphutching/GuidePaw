@@ -58,7 +58,7 @@ function insertAndGetId(PDO $pdo, string $sqlWithoutReturning, array $params = [
 }
 
 function upsertDogHandlerLink(PDO $pdo, int $dogId, int $userId, int $invitedByUserId, ?string $role, string $permissionLevel, string $status = 'accepted'): void {
-    $stmt = $pdo->prepare("INSERT INTO dog_handlers (dog_id, user_id, invited_by_user_id, role, permission_level, status) VALUES (?,?,?,?,?,?) ON CONFLICT (dog_id, user_id) DO UPDATE SET permission_level = EXCLUDED.permission_level, status = EXCLUDED.status, accepted_at = CURRENT_TIMESTAMP");
+    $stmt = $pdo->prepare("INSERT INTO dog_handlers (dog_id, user_id, invited_by_user_id, role, permission_level, status) VALUES (?,?,?,?,?,?) ON CONFLICT (dog_id, user_id) DO UPDATE SET invited_by_user_id = EXCLUDED.invited_by_user_id, role = EXCLUDED.role, permission_level = EXCLUDED.permission_level, status = EXCLUDED.status, accepted_at = CASE WHEN EXCLUDED.status = 'accepted' THEN COALESCE(dog_handlers.accepted_at, CURRENT_TIMESTAMP) ELSE NULL END, revoked_at = CASE WHEN EXCLUDED.status IN ('revoked', 'declined') THEN COALESCE(dog_handlers.revoked_at, CURRENT_TIMESTAMP) ELSE NULL END");
     $stmt->execute([$dogId, $userId, $invitedByUserId, $role, $permissionLevel, $status]);
 }
 
