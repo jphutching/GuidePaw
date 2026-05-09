@@ -113,6 +113,7 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - `scripts/repair_smoke_auth.php` can reset the seeded admin and regular smoke accounts back to the crawler passwords and clear 2FA for smoke testing.
   - `scripts/run_e2e.sh` and `scripts/run_admin_e2e.sh` can optionally run that repair step first when `GUIDEPAW_REPAIR_SMOKE_AUTH=yes`.
   - This is the supported path for fixing login drift on local or beta hosts without introducing a browser-side bypass.
+  - The repair path now also supports a single `GUIDEPAW_SMOKE_PASSWORD` for both smoke accounts so the login secret can be kept identical while preserving distinct admin and regular usernames.
 - Remaining roadmap bookkeeping was reconciled on 2026-05-08:
   - `feature_roadmap.coach_review_enabled` and `feature_roadmap.media_reviews_enabled` were promoted to `beta_enabled`.
   - The flag states were already enabled; this was a roadmap-history cleanup to match the shipped features.

@@ -24,9 +24,13 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
+if [ -n "${GUIDEPAW_SMOKE_PASSWORD:-}" ]; then
+  export GUIDEPAW_TEST_PASSWORD="$GUIDEPAW_SMOKE_PASSWORD"
+fi
+
 if [ "${GUIDEPAW_REPAIR_SMOKE_AUTH:-no}" = "yes" ]; then
   echo "Repairing smoke-login credentials before test run..."
-  php scripts/repair_smoke_auth.php
+  php scripts/repair_smoke_auth.php ${GUIDEPAW_SMOKE_PASSWORD:+--smoke-password=$GUIDEPAW_SMOKE_PASSWORD}
 fi
 
 if [ -z "${GUIDEPAW_TEST_USERNAME:-}" ]; then

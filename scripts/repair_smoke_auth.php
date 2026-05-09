@@ -6,16 +6,18 @@ require_once __DIR__ . '/../includes/db_connect.php';
 $options = getopt('', [
     'admin-username::',
     'admin-password::',
+    'smoke-password::',
     'regular-usernames::',
     'regular-password::',
     'dry-run::',
 ]);
 
 $adminUsername = strtolower(trim((string) ($options['admin-username'] ?? 'admin')));
-$adminPassword = (string) ($options['admin-password'] ?? 'admin123');
+$smokePassword = (string) ($options['smoke-password'] ?? '');
+$adminPassword = $smokePassword !== '' ? $smokePassword : (string) ($options['admin-password'] ?? 'admin123');
 $regularAliases = array_filter(array_map('trim', explode(',', (string) ($options['regular-usernames'] ?? 'test acct,test_acct,test account,test'))));
 $regularAliases = array_map('strtolower', $regularAliases);
-$regularPassword = (string) ($options['regular-password'] ?? 'test123');
+$regularPassword = $smokePassword !== '' ? $smokePassword : (string) ($options['regular-password'] ?? 'test123');
 $dryRun = strtolower((string) ($options['dry-run'] ?? 'no')) === 'yes';
 
 function columnExists(PDO $pdo, string $table, string $column): bool
