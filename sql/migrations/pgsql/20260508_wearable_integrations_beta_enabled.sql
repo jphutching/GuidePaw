@@ -19,6 +19,11 @@ CREATE TABLE IF NOT EXISTS wearable_sync_events (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+UPDATE feature_flags
+SET is_enabled = 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE flag_key = 'wearable_integrations_enabled';
+
 UPDATE feature_roadmap
 SET lifecycle_status = 'beta_enabled',
     release_notes = 'Wearable sync hub for manually entered or pasted device summaries.',
