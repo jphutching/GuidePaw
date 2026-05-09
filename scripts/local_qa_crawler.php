@@ -712,6 +712,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'log training')
                 || str_contains($body, 'save training log')
                 || str_contains($body, 'photo, video, or audio')
+                || str_contains($body, 'take photo')
+                || str_contains($body, 'record video')
+                || str_contains($body, 'open the device camera directly')
             )
             : true;
         $editLogPageLooksReady = $path === 'edit_log.php'

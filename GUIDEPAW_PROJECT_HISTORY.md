@@ -755,6 +755,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the crawler and confirm the reset-password page shows visibility toggles and password confirmation before saving
 
+2026-05-09 — Camera access enhancement
+- Commit(s): pending
+- Files changed: log_entry.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun the crawler and confirm the detailed log form exposes direct photo/video capture controls on mobile
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

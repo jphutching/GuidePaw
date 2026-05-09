@@ -148,7 +148,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'edit_profile_page', 'text' => 'Edit Dog Profile page loads.', 'expected' => 'edit_profile.php opens for the active dog without application error.'],
                 ['id' => 'manage_dogs_redirect', 'text' => 'Manage Dogs redirect still lands on Dogs page.', 'expected' => 'manage_dogs.php routes to dogs.php with the original query string.'],
                 ['id' => 'quick_log_page', 'text' => 'Quick Log page loads and shows the fast session form.', 'expected' => 'User can start a quick session and save it from the fast entry page.'],
-                ['id' => 'log_entry_page', 'text' => 'Training Log entry page loads and shows the detailed log form.', 'expected' => 'User can log training details, media, and save the record.'],
+                ['id' => 'log_entry_page', 'text' => 'Training Log entry page loads and shows camera capture controls.', 'expected' => 'User can log training details, open the camera for photo or video capture, and save the record.'],
                 ['id' => 'view_logs_page', 'text' => 'View Logs page loads and shows training history.', 'expected' => 'User can review prior logs and queued offline entries.'],
                 ['id' => 'edit_log_page', 'text' => 'Edit Training Log page loads from history.', 'expected' => 'edit_log.php opens from a selected log entry.'],
                 ['id' => 'update_log_guard', 'text' => 'Update Log only accepts POST and returns to history.', 'expected' => 'update_log.php redirects to view_logs.php when opened directly.'],
