@@ -190,8 +190,10 @@ $csrf = generateCsrfToken();
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <?php if ($archivedDogs): ?>
-                            <h6 class="text-uppercase text-muted small mb-2">Archived Dogs</h6>
+                        <h6 class="text-uppercase text-muted small mb-2">Archived Dogs</h6>
+                        <?php if (!$archivedDogs): ?>
+                            <div class="text-muted small mb-3">No archived dogs yet.</div>
+                        <?php else: ?>
                             <div class="list-group">
                                 <?php foreach ($archivedDogs as $dog): ?>
                                     <?php $lifeStatus = ucwords(str_replace('_', ' ', (string) ($dog['lifecycle_status'] ?? 'archived'))); ?>

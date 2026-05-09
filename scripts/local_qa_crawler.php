@@ -168,6 +168,7 @@ if ($adminLoggedIn) {
         $dogsPageLooksReady = $path === 'dogs.php'
             ? (
                 str_contains($body, 'archived dogs')
+                || str_contains($body, 'no archived dogs yet')
                 || str_contains($body, 'your accessible dogs')
             )
             : true;
@@ -253,7 +254,7 @@ if ($adminLoggedIn) {
     $dogsPage = gpQaRequest($baseUrl, 'dogs.php', 'GET', [], $adminCookie, $insecureLocalSsl);
     $dashboardBody = strtolower($dashboard['body']);
     $dogsPageBody = strtolower($dogsPage['body']);
-    $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'active dogs stay in the working list');
+    $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'no archived dogs yet') || str_contains($dogsPageBody, 'active dogs stay in the working list');
     $candidateHookSeen = str_contains($dashboardBody, 'candidate scoring') || str_contains($dashboardBody, 'candidate assessment');
     $candidateComparisonHookSeen = str_contains($dashboardBody, 'candidate comparison') || str_contains($dashboardBody, 'compare dogs');
     $behaviorRiskHookSeen = str_contains($dashboardBody, 'behavior risk');
