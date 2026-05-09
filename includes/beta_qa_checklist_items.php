@@ -185,7 +185,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'appointments_today', 'text' => 'Dashboard exposes Vet Appointments as a Today shortcut.', 'expected' => 'index.php shows a direct Appointments tile.'],
                 ['id' => 'medications_today', 'text' => 'Dashboard exposes Medications as a Today shortcut.', 'expected' => 'index.php shows a direct Medications tile.'],
                 ['id' => 'alerts_page', 'text' => 'Smart Alerts page loads and shows current alerts.', 'expected' => 'User can open alerts and see the current alert list.'],
-                ['id' => 'alerts_module_links', 'text' => 'Smart Alerts surfaces module start links when training guidance is shown.', 'expected' => 'alerts.php includes Start module links for coaching-style alerts.'],
+                ['id' => 'alerts_module_links', 'text' => 'Smart Alerts surfaces module start links when training guidance is shown.', 'expected' => 'alerts.php and the dashboard include Start module links for coaching-style alerts.'],
                 ['id' => 'alerts_today', 'text' => 'Dashboard exposes Smart Alerts as a Today shortcut.', 'expected' => 'index.php shows a direct Smart Alerts tile.'],
                 ['id' => 'certification_today', 'text' => 'Dashboard exposes Certification as a Today shortcut.', 'expected' => 'index.php shows a direct Certification tile.'],
             ],

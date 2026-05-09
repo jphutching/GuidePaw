@@ -1153,6 +1153,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $medicationsTodaySeen = str_contains($dashboardBody, 'medications');
     $wearableHookSeen = str_contains($dashboardBody, 'wearable sync') || str_contains($dashboardBody, 'wearable snapshot');
     $alertsHookSeen = str_contains($dashboardBody, 'smart alerts');
+    $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
+        && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
     $certificationHookSeen = str_contains($dashboardBody, 'certification');
     $statsHookSeen = str_contains($dashboardBody, 'stats');
     $trainerMarketplaceHookSeen = str_contains($dashboardBody, 'trainer marketplace') || str_contains($dashboardBody, 'trainer profiles');
@@ -1290,6 +1292,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_air_travel_hook', gpQaPageLooksOk($dashboard) && $airTravelHookSeen, 'HTTP ' . $dashboard['status'] . ($airTravelHookSeen ? ' air travel hook found' : ' air travel hook not currently visible'));
     gpQaResult($results, 'dashboard_air_travel_today', gpQaPageLooksOk($dashboard) && $airTravelTodaySeen, 'HTTP ' . $dashboard['status'] . ($airTravelTodaySeen ? ' air travel today action found' : ' air travel today action not currently visible'));
     gpQaResult($results, 'dashboard_alerts_today', gpQaPageLooksOk($dashboard) && $alertsHookSeen, 'HTTP ' . $dashboard['status'] . ($alertsHookSeen ? ' smart alerts today action found' : ' smart alerts today action not currently visible'));
+    gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
     gpQaResult($results, 'dashboard_health_docs_today', gpQaPageLooksOk($dashboard) && $healthDocsTodaySeen, 'HTTP ' . $dashboard['status'] . ($healthDocsTodaySeen ? ' health docs today action found' : ' health docs today action not currently visible'));
     gpQaResult($results, 'dashboard_appointments_today', gpQaPageLooksOk($dashboard) && $appointmentsTodaySeen, 'HTTP ' . $dashboard['status'] . ($appointmentsTodaySeen ? ' appointments today action found' : ' appointments today action not currently visible'));
     gpQaResult($results, 'dashboard_medications_today', gpQaPageLooksOk($dashboard) && $medicationsTodaySeen, 'HTTP ' . $dashboard['status'] . ($medicationsTodaySeen ? ' medications today action found' : ' medications today action not currently visible'));

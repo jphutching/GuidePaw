@@ -15,6 +15,7 @@ require_once __DIR__ . '/includes/wearable_integrations.php';
 require_once __DIR__ . '/includes/trainer_marketplace.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
+require_once __DIR__ . '/includes/training_suggestion_links.php';
 require_once 'includes/app_config.php';
 checkLogin();
 
@@ -224,6 +225,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                             <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
                                 <div class="fw-semibold"><?= e($alert['title']) ?></div>
                                 <div class="small text-muted"><?= e($alert['detail']) ?></div>
+                                <?php $moduleLink = gpTrainingSuggestionLink(($alert['title'] ?? '') . ' ' . ($alert['detail'] ?? '')); if ($moduleLink): ?>
+                                    <a class="btn btn-outline-primary btn-sm mt-2" href="<?= e($moduleLink['url']) ?>"><?= e($moduleLink['label']) ?></a>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>

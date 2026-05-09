@@ -762,6 +762,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the crawler and confirm the detailed log form exposes direct photo/video capture controls on mobile
 
+2026-05-09 — Alert suggestion link cleanup
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler and confirm dashboard alert cards expose Start module links when the alert text points at a training module.
+
 2026-05-09 — Tile layout cleanup
 - Commit(s): 06e8211 soften dashboard tile layout
 - Files changed: index.php, includes/mobile_nav.php, GUIDEPAW_PROJECT_HISTORY.md
