@@ -935,6 +935,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'training setup')
                 || str_contains($body, 'akc programs')
                 || str_contains($body, 'training ladder')
+                || str_contains($body, 'start module')
             )
             : true;
         $trainingGoalIntakePageLooksReady = $path === 'training_goal_intake.php'
@@ -998,6 +999,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'smart alerts')
                 || str_contains($body, 'active alerts')
                 || str_contains($body, 'no active alerts')
+                || str_contains($body, 'start module')
             )
             : true;
         $dogHealthPageLooksReady = $path === 'dog_health.php'
@@ -1076,6 +1078,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $goalIntakePage = gpQaRequest($baseUrl, 'training_goal_intake.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $trainingProgramPage = gpQaRequest($baseUrl, 'training_program.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $alertsPage = gpQaRequest($baseUrl, 'alerts.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $editProfilePage = gpQaRequest($baseUrl, 'edit_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $viewLogsForEditPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $manageDogsPage = gpQaRequest($baseUrl, 'manage_dogs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1096,6 +1100,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adminHomeBody = strtolower($adminHomePage['body']);
     $goalIntakeBody = strtolower($goalIntakePage['body']);
     $habitRepairBody = strtolower($habitRepairPage['body']);
+    $trainingProgramBody = strtolower($trainingProgramPage['body']);
+    $alertsPageBody = strtolower($alertsPage['body']);
     $editProfileBody = strtolower($editProfilePage['body']);
     $viewLogsForEditBody = strtolower($viewLogsForEditPage['body']);
     $manageDogsBody = strtolower($manageDogsPage['body']);
@@ -1131,6 +1137,17 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
     $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
+    $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
+        && (
+            str_contains($trainingProgramBody, 'load the starter program')
+            || (
+                str_contains($trainingProgramBody, 'start module')
+                && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $trainingProgramPage['body'])
+            )
+        );
+    $alertsModuleLinkSeen = gpQaPageLooksOk($alertsPage)
+        && str_contains($alertsPageBody, 'start module')
+        && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $alertsPage['body']);
     $appointmentNotificationsSeen = gpQaPageLooksOk($appointmentNotificationsPage) && (str_contains($appointmentNotificationsBody, '"success":true') || str_contains($appointmentNotificationsBody, 'generated_at'));
     $betaChecklistStateSeen = gpQaPageLooksOk($betaChecklistStatePage) && (str_contains($betaChecklistStateBody, '"ok":true') || str_contains($betaChecklistStateBody, 'checked_items'));
     $collaborationPage = gpQaRequest($baseUrl, 'collaboration.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1189,6 +1206,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'training_suggestions_links', $trainingSuggestionsLinkSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingSuggestionsLinkSeen ? ' training suggestions link found' : ' training suggestions link missing'));
+    gpQaResult($results, 'alerts_module_links', $alertsModuleLinkSeen, 'HTTP ' . $alertsPage['status'] . ($alertsModuleLinkSeen ? ' alerts module link found' : ' alerts module link missing'));
     gpQaResult($results, 'appointment_notifications_page_loads', $appointmentNotificationsSeen, 'HTTP ' . $appointmentNotificationsPage['status'] . ($appointmentNotificationsSeen ? ' appointment notifications found' : ' appointment notifications missing'));
     gpQaResult($results, 'beta_qa_checklist_state_page_loads', $betaChecklistStateSeen, 'HTTP ' . $betaChecklistStatePage['status'] . ($betaChecklistStateSeen ? ' checklist state found' : ' checklist state missing'));
     gpQaResult($results, 'admin_home_page_loads', $adminHomeSeen, 'HTTP ' . $adminHomePage['status'] . ($adminHomeSeen ? ' admin home found' : ' admin home missing'));

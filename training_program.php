@@ -7,6 +7,7 @@ require_once 'includes/feature_flags.php';
 require_once 'includes/training_goals.php';
 require_once 'includes/training_stats.php';
 require_once 'includes/training_goals.php';
+require_once 'includes/training_suggestion_links.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {
     header('Location: index.php?msg=feature_disabled');
     exit;
@@ -427,7 +428,13 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
                     <?php else: ?>
                         <div class="vstack gap-2">
                             <?php foreach ($suggestions as $suggestion): ?>
-                                <div class="kv-box small"><?= e($suggestion) ?></div>
+                                <?php $suggestionLink = gpTrainingSuggestionLink($suggestion); ?>
+                                <div class="kv-box small">
+                                    <div><?= e($suggestion) ?></div>
+                                    <?php if ($suggestionLink): ?>
+                                        <a class="btn btn-outline-primary btn-sm mt-2" href="<?= e($suggestionLink['url']) ?>"><?= e($suggestionLink['label']) ?></a>
+                                    <?php endif; ?>
+                                </div>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
