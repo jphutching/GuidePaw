@@ -138,6 +138,71 @@ function betaNotifyAdminTelegram(array $request): bool
     return true;
 }
 
+function betaNotifyAdminAlert(string $subject, string $body, string $telegramText = ''): bool
+{
+    $emailSent = false;
+    $telegramSent = false;
+
+    if (betaAdminNotificationEmailEnabled()) {
+        $adminEmail = trim((string) gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app')));
+        if ($adminEmail !== '') {
+            try {
+                $emailSent = gpSendMail($adminEmail, $subject, $body) || $emailSent;
+            } catch (Throwable $e) {
+                error_log('GuidePaw admin alert email failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    if (betaAdminNotificationTelegramEnabled()) {
+        $token = trim((string) gpEnv('TELEGRAM_BOT_TOKEN', ''));
+        $chatId = trim((string) gpEnv('TELEGRAM_CHAT_ID', ''));
+        if ($token !== '' && $chatId !== '') {
+            $message = trim($telegramText !== '' ? $telegramText : $body);
+            try {
+                $payload = json_encode([
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                    'disable_web_page_preview' => true,
+                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                if ($payload === false) {
+                    throw new RuntimeException('Could not encode Telegram payload.');
+                }
+                $ch = curl_init('https://api.telegram.org/bot' . $token . '/sendMessage');
+                if ($ch === false) {
+                    throw new RuntimeException('Could not initialize Telegram curl request.');
+                }
+                curl_setopt_array($ch, [
+                    CURLOPT_POST => true,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_CONNECTTIMEOUT => 15,
+                    CURLOPT_TIMEOUT => 20,
+                    CURLOPT_HTTPHEADER => [
+                        'Accept: application/json',
+                        'Content-Type: application/json',
+                    ],
+                    CURLOPT_POSTFIELDS => $payload,
+                ]);
+                $response = curl_exec($ch);
+                $curlError = curl_error($ch);
+                $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                if ($response === false) {
+                    throw new RuntimeException('Telegram curl error: ' . $curlError);
+                }
+                if ($httpCode < 200 || $httpCode >= 300) {
+                    throw new RuntimeException("Telegram API failed with HTTP {$httpCode}: " . mb_substr((string) $response, 0, 1000));
+                }
+                $telegramSent = true;
+            } catch (Throwable $e) {
+                error_log('GuidePaw admin alert Telegram failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    return $emailSent || $telegramSent;
+}
+
 function betaNotifyAdminOfBetaRequest(PDO $pdo, int $requestId): bool
 {
     try {

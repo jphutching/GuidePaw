@@ -66,6 +66,15 @@ function gpBetaQaChecklistExtraItems(): array
             ],
         ],
         [
+            'id' => 'admin_notifications',
+            'title' => 'Admin Notifications',
+            'description' => 'Validate admin-facing email and Telegram alerts for beta and operational events.',
+            'required_role' => 'admin',
+            'items' => [
+                ['id' => 'admin_transfer_request_alert', 'text' => 'Send a dog ownership transfer request.', 'expected' => 'Admin notification email and/or Telegram alert includes the transfer request summary.'],
+            ],
+        ],
+        [
             'id' => 'mobile_viewport_safety',
             'title' => 'Mobile Viewport Safety',
             'description' => 'Check that GuidePaw pages, cards, menus, text, tables, and buttons fit inside the viewable mobile screen.',

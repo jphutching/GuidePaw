@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/smtp_mailer.php';
 require_once __DIR__ . '/sms_notifications.php';
 require_once __DIR__ . '/notifications.php';
+require_once __DIR__ . '/beta_notifications.php';
 
 function gpDogAccessNotificationsEnabled(): bool
 {

@@ -212,6 +212,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$dogId, $userId, (int) $target['id'], $keepAccess, $note ?: null]);
                 $fromUser = gpDogAccessFetchUser($pdo, $userId) ?: [];
                 gpDogAccessNotifyTransferSent($dog, $fromUser, $target, $note ?: '');
+                $adminBody = gpDogAccessDisplayName($fromUser) . " sent a GuidePaw dog ownership transfer request.\n\n" .
+                    "Dog: " . (string) ($dog['name'] ?? 'Dog') . "\n" .
+                    "From: " . gpDogAccessDisplayName($fromUser) . "\n" .
+                    "To: " . gpDogAccessDisplayName($target) . "\n" .
+                    "Keep previous owner access: " . ($keepAccess ? 'yes' : 'no') . "\n" .
+                    ($note !== '' ? "Note: {$note}\n" : '') .
+                    "\nOpen Dog Access: " . gpDogAccessLink($dog) . "\n";
+                $adminTelegram = "🐾 Dog transfer request\nDog: " . (string) ($dog['name'] ?? 'Dog') . "\nFrom: " . gpDogAccessDisplayName($fromUser) . "\nTo: " . gpDogAccessDisplayName($target) . "\nOpen Dog Access: " . gpDogAccessLink($dog);
+                betaNotifyAdminAlert('GuidePaw dog transfer request: ' . (string) ($dog['name'] ?? 'Dog'), $adminBody, $adminTelegram);
                 header('Location: dog_access.php?dog_id=' . $dogId . '&status=transfer_request_sent');
                 exit;
             }
