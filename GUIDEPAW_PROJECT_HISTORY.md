@@ -608,6 +608,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the feedback-driven crawler now prints the top feedback hotspots plus status and priority counts
 
+2026-05-09 — Admin purge safety cleanup
+- Commit(s): pending
+- Files changed: admin_users.php, includes/beta_qa_checklist_extra_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; hard purge is now explicitly disabled on the admin user page during beta and the checklist wording matches the safer flow
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

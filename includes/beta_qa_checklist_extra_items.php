@@ -41,7 +41,7 @@ function gpBetaQaChecklistExtraItems(): array
             'items' => [
                 ['id' => 'role_migration', 'text' => 'Confirm user_role migration applied.', 'expected' => 'users.user_role exists and supports admin, moderator, and user. Existing is_admin accounts map to admin.'],
                 ['id' => 'role_admin_management', 'text' => 'Open Admin → User Management and change a test account role.', 'expected' => 'Admin can change another account to user, moderator, or admin after confirmation.'],
-                ['id' => 'role_builtin_admin_protected', 'text' => 'Attempt to downgrade, deactivate, or purge username admin.', 'expected' => 'The built-in admin account is blocked by the UI and protected by database trigger.'],
+                ['id' => 'role_builtin_admin_protected', 'text' => 'Attempt to downgrade or deactivate username admin.', 'expected' => 'The built-in admin account is blocked by the UI and protected by database trigger.'],
                 ['id' => 'role_self_protection', 'text' => 'Attempt to change the currently logged-in admin account from User Management.', 'expected' => 'Current admin account cannot be changed from that page.'],
                 ['id' => 'role_admin_access', 'text' => 'Log in as admin and open admin-only pages.', 'expected' => 'Admin can access admin dashboard, user management, beta/admin QA checks, and system tools.'],
                 ['id' => 'role_user_blocked', 'text' => 'Log in as regular user and attempt admin-only pages.', 'expected' => 'Regular user is blocked from admin-only pages and does not see admin-only QA sections.'],
