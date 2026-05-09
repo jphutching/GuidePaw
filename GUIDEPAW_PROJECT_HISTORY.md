@@ -497,11 +497,11 @@ php scripts/cleanup_e2e_data.php --yes
 ```
 
 2026-05-08 — Wearable integrations rollout
-- Commit(s): 16ac664 add wearable integrations hub
+- Commit(s): 16ac664 add wearable integrations hub, 4e574e5 enable wearable integrations flag
 - Files changed: wearable_integrations.php, includes/wearable_integrations.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, sql/migrations/pgsql/20260508_wearable_integrations_beta_enabled.sql
 - New checklist items added: yes
 - In-progress item changed: no
-- Next recommended step: push the wearable sync hub, wait for Render, and rerun the beta crawler
+- Next recommended step: none; beta crawler passed 35/35 after the flag fix
 
 2026-05-08 — Behavior risk scoring rollout
 - Commit(s): 1a82a5c add behavior risk scoring
