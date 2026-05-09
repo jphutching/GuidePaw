@@ -587,11 +587,11 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: none; local and beta crawlers passed 73/73 after the crawler session-cookie fix
 
 2026-05-09 — Feedback-driven crawl prioritization
-- Commit(s): 94d5e33 add feedback-driven crawl prioritization
-- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- Commit(s): 94d5e33 add feedback-driven crawl prioritization, a7e0470 wire feedback crawl into wrapper scripts
+- Files changed: scripts/local_qa_crawler.php, scripts/run_local_qa_crawler.sh, scripts/run_admin_e2e.sh, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
-- Next recommended step: none; the feedback-prioritized crawler is committed and passes 73/73 on both hosts
+- Next recommended step: none; the feedback-prioritized crawler and wrapper pass-throughs are committed and pass 73/73 on both hosts
 
 ## Open decisions / ideas
 
