@@ -101,10 +101,32 @@ function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', arra
 
 function gpQaLogin(string $baseUrl, string $username, string $password, string &$cookieHeader, string $cookieFile, bool $insecureLocalSsl): bool
 {
+    $preflight = gpQaRequest($baseUrl, 'login.php', 'GET', [], $cookieFile, $insecureLocalSsl, $cookieHeader, false);
+    if ($preflight['status'] < 200 || $preflight['status'] >= 400) {
+        fwrite(STDERR, sprintf(
+            "Login preflight failed for %s: HTTP %d%s\n",
+            $username,
+            $preflight['status'],
+            $preflight['error'] !== '' ? ' error=' . $preflight['error'] : ''
+        ));
+        return false;
+    }
+
     $res = gpQaRequest($baseUrl, 'login.php', 'POST', ['username' => $username, 'password' => $password], $cookieFile, $insecureLocalSsl, '', false);
     $body = strtolower($res['body']);
-    if ($res['status'] < 200 || $res['status'] >= 400) return false;
-    if (str_contains($body, 'invalid username or password')) return false;
+    if ($res['status'] < 200 || $res['status'] >= 400) {
+        fwrite(STDERR, sprintf(
+            "Login POST failed for %s: HTTP %d%s\n",
+            $username,
+            $res['status'],
+            $res['error'] !== '' ? ' error=' . $res['error'] : ''
+        ));
+        return false;
+    }
+    if (str_contains($body, 'invalid username or password')) {
+        fwrite(STDERR, sprintf("Login rejected for %s: invalid credentials banner found\n", $username));
+        return false;
+    }
     if (preg_match('/^Set-Cookie:\s*PHPSESSID=([^;]+)/im', $res['headers'], $matches)) {
         $cookieHeader = 'PHPSESSID=' . trim($matches[1]);
     }

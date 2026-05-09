@@ -74,9 +74,20 @@ case "$CRAWLER_MODE" in
     ;;
 esac
 
-if php scripts/local_qa_crawler.php "${args[@]}"; then
+php_output="$(mktemp)"
+if php scripts/local_qa_crawler.php "${args[@]}" >"$php_output" 2>&1; then
+  cat "$php_output"
+  rm -f "$php_output"
   exit 0
 fi
 
+cat "$php_output" >&2
+if grep -Eq 'failed to open socket: Operation not permitted|Could not resolve host|setsockopt: Operation not permitted' "$php_output"; then
+  rm -f "$php_output"
+  echo "PHP QA crawler cannot reach the target from this shell; run GUIDEPAW_CRAWLER_MODE=playwright or use an unsandboxed shell." >&2
+  exit 1
+fi
+
+rm -f "$php_output"
 echo "PHP QA crawler failed or is unavailable here; falling back to Playwright crawler." >&2
 npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js

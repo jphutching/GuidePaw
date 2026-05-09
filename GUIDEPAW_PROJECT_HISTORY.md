@@ -650,6 +650,27 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the local QA wrapper now supports explicit `php` or `playwright` modes instead of only auto-falling back when the PHP crawler cannot run here
 
+2026-05-09 — Login preflight for PHP crawler
+- Commit(s): e2a4b8e harden crawler transport handling
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the PHP crawler now loads `login.php` before posting credentials so it matches the browser flow more closely
+
+2026-05-09 — Login failure diagnostics for crawler
+- Commit(s): e2a4b8e harden crawler transport handling
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the crawler now logs whether login failed at preflight, POST, or invalid-credential detection so the auth failure source is visible
+
+2026-05-09 — Auto wrapper transport guard
+- Commit(s): e2a4b8e harden crawler transport handling
+- Files changed: scripts/run_local_qa_crawler.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the local crawler wrapper now stops on sandbox socket failures instead of falling through to a second browser failure in the same shell
+
 2026-05-09 — Browser crawler fallback
 - Commit(s): 1cea147 add browser crawler fallback
 - Files changed: scripts/run_local_qa_crawler.sh, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
