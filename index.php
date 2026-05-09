@@ -167,6 +167,15 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
                     <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
+                    <a class="today-action" href="dog_health.php"><span>🩺</span>Health Docs</a>
+                <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
+                    <a class="today-action" href="appointments.php"><span>📅</span>Appointments</a>
+                <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
+                    <a class="today-action" href="medications.php"><span>💊</span>Medications</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
                     <a class="today-action" href="trainer_marketplace.php"><span>🤝</span>Trainer Market</a>
                 <?php endif; ?>

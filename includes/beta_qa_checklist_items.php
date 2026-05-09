@@ -151,6 +151,9 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'vet_appointments', 'text' => 'Vet Appointments page loads and saves reminder.', 'expected' => 'Appointment appears on dashboard reminders.'],
                 ['id' => 'medications', 'text' => 'Medications page loads if enabled.', 'expected' => 'Medication reminder/refill behavior remains intact.'],
                 ['id' => 'health_docs', 'text' => 'Health Docs page loads if enabled.', 'expected' => 'Documents remain associated with dog profile.'],
+                ['id' => 'health_docs_today', 'text' => 'Dashboard exposes Health Docs as a Today shortcut.', 'expected' => 'index.php shows a direct Health Docs tile.'],
+                ['id' => 'appointments_today', 'text' => 'Dashboard exposes Vet Appointments as a Today shortcut.', 'expected' => 'index.php shows a direct Appointments tile.'],
+                ['id' => 'medications_today', 'text' => 'Dashboard exposes Medications as a Today shortcut.', 'expected' => 'index.php shows a direct Medications tile.'],
             ],
         ],
         [
