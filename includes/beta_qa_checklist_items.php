@@ -222,6 +222,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'admin_smtp_audit', 'text' => 'Admin SMTP Audit page loads.', 'expected' => 'admin_smtp_audit.php reports env and SMTP connection details.'],
                 ['id' => 'admin_zeptomail_audit', 'text' => 'Admin ZeptoMail Audit page loads.', 'expected' => 'admin_zeptomail_audit.php reports env and API connectivity.'],
                 ['id' => 'feedback_auto_context', 'text' => 'Feedback/Bug Report page captures relevant troubleshooting context.', 'expected' => 'Report includes page/error/account context where available.'],
+                ['id' => 'feedback_category_picker', 'text' => 'Feedback/Bug Report category picker clearly offers Bug, Feature request, and Enhancement.', 'expected' => 'Category choice is visible as a segmented control before the details field.'],
                 ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches and family guidance.'],
                 ['id' => 'ai_training_assistant', 'text' => 'AI Training Assistant page loads and returns bounded next steps.', 'expected' => 'Assistant gives safety-aware troubleshooting without unsafe certification advice.'],
                 ['id' => 'wearable_integrations', 'text' => 'Wearable Integrations page loads and saves a wearable snapshot.', 'expected' => 'User can record a wearable summary and review recent syncs.'],

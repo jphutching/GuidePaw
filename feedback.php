@@ -247,6 +247,53 @@ if (($_GET['msg'] ?? '') === 'saved') {
             background: #f8fafc;
             margin-top: 8px;
         }
+        .category-picker {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .65rem;
+            margin-top: 8px;
+        }
+        .category-option {
+            position: relative;
+            display: block;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            padding: 14px 12px;
+            background: #fff;
+            cursor: pointer;
+            transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+        .category-option:focus-within {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+        }
+        .category-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .category-option strong {
+            display: block;
+            font-size: 1rem;
+            color: #0f172a;
+        }
+        .category-option span {
+            display: block;
+            margin-top: 4px;
+            color: #64748b;
+            font-size: .88rem;
+            line-height: 1.2;
+        }
+        .category-option.is-selected {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+            transform: translateY(-1px);
+        }
+        @media (max-width: 620px) {
+            .category-picker {
+                grid-template-columns: 1fr;
+            }
+        }
         .upload-box input[type="file"] {
             border: 2px solid #2563eb;
             background: #fff;
@@ -279,11 +326,23 @@ if (($_GET['msg'] ?? '') === 'saved') {
     <div class="card">
         <form method="post" enctype="multipart/form-data">
             <label>Category</label>
-            <select name="category">
-                <option value="bug" <?= $prefillCategory === 'bug' ? 'selected' : '' ?>>Bug</option>
-                <option value="feature" <?= $prefillCategory === 'feature' ? 'selected' : '' ?>>Feature request</option>
-                <option value="enhancement" <?= $prefillCategory === 'enhancement' ? 'selected' : '' ?>>Enhancement</option>
-            </select>
+            <div class="category-picker" role="radiogroup" aria-label="Feedback category">
+                <label class="category-option <?= $prefillCategory === 'bug' ? 'is-selected' : '' ?>">
+                    <input type="radio" name="category" value="bug" <?= $prefillCategory === 'bug' ? 'checked' : '' ?>>
+                    <strong>Bug</strong>
+                    <span>Something is broken or incorrect.</span>
+                </label>
+                <label class="category-option <?= $prefillCategory === 'feature' ? 'is-selected' : '' ?>">
+                    <input type="radio" name="category" value="feature" <?= $prefillCategory === 'feature' ? 'checked' : '' ?>>
+                    <strong>Feature request</strong>
+                    <span>Add a new workflow or capability.</span>
+                </label>
+                <label class="category-option <?= $prefillCategory === 'enhancement' ? 'is-selected' : '' ?>">
+                    <input type="radio" name="category" value="enhancement" <?= $prefillCategory === 'enhancement' ? 'checked' : '' ?>>
+                    <strong>Enhancement</strong>
+                    <span>Make an existing page or flow better.</span>
+                </label>
+            </div>
 
             <label>Page or workflow</label>
             <input name="page_workflow" value="<?= h($prefillWorkflow) ?>" placeholder="dogs.php, onboarding, backup restore, training history">
@@ -320,6 +379,15 @@ if (($_GET['msg'] ?? '') === 'saved') {
 <script>
 const detailsBox = document.getElementById('details');
 const fromError = <?= $fromError ? 'true' : 'false' ?>;
+const categoryOptions = Array.from(document.querySelectorAll('.category-option'));
+
+function syncCategoryState() {
+    const checked = document.querySelector('input[name="category"]:checked');
+    categoryOptions.forEach(function (option) {
+        const input = option.querySelector('input[name="category"]');
+        option.classList.toggle('is-selected', !!input && !!checked && input.value === checked.value);
+    });
+}
 
 function browserContextBlock() {
     return '\n\nBrowser/device context:\n' +
@@ -335,6 +403,20 @@ function browserContextBlock() {
 if (detailsBox && fromError && !detailsBox.value.includes('Browser/device context:')) {
     detailsBox.value += browserContextBlock();
 }
+
+categoryOptions.forEach(function (option) {
+    option.addEventListener('click', function () {
+        const input = option.querySelector('input[name="category"]');
+        if (input) {
+            input.checked = true;
+            syncCategoryState();
+        }
+    });
+});
+document.querySelectorAll('input[name="category"]').forEach(function (input) {
+    input.addEventListener('change', syncCategoryState);
+});
+syncCategoryState();
 
 document.getElementById('attachments')?.addEventListener('change', function () {
     const list = document.getElementById('selectedFiles');
