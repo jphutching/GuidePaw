@@ -678,6 +678,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the local QA wrapper now falls back to Playwright when PHP socket access is blocked, and the browser auth crawl includes the found-dog public report submit/admin-queue check
 
+2026-05-09 — Auth and admin utility crawl expansion
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler in an unsandboxed shell or live environment so the new beta token, registration, 2FA, beta-request, and admin utility probes can be verified end to end
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

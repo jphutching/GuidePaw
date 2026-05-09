@@ -216,6 +216,11 @@ function gpQaFeedbackAliasMap(): array
         'index.php' => ['dashboard', 'today', 'needs attention'],
         'login.php' => ['login', 'log in', 'sign in', 'password as you are typing'],
         'feedback.php' => ['feedback', 'bug report', 'report issue'],
+        'beta_request.php' => ['request guidepaw beta access', 'beta access'],
+        'beta_token.php' => ['validate beta access token', 'beta token'],
+        'register.php' => ['create handler account', 'create guidepaw handler account'],
+        'reset_password.php' => ['account recovery', 'password recovery'],
+        'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
         'profile.php' => ['profile', 'microchip', 'owner'],
         'quick_log.php' => ['quick log', 'quick session'],
@@ -228,6 +233,11 @@ function gpQaFeedbackAliasMap(): array
         'handler_profile.php' => ['handler profile', 'public email', 'backup contact'],
         'db_status.php' => ['database', 'schema', 'migration'],
         'admin_feedback.php' => ['admin feedback', 'feedback reports'],
+        'admin_beta_requests.php' => ['beta access requests', 'access mode'],
+        'admin_feature_roadmap.php' => ['feature roadmap', 'roadmap item updated'],
+        'admin_audit_log.php' => ['admin audit log', 'audit log'],
+        'admin_smtp_audit.php' => ['smtp audit', 'dns check'],
+        'admin_zeptomail_audit.php' => ['zeptomail api audit', 'dns check'],
         'admin_notification_test.php' => ['notification test'],
         'admin_profile_completion.php' => ['profile completion'],
         'admin_users.php' => ['user management', 'admin users'],
@@ -354,6 +364,11 @@ if ($adminLoggedIn) {
         'qa_checklist_page_loads' => 'beta_qa_checklist.php',
         'admin_users_page_loads' => 'admin_users.php',
         'admin_feedback_page_loads' => 'admin_feedback.php',
+        'admin_beta_requests_page_loads' => 'admin_beta_requests.php',
+        'admin_feature_roadmap_page_loads' => 'admin_feature_roadmap.php',
+        'admin_audit_log_page_loads' => 'admin_audit_log.php',
+        'admin_smtp_audit_page_loads' => 'admin_smtp_audit.php',
+        'admin_zeptomail_audit_page_loads' => 'admin_zeptomail_audit.php',
         'admin_found_dog_reports_page_loads' => 'admin_found_dog_reports.php',
         'admin_notification_test_page_loads' => 'admin_notification_test.php',
         'found_dog_notification_test_page_loads' => 'found_dog_notification_test.php',
@@ -369,6 +384,11 @@ if ($adminLoggedIn) {
         'log_entry_page_loads' => 'log_entry.php',
         'view_logs_page_loads' => 'view_logs.php',
         'feedback_page_loads' => 'feedback.php',
+        'beta_request_page_loads' => 'beta_request.php',
+        'beta_token_page_loads' => 'beta_token.php',
+        'register_page_loads' => 'register.php',
+        'reset_password_page_loads' => 'reset_password.php',
+        'setup_2fa_page_loads' => 'setup_2fa.php',
         'db_status_page_loads' => 'db_status.php',
         'candidate_assessment_page_loads' => 'candidate_assessment.php',
         'candidate_comparison_page_loads' => 'candidate_comparison.php',
@@ -553,6 +573,41 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'bug report')
             )
             : true;
+        $adminBetaRequestsPageLooksReady = $path === 'admin_beta_requests.php'
+            ? (
+                str_contains($body, 'beta access requests')
+                || str_contains($body, 'access mode')
+                || str_contains($body, 'no requests found')
+            )
+            : true;
+        $adminFeatureRoadmapPageLooksReady = $path === 'admin_feature_roadmap.php'
+            ? (
+                str_contains($body, 'feature roadmap')
+                || str_contains($body, 'roadmap item updated')
+                || str_contains($body, 'tracks must / should / could roadmap items')
+            )
+            : true;
+        $adminAuditLogPageLooksReady = $path === 'admin_audit_log.php'
+            ? (
+                str_contains($body, 'admin audit log')
+                || str_contains($body, 'showing latest')
+                || str_contains($body, 'no audit records found')
+            )
+            : true;
+        $adminSmtpAuditPageLooksReady = $path === 'admin_smtp_audit.php'
+            ? (
+                str_contains($body, 'smtp audit')
+                || str_contains($body, 'dns check')
+                || str_contains($body, 'tcp connection check')
+            )
+            : true;
+        $adminZeptoMailAuditPageLooksReady = $path === 'admin_zeptomail_audit.php'
+            ? (
+                str_contains($body, 'zeptomail api audit')
+                || str_contains($body, 'dns check')
+                || str_contains($body, 'https connection check')
+            )
+            : true;
         $adminFoundDogReportsPageLooksReady = $path === 'admin_found_dog_reports.php'
             ? (
                 str_contains($body, 'found dog location reports')
@@ -579,6 +634,41 @@ if ($adminLoggedIn) {
                 str_contains($body, 'handler profile completion')
                 || str_contains($body, 'missing required')
                 || str_contains($body, 'accounts missing required')
+            )
+            : true;
+        $betaRequestPageLooksReady = $path === 'beta_request.php'
+            ? (
+                str_contains($body, 'request guidepaw beta access')
+                || str_contains($body, 'submit request')
+                || str_contains($body, 'beta access')
+            )
+            : true;
+        $betaTokenPageLooksReady = $path === 'beta_token.php'
+            ? (
+                str_contains($body, 'validate beta access token')
+                || str_contains($body, 'continue to account creation')
+                || str_contains($body, 'beta token')
+            )
+            : true;
+        $registerPageLooksReady = $path === 'register.php'
+            ? (
+                str_contains($body, 'create handler account')
+                || str_contains($body, 'create account')
+                || str_contains($body, 'dog profiles are set up after login')
+            )
+            : true;
+        $resetPasswordPageLooksReady = $path === 'reset_password.php'
+            ? (
+                str_contains($body, 'account recovery')
+                || str_contains($body, 'password recovery')
+                || str_contains($body, 'reset password')
+            )
+            : true;
+        $setup2faPageLooksReady = $path === 'setup_2fa.php'
+            ? (
+                str_contains($body, 'setup 2fa')
+                || str_contains($body, 'manage 2fa')
+                || str_contains($body, 'verification code')
             )
             : true;
         $apiTokensPageLooksReady = $path === 'api_tokens.php'
@@ -745,8 +835,8 @@ if ($adminLoggedIn) {
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $notificationPageLooksReady && $settingsPageLooksReady && $profilePageLooksReady && $quickLogPageLooksReady && $logEntryPageLooksReady && $viewLogsPageLooksReady && $adminFeedbackPageLooksReady && $adminFoundDogReportsPageLooksReady && $adminNotificationTestPageLooksReady && $foundDogNotificationTestPageLooksReady && $adminProfileCompletionPageLooksReady && $apiTokensPageLooksReady && $backupToolsPageLooksReady && $dogsPageLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $regressionEnginePageLooksReady && $goalBuilderPageLooksReady && $trainingProgramPageLooksReady && $trainingSessionLogPageLooksReady && $trainingHistoryPageLooksReady && $statsPageLooksReady && $airTravelPageLooksReady && $wearablePageLooksReady && $alertsPageLooksReady && $dogHealthPageLooksReady && $appointmentsPageLooksReady && $medicationsPageLooksReady && $certificationPageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
-            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'admin_feedback.php' ? ($adminFeedbackPageLooksReady ? ' feedback reports found' : ' feedback reports missing') : '') . ($path === 'admin_found_dog_reports.php' ? ($adminFoundDogReportsPageLooksReady ? ' found dog reports found' : ' found dog reports missing') : '') . ($path === 'admin_notification_test.php' ? ($adminNotificationTestPageLooksReady ? ' notification test found' : ' notification test missing') : '') . ($path === 'admin_profile_completion.php' ? ($adminProfileCompletionPageLooksReady ? ' profile completion found' : ' profile completion missing') : '') . ($path === 'api_tokens.php' ? ($apiTokensPageLooksReady ? ' api tokens found' : ' api tokens missing') : '') . ($path === 'backup.php' ? ($backupToolsPageLooksReady ? ' backup tools found' : ' backup tools missing') : '') . ($path === 'dogs.php' ? ($dogsPageLooksReady ? ' archive split found' : ' archive split missing') : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'candidate_comparison.php' ? ($candidateComparisonPageLooksReady ? ' candidate comparison content found' : ' candidate comparison content missing') : '') . ($path === 'behavior_risk_scoring.php' ? ($behaviorRiskPageLooksReady ? ' behavior risk content found' : ' behavior risk content missing') : '') . ($path === 'regression_engine.php' ? ($regressionEnginePageLooksReady ? ' regression engine content found' : ' regression engine content missing') : '') . ($path === 'goal_builder.php' ? ($goalBuilderPageLooksReady ? ' goal builder content found' : ' goal builder content missing') : '') . ($path === 'training_program.php' ? ($trainingProgramPageLooksReady ? ' training program content found' : ' training program content missing') : '') . ($path === 'training_session_log.php' ? ($trainingSessionLogPageLooksReady ? ' session log content found' : ' session log content missing') : '') . ($path === 'training_history.php' ? ($trainingHistoryPageLooksReady ? ' training history content found' : ' training history content missing') : '') . ($path === 'stats.php' ? ($statsPageLooksReady ? ' stats content found' : ' stats content missing') : '') . ($path === 'air_travel_rights.php' ? ($airTravelPageLooksReady ? ' air travel content found' : ' air travel content missing') : '') . ($path === 'wearable_integrations.php' ? ($wearablePageLooksReady ? ' wearable sync content found' : ' wearable sync content missing') : '') . ($path === 'alerts.php' ? ($alertsPageLooksReady ? ' alerts content found' : ' alerts content missing') : '') . ($path === 'dog_health.php' ? ($dogHealthPageLooksReady ? ' health docs content found' : ' health docs content missing') : '') . ($path === 'appointments.php' ? ($appointmentsPageLooksReady ? ' appointments content found' : ' appointments content missing') : '') . ($path === 'medications.php' ? ($medicationsPageLooksReady ? ' medications content found' : ' medications content missing') : '') . ($path === 'certification.php' ? ($certificationPageLooksReady ? ' certification content found' : ' certification content missing') : '') . ($path === 'trainer_marketplace.php' ? ($trainerMarketplaceLooksReady ? ' trainer marketplace content found' : ' trainer marketplace content missing') : '') . ($path === 'community_challenges.php' ? ($communityChallengesPageLooksReady ? ' community challenges content found' : ' community challenges content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '') . ($path === 'notifications.php' ? ($notificationPageLooksReady ? ' notification controls found' : ' notification controls missing') : '') . ($path === 'settings.php' ? ($settingsPageLooksReady ? ' settings content found' : ' settings content missing') : '') . ($path === 'profile.php' ? ($profilePageLooksReady ? ' profile content found' : ' profile content missing') : '') . ($path === 'quick_log.php' ? ($quickLogPageLooksReady ? ' quick log content found' : ' quick log content missing') : '') . ($path === 'log_entry.php' ? ($logEntryPageLooksReady ? ' log entry content found' : ' log entry content missing') : '') . ($path === 'view_logs.php' ? ($viewLogsPageLooksReady ? ' history content found' : ' history content missing') : '')
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $notificationPageLooksReady && $settingsPageLooksReady && $profilePageLooksReady && $quickLogPageLooksReady && $logEntryPageLooksReady && $viewLogsPageLooksReady && $adminFeedbackPageLooksReady && $adminBetaRequestsPageLooksReady && $adminFeatureRoadmapPageLooksReady && $adminAuditLogPageLooksReady && $adminSmtpAuditPageLooksReady && $adminZeptoMailAuditPageLooksReady && $adminFoundDogReportsPageLooksReady && $adminNotificationTestPageLooksReady && $foundDogNotificationTestPageLooksReady && $adminProfileCompletionPageLooksReady && $apiTokensPageLooksReady && $backupToolsPageLooksReady && $dogsPageLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $regressionEnginePageLooksReady && $goalBuilderPageLooksReady && $trainingProgramPageLooksReady && $trainingSessionLogPageLooksReady && $trainingHistoryPageLooksReady && $statsPageLooksReady && $airTravelPageLooksReady && $wearablePageLooksReady && $alertsPageLooksReady && $dogHealthPageLooksReady && $appointmentsPageLooksReady && $medicationsPageLooksReady && $certificationPageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady && $betaRequestPageLooksReady && $betaTokenPageLooksReady && $registerPageLooksReady && $resetPasswordPageLooksReady && $setup2faPageLooksReady,
+            'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'admin_feedback.php' ? ($adminFeedbackPageLooksReady ? ' feedback reports found' : ' feedback reports missing') : '') . ($path === 'admin_beta_requests.php' ? ($adminBetaRequestsPageLooksReady ? ' beta access requests found' : ' beta access requests missing') : '') . ($path === 'admin_feature_roadmap.php' ? ($adminFeatureRoadmapPageLooksReady ? ' roadmap found' : ' roadmap missing') : '') . ($path === 'admin_audit_log.php' ? ($adminAuditLogPageLooksReady ? ' audit log found' : ' audit log missing') : '') . ($path === 'admin_smtp_audit.php' ? ($adminSmtpAuditPageLooksReady ? ' smtp audit found' : ' smtp audit missing') : '') . ($path === 'admin_zeptomail_audit.php' ? ($adminZeptoMailAuditPageLooksReady ? ' zeptomail audit found' : ' zeptomail audit missing') : '') . ($path === 'admin_found_dog_reports.php' ? ($adminFoundDogReportsPageLooksReady ? ' found dog reports found' : ' found dog reports missing') : '') . ($path === 'admin_notification_test.php' ? ($adminNotificationTestPageLooksReady ? ' notification test found' : ' notification test missing') : '') . ($path === 'admin_profile_completion.php' ? ($adminProfileCompletionPageLooksReady ? ' profile completion found' : ' profile completion missing') : '') . ($path === 'api_tokens.php' ? ($apiTokensPageLooksReady ? ' api tokens found' : ' api tokens missing') : '') . ($path === 'backup.php' ? ($backupToolsPageLooksReady ? ' backup tools found' : ' backup tools missing') : '') . ($path === 'dogs.php' ? ($dogsPageLooksReady ? ' archive split found' : ' archive split missing') : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'candidate_comparison.php' ? ($candidateComparisonPageLooksReady ? ' candidate comparison content found' : ' candidate comparison content missing') : '') . ($path === 'behavior_risk_scoring.php' ? ($behaviorRiskPageLooksReady ? ' behavior risk content found' : ' behavior risk content missing') : '') . ($path === 'regression_engine.php' ? ($regressionEnginePageLooksReady ? ' regression engine content found' : ' regression engine content missing') : '') . ($path === 'goal_builder.php' ? ($goalBuilderPageLooksReady ? ' goal builder content found' : ' goal builder content missing') : '') . ($path === 'training_program.php' ? ($trainingProgramPageLooksReady ? ' training program content found' : ' training program content missing') : '') . ($path === 'training_session_log.php' ? ($trainingSessionLogPageLooksReady ? ' session log content found' : ' session log content missing') : '') . ($path === 'training_history.php' ? ($trainingHistoryPageLooksReady ? ' training history content found' : ' training history content missing') : '') . ($path === 'stats.php' ? ($statsPageLooksReady ? ' stats content found' : ' stats content missing') : '') . ($path === 'air_travel_rights.php' ? ($airTravelPageLooksReady ? ' air travel content found' : ' air travel content missing') : '') . ($path === 'wearable_integrations.php' ? ($wearablePageLooksReady ? ' wearable sync content found' : ' wearable sync content missing') : '') . ($path === 'alerts.php' ? ($alertsPageLooksReady ? ' alerts content found' : ' alerts content missing') : '') . ($path === 'dog_health.php' ? ($dogHealthPageLooksReady ? ' health docs content found' : ' health docs content missing') : '') . ($path === 'appointments.php' ? ($appointmentsPageLooksReady ? ' appointments content found' : ' appointments content missing') : '') . ($path === 'medications.php' ? ($medicationsPageLooksReady ? ' medications content found' : ' medications content missing') : '') . ($path === 'certification.php' ? ($certificationPageLooksReady ? ' certification content found' : ' certification content missing') : '') . ($path === 'trainer_marketplace.php' ? ($trainerMarketplaceLooksReady ? ' trainer marketplace content found' : ' trainer marketplace content missing') : '') . ($path === 'community_challenges.php' ? ($communityChallengesPageLooksReady ? ' community challenges content found' : ' community challenges content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '') . ($path === 'notifications.php' ? ($notificationPageLooksReady ? ' notification controls found' : ' notification controls missing') : '') . ($path === 'settings.php' ? ($settingsPageLooksReady ? ' settings content found' : ' settings content missing') : '') . ($path === 'profile.php' ? ($profilePageLooksReady ? ' profile content found' : ' profile content missing') : '') . ($path === 'quick_log.php' ? ($quickLogPageLooksReady ? ' quick log content found' : ' quick log content missing') : '') . ($path === 'log_entry.php' ? ($logEntryPageLooksReady ? ' log entry content found' : ' log entry content missing') : '') . ($path === 'view_logs.php' ? ($viewLogsPageLooksReady ? ' history content found' : ' history content missing') : '') . ($path === 'beta_request.php' ? ($betaRequestPageLooksReady ? ' beta request content found' : ' beta request content missing') : '') . ($path === 'beta_token.php' ? ($betaTokenPageLooksReady ? ' beta token content found' : ' beta token content missing') : '') . ($path === 'register.php' ? ($registerPageLooksReady ? ' register content found' : ' register content missing') : '') . ($path === 'reset_password.php' ? ($resetPasswordPageLooksReady ? ' reset password content found' : ' reset password content missing') : '') . ($path === 'setup_2fa.php' ? ($setup2faPageLooksReady ? ' 2fa content found' : ' 2fa content missing') : '')
         );
     }
 
@@ -777,6 +867,8 @@ if ($adminLoggedIn) {
     $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
     $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
     $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
+    $verify2faPage = gpQaRequest($baseUrl, 'verify_2fa.php', 'GET', [], '', $insecureLocalSsl, '');
+    $verify2faRedirectSeen = gpQaPageLooksOk($verify2faPage) && (str_contains(strtolower($verify2faPage['url']), 'login.php') || str_contains(strtolower($verify2faPage['body']), 'guidepaw login') || str_contains(strtolower($verify2faPage['body']), 'log in'));
     gpQaResult($results, 'dashboard_candidate_hook', gpQaPageLooksOk($dashboard) && $candidateHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateHookSeen ? ' candidate hook found' : ' candidate hook not currently visible'));
     gpQaResult($results, 'dashboard_candidate_comparison_hook', gpQaPageLooksOk($dashboard) && $candidateComparisonHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateComparisonHookSeen ? ' comparison hook found' : ' comparison hook not currently visible'));
     gpQaResult($results, 'dashboard_behavior_risk_hook', gpQaPageLooksOk($dashboard) && $behaviorRiskHookSeen, 'HTTP ' . $dashboard['status'] . ($behaviorRiskHookSeen ? ' behavior risk hook found' : ' behavior risk hook not currently visible'));
@@ -795,6 +887,7 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));
     gpQaResult($results, 'dashboard_trucking_hook', gpQaPageLooksOk($dashboard) && $truckingHookSeen, 'HTTP ' . $dashboard['status'] . ($truckingHookSeen ? ' trucking hook found' : ' trucking hook not currently visible'));
     gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
+    gpQaResult($results, 'verify_2fa_redirects_to_login', $verify2faRedirectSeen, 'HTTP ' . $verify2faPage['status'] . ($verify2faRedirectSeen ? ' verify 2fa protected outside pending session' : ' verify 2fa protection missing'));
     gpQaResult($results, 'notification_prefs_controls', gpQaPageLooksOk($notificationsPage) && $notificationPrefsSeen, 'HTTP ' . $notificationsPage['status'] . ($notificationPrefsSeen ? ' notification preferences found' : ' notification preferences missing'));
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split found' : ' archive split not currently visible'));
