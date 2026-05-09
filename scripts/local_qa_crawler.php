@@ -219,6 +219,7 @@ function gpQaFeedbackAliasMap(): array
         'training_history.php' => ['training history', 'history'],
         'stats.php' => ['stats', 'progress'],
         'air_travel_rights.php' => ['air travel', 'service dog training'],
+        'report_found_dog.php' => ['found dog', 'location report', 'share found location'],
         'wearable_integrations.php' => ['wearable', 'snapshot'],
         'alerts.php' => ['smart alerts', 'alerts'],
         'dog_health.php' => ['health docs', 'vet'],
@@ -333,6 +334,7 @@ if ($adminLoggedIn) {
         'admin_feedback_page_loads' => 'admin_feedback.php',
         'admin_found_dog_reports_page_loads' => 'admin_found_dog_reports.php',
         'admin_notification_test_page_loads' => 'admin_notification_test.php',
+        'found_dog_notification_test_page_loads' => 'found_dog_notification_test.php',
         'admin_profile_completion_page_loads' => 'admin_profile_completion.php',
         'api_tokens_page_loads' => 'api_tokens.php',
         'backup_tools_page_loads' => 'backup.php',
@@ -543,6 +545,13 @@ if ($adminLoggedIn) {
                 || str_contains($body, 'send test')
             )
             : true;
+        $foundDogNotificationTestPageLooksReady = $path === 'found_dog_notification_test.php'
+            ? (
+                str_contains($body, 'found dog alert test')
+                || str_contains($body, 'notification route')
+                || str_contains($body, 'send test found-dog alert')
+            )
+            : true;
         $adminProfileCompletionPageLooksReady = $path === 'admin_profile_completion.php'
             ? (
                 str_contains($body, 'handler profile completion')
@@ -714,7 +723,7 @@ if ($adminLoggedIn) {
         gpQaResult(
             $results,
             $id,
-            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $notificationPageLooksReady && $settingsPageLooksReady && $profilePageLooksReady && $quickLogPageLooksReady && $logEntryPageLooksReady && $viewLogsPageLooksReady && $adminFeedbackPageLooksReady && $adminFoundDogReportsPageLooksReady && $adminNotificationTestPageLooksReady && $adminProfileCompletionPageLooksReady && $apiTokensPageLooksReady && $backupToolsPageLooksReady && $dogsPageLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $regressionEnginePageLooksReady && $goalBuilderPageLooksReady && $trainingProgramPageLooksReady && $trainingSessionLogPageLooksReady && $trainingHistoryPageLooksReady && $statsPageLooksReady && $airTravelPageLooksReady && $wearablePageLooksReady && $alertsPageLooksReady && $dogHealthPageLooksReady && $appointmentsPageLooksReady && $medicationsPageLooksReady && $certificationPageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
+            gpQaPageLooksOk($res) && $mediaPageLooksReady && $videoPageLooksReady && $coachPageLooksReady && $dbStatusLooksReady && $notificationPageLooksReady && $settingsPageLooksReady && $profilePageLooksReady && $quickLogPageLooksReady && $logEntryPageLooksReady && $viewLogsPageLooksReady && $adminFeedbackPageLooksReady && $adminFoundDogReportsPageLooksReady && $adminNotificationTestPageLooksReady && $foundDogNotificationTestPageLooksReady && $adminProfileCompletionPageLooksReady && $apiTokensPageLooksReady && $backupToolsPageLooksReady && $dogsPageLooksReady && $candidatePageLooksReady && $candidateComparisonPageLooksReady && $behaviorRiskPageLooksReady && $regressionEnginePageLooksReady && $goalBuilderPageLooksReady && $trainingProgramPageLooksReady && $trainingSessionLogPageLooksReady && $trainingHistoryPageLooksReady && $statsPageLooksReady && $airTravelPageLooksReady && $wearablePageLooksReady && $alertsPageLooksReady && $dogHealthPageLooksReady && $appointmentsPageLooksReady && $medicationsPageLooksReady && $certificationPageLooksReady && $trainerMarketplaceLooksReady && $communityChallengesPageLooksReady && $truckingPageLooksReady && $assistantPageLooksReady,
             'HTTP ' . $res['status'] . ' ' . basename(parse_url($res['url'], PHP_URL_PATH) ?: $path) . ($res['error'] ? ' error=' . $res['error'] : '') . ($path === 'admin_feedback.php' ? ($adminFeedbackPageLooksReady ? ' feedback reports found' : ' feedback reports missing') : '') . ($path === 'admin_found_dog_reports.php' ? ($adminFoundDogReportsPageLooksReady ? ' found dog reports found' : ' found dog reports missing') : '') . ($path === 'admin_notification_test.php' ? ($adminNotificationTestPageLooksReady ? ' notification test found' : ' notification test missing') : '') . ($path === 'admin_profile_completion.php' ? ($adminProfileCompletionPageLooksReady ? ' profile completion found' : ' profile completion missing') : '') . ($path === 'api_tokens.php' ? ($apiTokensPageLooksReady ? ' api tokens found' : ' api tokens missing') : '') . ($path === 'backup.php' ? ($backupToolsPageLooksReady ? ' backup tools found' : ' backup tools missing') : '') . ($path === 'dogs.php' ? ($dogsPageLooksReady ? ' archive split found' : ' archive split missing') : '') . ($path === 'candidate_assessment.php' ? ($candidatePageLooksReady ? ' candidate assessment content found' : ' candidate assessment content missing') : '') . ($path === 'candidate_comparison.php' ? ($candidateComparisonPageLooksReady ? ' candidate comparison content found' : ' candidate comparison content missing') : '') . ($path === 'behavior_risk_scoring.php' ? ($behaviorRiskPageLooksReady ? ' behavior risk content found' : ' behavior risk content missing') : '') . ($path === 'regression_engine.php' ? ($regressionEnginePageLooksReady ? ' regression engine content found' : ' regression engine content missing') : '') . ($path === 'goal_builder.php' ? ($goalBuilderPageLooksReady ? ' goal builder content found' : ' goal builder content missing') : '') . ($path === 'training_program.php' ? ($trainingProgramPageLooksReady ? ' training program content found' : ' training program content missing') : '') . ($path === 'training_session_log.php' ? ($trainingSessionLogPageLooksReady ? ' session log content found' : ' session log content missing') : '') . ($path === 'training_history.php' ? ($trainingHistoryPageLooksReady ? ' training history content found' : ' training history content missing') : '') . ($path === 'stats.php' ? ($statsPageLooksReady ? ' stats content found' : ' stats content missing') : '') . ($path === 'air_travel_rights.php' ? ($airTravelPageLooksReady ? ' air travel content found' : ' air travel content missing') : '') . ($path === 'wearable_integrations.php' ? ($wearablePageLooksReady ? ' wearable sync content found' : ' wearable sync content missing') : '') . ($path === 'alerts.php' ? ($alertsPageLooksReady ? ' alerts content found' : ' alerts content missing') : '') . ($path === 'dog_health.php' ? ($dogHealthPageLooksReady ? ' health docs content found' : ' health docs content missing') : '') . ($path === 'appointments.php' ? ($appointmentsPageLooksReady ? ' appointments content found' : ' appointments content missing') : '') . ($path === 'medications.php' ? ($medicationsPageLooksReady ? ' medications content found' : ' medications content missing') : '') . ($path === 'certification.php' ? ($certificationPageLooksReady ? ' certification content found' : ' certification content missing') : '') . ($path === 'trainer_marketplace.php' ? ($trainerMarketplaceLooksReady ? ' trainer marketplace content found' : ' trainer marketplace content missing') : '') . ($path === 'community_challenges.php' ? ($communityChallengesPageLooksReady ? ' community challenges content found' : ' community challenges content missing') : '') . ($path === 'trucking_mode.php' ? ($truckingPageLooksReady ? ' trucking mode content found' : ' trucking mode content missing') : '') . ($path === 'ai_training_assistant.php' ? ($assistantPageLooksReady ? ' assistant content found' : ' assistant content missing') : '') . ($path === 'media_review.php' ? ($mediaPageLooksReady ? ' media review content found' : ' media review content missing') : '') . ($path === 'video_review.php' ? ($videoPageLooksReady ? ' video review content found' : ' video review content missing') : '') . ($path === 'coach_review.php' ? ($coachPageLooksReady ? ' coach review content found' : ' coach review content missing') : '') . ($path === 'db_status.php' ? ($dbStatusLooksReady ? ' schema migration section found' : ' schema migration section missing') : '') . ($path === 'notifications.php' ? ($notificationPageLooksReady ? ' notification controls found' : ' notification controls missing') : '') . ($path === 'settings.php' ? ($settingsPageLooksReady ? ' settings content found' : ' settings content missing') : '') . ($path === 'profile.php' ? ($profilePageLooksReady ? ' profile content found' : ' profile content missing') : '') . ($path === 'quick_log.php' ? ($quickLogPageLooksReady ? ' quick log content found' : ' quick log content missing') : '') . ($path === 'log_entry.php' ? ($logEntryPageLooksReady ? ' log entry content found' : ' log entry content missing') : '') . ($path === 'view_logs.php' ? ($viewLogsPageLooksReady ? ' history content found' : ' history content missing') : '')
         );
     }
@@ -797,8 +806,45 @@ if ($adminLoggedIn) {
             $publicProfilePage = gpQaRequest($baseUrl, ltrim(parse_url($publicProfileUrl, PHP_URL_PATH) . '?' . (parse_url($publicProfileUrl, PHP_URL_QUERY) ?? ''), '/'), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
             $publicProfileStatus = $publicProfilePage['status'];
             $publicProfileBody = strtolower($publicProfilePage['body']);
+            $publicProfileHtml = html_entity_decode($publicProfilePage['body'], ENT_QUOTES | ENT_HTML5);
             $publicProfileQuestionnaireSeen = str_contains($publicProfileBody, 'breed questionnaire');
             $publicProfileAirTravelSeen = str_contains($publicProfileBody, 'air travel rights');
+
+            if (preg_match('/href="([^"]*report_found_dog\.php\?dog=\d+&token=[^"]+)"/i', $publicProfileHtml, $reportMatch)) {
+                $foundDogReportPath = ltrim(parse_url($reportMatch[1], PHP_URL_PATH) . '?' . (parse_url($reportMatch[1], PHP_URL_QUERY) ?? ''), '/');
+                $reportQuery = [];
+                parse_str((string) (parse_url($reportMatch[1], PHP_URL_QUERY) ?? ''), $reportQuery);
+                $foundDogLocation = 'GuidePaw QA found-dog report ' . date('YmdHis');
+                $foundDogMessage = 'Automated found-dog smoke test report.';
+                $foundDogPost = gpQaRequest($baseUrl, $foundDogReportPath, 'POST', [
+                    'dog_id' => (int) $m[1],
+                    'token' => (string) ($reportQuery['token'] ?? ''),
+                    'finder_location' => $foundDogLocation,
+                    'finder_name' => 'GuidePaw QA',
+                    'finder_phone' => '000-000-0000',
+                    'finder_message' => $foundDogMessage,
+                    'finder_latitude' => '',
+                    'finder_longitude' => '',
+                    'finder_accuracy_m' => '',
+                    'website' => '',
+                ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                $foundDogReportSubmitted = gpQaPageLooksOk($foundDogPost)
+                    && (
+                        str_contains(strtolower($foundDogPost['body']), 'location report sent')
+                        || str_contains(strtolower($foundDogPost['body']), 'handler/admin notification has been queued')
+                    );
+                gpQaResult($results, 'found_dog_report_submit', $foundDogReportSubmitted, 'HTTP ' . $foundDogPost['status'] . ($foundDogReportSubmitted ? ' found-dog report sent' : ' found-dog report missing'));
+
+                $adminFoundDogReports = gpQaRequest($baseUrl, 'admin_found_dog_reports.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                $adminFoundDogReportsBody = strtolower($adminFoundDogReports['body']);
+                $foundDogReportListed = gpQaPageLooksOk($adminFoundDogReports)
+                    && str_contains($adminFoundDogReportsBody, strtolower($foundDogLocation))
+                    && str_contains($adminFoundDogReportsBody, strtolower($foundDogMessage));
+                gpQaResult($results, 'found_dog_report_admin_listed', $foundDogReportListed, 'HTTP ' . $adminFoundDogReports['status'] . ($foundDogReportListed ? ' found-dog report listed' : ' found-dog report missing'));
+            } else {
+                gpQaResult($results, 'found_dog_report_submit', false, 'found-dog report link missing');
+                gpQaResult($results, 'found_dog_report_admin_listed', false, 'found-dog report link missing');
+            }
         } else {
             $publicProfileStatus = $dogProfile['status'];
         }
