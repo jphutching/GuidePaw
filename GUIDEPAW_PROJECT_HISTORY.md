@@ -644,7 +644,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: none; the crawler now submits a unique public found-dog report and verifies that the admin queue lists it, while also covering the found-dog test page
 
 2026-05-09 — Local crawler mode switch
-- Commit(s): pending
+- Commit(s): 3f77f68 add local crawler mode switch
 - Files changed: scripts/run_local_qa_crawler.sh, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
