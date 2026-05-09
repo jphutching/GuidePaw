@@ -324,6 +324,7 @@ Completed changes from prior work:
 - The QA crawler now directly verifies Health Docs, Vet Appointments, and Medications page loads as part of the care slice.
 - Smart Alerts and Certification are now exposed in the dashboard Today actions and verified by the QA crawler.
 - Training Program, Training Session Log, Training History, and Stats are now verified directly by the QA crawler, with Stats also exposed in Today actions.
+- Admin Notification Test, Profile Completion, Found Dog Reports, API Tokens, and Backup Tools are now directly covered by the QA crawler.
 - The page explains the DOT service-dog cabin baseline and notes that service dogs in training are not covered by the DOT air-travel service-animal definition.
 - The ADA Access Card and Detailed ADA Notes pages link to the new flight guidance page.
 - Beta QA and the local crawler now cover the new air-travel page.
