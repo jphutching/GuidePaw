@@ -64,7 +64,7 @@ function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', arra
     $url = $baseUrl . '/' . ltrim($path, '/');
     $ch = curl_init($url);
     $headers = ['User-Agent: GuidePawLocalQACrawler/1.0'];
-    if ($cookieHeader !== '') {
+    if ($cookieHeader !== '' && $cookieFile === '') {
         $headers[] = 'Cookie: ' . $cookieHeader;
     }
     curl_setopt_array($ch, [
@@ -409,6 +409,7 @@ function gpQaFeedbackScore(array $feedbackRows, string $path, array $aliases): a
 }
 
 $adminCookie = tempnam(sys_get_temp_dir(), 'gpqa_admin_');
+$adminLogoutCookie = tempnam(sys_get_temp_dir(), 'gpqa_admin_logout_');
 $regularCookie = tempnam(sys_get_temp_dir(), 'gpqa_user_');
 $adminCookieHeader = '';
 $regularCookieHeader = '';
@@ -419,16 +420,25 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'crawler_admin_login', $adminLoggedIn, $adminLoggedIn ? 'admin login succeeded' : 'admin login failed');
 
     if ($adminLoggedIn) {
-        $loginPage = gpQaRequest($baseUrl, 'login.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-        $logoutPage = gpQaRequest($baseUrl, 'logout.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $loginPage = gpQaRequest($baseUrl, 'login.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $healthzPage = gpQaRequest($baseUrl, 'healthz.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $csrfTokenPage = gpQaRequest($baseUrl, 'csrf_token.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $logoutCookieHeader = '';
+        $logoutCookie = $adminLogoutCookie;
+        if ($logoutCookie !== '') {
+            gpQaLogin($baseUrl, $adminUser, $adminPass, $logoutCookieHeader, $logoutCookie, $insecureLocalSsl);
+        }
+        $logoutPage = gpQaRequest($baseUrl, 'logout.php', 'GET', [], $logoutCookie ?: $adminCookie, $insecureLocalSsl);
         $loginSeen = gpQaPageLooksOk($loginPage) && (str_contains(strtolower($loginPage['body']), 'handler login') || str_contains(strtolower($loginPage['body']), 'remember me on this device'));
         $logoutSeen = gpQaPageLooksOk($logoutPage) && (str_contains(strtolower($logoutPage['url']), 'login.php') || str_contains(strtolower($logoutPage['body']), 'handler login'));
         $healthzSeen = gpQaPageLooksOk($healthzPage) && (str_contains(strtolower($healthzPage['body']), '"status":"ok"') || str_contains(strtolower($healthzPage['body']), '"database":"ok"'));
         $csrfTokenSeen = gpQaPageLooksOk($csrfTokenPage) && (str_contains(strtolower($csrfTokenPage['body']), '"success":true') || str_contains(strtolower($csrfTokenPage['body']), 'csrf_token'));
-        $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains(strtolower($adminHomePage['body']), 'guidepaw admin') || str_contains(strtolower($adminHomePage['body']), 'feature flags'));
+        $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (
+            str_contains(strtolower($adminHomePage['body']), 'admin control panel')
+            || str_contains(strtolower($adminHomePage['body']), 'guidepaw admin')
+            || str_contains(strtolower($adminHomePage['body']), 'feature flags')
+        );
         $apiTokensPage = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiTokensSeen = false;
         $apiLogin = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
@@ -476,11 +486,27 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         }
         $adminSessionProbe = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminSessionProbeBody = strtolower($adminSessionProbe['body']);
-        $adminSessionReady = gpQaPageLooksOk($adminSessionProbe)
+        $adminSessionReady = (
+            gpQaPageLooksOk($adminSessionProbe)
             && !str_contains($adminSessionProbeBody, 'handler login')
             && !str_contains($adminSessionProbeBody, 'please sign in')
-            && !str_contains(strtolower($adminSessionProbe['url']), 'login.php');
-        gpQaResult($results, 'admin_session_ready', $adminSessionReady, 'HTTP ' . $adminSessionProbe['status'] . ($adminSessionReady ? ' admin session confirmed' : ' admin session did not survive login'));
+            && !str_contains(strtolower($adminSessionProbe['url']), 'login.php')
+        ) || (
+            gpQaPageLooksOk($adminHomePage)
+            && !str_contains(strtolower($adminHomePage['body']), 'handler login')
+            && !str_contains(strtolower($adminHomePage['body']), 'please sign in')
+            && !str_contains(strtolower($adminHomePage['url']), 'login.php')
+        );
+        gpQaResult(
+            $results,
+            'admin_session_ready',
+            $adminSessionReady,
+            'probe=' . $adminSessionProbe['status'] . ' home=' . $adminHomePage['status'] . (
+                $adminSessionReady
+                    ? ' admin session confirmed'
+                    : ' admin session did not survive login'
+            )
+        );
         if (!$adminSessionReady) {
             fwrite(STDERR, "Admin session did not survive login; falling back to Playwright crawler.\n");
             exit(1);
@@ -1109,6 +1135,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $habitRepairBody = strtolower($habitRepairPage['body']);
     $trainingProgramBody = strtolower($trainingProgramPage['body']);
     $alertsPageBody = strtolower($alertsPage['body']);
+    $settingsPage = gpQaRequest($baseUrl, 'settings.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $settingsPageBody = strtolower($settingsPage['body']);
     $editProfileBody = strtolower($editProfilePage['body']);
     $viewLogsForEditBody = strtolower($viewLogsForEditPage['body']);

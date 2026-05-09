@@ -853,6 +853,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the feedback picker update, let beta deploy, and confirm the report form now exposes Bug, Feature request, and Enhancement as distinct choices
 
+2026-05-09 — Crawler admin-session cleanup
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the admin session probe on its own cookie jar, then leave the public login/logout checks and admin-home check independent so beta smoke stays honest
+
 ## Update log template
 
 When updating this file, add a short note like:
