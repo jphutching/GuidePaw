@@ -783,6 +783,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: commit the admin shell fix, then rerun the crawler and confirm the admin pages still load with the shared menu shell asserted
 
+2026-05-09 — Admin shell completion pass
+- Commit(s): pending
+- Files changed: admin.php, admin_users.php, scripts/local_qa_crawler.php
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the admin shell assertions in the crawler and watch for any pages that drift away from the shared banner/nav pattern
+
 2026-05-09 — Dog Access state-model fix
 - Commit(s): pending
 - Files changed: includes/db_connect.php, dog_access.php, notifications.php, collaboration.php, includes/dog_access_notifications.php, includes/dog_access_expiry.php, includes/media_reviews.php, includes/video_reviews.php, GUIDEPAW_PROJECT_HISTORY.md
