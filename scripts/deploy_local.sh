@@ -67,7 +67,7 @@ done < <(
 echo "== Key HTTP checks =="
 for url in \
   index.php dogs.php training_program.php training_session_log.php \
-  training_goal_intake.php goal_builder.php behavior_risk_scoring.php wearable_integrations.php candidate_assessment.php candidate_comparison.php community_challenges.php habit_repair.php \
+  training_goal_intake.php goal_builder.php behavior_risk_scoring.php wearable_integrations.php trainer_marketplace.php candidate_assessment.php candidate_comparison.php community_challenges.php habit_repair.php \
   admin.php admin_feature_roadmap.php settings.php profile.php
 do
   code=$(curl -k -s -o /tmp/gp_deploy_check.out -w "%{http_code}" "https://10.147.18.184/$url?deploycheck=1")

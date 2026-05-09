@@ -11,6 +11,7 @@ require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/trucking_mode.php';
 require_once __DIR__ . '/includes/wearable_integrations.php';
+require_once __DIR__ . '/includes/trainer_marketplace.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
@@ -37,6 +38,7 @@ $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
 $wearableEvents = gpWearableRecentEvents($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null, 1);
 $latestWearableSync = $wearableEvents[0] ?? null;
+$trainerMarketplaceEntries = gpTrainerMarketplaceEntries($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
 $candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
 $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
@@ -159,6 +161,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
                     <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
+                    <a class="today-action" href="trainer_marketplace.php"><span>🤝</span>Trainer Market</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'goal_builder_enabled')): ?>
                     <a class="today-action" href="goal_builder.php"><span>🎯</span>Goal Builder</a>
                 <?php endif; ?>
@@ -247,6 +252,17 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                         <?php else: ?>
                             No wearable snapshots recorded yet.
                         <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Trainer Marketplace</h3>
+                        <a href="trainer_marketplace.php" class="btn btn-outline-primary btn-sm">Open directory</a>
+                    </div>
+                    <div class="attention-empty">
+                        <?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready in the directory.
                     </div>
                 </div>
             <?php endif; ?>
