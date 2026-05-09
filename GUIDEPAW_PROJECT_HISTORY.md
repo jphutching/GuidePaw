@@ -308,6 +308,7 @@ Completed changes from prior work:
 - README, upgrade notes, current build notes, and the service worker cache list were normalized to the ADA Access Card name as well.
 - The legacy fix notes file now uses ADA Access Card wording too.
 - ADA Access Card now auto-detects the reviewed state law summary on load when geolocation access is already granted, and still offers manual/GPS overrides.
+- The auto-detect path skips webdriver and Playwright automation sessions so crawls stay stable.
 
 ### E2E cleanup
 

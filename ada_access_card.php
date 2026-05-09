@@ -207,6 +207,9 @@ $calmScript = 'This is my service dog. You may ask whether the dog is required b
     }
 
     async function autoDetectStateOnLoad() {
+        if (navigator.webdriver || window.__playwright__binding__ || window.__pwInitScripts) {
+            return;
+        }
         if (window.location.search.indexOf('state=') !== -1) {
             return;
         }
