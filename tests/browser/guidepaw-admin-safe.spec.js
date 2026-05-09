@@ -10,8 +10,13 @@ const SAFE_ADMIN_PAGES = [
   '/admin_beta_requests.php',
   '/admin_feature_roadmap.php',
   '/admin_audit_log.php',
+  '/admin_found_dog_reports.php',
+  '/admin_notification_test.php',
+  '/admin_profile_completion.php',
+  '/admin_users.php',
+  '/api_tokens.php',
   '/db_status.php',
-  '/admin_users.php'
+  '/backup.php'
 ];
 
 test.setTimeout(120000);
