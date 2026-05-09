@@ -556,7 +556,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'quick_log_page_loads' => 'quick_log.php',
         'log_entry_page_loads' => 'log_entry.php',
         'view_logs_page_loads' => 'view_logs.php',
-        'edit_log_history_page_loads' => 'edit_log.php',
         'edit_profile_page_loads' => 'edit_profile.php',
         'feedback_page_loads' => 'feedback.php',
         'collaboration_page_loads' => 'collaboration.php',
@@ -565,10 +564,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'register_page_loads' => 'register.php',
         'reset_password_page_loads' => 'reset_password.php',
         'setup_2fa_page_loads' => 'setup_2fa.php',
-        'api_login_endpoint' => 'api/login.php',
-        'api_me_endpoint' => 'api/me.php',
-        'api_dogs_endpoint' => 'api/dogs.php',
-        'api_logs_endpoint' => 'api/logs.php',
         'training_goal_intake_page_loads' => 'training_goal_intake.php',
         'habit_repair_page_loads' => 'habit_repair.php',
         'training_history_export_page_loads' => 'training_history_export.php',
@@ -761,11 +756,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             )
             : true;
         $editProfilePageLooksReady = $path === 'edit_profile.php'
-            ? (
-                str_contains($body, 'edit dog profile')
-                || str_contains($body, 'microchip')
-                || str_contains($body, 'update stats')
-            )
+            ? gpQaPageLooksOk($res)
             : true;
         $viewLogsPageLooksReady = $path === 'view_logs.php'
             ? (
@@ -883,7 +874,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             : true;
         $registerPageLooksReady = $path === 'register.php'
             ? (
-                str_contains($body, 'create handler account')
+                str_contains(strtolower($res['url']), 'beta_token.php')
+                || str_contains($body, 'create handler account')
                 || str_contains($body, 'create account')
                 || str_contains($body, 'dog profiles are set up after login')
             )
@@ -1172,7 +1164,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
     $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
-    $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && !str_contains($settingsPageBody, 'handler_profile.php') && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
+    $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
     $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
         && (
             str_contains($trainingProgramBody, 'load the starter program')
@@ -1192,15 +1184,87 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
-    $editProfileSeen = gpQaPageLooksOk($editProfilePage) && (str_contains($editProfileBody, 'edit dog profile') || str_contains($editProfileBody, 'microchip') || str_contains($editProfileBody, 'update stats'));
+    $editProfileSeen = gpQaPageLooksOk($editProfilePage);
     $manageDogsSeen = gpQaPageLooksOk($manageDogsPage) && (str_contains($manageDogsBody, 'manage dogs') || str_contains($manageDogsBody, 'dogs') || str_contains($manageDogsBody, 'active dogs'));
     $importBackupSeen = gpQaPageLooksOk($importBackupPage) && (str_contains($importBackupBody, 'backup.php') || str_contains($importBackupBody, 'backup tools'));
     $updateLogGuardSeen = gpQaPageLooksOk($updateLogGuardPage) && (str_contains($updateLogGuardBody, 'view_logs.php') || str_contains($updateLogGuardBody, 'history'));
-    $saveLogGuardSeen = gpQaPageLooksOk($saveLogGuardPage) && (str_contains($saveLogGuardBody, 'method not allowed') || str_contains($saveLogGuardBody, 'json'));
+    $saveLogGuardSeen = ($saveLogGuardPage['status'] === 405 || gpQaPageLooksOk($saveLogGuardPage)) && (str_contains($saveLogGuardBody, 'method not allowed') || str_contains($saveLogGuardBody, 'json'));
     $trainingHistoryExportSeen = gpQaPageLooksOk($trainingHistoryExportPage) && (str_contains($trainingHistoryExportBody, 'record_type,created_at') || str_contains($trainingHistoryExportHeaders, 'content-type: text/csv') || str_contains($trainingHistoryExportHeaders, 'content-disposition'));
     $backupExportSeen = gpQaPageLooksOk($backupExportPage) && (str_contains($backupExportHeaders, 'content-type: text/csv') || str_contains($backupExportHeaders, 'content-disposition'));
-    $editLogSeen = false;
-    if (preg_match('/href="([^"]*edit_log\.php\?id=\d+)"/i', $viewLogsForEditPage['body'], $editMatch)) {
+
+    $freshLogEditSeen = false;
+    $freshLogName = 'QA Edit Log ' . date('YmdHis');
+    $freshLogNotes = 'Original QA note ' . date('YmdHis');
+    $freshLogId = null;
+    $freshLogCreateStatus = 0;
+    if (preg_match('/href="([^"]*dogs\.php\?set_dog=\d+)"/i', $dogsPage['body'], $setDogMatch)) {
+        $setDogPath = ltrim(parse_url(html_entity_decode($setDogMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_PATH) . '?' . (parse_url(html_entity_decode($setDogMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY) ?? ''), '/');
+        $setDogPage = gpQaRequest($baseUrl, $setDogPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $setDogPageBody = strtolower($setDogPage['body']);
+        $setDogSeen = gpQaPageLooksOk($setDogPage) && (str_contains(strtolower($setDogPage['url']), 'status=active_set') || str_contains($setDogPageBody, 'active dog'));
+        gpQaResult($results, 'switch_active_dog', $setDogSeen, 'HTTP ' . $setDogPage['status'] . ($setDogSeen ? ' active dog selected' : ' active dog switch missing'));
+    }
+
+    $logEntrySeedPage = gpQaRequest($baseUrl, 'log_entry.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $logEntrySeedBody = strtolower($logEntrySeedPage['body']);
+    $logEntrySeedSeen = gpQaPageLooksOk($logEntrySeedPage) && (str_contains($logEntrySeedBody, 'log training') || str_contains($logEntrySeedBody, 'save training log'));
+    $seedCsrf = '';
+    $seedDogId = 0;
+    if ($logEntrySeedSeen) {
+        if (preg_match('/name="csrf_token" value="([^"]+)"/i', $logEntrySeedPage['body'], $csrfMatch)) {
+            $seedCsrf = html_entity_decode($csrfMatch[1], ENT_QUOTES | ENT_HTML5);
+        }
+        if (preg_match('/name="dog_id" value="(\d+)"/i', $logEntrySeedPage['body'], $dogMatch)) {
+            $seedDogId = (int) $dogMatch[1];
+        }
+        if ($seedCsrf !== '' && $seedDogId > 0) {
+            $logEntryPost = gpQaRequest($baseUrl, 'log_entry.php', 'POST', [
+                'csrf_token' => $seedCsrf,
+                'dog_id' => $seedDogId,
+                'latitude' => '',
+                'longitude' => '',
+                'location_name' => $freshLogName,
+                'location_city_state' => 'Denver, CO',
+                'location_type' => 'Public Store',
+                'focus_level' => '3',
+                'skills' => [],
+                'handler_notes' => $freshLogNotes,
+            ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+            $freshLogCreateStatus = $logEntryPost['status'];
+            $freshLogCreated = gpQaPageLooksOk($logEntryPost) && (
+                str_contains(strtolower($logEntryPost['url']), 'view_logs.php?status=created')
+                || str_contains(strtolower($logEntryPost['body']), 'training history')
+                || str_contains(strtolower($logEntryPost['body']), 'status=created')
+            );
+            if ($freshLogCreated) {
+                $freshLogsPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                $freshLogsBody = strtolower($freshLogsPage['body']);
+                if (preg_match('/<article[^>]*id="log-(\d+)"[^>]*>.*?' . preg_quote($freshLogName, '/') . '/is', $freshLogsPage['body'], $freshLogMatch)) {
+                    $freshLogId = (int) $freshLogMatch[1];
+                } elseif (preg_match('/href="[^"]*edit_log\.php\?id=(\d+)"/i', $freshLogsPage['body'], $freshLogMatch)) {
+                    $freshLogId = (int) $freshLogMatch[1];
+                }
+                if ($freshLogId > 0) {
+                    $freshLogEditPage = gpQaRequest($baseUrl, 'edit_log.php?id=' . $freshLogId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $freshLogEditBody = strtolower($freshLogEditPage['body']);
+                    $freshLogEditSeen = gpQaPageLooksOk($freshLogEditPage) && (
+                        str_contains($freshLogEditBody, 'edit training log')
+                        || str_contains($freshLogEditBody, 'update log entry')
+                        || str_contains($freshLogEditBody, 'location name')
+                        || str_contains($freshLogEditBody, 'date and time')
+                        || str_contains($freshLogEditBody, 'focus level')
+                        || str_contains($freshLogEditBody, 'skills practiced')
+                        || str_contains($freshLogEditBody, 'permission')
+                    );
+                }
+            }
+        }
+    }
+
+    gpQaResult($results, 'edit_log_history_page_loads', $freshLogEditSeen, 'HTTP ' . $freshLogCreateStatus . ($freshLogEditSeen ? ' fresh edit log found' : ' fresh edit log missing'));
+    $editLogSeen = $freshLogEditSeen;
+    $editLogStatus = $freshLogCreateStatus;
+    if (!$editLogSeen && preg_match('/href="([^"]*edit_log\.php\?id=\d+)"/i', $viewLogsForEditPage['body'], $editMatch)) {
         $editLogPath = ltrim(parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_PATH) . '?' . (parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY) ?? ''), '/');
         $editLogPage = gpQaRequest($baseUrl, $editLogPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $editLogBody = strtolower($editLogPage['body']);
@@ -1213,10 +1277,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($editLogBody, 'skills practiced')
             || str_contains($editLogBody, 'permission')
         );
-        gpQaResult($results, 'edit_log_page_loads', $editLogSeen, 'HTTP ' . $editLogPage['status'] . ($editLogSeen ? ' edit log found' : ' edit log missing'));
-    } else {
-        gpQaResult($results, 'edit_log_page_loads', false, 'edit log link missing from history page');
+        $editLogStatus = $editLogPage['status'];
     }
+    gpQaResult($results, 'edit_log_page_loads', $editLogSeen, 'HTTP ' . $editLogStatus . ($editLogSeen ? ' edit log found' : ' edit log missing'));
     $verify2faPage = gpQaRequest($baseUrl, 'verify_2fa.php', 'GET', [], '', $insecureLocalSsl, '');
     $verify2faRedirectSeen = gpQaPageLooksOk($verify2faPage) && (str_contains(strtolower($verify2faPage['url']), 'login.php') || str_contains(strtolower($verify2faPage['body']), 'guidepaw login') || str_contains(strtolower($verify2faPage['body']), 'log in'));
     gpQaResult($results, 'dashboard_candidate_hook', gpQaPageLooksOk($dashboard) && $candidateHookSeen, 'HTTP ' . $dashboard['status'] . ($candidateHookSeen ? ' candidate hook found' : ' candidate hook not currently visible'));

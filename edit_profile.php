@@ -15,6 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$uid]);
 $u = $stmt->fetch();
+$safe = static function ($value): string {
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 ?>
 <!DOCTYPE html>
 <html>
@@ -28,9 +31,9 @@ $u = $stmt->fetch();
 <?php require_once 'includes/mobile_nav.php'; ?>
     <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width:400px;">
         <h4>Edit Dog Profile</h4>
-        <div class="mb-3"><label>Breed</label><input type="text" name="breed" class="form-control" value="<?= htmlspecialchars($u['breed']) ?>"></div>
-        <div class="mb-3"><label>Microchip #</label><input type="text" name="chip_number" class="form-control" value="<?= htmlspecialchars($u['chip_number']) ?>"></div>
-        <div class="mb-3"><label>Weight (lbs)</label><input type="number" step="0.1" name="weight_lbs" class="form-control" value="<?= $u['weight_lbs'] ?>"></div>
+        <div class="mb-3"><label>Breed</label><input type="text" name="breed" class="form-control" value="<?= $safe($u['breed'] ?? '') ?>"></div>
+        <div class="mb-3"><label>Microchip #</label><input type="text" name="chip_number" class="form-control" value="<?= $safe($u['chip_number'] ?? '') ?>"></div>
+        <div class="mb-3"><label>Weight (lbs)</label><input type="number" step="0.1" name="weight_lbs" class="form-control" value="<?= $safe($u['weight_lbs'] ?? '') ?>"></div>
         <button class="btn btn-primary w-100">Update Stats</button>
         <a href="index.php" class="btn btn-link w-100 mt-2">Cancel</a>
     </form>

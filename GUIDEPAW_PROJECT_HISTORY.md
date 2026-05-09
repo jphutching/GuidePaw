@@ -839,6 +839,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the QR tracking slice, let beta deploy, then mark beta feedback #35 fixed after the live host confirms the new tracking page and scan counter
 
+2026-05-09 — Edit profile hardening and crawler cleanup
+- Commit(s): pending
+- Files changed: edit_profile.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: push the edit-profile escaping fix, then rerun beta smoke so the profile page and the training-log edit flow stay green together
+
 2026-05-09 — Training log edit workflow
 - Commit(s): pending
 - Files changed: edit_log.php, update_log.php, view_logs.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/edit_log_smoke.spec.js, GUIDEPAW_PROJECT_HISTORY.md
