@@ -19,20 +19,27 @@ $requiredFields = [
 ];
 
 $totalAccounts = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-$missingSql = "SELECT id, username, email, display_name, phone, public_email, backup_contact_name, backup_contact_phone,
-    CONCAT_WS(', ',
-        CASE WHEN COALESCE(NULLIF(TRIM(display_name), ''), '') = '' THEN 'Display name' END,
-        CASE WHEN COALESCE(NULLIF(TRIM(phone), ''), '') = '' THEN 'Public phone' END,
-        CASE WHEN COALESCE(NULLIF(TRIM(public_email), ''), '') = '' THEN 'Public email' END,
-        CASE WHEN COALESCE(NULLIF(TRIM(public_email), ''), '') <> '' AND public_email !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$' THEN 'Valid public email' END
-    ) AS missing_fields
-    FROM users
-    WHERE COALESCE(NULLIF(TRIM(display_name), ''), '') = ''
-       OR COALESCE(NULLIF(TRIM(phone), ''), '') = ''
-       OR COALESCE(NULLIF(TRIM(public_email), ''), '') = ''
-       OR (COALESCE(NULLIF(TRIM(public_email), ''), '') <> '' AND public_email !~* '^[A-Z0-9._%+-]+@[A-Z]{2,}$')
-    ORDER BY username ASC, id ASC";
-$missingRows = $pdo->query($missingSql)->fetchAll() ?: [];
+$allRows = $pdo->query("SELECT id, username, email, display_name, phone, public_email, backup_contact_name, backup_contact_phone FROM users ORDER BY username ASC, id ASC")->fetchAll() ?: [];
+$missingRows = [];
+foreach ($allRows as $row) {
+    $missing = [];
+    if (trim((string) ($row['display_name'] ?? '')) === '') {
+        $missing[] = 'Display name';
+    }
+    if (trim((string) ($row['phone'] ?? '')) === '') {
+        $missing[] = 'Public phone';
+    }
+    $publicEmail = trim((string) ($row['public_email'] ?? ''));
+    if ($publicEmail === '') {
+        $missing[] = 'Public email';
+    } elseif (!filter_var($publicEmail, FILTER_VALIDATE_EMAIL)) {
+        $missing[] = 'Valid public email';
+    }
+    if ($missing) {
+        $row['missing_fields'] = implode(', ', $missing);
+        $missingRows[] = $row;
+    }
+}
 $missingCount = count($missingRows);
 $completeCount = max(0, $totalAccounts - $missingCount);
 $optionalBackupMissing = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE COALESCE(NULLIF(TRIM(backup_contact_name), ''), '') = '' OR COALESCE(NULLIF(TRIM(backup_contact_phone), ''), '') = ''")->fetchColumn();

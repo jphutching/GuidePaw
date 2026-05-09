@@ -615,6 +615,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; hard purge is now explicitly disabled on the admin user page during beta and the checklist wording matches the safer flow
 
+2026-05-09 — Profile completion report hardening
+- Commit(s): pending
+- Files changed: admin_profile_completion.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the admin profile-completion report now computes missing-field status in PHP instead of relying on a DB regex query
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
