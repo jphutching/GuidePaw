@@ -305,6 +305,8 @@ Completed changes from prior work:
 - Button naming was adjusted.
 - Lock-screen/focus behavior was improved so the access card content is visually emphasized.
 - The detailed notes page now links back with ADA Access Card wording instead of the old wallet-card label.
+- README, upgrade notes, current build notes, and the service worker cache list were normalized to the ADA Access Card name as well.
+- The legacy fix notes file now uses ADA Access Card wording too.
 - Future idea: GPS/state-law detection for service dog law information. This is not fully confirmed as complete and should remain a roadmap/testing item.
 
 ### E2E cleanup

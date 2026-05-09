@@ -10,7 +10,7 @@ This package reflects the latest working changes captured during sandbox stabili
 - bottom nav + More flyout kept, floating menu button removed
 - `settings.php`, `backup.php`, and other shared-nav pages load `styles.css`
 - duplicate dashboard ADA tile removed
-- ADA Wallet Card page reworked
+- ADA Access Card page reworked
 
 ## Still worth validating on a fresh machine
 - 2FA screens

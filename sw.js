@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psd-logbook-v16';
+const CACHE_NAME = 'psd-logbook-v17';
 const APP_SHELL = [
   '/',
   '/index.php',
@@ -17,6 +17,7 @@ const APP_SHELL = [
   '/dogs.php',
   '/backup.php',
   '/service_dog_rights.php',
+  '/ada_access_card.php',
   '/ada_wallet_card.php',
   '/styles.css',
   '/alerts.php',

@@ -9,5 +9,5 @@ Included:
 - bottom nav + More flyout, floating menu button removed
 - shared nav styling loaded on key pages
 - dashboard ADA duplicate tile removed
-- ADA Wallet Card page reworked
+- ADA Access Card page reworked
 - Ubuntu migration guide added

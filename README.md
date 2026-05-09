@@ -9,7 +9,7 @@ What is included:
 - Quick Log GPS capture with city/state display
 - fixed Training History PostgreSQL query
 - fixed Reports PostgreSQL empty-string query
-- polished ADA Wallet Card page
+- polished ADA Access Card page
 - updated guides for Ubuntu, Render, and phone sandbox
 
 ## Current known-good areas
@@ -20,7 +20,7 @@ What is included:
 - training history
 - reports
 - backup page
-- ADA wallet card
+- ADA Access Card
 - PostgreSQL connection path
 
 ## Recommended environments
