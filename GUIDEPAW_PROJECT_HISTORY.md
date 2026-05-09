@@ -763,14 +763,14 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: rerun the crawler and confirm the detailed log form exposes direct photo/video capture controls on mobile
 
 2026-05-09 — Tile layout cleanup
-- Commit(s): pending
-- Files changed: index.php, includes/mobile_nav.php
+- Commit(s): 06e8211 soften dashboard tile layout
+- Files changed: index.php, includes/mobile_nav.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
 - Next recommended step: rerun the crawler and confirm the dashboard still exposes the common actions while the menu carries the broader quick-action set.
 
 2026-05-09 — Menu and navigation enhancement
-- Commit(s): pending
+- Commit(s): 7083173 improve menu navigation search
 - Files changed: includes/mobile_nav.php, training_program.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
