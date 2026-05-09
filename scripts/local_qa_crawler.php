@@ -215,6 +215,9 @@ function gpQaFeedbackAliasMap(): array
     return [
         'index.php' => ['dashboard', 'today', 'needs attention'],
         'login.php' => ['login', 'log in', 'sign in', 'password as you are typing'],
+        'logout.php' => ['logout', 'sign out'],
+        'healthz.php' => ['healthz', 'status ok', 'database ok'],
+        'csrf_token.php' => ['csrf token', 'csrf'],
         'feedback.php' => ['feedback', 'bug report', 'report issue'],
         'beta_request.php' => ['request guidepaw beta access', 'beta access'],
         'beta_token.php' => ['validate beta access token', 'beta token'],
@@ -223,11 +226,14 @@ function gpQaFeedbackAliasMap(): array
         'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
         'profile.php' => ['profile', 'microchip', 'owner'],
+        'admin.php' => ['guidepaw admin', 'feature flags', 'backup snapshot'],
         'quick_log.php' => ['quick log', 'quick session'],
         'log_entry.php' => ['detailed log', 'training log', 'photo, video, or audio'],
         'view_logs.php' => ['training history', 'view logs', 'queued offline logs'],
         'edit_log.php' => ['edit training log', 'update log entry'],
         'edit_profile.php' => ['edit dog profile', 'update stats'],
+        'manage_dogs.php' => ['manage dogs', 'dogs.php'],
+        'import_backup.php' => ['import backup', 'backup tools'],
         'dogs.php' => ['manage dogs', 'archived dogs', 'active dogs'],
         'notifications.php' => ['notification', 'alerts', 'inbox'],
         'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
@@ -360,12 +366,27 @@ $regularCookieHeader = '';
 
 echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' with local SSL verification disabled' : '') . PHP_EOL;
 
-$adminLoggedIn = gpQaLogin($baseUrl, $adminUser, $adminPass, $adminCookieHeader, $adminCookie, $insecureLocalSsl);
-gpQaResult($results, 'crawler_admin_login', $adminLoggedIn, $adminLoggedIn ? 'admin login succeeded' : 'admin login failed');
+    $adminLoggedIn = gpQaLogin($baseUrl, $adminUser, $adminPass, $adminCookieHeader, $adminCookie, $insecureLocalSsl);
+    gpQaResult($results, 'crawler_admin_login', $adminLoggedIn, $adminLoggedIn ? 'admin login succeeded' : 'admin login failed');
 
-if ($adminLoggedIn) {
-    $pages = [
-        'dashboard_loads' => 'index.php',
+    if ($adminLoggedIn) {
+        $loginPage = gpQaRequest($baseUrl, 'login.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $logoutPage = gpQaRequest($baseUrl, 'logout.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $healthzPage = gpQaRequest($baseUrl, 'healthz.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $csrfTokenPage = gpQaRequest($baseUrl, 'csrf_token.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $loginSeen = gpQaPageLooksOk($loginPage) && (str_contains(strtolower($loginPage['body']), 'handler login') || str_contains(strtolower($loginPage['body']), 'remember me on this device'));
+        $logoutSeen = gpQaPageLooksOk($logoutPage) && (str_contains(strtolower($logoutPage['url']), 'login.php') || str_contains(strtolower($logoutPage['body']), 'handler login'));
+        $healthzSeen = gpQaPageLooksOk($healthzPage) && (str_contains(strtolower($healthzPage['body']), '"status":"ok"') || str_contains(strtolower($healthzPage['body']), '"database":"ok"'));
+        $csrfTokenSeen = gpQaPageLooksOk($csrfTokenPage) && (str_contains(strtolower($csrfTokenPage['body']), '"success":true') || str_contains(strtolower($csrfTokenPage['body']), 'csrf_token'));
+        $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains(strtolower($adminHomePage['body']), 'guidepaw admin') || str_contains(strtolower($adminHomePage['body']), 'feature flags'));
+        gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
+        gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));
+        gpQaResult($results, 'healthz_page_loads', $healthzSeen, 'HTTP ' . $healthzPage['status'] . ($healthzSeen ? ' healthz ok found' : ' healthz ok missing'));
+        gpQaResult($results, 'csrf_token_page_loads', $csrfTokenSeen, 'HTTP ' . $csrfTokenPage['status'] . ($csrfTokenSeen ? ' csrf token found' : ' csrf token missing'));
+        gpQaResult($results, 'admin_home_page_loads', $adminHomeSeen, 'HTTP ' . $adminHomePage['status'] . ($adminHomeSeen ? ' admin home found' : ' admin home missing'));
+        $pages = [
+            'dashboard_loads' => 'index.php',
         'dogs_page_loads' => 'dogs.php',
         'notifications_page_loads' => 'notifications.php',
         'qa_checklist_page_loads' => 'beta_qa_checklist.php',
@@ -894,6 +915,10 @@ if ($adminLoggedIn) {
     $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $editProfilePage = gpQaRequest($baseUrl, 'edit_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $viewLogsForEditPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $manageDogsPage = gpQaRequest($baseUrl, 'manage_dogs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $importBackupPage = gpQaRequest($baseUrl, 'import_backup.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $updateLogGuardPage = gpQaRequest($baseUrl, 'update_log.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $saveLogGuardPage = gpQaRequest($baseUrl, 'save_log.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $trainingHistoryExportPage = gpQaRequest($baseUrl, 'training_history_export.php?status=active', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $backupExportPage = gpQaRequest($baseUrl, 'export_backup.php?format=csv', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $dashboardBody = strtolower($dashboard['body']);
@@ -903,6 +928,10 @@ if ($adminLoggedIn) {
     $habitRepairBody = strtolower($habitRepairPage['body']);
     $editProfileBody = strtolower($editProfilePage['body']);
     $viewLogsForEditBody = strtolower($viewLogsForEditPage['body']);
+    $manageDogsBody = strtolower($manageDogsPage['body']);
+    $importBackupBody = strtolower($importBackupPage['body']);
+    $updateLogGuardBody = strtolower($updateLogGuardPage['body']);
+    $saveLogGuardBody = strtolower($saveLogGuardPage['body']);
     $trainingHistoryExportBody = strtolower($trainingHistoryExportPage['body']);
     $trainingHistoryExportHeaders = strtolower($trainingHistoryExportPage['headers']);
     $backupExportHeaders = strtolower($backupExportPage['headers']);
@@ -930,6 +959,10 @@ if ($adminLoggedIn) {
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
     $editProfileSeen = gpQaPageLooksOk($editProfilePage) && (str_contains($editProfileBody, 'edit dog profile') || str_contains($editProfileBody, 'microchip') || str_contains($editProfileBody, 'update stats'));
+    $manageDogsSeen = gpQaPageLooksOk($manageDogsPage) && (str_contains($manageDogsBody, 'manage dogs') || str_contains($manageDogsBody, 'dogs') || str_contains($manageDogsBody, 'active dogs'));
+    $importBackupSeen = gpQaPageLooksOk($importBackupPage) && (str_contains($importBackupBody, 'backup.php') || str_contains($importBackupBody, 'backup tools'));
+    $updateLogGuardSeen = gpQaPageLooksOk($updateLogGuardPage) && (str_contains($updateLogGuardBody, 'view_logs.php') || str_contains($updateLogGuardBody, 'history'));
+    $saveLogGuardSeen = gpQaPageLooksOk($saveLogGuardPage) && (str_contains($saveLogGuardBody, 'method not allowed') || str_contains($saveLogGuardBody, 'json'));
     $trainingHistoryExportSeen = gpQaPageLooksOk($trainingHistoryExportPage) && (str_contains($trainingHistoryExportBody, 'record_type,created_at') || str_contains($trainingHistoryExportHeaders, 'content-type: text/csv') || str_contains($trainingHistoryExportHeaders, 'content-disposition'));
     $backupExportSeen = gpQaPageLooksOk($backupExportPage) && (str_contains($backupExportHeaders, 'content-type: text/csv') || str_contains($backupExportHeaders, 'content-disposition'));
     $editLogSeen = false;
@@ -965,6 +998,10 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'training_goal_intake_page_loads', $goalIntakeSeen, 'HTTP ' . $goalIntakePage['status'] . ($goalIntakeSeen ? ' goal intake found' : ' goal intake missing'));
     gpQaResult($results, 'habit_repair_page_loads', $habitRepairSeen, 'HTTP ' . $habitRepairPage['status'] . ($habitRepairSeen ? ' habit repair found' : ' habit repair missing'));
     gpQaResult($results, 'edit_profile_page_loads', $editProfileSeen, 'HTTP ' . $editProfilePage['status'] . ($editProfileSeen ? ' edit profile found' : ' edit profile missing'));
+    gpQaResult($results, 'manage_dogs_redirect', $manageDogsSeen, 'HTTP ' . $manageDogsPage['status'] . ($manageDogsSeen ? ' manage dogs redirect found' : ' manage dogs redirect missing'));
+    gpQaResult($results, 'import_backup_redirect', $importBackupSeen, 'HTTP ' . $importBackupPage['status'] . ($importBackupSeen ? ' import backup redirect found' : ' import backup redirect missing'));
+    gpQaResult($results, 'update_log_redirect', $updateLogGuardSeen, 'HTTP ' . $updateLogGuardPage['status'] . ($updateLogGuardSeen ? ' update log redirect found' : ' update log redirect missing'));
+    gpQaResult($results, 'save_log_method_guard', $saveLogGuardSeen, 'HTTP ' . $saveLogGuardPage['status'] . ($saveLogGuardSeen ? ' save log guard found' : ' save log guard missing'));
     gpQaResult($results, 'training_history_export_page_loads', $trainingHistoryExportSeen, 'HTTP ' . $trainingHistoryExportPage['status'] . ($trainingHistoryExportSeen ? ' training history export found' : ' training history export missing'));
     gpQaResult($results, 'export_backup_csv_download', $backupExportSeen, 'HTTP ' . $backupExportPage['status'] . ($backupExportSeen ? ' backup export csv found' : ' backup export csv missing'));
     gpQaResult($results, 'verify_2fa_redirects_to_login', $verify2faRedirectSeen, 'HTTP ' . $verify2faPage['status'] . ($verify2faRedirectSeen ? ' verify 2fa protected outside pending session' : ' verify 2fa protection missing'));

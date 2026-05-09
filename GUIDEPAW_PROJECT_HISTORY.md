@@ -692,6 +692,20 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the crawler in an unsandboxed shell or live environment so the new log edit, profile edit, habit repair, goal intake, history export, and backup export probes can be verified end to end
 
+2026-05-09 — Log handler and redirect crawl expansion
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler in an unsandboxed shell or live environment so the new manage-dogs, backup-import, update-log, and save-log guard probes can be verified end to end
+
+2026-05-09 — Login, logout, and health crawl expansion
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: rerun the crawler in an unsandboxed shell or live environment so the new login, logout, healthz, csrf-token, and admin home probes can be verified end to end
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
