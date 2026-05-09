@@ -99,6 +99,7 @@ function gpBetaQaChecklistItems(): array
             'title' => 'Dog Access, Co-op, Status, and Transfer',
             'description' => 'Full workflow for co-op handlers, temporary access, retirement/archive, and transfer requests.',
             'items' => [
+                ['id' => 'dog_list_archive_split', 'text' => 'Manage Dogs separates active and archived dogs.', 'expected' => 'Archived dogs stay in a dedicated archive section instead of the main working list.'],
                 ['id' => 'dog_access_page_loads', 'text' => 'Dog Access & Status page loads from Manage Dogs.', 'expected' => 'dog_access.php opens for selected dog.'],
                 ['id' => 'grant_view_access', 'text' => 'Owner invites Viewer access to another GuidePaw account.', 'expected' => 'Recipient sees a pending invite and can accept it before the dog appears in shared/viewer access.'],
                 ['id' => 'grant_editor_access', 'text' => 'Owner invites Contributor/Editor access.', 'expected' => 'Recipient sees a pending invite and can accept it before editing allowed dog areas.'],

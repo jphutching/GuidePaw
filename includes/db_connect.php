@@ -289,6 +289,13 @@ function userOwnsDog(PDO $pdo, int $userId, int $dogId): bool {
     return (bool) $stmt->fetchColumn();
 }
 
+function dogIsActiveLifecycle(PDO $pdo, int $dogId): bool {
+    $stmt = $pdo->prepare("SELECT COALESCE(NULLIF(lifecycle_status, ''), 'active') FROM dogs WHERE id = ? LIMIT 1");
+    $stmt->execute([$dogId]);
+    $status = (string) ($stmt->fetchColumn() ?: '');
+    return in_array($status, ['active', 'in_training'], true);
+}
+
 function requireDogOwner(PDO $pdo, int $userId, int $dogId): void {
     if (!userOwnsDog($pdo, $userId, $dogId)) {
         http_response_code(403);
@@ -313,7 +320,7 @@ function getAccessibleDogs(PDO $pdo, int $userId): array {
 }
 
 function setActiveDogId(PDO $pdo, int $userId, int $dogId): bool {
-    if (!hasDogAccess($pdo, $userId, $dogId)) {
+    if (!hasDogAccess($pdo, $userId, $dogId) || !dogIsActiveLifecycle($pdo, $dogId)) {
         return false;
     }
     $_SESSION['active_dog_id'] = $dogId;
@@ -321,18 +328,25 @@ function setActiveDogId(PDO $pdo, int $userId, int $dogId): bool {
 }
 
 function getActiveDogId(PDO $pdo, int $userId): ?int {
-    if (!empty($_SESSION['active_dog_id']) && hasDogAccess($pdo, $userId, (int) $_SESSION['active_dog_id'])) {
+    if (!empty($_SESSION['active_dog_id']) && hasDogAccess($pdo, $userId, (int) $_SESSION['active_dog_id']) && dogIsActiveLifecycle($pdo, (int) $_SESSION['active_dog_id'])) {
         return (int) $_SESSION['active_dog_id'];
     }
 
-    $dogs = getAccessibleDogs($pdo, $userId);
+    $stmt = $pdo->prepare("SELECT d.id
+        FROM dogs d
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        WHERE (d.owner_user_id = ? OR dh.id IS NOT NULL)
+          AND COALESCE(NULLIF(d.lifecycle_status, ''), 'active') IN ('active', 'in_training')
+        ORDER BY d.name ASC, d.id ASC");
+    $stmt->execute([$userId, $userId]);
+    $dogs = array_map(static fn($row) => (int) $row['id'], $stmt->fetchAll() ?: []);
     if (!$dogs) {
         unset($_SESSION['active_dog_id']);
         return null;
     }
 
-    $_SESSION['active_dog_id'] = (int) $dogs[0]['id'];
-    return (int) $dogs[0]['id'];
+    $_SESSION['active_dog_id'] = (int) $dogs[0];
+    return (int) $dogs[0];
 }
 
 function getActiveDog(PDO $pdo, int $userId): ?array {

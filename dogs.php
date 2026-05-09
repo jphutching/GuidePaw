@@ -63,6 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $dogs = getAccessibleDogs($pdo, $userId);
 $activeDog = getActiveDog($pdo, $userId);
+$activeDogs = array_values(array_filter($dogs, static function (array $dog): bool {
+    return in_array((string) ($dog['lifecycle_status'] ?? 'active'), ['active', 'in_training'], true);
+}));
+$archivedDogs = array_values(array_filter($dogs, static function (array $dog): bool {
+    return !in_array((string) ($dog['lifecycle_status'] ?? 'active'), ['active', 'in_training'], true);
+}));
 $csrf = generateCsrfToken();
 ?>
 <!DOCTYPE html>
@@ -166,8 +172,9 @@ $csrf = generateCsrfToken();
                     <?php if (!$dogs): ?>
                         <p class="text-muted mb-0">No dogs yet.</p>
                     <?php else: ?>
-                        <div class="list-group">
-                            <?php foreach ($dogs as $dog): ?>
+                        <div class="small text-muted mb-2">Active dogs stay in the working list. Retired, archived, deceased, and transferred dogs are grouped below.</div>
+                        <div class="list-group mb-4">
+                            <?php foreach ($activeDogs as $dog): ?>
                                 <div class="list-group-item d-flex justify-content-between align-items-start gap-3">
                                     <div>
                                         <div class="fw-semibold"><?= e($dog['name']) ?><?php if ($activeDog && (int) $activeDog['id'] === (int) $dog['id']): ?> <span class="badge bg-primary">Active</span><?php endif; ?></div>
@@ -183,6 +190,27 @@ $csrf = generateCsrfToken();
                                 </div>
                             <?php endforeach; ?>
                         </div>
+                        <?php if ($archivedDogs): ?>
+                            <h6 class="text-uppercase text-muted small mb-2">Archived Dogs</h6>
+                            <div class="list-group">
+                                <?php foreach ($archivedDogs as $dog): ?>
+                                    <?php $lifeStatus = ucwords(str_replace('_', ' ', (string) ($dog['lifecycle_status'] ?? 'archived'))); ?>
+                                    <div class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                                        <div>
+                                            <div class="fw-semibold"><?= e($dog['name']) ?> <span class="badge bg-secondary"><?= e($lifeStatus) ?></span></div>
+                                            <div class="small text-muted">
+                                                <?= e($dog['breed'] ?: 'Breed not set') ?> • <?= e(ucfirst($dog['access_role'])) ?>
+                                                <?php if ((int) $dog['owner_user_id'] !== $userId): ?> • Owner: <?= e($dog['owner_username']) ?><?php endif; ?>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a href="dog_profile.php?dog_id=<?= (int) $dog['id'] ?>" class="btn btn-outline-secondary btn-sm">Profile</a>
+                                            <a href="dog_access.php?dog_id=<?= (int) $dog['id'] ?>" class="btn btn-outline-primary btn-sm">Status</a>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

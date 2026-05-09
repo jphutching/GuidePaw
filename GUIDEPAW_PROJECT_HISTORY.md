@@ -254,6 +254,7 @@ Major feature stack added:
 - Temporary access end date.
 - Revocation of shared access.
 - Central helper now exposes owner-only checks for dog access and collaboration approval paths.
+- Manage Dogs now splits active dogs from archived/retired dogs.
 - Dog lifecycle statuses: Active, In training, Retired, Archived, Deceased, Transferred.
 - Ownership transfer request workflow.
 - Receiving handler can accept or decline transfer.
@@ -560,7 +561,6 @@ php scripts/cleanup_e2e_data.php --yes
 - Which exact admin pages moderators should be allowed to access.
 - Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
 - Whether transfer requests should also trigger Telegram/admin notifications.
-- Whether retired/archived dogs should have a dedicated archive list rather than appearing in normal Manage Dogs.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
 - Whether Notification Center should later add user preferences, categories, bulk delete, or persistent notification badges.
