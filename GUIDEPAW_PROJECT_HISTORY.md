@@ -601,6 +601,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the local crawler wrapper now self-loads the checked-in test env files and falls back to the standard smoke credentials
 
+2026-05-09 — Feedback hotspot summaries
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the feedback-driven crawler now prints the top feedback hotspots plus status and priority counts
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

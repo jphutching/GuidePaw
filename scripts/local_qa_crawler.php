@@ -426,6 +426,30 @@ if ($adminLoggedIn) {
         if ($feedbackHotspots) {
             echo 'Feedback hotspots: ' . implode(' | ', $feedbackHotspots) . PHP_EOL;
         }
+        $statusCounts = [];
+        $priorityCounts = [];
+        foreach ($feedbackRows as $row) {
+            $status = (string) ($row['status'] ?? 'new');
+            $priority = (string) ($row['priority'] ?? 'normal');
+            $statusCounts[$status] = ($statusCounts[$status] ?? 0) + 1;
+            $priorityCounts[$priority] = ($priorityCounts[$priority] ?? 0) + 1;
+        }
+        if ($statusCounts) {
+            ksort($statusCounts);
+            $statusParts = [];
+            foreach ($statusCounts as $status => $count) {
+                $statusParts[] = $status . ':' . $count;
+            }
+            echo 'Feedback status counts: ' . implode(', ', $statusParts) . PHP_EOL;
+        }
+        if ($priorityCounts) {
+            ksort($priorityCounts);
+            $priorityParts = [];
+            foreach ($priorityCounts as $priority => $count) {
+                $priorityParts[] = $priority . ':' . $count;
+            }
+            echo 'Feedback priority counts: ' . implode(', ', $priorityParts) . PHP_EOL;
+        }
         echo 'Feedback reports scanned: ' . count($feedbackRows) . PHP_EOL;
     }
 
