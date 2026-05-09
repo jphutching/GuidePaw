@@ -1,6 +1,6 @@
 # GuidePaw Project History / Handoff
 
-Last updated: 2026-05-08
+Last updated: 2026-05-09
 
 This file is the durable project memory for GuidePaw. Use it before starting or resuming work so the project can continue without backtracking when a chat gets long, scattered, or sidetracked.
 
@@ -775,6 +775,13 @@ php scripts/cleanup_e2e_data.php --yes
 - Whether hard purge should remain disabled during beta or be reintroduced with stronger retention/export safeguards.
 - Whether profile images should eventually move from DB data URI to object storage if image volume grows.
 - Whether SMS should be limited to urgent alerts only after beta testing costs/usage.
+
+2026-05-09 — Dog Access state-model fix
+- Commit(s): pending
+- Files changed: includes/db_connect.php, dog_access.php, notifications.php, collaboration.php, includes/dog_access_notifications.php, includes/dog_access_expiry.php, includes/media_reviews.php, includes/video_reviews.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: rerun the mirror and beta crawler plus the dog-access invite/accept path to confirm the live schema no longer rejects handler writes
 
 ## Update log template
 

@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             FROM dog_handlers dh
             JOIN dogs d ON d.id = dh.dog_id
             JOIN users owner ON owner.id = d.owner_user_id
-            WHERE dh.id = ? AND dh.user_id = ? AND dh.status = 'pending'
+            WHERE dh.id = ? AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NULL
             LIMIT 1");
         $stmt->execute([$handlerId, $userId]);
         $invite = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -52,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->beginTransaction();
             try {
                 if (($_POST['action'] ?? '') === 'accept_dog_access_invite') {
-                    upsertDogHandlerLink($pdo, (int) $invite['dog_id'], $userId, (int) $invite['invited_by_user_id'], (string) ($invite['role'] ?? 'co-op handler'), (string) ($invite['permission_level'] ?? 'view'), 'accepted');
+                    $role = gpDogHandlerRoleLabel((string) ($invite['role'] ?? 'co-op handler'));
+                    upsertDogHandlerLink($pdo, (int) $invite['dog_id'], $userId, (int) $invite['invited_by_user_id'], $role, (string) ($invite['permission_level'] ?? 'view'), 'accepted');
                     $stmt = $pdo->prepare('UPDATE dog_handlers SET access_ends_at = ? WHERE id = ?');
                     $stmt->execute([$invite['access_ends_at'] ?? null, $handlerId]);
                     $stmt = $pdo->prepare("UPDATE user_notifications SET is_read = TRUE, read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND related_dog_id = ? AND notification_type = 'dog_access_invite'");
@@ -63,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
 
-                $stmt = $pdo->prepare("UPDATE dog_handlers SET status = 'declined', revoked_at = CURRENT_TIMESTAMP WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE dog_handlers SET status = 'revoked', revoked_at = CURRENT_TIMESTAMP, accepted_at = NULL WHERE id = ?");
                 $stmt->execute([$handlerId]);
                 $stmt = $pdo->prepare("UPDATE user_notifications SET is_read = TRUE, read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND related_dog_id = ? AND notification_type = 'dog_access_invite'");
                 $stmt->execute([$userId, (int) $invite['dog_id']]);

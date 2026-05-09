@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $csrf = generateCsrfToken();
 $activeDogId = (int) $activeDog['id'];
-$linksStmt = $pdo->prepare("SELECT dh.*, u.username FROM dog_handlers dh JOIN users u ON u.id = dh.user_id WHERE dh.dog_id=? AND dh.status='accepted' ORDER BY u.username ASC");
+$linksStmt = $pdo->prepare("SELECT dh.*, u.username FROM dog_handlers dh JOIN users u ON u.id = dh.user_id WHERE dh.dog_id=? AND dh.status='accepted' AND dh.accepted_at IS NOT NULL ORDER BY u.username ASC");
 $linksStmt->execute([$activeDogId]);
 $collaborators = $linksStmt->fetchAll();
 

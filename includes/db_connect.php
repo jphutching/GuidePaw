@@ -57,9 +57,48 @@ function insertAndGetId(PDO $pdo, string $sqlWithoutReturning, array $params = [
     return (int) $stmt->fetchColumn();
 }
 
+function gpCanonicalDogHandlerRole(?string $role, bool $isOwner = false): string {
+    if ($isOwner) {
+        return 'owner';
+    }
+    return 'collaborator';
+}
+
+function gpDogHandlerRoleLabel(?string $role): string {
+    $role = strtolower(trim((string) $role));
+    return match ($role) {
+        'owner' => 'owner',
+        'collaborator' => 'collaborator',
+        'co-op handler', 'co op handler', 'co-op', 'co op', 'previous owner', 'editor', 'viewer' => 'collaborator',
+        default => 'collaborator',
+    };
+}
+
+function gpDogHandlerDisplayStatus(array $handler): string {
+    $status = strtolower(trim((string) ($handler['status'] ?? '')));
+    $acceptedAt = trim((string) ($handler['accepted_at'] ?? ''));
+    if ($status === 'accepted' && $acceptedAt === '') {
+        return 'pending';
+    }
+    return $status !== '' ? $status : 'unknown';
+}
+
 function upsertDogHandlerLink(PDO $pdo, int $dogId, int $userId, int $invitedByUserId, ?string $role, string $permissionLevel, string $status = 'accepted'): void {
-    $stmt = $pdo->prepare("INSERT INTO dog_handlers (dog_id, user_id, invited_by_user_id, role, permission_level, status) VALUES (?,?,?,?,?,?) ON CONFLICT (dog_id, user_id) DO UPDATE SET invited_by_user_id = EXCLUDED.invited_by_user_id, role = EXCLUDED.role, permission_level = EXCLUDED.permission_level, status = EXCLUDED.status, accepted_at = CASE WHEN EXCLUDED.status = 'accepted' THEN COALESCE(dog_handlers.accepted_at, CURRENT_TIMESTAMP) ELSE NULL END, revoked_at = CASE WHEN EXCLUDED.status IN ('revoked', 'declined') THEN COALESCE(dog_handlers.revoked_at, CURRENT_TIMESTAMP) ELSE NULL END");
-    $stmt->execute([$dogId, $userId, $invitedByUserId, $role, $permissionLevel, $status]);
+    $canonicalRole = gpCanonicalDogHandlerRole($role, false);
+    $requestedStatus = strtolower(trim($status));
+    $dbStatus = 'accepted';
+    $acceptedAt = null;
+    $revokedAt = null;
+    if ($requestedStatus === 'pending') {
+        $acceptedAt = null;
+    } elseif ($requestedStatus === 'revoked' || $requestedStatus === 'declined' || $requestedStatus === 'expired') {
+        $dbStatus = 'revoked';
+        $revokedAt = date('Y-m-d H:i:s');
+    } else {
+        $acceptedAt = date('Y-m-d H:i:s');
+    }
+    $stmt = $pdo->prepare("INSERT INTO dog_handlers (dog_id, user_id, invited_by_user_id, role, permission_level, status, accepted_at, revoked_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT (dog_id, user_id) DO UPDATE SET invited_by_user_id = EXCLUDED.invited_by_user_id, role = EXCLUDED.role, permission_level = EXCLUDED.permission_level, status = EXCLUDED.status, accepted_at = EXCLUDED.accepted_at, revoked_at = EXCLUDED.revoked_at");
+    $stmt->execute([$dogId, $userId, $invitedByUserId, $canonicalRole, $permissionLevel, $dbStatus, $acceptedAt, $revokedAt]);
 }
 
 function redirectToAuth(string $reason = 'login_required'): void {
@@ -276,7 +315,7 @@ function getUserRecord(PDO $pdo, int $userId): ?array {
 function hasDogAccess(PDO $pdo, int $userId, int $dogId): bool {
     $stmt = $pdo->prepare("SELECT 1
         FROM dogs d
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE d.id = ? AND (d.owner_user_id = ? OR dh.id IS NOT NULL)
         LIMIT 1");
     $stmt->execute([$userId, $dogId, $userId]);
@@ -312,7 +351,7 @@ function getAccessibleDogs(PDO $pdo, int $userId): array {
             END AS access_role
         FROM dogs d
         JOIN users u ON u.id = d.owner_user_id
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE d.owner_user_id = ? OR dh.id IS NOT NULL
         ORDER BY d.name ASC, d.id ASC");
     $stmt->execute([$userId, $userId, $userId]);
@@ -334,7 +373,7 @@ function getActiveDogId(PDO $pdo, int $userId): ?int {
 
     $stmt = $pdo->prepare("SELECT d.id
         FROM dogs d
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE (d.owner_user_id = ? OR dh.id IS NOT NULL)
           AND COALESCE(NULLIF(d.lifecycle_status, ''), 'active') IN ('active', 'in_training')
         ORDER BY d.name ASC, d.id ASC");
@@ -363,7 +402,7 @@ function getActiveDog(PDO $pdo, int $userId): ?array {
             END AS access_role
         FROM dogs d
         JOIN users u ON u.id = d.owner_user_id
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE d.id = ?
         LIMIT 1");
     $stmt->execute([$userId, $userId, $dogId]);
@@ -383,7 +422,7 @@ function requireActiveDog(PDO $pdo, int $userId): array {
 function userCanEditDog(PDO $pdo, int $userId, int $dogId): bool {
     $stmt = $pdo->prepare("SELECT 1
         FROM dogs d
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE d.id = ?
           AND (d.owner_user_id = ? OR dh.permission_level = 'edit')
         LIMIT 1");
@@ -403,7 +442,7 @@ function getUpcomingVetReminders(PDO $pdo, int $userId, int $limit = 5): array {
         FROM dog_vet_appointments a
         JOIN dogs d ON d.id = a.dog_id
         LEFT JOIN dog_vets v ON v.id = a.dog_vet_id
-        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NOT NULL
         WHERE (d.owner_user_id = ? OR dh.id IS NOT NULL)
           AND a.status = 'scheduled'
           AND (

@@ -60,7 +60,7 @@ function gpDogAccessPendingInvites(PDO $pdo, int $userId): array
         FROM dog_handlers dh
         JOIN dogs d ON d.id = dh.dog_id
         JOIN users owner ON owner.id = d.owner_user_id
-        WHERE dh.user_id = ? AND dh.status = 'pending'
+        WHERE dh.user_id = ? AND dh.status = 'accepted' AND dh.accepted_at IS NULL
         ORDER BY dh.id DESC");
     $stmt->execute([$userId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -86,10 +86,11 @@ function gpDogAccessNotifyInApp(array $recipient, string $subject, string $body,
 function gpDogAccessNotifyInvite(array $dog, array $owner, array $handler, string $role, string $permission, ?string $endDate): bool
 {
     $dogName = (string) ($dog['name'] ?? 'Dog');
+    $roleLabel = gpDogHandlerRoleLabel($role);
     $subject = "GuidePaw dog access invite: {$dogName}";
     $body = gpDogAccessDisplayName($owner) . " invited you to shared access for a GuidePaw dog profile.\n\n" .
         "Dog: {$dogName}\n" .
-        "Role: {$role}\n" .
+        "Role: {$roleLabel}\n" .
         "Permission: {$permission}\n" .
         "End date: " . ($endDate ?: 'not set') . "\n\n" .
         "Open your Notifications page to accept or decline.\n";
@@ -110,7 +111,7 @@ function gpDogAccessNotifyInvite(array $dog, array $owner, array $handler, strin
                 (int) ($dog['id'] ?? 0),
                 [
                     'owner_username' => (string) ($owner['username'] ?? ''),
-                    'role' => $role,
+                    'role' => $roleLabel,
                     'permission_level' => $permission,
                     'access_ends_at' => $endDate,
                 ]

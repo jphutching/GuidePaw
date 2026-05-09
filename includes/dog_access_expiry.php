@@ -25,8 +25,9 @@ function gpExpireDogHandlerAccess(PDO $pdo): int
     }
 
     $stmt = $pdo->prepare("UPDATE dog_handlers
-        SET status = 'expired', revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
+        SET status = 'revoked', revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
         WHERE status = 'accepted'
+          AND accepted_at IS NOT NULL
           AND access_ends_at IS NOT NULL
           AND access_ends_at < CURRENT_DATE");
     $stmt->execute();

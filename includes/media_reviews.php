@@ -48,6 +48,7 @@ function gpMediaReviewLogEntries(PDO $pdo, int $userId, int $dogId, int $limit =
                 WHERE dh.dog_id = dl.dog_id
                   AND dh.user_id = ?
                   AND dh.status = 'accepted'
+                  AND dh.accepted_at IS NOT NULL
             )
           )
         ORDER BY dl.log_date DESC
