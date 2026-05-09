@@ -637,7 +637,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: none; dog access now fails closed if the selected dog row disappears after access checks, and the crawler reports the selected access page explicitly
 
 2026-05-09 — Found-dog report smoke coverage
-- Commit(s): da907d9 add found dog report smoke coverage
+- Commit(s): a5eeb03 add found dog report smoke coverage
 - Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
