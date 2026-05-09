@@ -160,6 +160,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
 $stmt = $pdo->prepare('SELECT d.*, u.username AS owner_username, u.email AS owner_email FROM dogs d JOIN users u ON u.id=d.owner_user_id WHERE d.id=?');
 $stmt->execute([$dogId]);
 $dog = $stmt->fetch();
+if (!$dog) {
+    http_response_code(404);
+    ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><?= e(appName()) ?></title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+</head>
+<body class="pb-5">
+<?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
+<div class="container py-4" style="max-width: 820px;">
+    <div class="alert alert-warning">Dog profile not found or it is no longer available to this account.</div>
+    <a href="dogs.php" class="btn btn-outline-secondary">Dogs</a>
+</div>
+</body>
+</html>
+<?php
+    exit;
+}
 $publicContact = gpDogPublicContactDefaults($pdo, $dog);
 $csrf = generateCsrfToken();
 $publicUrl = publicDogProfileUrl((int) $dog['id']);

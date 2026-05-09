@@ -776,6 +776,13 @@ if ($adminLoggedIn) {
         $dogProfile = gpQaRequest($baseUrl, 'dog_profile.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $dogProfileBody = strtolower($dogProfile['body']);
         $dogProfileHtml = html_entity_decode($dogProfile['body'], ENT_QUOTES | ENT_HTML5);
+        $dogProfileLooksReady = gpQaPageLooksOk($dogProfile)
+            && (
+                str_contains($dogProfileBody, 'public qr profile')
+                || str_contains($dogProfileBody, 'private dog details')
+                || str_contains($dogProfileBody, 'dog profile saved')
+            );
+        gpQaResult($results, 'dog_profile_page_loads', $dogProfileLooksReady, 'HTTP ' . $dogProfile['status'] . ($dogProfileLooksReady ? ' dog profile content found' : ' dog profile content missing'));
         if (preg_match('/href="([^"]*public_dog_profile\.php\?dog=\d+&token=[^"]+)"/i', $dogProfileHtml, $pm)) {
             $publicProfileUrl = $pm[1];
             $publicProfilePage = gpQaRequest($baseUrl, ltrim(parse_url($publicProfileUrl, PHP_URL_PATH) . '?' . (parse_url($publicProfileUrl, PHP_URL_QUERY) ?? ''), '/'), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
