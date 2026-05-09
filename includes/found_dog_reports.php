@@ -68,12 +68,46 @@ function gpFoundDogFetchPublicDog(PDO $pdo, int $dogId): ?array
     return $dog;
 }
 
-function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location): string
+function gpFoundDogLooksLikeMapLocation(string $location): bool
+{
+    $normalized = strtolower(trim($location));
+    if ($normalized === '') {
+        return false;
+    }
+
+    if (str_contains($normalized, 'found-dog report') || str_contains($normalized, 'guidepaw qa') || str_contains($normalized, 'found location')) {
+        return false;
+    }
+
+    if (preg_match('/\b(?:st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|ln|lane|ct|court|hwy|highway|pkwy|parkway|way|trl|trail|pl|place|cir|circle)\b/i', $location)) {
+        return true;
+    }
+
+    return str_contains($location, '&') || str_contains($location, ',') || str_contains($normalized, ' near ') || str_contains($normalized, ' by ') || str_contains($normalized, ' at ');
+}
+
+function gpFoundDogMapUrl(?string $lat, ?string $lng, string $location, ?array $dog = null): string
 {
     if ($lat !== null && $lat !== '' && $lng !== null && $lng !== '') {
         return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lng);
     }
-    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location);
+    if (gpFoundDogLooksLikeMapLocation($location)) {
+        return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($location);
+    }
+    $dogId = (int) ($dog['id'] ?? 0);
+    $baseUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/');
+    if ($dogId > 0) {
+        return $baseUrl . '/dog_profile.php?dog_id=' . $dogId;
+    }
+    return $baseUrl . '/admin_found_dog_reports.php';
+}
+
+function gpFoundDogLocationLink(array $dog, array $report): string
+{
+    $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
+    $lng = isset($report['finder_longitude']) ? (string) $report['finder_longitude'] : '';
+    $location = (string) ($report['finder_location'] ?? '');
+    return gpFoundDogMapUrl($lat, $lng, $location, $dog);
 }
 
 function gpFoundDogTelegramText(array $dog, array $report, string $mapUrl): string
@@ -91,7 +125,7 @@ function gpFoundDogTelegramText(array $dog, array $report, string $mapUrl): stri
     if ($handler !== '') {
         $text .= "\nHandler: {$handler}";
     }
-    return $text . "\nMap: {$mapUrl}";
+    return $text . "\nLocation link: {$mapUrl}";
 }
 
 function gpSendFoundDogTelegram(array $dog, array $report, string $mapUrl): bool
@@ -156,7 +190,7 @@ function gpFoundDogNotifyOwnerSms(array $dog, array $report, string $mapUrl): bo
     if ($finderPhone !== '') {
         $body .= " Finder phone: {$finderPhone}.";
     }
-    $body .= " Map/details: {$mapUrl}";
+    $body .= " Location link: {$mapUrl}";
     return gpSmsNotifyUser($owner, $body, 'FOUND_DOG_NOTIFY_SMS_ENABLED');
 }
 
@@ -169,7 +203,8 @@ function gpFoundDogNotifyOwnerInApp(PDO $pdo, array $dog, array $report, string 
     }
     $dogName = (string) ($dog['name'] ?? 'your dog');
     try {
-        return gpCreateNotification($pdo, $ownerId, 'Found-dog report: ' . $dogName, $body, 'admin_found_dog_reports.php', 'found_dog_report', 'high', (int) ($dog['id'] ?? 0), ['map_url' => $mapUrl, 'report_id' => (int) ($report['id'] ?? 0)]);
+        $actionUrl = gpFoundDogLocationLink($dog, $report);
+        return gpCreateNotification($pdo, $ownerId, 'Found-dog report: ' . $dogName, $body, $actionUrl, 'found_dog_report', 'high', (int) ($dog['id'] ?? 0), ['map_url' => $mapUrl, 'report_id' => (int) ($report['id'] ?? 0)]);
     } catch (Throwable $e) {
         error_log('GuidePaw found dog in-app notification failed: ' . $e->getMessage());
         return false;
@@ -192,10 +227,12 @@ function gpFoundDogEmailBody(array $dog, array $report, string $mapUrl, ?string 
     $message = trim((string) ($report['finder_message'] ?? ''));
     $adminUrl = $adminUrl ?? rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_found_dog_reports.php';
 
+    $locationLink = gpFoundDogLocationLink($dog, $report);
+
     $body = "A location report was submitted for {$dogName}.\n\n" .
         "Handler: " . (string) ($contact['handler_name'] ?? 'Not provided') . "\n" .
         "Location / cross street: {$location}\n" .
-        "Map: {$mapUrl}\n";
+        "Location link: {$locationLink}\n";
     if ($lat !== '' && $lng !== '') {
         $body .= "GPS: {$lat}, {$lng}" . ($accuracy !== '' ? " ±{$accuracy}m" : '') . "\n";
     }
@@ -240,7 +277,7 @@ function gpNotifyFoundDogReport(PDO $pdo, int $reportId): bool
         $location = (string) ($report['finder_location'] ?? 'Not provided');
         $lat = isset($report['finder_latitude']) ? (string) $report['finder_latitude'] : '';
         $lng = isset($report['finder_longitude']) ? (string) $report['finder_longitude'] : '';
-        $mapUrl = gpFoundDogMapUrl($lat, $lng, $location);
+        $mapUrl = gpFoundDogMapUrl($lat, $lng, $location, $dog);
         $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_found_dog_reports.php';
         $body = gpFoundDogEmailBody($dog, $report, $mapUrl, $adminUrl);
         $recipients = gpFoundDogRecipientEmails($dog);

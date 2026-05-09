@@ -860,6 +860,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the admin session probe on its own cookie jar, then leave the public login/logout checks and admin-home check independent so beta smoke stays honest
 
+2026-05-09 — Found-dog location link fallback
+- Commit(s): pending
+- Files changed: includes/found_dog_reports.php, admin_found_dog_reports.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the found-dog notifications using Google Maps only for real map-like locations, and fall back to the dog profile for synthetic or non-map text so the notification links stay usable
+
 ## Update log template
 
 When updating this file, add a short note like:

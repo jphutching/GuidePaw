@@ -32,14 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $lat = $report['finder_latitude'] !== null ? (string) $report['finder_latitude'] : '';
         $lng = $report['finder_longitude'] !== null ? (string) $report['finder_longitude'] : '';
-        $mapUrl = gpFoundDogMapUrl($lat, $lng, (string) ($report['finder_location'] ?? ''));
         $subject = trim((string) ($_POST['email_subject'] ?? ''));
         $body = trim((string) ($_POST['email_body'] ?? ''));
         if ($subject === '') {
             $subject = gpFoundDogEmailSubject($dog);
         }
         if ($body === '') {
-            $body = gpFoundDogEmailBody($dog, $report, $mapUrl);
+            $body = gpFoundDogEmailBody($dog, $report, gpFoundDogLocationLink($dog, $report));
         }
 
         $sentCount = 0;
@@ -120,14 +119,12 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
     <?php if (!$reports): ?><div class="cardx">No found dog location reports yet.</div><?php endif; ?>
 
     <?php foreach ($reports as $report):
-        $lat = $report['finder_latitude'] !== null ? (string) $report['finder_latitude'] : '';
-        $lng = $report['finder_longitude'] !== null ? (string) $report['finder_longitude'] : '';
         $location = (string) ($report['finder_location'] ?? '');
-        $mapUrl = gpFoundDogMapUrl($lat, $lng, $location);
         $emailDog = gpFoundDogFetchPublicDog($pdo, (int) $report['dog_id']);
+        $locationLink = gpFoundDogLocationLink($emailDog ?: ['id' => (int) $report['dog_id']], $report);
         $emailRecipients = $emailDog ? gpFoundDogRecipientEmails($emailDog) : [];
         $emailSubject = $emailDog ? gpFoundDogEmailSubject($emailDog) : '';
-        $emailBody = $emailDog ? gpFoundDogEmailBody($emailDog, $report, $mapUrl) : '';
+        $emailBody = $emailDog ? gpFoundDogEmailBody($emailDog, $report, $locationLink) : '';
         $emailId = 'foundDogEmail' . (int) $report['id'];
     ?>
         <section class="cardx">
@@ -142,8 +139,8 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
             <hr>
             <div class="row g-3">
                 <div class="col-md-6"><strong>Reported location</strong><br><?= h($location ?: 'GPS only / not typed') ?></div>
-                <div class="col-md-6"><strong>Map</strong><br><a class="maplink" href="<?= h($mapUrl) ?>" target="_blank" rel="noopener"><?= h($mapUrl) ?></a></div>
-                <?php if ($lat !== '' && $lng !== ''): ?><div class="col-md-6"><strong>GPS</strong><br><?= h($lat) ?>, <?= h($lng) ?><?= $report['finder_accuracy_m'] !== null ? ' ±' . h($report['finder_accuracy_m']) . 'm' : '' ?></div><?php endif; ?>
+                <div class="col-md-6"><strong>Location link</strong><br><a class="maplink" href="<?= h($locationLink) ?>" target="_blank" rel="noopener"><?= h($locationLink) ?></a></div>
+                <?php if ($report['finder_latitude'] !== null && $report['finder_longitude'] !== null): ?><div class="col-md-6"><strong>GPS</strong><br><?= h($report['finder_latitude']) ?>, <?= h($report['finder_longitude']) ?><?= $report['finder_accuracy_m'] !== null ? ' ±' . h($report['finder_accuracy_m']) . 'm' : '' ?></div><?php endif; ?>
                 <div class="col-md-6"><strong>Finder</strong><br><?= h($report['finder_name'] ?: 'Name not provided') ?> · <?= h($report['finder_phone'] ?: 'Phone not provided') ?></div>
                 <div class="col-md-6"><strong>Handler</strong><br><?= h($report['handler_name'] ?: 'Not listed') ?> · <?= h($report['handler_phone'] ?: 'No phone') ?> · <?= h($report['handler_email'] ?: 'No email') ?></div>
             </div>

@@ -192,4 +192,10 @@ test('GuidePaw found-dog public report submits and reaches admin queue', async (
   const adminBody = await page.locator('body').innerText().catch(() => '');
   expect(adminBody).toContain(reportLocation);
   expect(adminBody).toContain(reportMessage);
+
+  const reportSection = page.locator('section.cardx').filter({ hasText: reportLocation }).first();
+  const locationLink = reportSection.locator('a.maplink').first();
+  await expect(locationLink).toBeVisible();
+  const locationHref = (await locationLink.getAttribute('href')) || '';
+  expect(locationHref).toContain('dog_profile.php?dog_id=');
 });
