@@ -949,6 +949,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'goal builder')
                 || str_contains($body, 'draft preview')
+                || str_contains($body, 'recommended path')
                 || str_contains($body, 'add a dog profile before building a goal')
             )
             : true;
@@ -1102,6 +1103,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $betaChecklistStatePage = gpQaRequest($baseUrl, 'beta_qa_checklist_state.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $goalIntakePage = gpQaRequest($baseUrl, 'training_goal_intake.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $goalBuilderPage = gpQaRequest($baseUrl, 'goal_builder.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $trainingProgramPage = gpQaRequest($baseUrl, 'training_program.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $alertsPage = gpQaRequest($baseUrl, 'alerts.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1124,6 +1126,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $betaChecklistStateBody = strtolower($betaChecklistStatePage['body']);
     $adminHomeBody = strtolower($adminHomePage['body']);
     $goalIntakeBody = strtolower($goalIntakePage['body']);
+    $goalBuilderPageBody = strtolower($goalBuilderPage['body']);
     $habitRepairBody = strtolower($habitRepairPage['body']);
     $trainingProgramBody = strtolower($trainingProgramPage['body']);
     $alertsPageBody = strtolower($alertsPage['body']);
@@ -1185,6 +1188,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $collaborationSeen = gpQaPageLooksOk($collaborationPage) && (str_contains($collaborationBody, 'handler collaboration') || str_contains($collaborationBody, 'handshake-based sharing') || str_contains($collaborationBody, 'claim a shared dog code'));
     $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
+    $goalBuilderSeen = gpQaPageLooksOk($goalBuilderPage) && (str_contains($goalBuilderPageBody, 'goal builder') || str_contains($goalBuilderPageBody, 'draft preview'));
+    $goalBuilderPathSeen = gpQaPageLooksOk($goalBuilderPage) && (str_contains($goalBuilderPageBody, 'recommended path') || str_contains($goalBuilderPageBody, 'program guide') || str_contains($goalBuilderPageBody, 'candidate assessment'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
     $editProfileSeen = gpQaPageLooksOk($editProfilePage);
     $manageDogsSeen = gpQaPageLooksOk($manageDogsPage) && (str_contains($manageDogsBody, 'manage dogs') || str_contains($manageDogsBody, 'dogs') || str_contains($manageDogsBody, 'active dogs'));
@@ -1315,6 +1320,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'beta_qa_checklist_state_page_loads', $betaChecklistStateSeen, 'HTTP ' . $betaChecklistStatePage['status'] . ($betaChecklistStateSeen ? ' checklist state found' : ' checklist state missing'));
     gpQaResult($results, 'admin_home_page_loads', $adminHomeSeen, 'HTTP ' . $adminHomePage['status'] . ($adminHomeSeen ? ' admin home found' : ' admin home missing'));
     gpQaResult($results, 'training_goal_intake_page_loads', $goalIntakeSeen, 'HTTP ' . $goalIntakePage['status'] . ($goalIntakeSeen ? ' goal intake found' : ' goal intake missing'));
+    gpQaResult($results, 'goal_builder_page_loads', $goalBuilderSeen, 'HTTP ' . $goalBuilderPage['status'] . ($goalBuilderSeen ? ' goal builder content found' : ' goal builder content missing'));
+    gpQaResult($results, 'goal_builder_path_links', $goalBuilderPathSeen, 'HTTP ' . $goalBuilderPage['status'] . ($goalBuilderPathSeen ? ' goal builder path links found' : ' goal builder path links missing'));
     gpQaResult($results, 'habit_repair_page_loads', $habitRepairSeen, 'HTTP ' . $habitRepairPage['status'] . ($habitRepairSeen ? ' habit repair found' : ' habit repair missing'));
     gpQaResult($results, 'edit_profile_page_loads', $editProfileSeen, 'HTTP ' . $editProfilePage['status'] . ($editProfileSeen ? ' edit profile found' : ' edit profile missing'));
     gpQaResult($results, 'manage_dogs_redirect', $manageDogsSeen, 'HTTP ' . $manageDogsPage['status'] . ($manageDogsSeen ? ' manage dogs redirect found' : ' manage dogs redirect missing'));

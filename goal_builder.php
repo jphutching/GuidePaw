@@ -102,6 +102,7 @@ if ($draft === null) {
 
 $csrf = generateCsrfToken();
 $options = gpGoalBuilderCategoryOptions();
+$path = gpGoalBuilderTrainingPath((string) ($draft['goal_category'] ?? 'other'));
 ?>
 <!doctype html>
 <html lang="en">
@@ -258,6 +259,16 @@ $options = gpGoalBuilderCategoryOptions();
                 <p><strong>Reward plan:</strong> <?= h($draft['reinforcer_preference']) ?></p>
                 <p><strong>Time budget:</strong> <?= h((string) $draft['handler_time_budget_minutes']) ?> minutes</p>
                 <p><strong>Safety risk:</strong> <?= !empty($draft['safety_risk']) ? 'Yes' : 'No' ?></p>
+                <div class="mt-3">
+                    <div class="small text-muted">Recommended path</div>
+                    <h3 class="h6 mt-1 mb-2"><?= h($path['title']) ?></h3>
+                    <p class="muted mb-3"><?= h($path['summary']) ?></p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($path['links'] as $link): ?>
+                            <a class="btn btn-outline-primary btn-sm" href="<?= h($link['url']) ?>"><?= h($link['label']) ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
                 <div class="small text-muted">The Save Goal button uses the drafted values, so you can adjust them before saving.</div>
             </div>
         </div>

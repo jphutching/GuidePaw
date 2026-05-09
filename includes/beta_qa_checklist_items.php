@@ -164,7 +164,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'goal_intake_page', 'text' => 'Goal Intake page loads.', 'expected' => 'training_goal_intake.php opens and can create or archive goals.'],
                 ['id' => 'habit_repair_page', 'text' => 'Habit Repair page loads.', 'expected' => 'habit_repair.php opens and shows repair protocols.'],
                 ['id' => 'behavior_risk_scoring', 'text' => 'Behavior Risk Scoring page loads and summarizes the current risk picture.', 'expected' => 'User can inspect risk bands, incident reasons, and next-step recommendations.'],
-                ['id' => 'goal_builder', 'text' => 'Goal Builder page loads and saves a generated goal.', 'expected' => 'User can draft a measurable goal and persist it to training goals.'],
+                ['id' => 'goal_builder', 'text' => 'Goal Builder page loads, saves a generated goal, and shows a recommended path.', 'expected' => 'User can draft a measurable goal, see suggested next modules, and persist it to training goals.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
                 ['id' => 'training_session_log', 'text' => 'Training Session Log page loads and saves a session.', 'expected' => 'User can log reps and see a session status result.'],
                 ['id' => 'training_history', 'text' => 'Training History page loads and lists records.', 'expected' => 'Active and archived training records remain visible.'],

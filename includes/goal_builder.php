@@ -174,3 +174,75 @@ function gpGoalBuilderDraft(array $input): array
         'summary' => $defaultDesired . ' in ' . $defaultContext,
     ];
 }
+
+function gpGoalBuilderTrainingPath(string $category): array
+{
+    $paths = [
+        'potty' => [
+            'title' => 'Potty routine path',
+            'summary' => 'Use the goal as a short routine plan: log the reps, keep timing tight, and reinforce the same potty cue.',
+            'links' => [
+                ['url' => 'log_entry.php', 'label' => 'Log sessions'],
+                ['url' => 'view_logs.php', 'label' => 'Review history'],
+            ],
+        ],
+        'leash' => [
+            'title' => 'Loose leash path',
+            'summary' => 'Build this through the training ladder first, then use logs to keep the leash work short and repeatable.',
+            'links' => [
+                ['url' => 'training_program.php#training-ladder', 'label' => 'Open training ladder'],
+                ['url' => 'log_entry.php', 'label' => 'Log sessions'],
+            ],
+        ],
+        'barking' => [
+            'title' => 'Quiet recovery path',
+            'summary' => 'Focus on calm recovery, distance management, and a short follow-up session after each trigger.',
+            'links' => [
+                ['url' => 'training_program.php#training-ladder', 'label' => 'Open training ladder'],
+                ['url' => 'log_entry.php', 'label' => 'Log sessions'],
+            ],
+        ],
+        'cab_calm' => [
+            'title' => 'Cab calm path',
+            'summary' => 'Use trucking mode for the day plan, then record the settle reps so you can see what works in-cab.',
+            'links' => [
+                ['url' => 'trucking_mode.php', 'label' => 'Open trucking mode'],
+                ['url' => 'log_entry.php', 'label' => 'Log sessions'],
+            ],
+        ],
+        'jumping' => [
+            'title' => 'Greeting control path',
+            'summary' => 'Work the greeting pattern in the training ladder and keep the reward timing tied to four paws on the floor.',
+            'links' => [
+                ['url' => 'training_program.php#training-ladder', 'label' => 'Open training ladder'],
+                ['url' => 'log_entry.php', 'label' => 'Log sessions'],
+            ],
+        ],
+        'public_manners' => [
+            'title' => 'Public manners path',
+            'summary' => 'Use the training program and certification checklists together so public access work and proofing stay aligned.',
+            'links' => [
+                ['url' => 'training_program.php#program-guide', 'label' => 'Program guide'],
+                ['url' => 'certification.php', 'label' => 'Certification checklist'],
+            ],
+        ],
+        'psd_foundation' => [
+            'title' => 'PSD foundation path',
+            'summary' => 'Start with candidate assessment, then use the training ladder to build neutrality, recovery, and core service work.',
+            'links' => [
+                ['url' => 'candidate_assessment.php', 'label' => 'Candidate assessment'],
+                ['url' => 'training_program.php#training-ladder', 'label' => 'Open training ladder'],
+            ],
+        ],
+        'other' => [
+            'title' => 'Custom path',
+            'summary' => 'Start by refining the problem, then attach the goal to the most relevant training page before saving more detail.',
+            'links' => [
+                ['url' => 'goal_builder.php', 'label' => 'Refine goal'],
+                ['url' => 'training_goal_intake.php', 'label' => 'Goal intake'],
+            ],
+        ],
+    ];
+
+    return $paths[$category] ?? $paths['other'];
+}
