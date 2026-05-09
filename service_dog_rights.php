@@ -8,7 +8,7 @@ checkLogin();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADA Quick Reference</title>
+    <title>Detailed ADA Notes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>
@@ -38,7 +38,7 @@ checkLogin();
     <div class="bg-primary text-white px-4 py-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <div class="small opacity-75">Quick Reference</div>
+                <div class="small opacity-75">Detailed notes</div>
                 <h3 class="mb-0">ADA Service Dog Rights</h3>
             </div>
             <a href="index.php" class="btn btn-light btn-sm">Home</a>
@@ -141,7 +141,7 @@ checkLogin();
     <div class="sticky-actions p-3">
         <div class="container" style="max-width: 760px;">
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
-                <a href="ada_wallet_card.php" class="btn btn-outline-dark">Wallet Card</a>
+                <a href="ada_access_card.php" class="btn btn-outline-dark">ADA Access Card</a>
                 <button class="btn btn-outline-secondary" onclick="window.print()">Print / Save PDF</button>
                 <a href="index.php" class="btn btn-primary">Done</a>
             </div>
