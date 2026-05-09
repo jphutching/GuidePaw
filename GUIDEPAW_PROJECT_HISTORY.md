@@ -496,6 +496,13 @@ Only run destructive cleanup after dry-run output is correct:
 php scripts/cleanup_e2e_data.php --yes
 ```
 
+2026-05-08 — Behavior risk scoring rollout
+- Commit(s): pending
+- Files changed: behavior_risk_scoring.php, includes/behavior_risk_scoring.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, sql/migrations/pgsql/20260508_behavior_risk_scoring_beta_enabled.sql
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: apply the migration, verify local/beta crawlers, then commit and push
+
 2026-05-08 — Goal builder rollout
 - Commit(s): b76e41b add goal builder workflow
 - Files changed: goal_builder.php, includes/goal_builder.php, index.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, training_goal_intake.php, sql/migrations/pgsql/20260508_goal_builder_beta_enabled.sql

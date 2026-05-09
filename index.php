@@ -4,6 +4,7 @@ require_once 'includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/dog_access_dashboard.php';
 require_once __DIR__ . '/includes/candidate_scoring.php';
+require_once __DIR__ . '/includes/behavior_risk_scoring.php';
 require_once __DIR__ . '/includes/candidate_comparison.php';
 require_once __DIR__ . '/includes/community_challenges.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
@@ -29,6 +30,7 @@ $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
+$behaviorRiskState = gpBehaviorRiskAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
 $communityChallengeState = $activeDog ? gpCommunityChallengeState($userId, (int) $activeDog['id']) : null;
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
@@ -148,6 +150,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'trucking_mode_enabled')): ?>
                     <a class="today-action" href="trucking_mode.php"><span>🚚</span>Trucking Mode</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled')): ?>
+                    <a class="today-action" href="behavior_risk_scoring.php"><span>⚠️</span>Behavior Risk</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'goal_builder_enabled')): ?>
                     <a class="today-action" href="goal_builder.php"><span>🎯</span>Goal Builder</a>
                 <?php endif; ?>
@@ -210,6 +215,20 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <?php endif; ?>
 
             <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
+            <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled') && $behaviorRiskState): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Behavior Risk</h3>
+                        <a href="behavior_risk_scoring.php" class="btn btn-outline-danger btn-sm">Open scoring</a>
+                    </div>
+                    <div class="attention-empty">
+                        Current score <?= (int) $behaviorRiskState['score'] ?>, <?= e(ucfirst((string) $behaviorRiskState['band'])) ?> risk.
+                        <?php if (!empty($behaviorRiskState['candidate']['dog_name'])): ?>
+                            Latest assessment: <?= e($behaviorRiskState['candidate']['dog_name']) ?>.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
             <?php if (featureEnabled($pdo, 'candidate_comparison_enabled') && count($dogs) > 1): ?>
                 <div class="mt-3">
                     <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
