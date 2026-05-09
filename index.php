@@ -10,6 +10,7 @@ require_once __DIR__ . '/includes/community_challenges.php';
 require_once __DIR__ . '/includes/coach_reviews.php';
 require_once __DIR__ . '/includes/video_reviews.php';
 require_once __DIR__ . '/includes/trucking_mode.php';
+require_once __DIR__ . '/includes/wearable_integrations.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once 'includes/app_config.php';
@@ -34,6 +35,8 @@ $behaviorRiskState = gpBehaviorRiskAssessment($pdo, $userId, $activeDog ? (int) 
 $communityChallengeState = $activeDog ? gpCommunityChallengeState($userId, (int) $activeDog['id']) : null;
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
+$wearableEvents = gpWearableRecentEvents($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null, 1);
+$latestWearableSync = $wearableEvents[0] ?? null;
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
 $candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
 $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
@@ -153,6 +156,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled')): ?>
                     <a class="today-action" href="behavior_risk_scoring.php"><span>⚠️</span>Behavior Risk</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
+                    <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'goal_builder_enabled')): ?>
                     <a class="today-action" href="goal_builder.php"><span>🎯</span>Goal Builder</a>
                 <?php endif; ?>
@@ -225,6 +231,21 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                         Current score <?= (int) $behaviorRiskState['score'] ?>, <?= e(ucfirst((string) $behaviorRiskState['band'])) ?> risk.
                         <?php if (!empty($behaviorRiskState['candidate']['dog_name'])): ?>
                             Latest assessment: <?= e($behaviorRiskState['candidate']['dog_name']) ?>.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <h3 class="h6 mb-0">Wearable Sync</h3>
+                        <a href="wearable_integrations.php" class="btn btn-outline-dark btn-sm">Open sync hub</a>
+                    </div>
+                    <div class="attention-empty">
+                        <?php if ($latestWearableSync): ?>
+                            Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?> from <?= e((string) ($latestWearableSync['source'] ?? 'manual')) ?>.
+                        <?php else: ?>
+                            No wearable snapshots recorded yet.
                         <?php endif; ?>
                     </div>
                 </div>

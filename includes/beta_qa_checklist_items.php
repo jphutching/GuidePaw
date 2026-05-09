@@ -171,6 +171,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'feedback_auto_context', 'text' => 'Feedback/Bug Report page captures relevant troubleshooting context.', 'expected' => 'Report includes page/error/account context where available.'],
                 ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches and family guidance.'],
                 ['id' => 'ai_training_assistant', 'text' => 'AI Training Assistant page loads and returns bounded next steps.', 'expected' => 'Assistant gives safety-aware troubleshooting without unsafe certification advice.'],
+                ['id' => 'wearable_integrations', 'text' => 'Wearable Integrations page loads and saves a wearable snapshot.', 'expected' => 'User can record a wearable summary and review recent syncs.'],
                 ['id' => 'public_profile_questionnaire_link', 'text' => 'Public dog profile links to the Breed Questionnaire.', 'expected' => 'Public profile page exposes the questionnaire CTA.'],
                 ['id' => 'admin_feedback', 'text' => 'Admin Feedback Reports page shows submitted feedback.', 'expected' => 'Submitted bug report is visible to admin.'],
                 ['id' => 'user_management', 'text' => 'Admin User Management page loads.', 'expected' => 'Admin can inspect/manage users as expected.'],
