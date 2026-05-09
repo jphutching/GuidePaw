@@ -406,6 +406,26 @@ if ($adminLoggedIn) {
         if ($feedbackSummary) {
             echo 'Feedback-prioritized pages: ' . implode(', ', $feedbackSummary) . PHP_EOL;
         }
+        $topFeedbackRows = array_slice($feedbackRows, 0, 5);
+        $feedbackHotspots = [];
+        foreach ($topFeedbackRows as $row) {
+            $label = trim((string) ($row['page_workflow'] ?? ''));
+            if ($label === '') {
+                $label = trim((string) ($row['title'] ?? ''));
+            }
+            if ($label === '') {
+                $label = 'feedback #' . (string) ($row['id'] ?? '0');
+            }
+            $feedbackHotspots[] = sprintf(
+                '%s [%s/%s]',
+                preg_replace('/\s+/', ' ', $label),
+                (string) ($row['status'] ?? 'new'),
+                (string) ($row['priority'] ?? 'normal')
+            );
+        }
+        if ($feedbackHotspots) {
+            echo 'Feedback hotspots: ' . implode(' | ', $feedbackHotspots) . PHP_EOL;
+        }
         echo 'Feedback reports scanned: ' . count($feedbackRows) . PHP_EOL;
     }
 

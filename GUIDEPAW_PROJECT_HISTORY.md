@@ -592,6 +592,7 @@ php scripts/cleanup_e2e_data.php --yes
 - New checklist items added: no
 - In-progress item changed: no
 - Next recommended step: none; the feedback-prioritized crawler and wrapper pass-throughs are committed and pass 73/73 on both hosts
+- Follow-up: the crawler now also prints the top feedback hotspots so the DB signal is easier to triage
 
 2026-05-09 — Local crawler wrapper ergonomics
 - Commit(s): pending
