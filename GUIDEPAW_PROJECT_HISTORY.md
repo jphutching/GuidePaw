@@ -593,6 +593,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the feedback-prioritized crawler and wrapper pass-throughs are committed and pass 73/73 on both hosts
 
+2026-05-09 — Local crawler wrapper ergonomics
+- Commit(s): pending
+- Files changed: scripts/run_local_qa_crawler.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the local crawler wrapper now self-loads the checked-in test env files and falls back to the standard smoke credentials
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
