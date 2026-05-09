@@ -129,6 +129,7 @@ $recent = getRecentTrainingGoals($pdo, $userId, 8, $view);
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Training Goal Intake</h1>
     <p class="small">Turn a real-life problem into a measurable GuidePaw training goal.</p>
+    <p><a href="goal_builder.php">Open Goal Builder →</a></p>
 
     <?php if ($message): ?>
         <div class="alert"><?= h($message) ?></div>

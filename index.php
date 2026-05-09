@@ -148,6 +148,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'trucking_mode_enabled')): ?>
                     <a class="today-action" href="trucking_mode.php"><span>🚚</span>Trucking Mode</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'goal_builder_enabled')): ?>
+                    <a class="today-action" href="goal_builder.php"><span>🎯</span>Goal Builder</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'community_challenges_enabled')): ?>
                     <a class="today-action" href="community_challenges.php"><span>🏅</span>Community Challenges</a>
                 <?php endif; ?>

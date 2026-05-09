@@ -137,6 +137,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'coach_review', 'text' => 'Coach Review page opens and lets you queue regression items for follow-up.', 'expected' => 'Open training regressions can be promoted into a coach review queue and updated.'],
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
                 ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
+                ['id' => 'goal_builder', 'text' => 'Goal Builder page loads and saves a generated goal.', 'expected' => 'User can draft a measurable goal and persist it to training goals.'],
                 ['id' => 'candidate_assessment', 'text' => 'Candidate Assessment page loads if enabled.', 'expected' => 'Assessment can be started or viewed.'],
                 ['id' => 'candidate_comparison', 'text' => 'Candidate Comparison page loads if enabled.', 'expected' => 'User can compare multiple dog candidate assessments side by side.'],
                 ['id' => 'community_challenges', 'text' => 'Community Challenges page loads if enabled.', 'expected' => 'User can choose a challenge and see the current challenge state.'],
