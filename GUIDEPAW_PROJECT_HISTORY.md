@@ -551,11 +551,11 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: none; beta crawler passed 29/29 after the deploy
 
 2026-05-08 — Notification Center enhancement rollout
-- Commit(s): pending
+- Commit(s): 117e46c add notification center preferences
 - Files changed: notifications.php, includes/mobile_nav.php, includes/notifications.php, includes/beta_qa_checklist_extra_items.php, scripts/local_qa_crawler.php
 - New checklist items added: yes
 - In-progress item changed: no
-- Next recommended step: run PHP lint, deploy smoke checks, and local/beta crawlers to verify preferences, bulk delete, and nav badge behavior
+- Next recommended step: push to main, let Render deploy, and verify the beta crawler against the notification center changes
 
 2026-05-08 — Candidate comparison rollout
 - Commit(s): e9f3f8f add candidate comparison workflow
