@@ -847,7 +847,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: keep the log editor discoverable from Training History and verify the beta edit/save path stays stable across ownership and access roles
 
 2026-05-09 — Feedback category picker enhancement
-- Commit(s): pending
+- Commit(s): 59cf331 improve feedback category picker
 - Files changed: feedback.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: yes
 - In-progress item changed: yes
