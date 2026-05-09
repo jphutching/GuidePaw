@@ -160,7 +160,11 @@ body { background: #f1f5f9; color:#0f172a; }
     <section class="cardx mb-3">
         <h2 class="h5 mb-2">Choosing a breed?</h2>
         <p class="text-muted mb-3">Use the public questionnaire to compare breed groups by size, energy, grooming, and the kind of work you need.</p>
-        <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
+        <div class="d-grid gap-2">
+            <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
+            <a class="btn btn-outline-dark btn-call w-100" href="air_travel_rights.php">Air Travel Rights</a>
+        </div>
+        <div class="inherited-hint mt-2">Use the air-travel guide for service-dog flight rules and the separate note for dogs in training.</div>
     </section>
 
     <section class="cardx small text-muted mb-3">This public profile is intended to help return or identify a service dog and contact the handler or vet. It does not display private training logs, medical records, account data, or full app history.</section>

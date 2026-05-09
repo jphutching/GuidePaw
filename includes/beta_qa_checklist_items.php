@@ -178,6 +178,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'ai_training_assistant', 'text' => 'AI Training Assistant page loads and returns bounded next steps.', 'expected' => 'Assistant gives safety-aware troubleshooting without unsafe certification advice.'],
                 ['id' => 'wearable_integrations', 'text' => 'Wearable Integrations page loads and saves a wearable snapshot.', 'expected' => 'User can record a wearable summary and review recent syncs.'],
                 ['id' => 'public_profile_questionnaire_link', 'text' => 'Public dog profile links to the Breed Questionnaire.', 'expected' => 'Public profile page exposes the questionnaire CTA.'],
+                ['id' => 'public_profile_air_travel_link', 'text' => 'Public dog profile links to Air Travel Rights.', 'expected' => 'Public profile page exposes the flight guidance CTA.'],
                 ['id' => 'admin_feedback', 'text' => 'Admin Feedback Reports page shows submitted feedback.', 'expected' => 'Submitted bug report is visible to admin.'],
                 ['id' => 'user_management', 'text' => 'Admin User Management page loads.', 'expected' => 'Admin can inspect/manage users as expected.'],
                 ['id' => 'feature_roadmap', 'text' => 'Admin Feature Roadmap page loads.', 'expected' => 'Flags/roadmap remain visible.'],

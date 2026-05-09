@@ -302,6 +302,31 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split found' : ' archive split not currently visible'));
 
+    $publicProfileQuestionnaireSeen = false;
+    $publicProfileAirTravelSeen = false;
+    $publicProfileStatus = 0;
+    $publicProfileUrl = '';
+    if (preg_match('/dog_profile\.php\?dog_id=(\d+)/', $dogsPage['body'], $m)) {
+        $dogProfile = gpQaRequest($baseUrl, 'dog_profile.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl);
+        $dogProfileBody = strtolower($dogProfile['body']);
+        $dogProfileHtml = html_entity_decode($dogProfile['body'], ENT_QUOTES | ENT_HTML5);
+        if (preg_match('/href="([^"]*public_dog_profile\.php\?dog=\d+&token=[^"]+)"/i', $dogProfileHtml, $pm)) {
+            $publicProfileUrl = $pm[1];
+            $publicProfilePage = gpQaRequest($baseUrl, ltrim(parse_url($publicProfileUrl, PHP_URL_PATH) . '?' . (parse_url($publicProfileUrl, PHP_URL_QUERY) ?? ''), '/'), 'GET', [], $adminCookie, $insecureLocalSsl);
+            $publicProfileStatus = $publicProfilePage['status'];
+            $publicProfileBody = strtolower($publicProfilePage['body']);
+            $publicProfileQuestionnaireSeen = str_contains($publicProfileBody, 'breed questionnaire');
+            $publicProfileAirTravelSeen = str_contains($publicProfileBody, 'air travel rights');
+        } else {
+            $publicProfileStatus = $dogProfile['status'];
+        }
+        gpQaResult($results, 'public_profile_questionnaire_link', $publicProfileQuestionnaireSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileQuestionnaireSeen ? ' breed questionnaire link found' : ' breed questionnaire link missing'));
+        gpQaResult($results, 'public_profile_air_travel_link', $publicProfileAirTravelSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileAirTravelSeen ? ' air travel link found' : ' air travel link missing'));
+    } else {
+        gpQaResult($results, 'public_profile_questionnaire_link', false, 'dog profile link missing on dogs page');
+        gpQaResult($results, 'public_profile_air_travel_link', false, 'dog profile link missing on dogs page');
+    }
+
     $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl);
     $adminBody = strtolower($adminUsers['body']);
     $adminProtected = gpQaPageLooksOk($adminUsers)
