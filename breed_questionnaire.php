@@ -3,6 +3,13 @@ require_once __DIR__ . '/includes/app_config.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/dog_breeds.php';
 
+if (!function_exists('e')) {
+    function e($value): string
+    {
+        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
