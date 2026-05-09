@@ -24,6 +24,11 @@ if [ -f "$ENV_FILE" ]; then
   set +a
 fi
 
+if [ "${GUIDEPAW_REPAIR_SMOKE_AUTH:-no}" = "yes" ]; then
+  echo "Repairing smoke-login credentials before test run..."
+  php scripts/repair_smoke_auth.php
+fi
+
 if [ -z "${GUIDEPAW_TEST_USERNAME:-}" ]; then
   read -r -p "GuidePaw test username/email: " GUIDEPAW_TEST_USERNAME
   export GUIDEPAW_TEST_USERNAME

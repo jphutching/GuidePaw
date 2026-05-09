@@ -109,6 +109,10 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
   - The Training menu, Today dashboard actions, beta QA checklist, local crawler, and deploy smoke checks now include Regression Engine.
   - Commit `d41b07a` captured the workflow slice.
   - Local mirror deployment reached `regression_engine.php`, but the credentialed crawler pass against `https://10.147.18.184` was still blocked by auth failures on the seeded test logins.
+- Smoke-login repair tooling was added on 2026-05-08:
+  - `scripts/repair_smoke_auth.php` can reset the seeded admin and regular smoke accounts back to the crawler passwords and clear 2FA for smoke testing.
+  - `scripts/run_e2e.sh` and `scripts/run_admin_e2e.sh` can optionally run that repair step first when `GUIDEPAW_REPAIR_SMOKE_AUTH=yes`.
+  - This is the supported path for fixing login drift on local or beta hosts without introducing a browser-side bypass.
 - Remaining roadmap bookkeeping was reconciled on 2026-05-08:
   - `feature_roadmap.coach_review_enabled` and `feature_roadmap.media_reviews_enabled` were promoted to `beta_enabled`.
   - The flag states were already enabled; this was a roadmap-history cleanup to match the shipped features.
