@@ -906,6 +906,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'training program')
                 || str_contains($body, 'today\'s easy win')
                 || str_contains($body, 'active goals')
+                || str_contains($body, 'training setup')
+                || str_contains($body, 'akc programs')
+                || str_contains($body, 'training ladder')
             )
             : true;
         $trainingGoalIntakePageLooksReady = $path === 'training_goal_intake.php'
@@ -1097,6 +1100,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
     $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
     $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
+    $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
     $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog'));
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
@@ -1146,6 +1150,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));
     gpQaResult($results, 'dashboard_trucking_hook', gpQaPageLooksOk($dashboard) && $truckingHookSeen, 'HTTP ' . $dashboard['status'] . ($truckingHookSeen ? ' trucking hook found' : ' trucking hook not currently visible'));
     gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
+    gpQaResult($results, 'dashboard_menu_search', gpQaPageLooksOk($dashboard) && $menuSearchSeen, 'HTTP ' . $dashboard['status'] . ($menuSearchSeen ? ' menu search found' : ' menu search not currently visible'));
     gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));

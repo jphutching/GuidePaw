@@ -342,15 +342,25 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
     </div>
 </div>
 
-<div class="page-shell">
-    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
-        <div>
-            <div class="small-muted">Structured training</div>
-            <h1 class="h3 mb-1">🎓 <?= e($dog['name']) ?></h1>
-            <div class="small-muted">Progression ladder, service-dog candidate screen, AKC tracks, and trainer workflow.</div>
+    <div class="page-shell">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+            <div>
+                <div class="small-muted">Structured training</div>
+                <h1 class="h3 mb-1">🎓 <?= e($dog['name']) ?></h1>
+                <div class="small-muted">Progression ladder, service-dog candidate screen, AKC tracks, and trainer workflow.</div>
+            </div>
+            <a href="index.php" class="btn btn-outline-secondary btn-sm">Dashboard</a>
         </div>
-        <a href="index.php" class="btn btn-outline-secondary btn-sm">Dashboard</a>
-    </div>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a class="btn btn-outline-primary btn-sm" href="#training-setup">Training setup</a>
+            <a class="btn btn-outline-primary btn-sm" href="#program-guide">AKC programs</a>
+            <a class="btn btn-outline-primary btn-sm" href="#training-ladder">Training ladder</a>
+            <a class="btn btn-outline-primary btn-sm" href="certification.php">Certification</a>
+            <a class="btn btn-outline-primary btn-sm" href="candidate_assessment.php">Candidate Assessment</a>
+            <a class="btn btn-outline-primary btn-sm" href="goal_builder.php">Goal Builder</a>
+            <a class="btn btn-outline-primary btn-sm" href="training_session_log.php">Session Log</a>
+            <a class="btn btn-outline-primary btn-sm" href="training_history.php">History</a>
+        </div>
     <?php if ($status): ?><div class="alert alert-success"><?= e(str_replace('_', ' ', $status)) ?>.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
@@ -363,7 +373,7 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
 
     <div class="row g-3">
         <div class="col-lg-4">
-            <div class="card shadow-sm mb-3">
+            <div class="card shadow-sm mb-3" id="training-setup">
                 <div class="card-body">
                     <div class="section-title">Training setup</div>
                     <form method="post" class="row g-3">
@@ -423,7 +433,7 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="card shadow-sm">
+            <div class="card shadow-sm" id="program-guide">
                 <div class="card-body">
                     <div class="section-title">Helpful programs and tests</div>
                     <div class="vstack gap-2">
@@ -440,7 +450,7 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
         </div>
 
         <div class="col-lg-8">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm" id="training-ladder">
                 <div class="card-body">
                     <div class="section-title">Training ladder</div>
                     <?php if (!$items): ?>

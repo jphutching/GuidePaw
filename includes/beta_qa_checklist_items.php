@@ -158,7 +158,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'coach_review', 'text' => 'Coach Review page opens and lets you queue regression items for follow-up.', 'expected' => 'Open training regressions can be promoted into a coach review queue and updated.'],
                 ['id' => 'regression_engine', 'text' => 'Regression Engine page opens and shows reset plans for open regressions.', 'expected' => 'User can review open regression events and save a reset plan update.'],
                 ['id' => 'history_loads', 'text' => 'History page loads and filters active dog data correctly.', 'expected' => 'No stale/retired dog confusion unless intentionally viewing history.'],
-                ['id' => 'training_program', 'text' => 'Training Program page loads.', 'expected' => 'Active dog training ladder/profile works.'],
+                ['id' => 'training_program', 'text' => 'Training Program page loads with quick links.', 'expected' => 'Active dog training ladder/profile works and the page surfaces jump links for AKC programs, certification, and training history.'],
                 ['id' => 'goal_intake_page', 'text' => 'Goal Intake page loads.', 'expected' => 'training_goal_intake.php opens and can create or archive goals.'],
                 ['id' => 'habit_repair_page', 'text' => 'Habit Repair page loads.', 'expected' => 'habit_repair.php opens and shows repair protocols.'],
                 ['id' => 'behavior_risk_scoring', 'text' => 'Behavior Risk Scoring page loads and summarizes the current risk picture.', 'expected' => 'User can inspect risk bands, incident reasons, and next-step recommendations.'],
@@ -192,7 +192,7 @@ function gpBetaQaChecklistItems(): array
             'title' => 'Mobile, PWA, and Offline Behavior',
             'description' => 'Validate mobile navigation and browser/PWA behaviors.',
             'items' => [
-                ['id' => 'mobile_menu_groups', 'text' => 'Mobile menu groups open/close correctly.', 'expected' => 'Dog, Logs, Training, Care, Access, Support, and Admin sections work.'],
+                ['id' => 'mobile_menu_groups', 'text' => 'Mobile menu groups and search open/close correctly.', 'expected' => 'Dog, Logs, Training, Care, Access, Support, and Admin sections work and the menu search filters pages.'],
                 ['id' => 'bottom_nav', 'text' => 'Bottom nav routes work.', 'expected' => 'Home, Log, History, Alerts, Menu open expected pages.'],
                 ['id' => 'install_home_screen', 'text' => 'PWA can be installed to home screen.', 'expected' => 'Manifest/icon load and app opens standalone where supported.'],
                 ['id' => 'notification_permission', 'text' => 'Enable reminders button prompts for notifications.', 'expected' => 'Browser permission flow works or fails gracefully.'],
