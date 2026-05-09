@@ -154,6 +154,9 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'health_docs_today', 'text' => 'Dashboard exposes Health Docs as a Today shortcut.', 'expected' => 'index.php shows a direct Health Docs tile.'],
                 ['id' => 'appointments_today', 'text' => 'Dashboard exposes Vet Appointments as a Today shortcut.', 'expected' => 'index.php shows a direct Appointments tile.'],
                 ['id' => 'medications_today', 'text' => 'Dashboard exposes Medications as a Today shortcut.', 'expected' => 'index.php shows a direct Medications tile.'],
+                ['id' => 'alerts_page', 'text' => 'Smart Alerts page loads and shows current alerts.', 'expected' => 'User can open alerts and see the current alert list.'],
+                ['id' => 'alerts_today', 'text' => 'Dashboard exposes Smart Alerts as a Today shortcut.', 'expected' => 'index.php shows a direct Smart Alerts tile.'],
+                ['id' => 'certification_today', 'text' => 'Dashboard exposes Certification as a Today shortcut.', 'expected' => 'index.php shows a direct Certification tile.'],
             ],
         ],
         [
@@ -180,6 +183,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches and family guidance.'],
                 ['id' => 'ai_training_assistant', 'text' => 'AI Training Assistant page loads and returns bounded next steps.', 'expected' => 'Assistant gives safety-aware troubleshooting without unsafe certification advice.'],
                 ['id' => 'wearable_integrations', 'text' => 'Wearable Integrations page loads and saves a wearable snapshot.', 'expected' => 'User can record a wearable summary and review recent syncs.'],
+                ['id' => 'certification_page', 'text' => 'Certification page loads and shows readiness tracking.', 'expected' => 'Certification tracking page displays the checklist and assessment snapshot.'],
                 ['id' => 'public_profile_questionnaire_link', 'text' => 'Public dog profile links to the Breed Questionnaire.', 'expected' => 'Public profile page exposes the questionnaire CTA.'],
                 ['id' => 'public_profile_air_travel_link', 'text' => 'Public dog profile links to Air Travel Rights.', 'expected' => 'Public profile page exposes the flight guidance CTA.'],
                 ['id' => 'admin_feedback', 'text' => 'Admin Feedback Reports page shows submitted feedback.', 'expected' => 'Submitted bug report is visible to admin.'],

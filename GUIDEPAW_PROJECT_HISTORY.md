@@ -322,6 +322,7 @@ Completed changes from prior work:
 - The public dog profile now links to Air Travel Rights alongside the breed questionnaire.
 - The dashboard Today actions now expose Health Docs, Vet Appointments, and Medications alongside the other care shortcuts.
 - The QA crawler now directly verifies Health Docs, Vet Appointments, and Medications page loads as part of the care slice.
+- Smart Alerts and Certification are now exposed in the dashboard Today actions and verified by the QA crawler.
 - The page explains the DOT service-dog cabin baseline and notes that service dogs in training are not covered by the DOT air-travel service-animal definition.
 - The ADA Access Card and Detailed ADA Notes pages link to the new flight guidance page.
 - Beta QA and the local crawler now cover the new air-travel page.

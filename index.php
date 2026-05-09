@@ -167,6 +167,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
                     <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
                 <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
+                    <a class="today-action" href="alerts.php"><span>🧠</span>Smart Alerts</a>
+                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
                     <a class="today-action" href="dog_health.php"><span>🩺</span>Health Docs</a>
                 <?php endif; ?>
@@ -184,6 +187,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'community_challenges_enabled')): ?>
                     <a class="today-action" href="community_challenges.php"><span>🏅</span>Community Challenges</a>
+                <?php endif; ?>
+                <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
+                    <a class="today-action" href="certification.php"><span>✅</span>Certification</a>
                 <?php endif; ?>
                 <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
