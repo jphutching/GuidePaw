@@ -16,6 +16,7 @@ if [[ -f ".env.test.admin.local" ]]; then
 fi
 
 BASE_URL="${GUIDEPAW_BASE_URL:-https://10.147.18.184}"
+CRAWLER_MODE="${GUIDEPAW_CRAWLER_MODE:-auto}"
 ADMIN_USER="${GUIDEPAW_ADMIN_USER:-${GUIDEPAW_ADMIN_TEST_USERNAME:-admin}}"
 ADMIN_PASS="${GUIDEPAW_ADMIN_PASS:-${GUIDEPAW_ADMIN_TEST_PASSWORD:-${GUIDEPAW_SMOKE_PASSWORD:-}}}"
 REGULAR_USER="${GUIDEPAW_REGULAR_USER:-${GUIDEPAW_TEST_USERNAME:-}}"
@@ -61,6 +62,17 @@ export GUIDEPAW_TEST_USERNAME="$REGULAR_USER"
 export GUIDEPAW_TEST_PASSWORD="$REGULAR_PASS"
 export GUIDEPAW_ADMIN_TEST_USERNAME="$ADMIN_USER"
 export GUIDEPAW_ADMIN_TEST_PASSWORD="$ADMIN_PASS"
+
+case "$CRAWLER_MODE" in
+  php)
+    php scripts/local_qa_crawler.php "${args[@]}"
+    exit $?
+    ;;
+  playwright)
+    echo "GUIDEPAW_CRAWLER_MODE=playwright; skipping PHP crawler." >&2
+    exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js
+    ;;
+esac
 
 if php scripts/local_qa_crawler.php "${args[@]}"; then
   exit 0

@@ -643,6 +643,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; the crawler now submits a unique public found-dog report and verifies that the admin queue lists it, while also covering the found-dog test page
 
+2026-05-09 — Local crawler mode switch
+- Commit(s): pending
+- Files changed: scripts/run_local_qa_crawler.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the local QA wrapper now supports explicit `php` or `playwright` modes instead of only auto-falling back when the PHP crawler cannot run here
+
 2026-05-09 — Browser crawler fallback
 - Commit(s): 1cea147 add browser crawler fallback
 - Files changed: scripts/run_local_qa_crawler.sh, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
