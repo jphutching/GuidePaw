@@ -586,6 +586,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; local and beta crawlers passed 73/73 after the crawler session-cookie fix
 
+2026-05-09 — Feedback-driven crawl prioritization
+- Commit(s): 94d5e33 add feedback-driven crawl prioritization
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; the feedback-prioritized crawler is committed and passes 73/73 on both hosts
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

@@ -23,6 +23,12 @@ $options = getopt('', [
     'regular-pass::',
     'mark-checklist::',
     'insecure-local-ssl::',
+    'feedback-db-host::',
+    'feedback-db-port::',
+    'feedback-db-name::',
+    'feedback-db-user::',
+    'feedback-db-pass::',
+    'feedback-limit::',
 ]);
 
 $baseUrl = rtrim((string)($options['base-url'] ?? getenv('GUIDEPAW_BASE_URL') ?: 'https://10.147.18.184'), '/');
@@ -32,6 +38,12 @@ $regularUser = (string)($options['regular-user'] ?? getenv('GUIDEPAW_REGULAR_USE
 $regularPass = (string)($options['regular-pass'] ?? getenv('GUIDEPAW_REGULAR_PASS') ?: '');
 $markChecklist = strtolower((string)($options['mark-checklist'] ?? 'no')) === 'yes';
 $insecureLocalSsl = strtolower((string)($options['insecure-local-ssl'] ?? getenv('GUIDEPAW_INSECURE_LOCAL_SSL') ?: 'yes')) !== 'no';
+$feedbackDbHost = (string)($options['feedback-db-host'] ?? getenv('GUIDEPAW_FEEDBACK_DB_HOST') ?? getenv('DB_HOST') ?: '');
+$feedbackDbPort = (string)($options['feedback-db-port'] ?? getenv('GUIDEPAW_FEEDBACK_DB_PORT') ?? getenv('DB_PORT') ?: '5432');
+$feedbackDbName = (string)($options['feedback-db-name'] ?? getenv('GUIDEPAW_FEEDBACK_DB_NAME') ?? getenv('DB_DATABASE') ?: '');
+$feedbackDbUser = (string)($options['feedback-db-user'] ?? getenv('GUIDEPAW_FEEDBACK_DB_USER') ?? getenv('DB_USERNAME') ?: '');
+$feedbackDbPass = (string)($options['feedback-db-pass'] ?? getenv('GUIDEPAW_FEEDBACK_DB_PASSWORD') ?? getenv('DB_PASSWORD') ?: '');
+$feedbackLimit = max(1, (int)($options['feedback-limit'] ?? getenv('GUIDEPAW_FEEDBACK_LIMIT') ?: 200));
 
 if ($adminPass === '') {
     fwrite(STDERR, "Missing --admin-pass or GUIDEPAW_ADMIN_PASS.\n");
@@ -109,6 +121,198 @@ function gpQaPageLooksOk(array $res): bool
     return true;
 }
 
+function gpQaFeedbackPdo(string $host, string $port, string $name, string $user, string $pass): ?PDO
+{
+    if ($host === '' || $name === '' || $user === '') {
+        return null;
+    }
+
+    try {
+        return new PDO(
+            sprintf('pgsql:host=%s;port=%s;dbname=%s', $host, $port ?: '5432', $name),
+            $user,
+            $pass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]
+        );
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+function gpQaFeedbackRows(PDO $pdo, int $limit): array
+{
+    $sql = "
+        SELECT
+            id,
+            COALESCE(category, report_type, 'bug') AS category,
+            title,
+            description,
+            page_url,
+            page_workflow,
+            steps_to_reproduce,
+            expected_behavior,
+            actual_behavior,
+            pasted_text,
+            COALESCE(status, 'new') AS status,
+            COALESCE(priority, 'normal') AS priority,
+            created_at
+        FROM feedback_reports
+        ORDER BY
+            CASE COALESCE(status, 'new')
+                WHEN 'new' THEN 0
+                WHEN 'reviewing' THEN 1
+                WHEN 'planned' THEN 2
+                WHEN 'fixed' THEN 3
+                WHEN 'closed' THEN 4
+                ELSE 5
+            END,
+            CASE COALESCE(priority, 'normal')
+                WHEN 'urgent' THEN 0
+                WHEN 'high' THEN 1
+                WHEN 'normal' THEN 2
+                WHEN 'low' THEN 3
+                ELSE 4
+            END,
+            created_at DESC
+        LIMIT " . max(1, $limit);
+
+    try {
+        $stmt = $pdo->query($sql);
+        return $stmt->fetchAll() ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function gpQaFeedbackAliasMap(): array
+{
+    return [
+        'index.php' => ['dashboard', 'today', 'needs attention'],
+        'login.php' => ['login', 'log in', 'sign in', 'password as you are typing'],
+        'feedback.php' => ['feedback', 'bug report', 'report issue'],
+        'settings.php' => ['settings', 'change password', 'logout'],
+        'profile.php' => ['profile', 'microchip', 'owner'],
+        'quick_log.php' => ['quick log', 'quick session'],
+        'log_entry.php' => ['detailed log', 'training log', 'photo, video, or audio'],
+        'view_logs.php' => ['training history', 'view logs', 'queued offline logs'],
+        'dogs.php' => ['manage dogs', 'archived dogs', 'active dogs'],
+        'notifications.php' => ['notification', 'alerts', 'inbox'],
+        'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
+        'dog_access_audit.php' => ['audit', 'timeline'],
+        'handler_profile.php' => ['handler profile', 'public email', 'backup contact'],
+        'db_status.php' => ['database', 'schema', 'migration'],
+        'admin_feedback.php' => ['admin feedback', 'feedback reports'],
+        'admin_notification_test.php' => ['notification test'],
+        'admin_profile_completion.php' => ['profile completion'],
+        'admin_users.php' => ['user management', 'admin users'],
+        'candidate_assessment.php' => ['candidate assessment', 'candidate'],
+        'candidate_comparison.php' => ['candidate comparison', 'compare'],
+        'behavior_risk_scoring.php' => ['behavior risk', 'risk scoring'],
+        'regression_engine.php' => ['regression engine', 'reset plan'],
+        'goal_builder.php' => ['goal builder', 'goal'],
+        'training_program.php' => ['training program', 'training'],
+        'training_session_log.php' => ['session log', 'training session'],
+        'training_history.php' => ['training history', 'history'],
+        'stats.php' => ['stats', 'progress'],
+        'air_travel_rights.php' => ['air travel', 'service dog training'],
+        'wearable_integrations.php' => ['wearable', 'snapshot'],
+        'alerts.php' => ['smart alerts', 'alerts'],
+        'dog_health.php' => ['health docs', 'vet'],
+        'appointments.php' => ['appointments', 'vet appointments'],
+        'medications.php' => ['medication', 'medications'],
+        'certification.php' => ['certification', 'readiness'],
+        'trainer_marketplace.php' => ['trainer marketplace', 'trainer'],
+        'community_challenges.php' => ['community challenges', 'challenge'],
+        'trucking_mode.php' => ['trucking mode', 'travel-day plan'],
+        'ai_training_assistant.php' => ['ai training assistant', 'bounded guidance'],
+        'media_review.php' => ['media review', 'camera stability'],
+        'video_review.php' => ['video review', 'checkpoint video'],
+        'coach_review.php' => ['coach review', 'review queue'],
+    ];
+}
+
+function gpQaFeedbackText(array $row): string
+{
+    $parts = [
+        $row['category'] ?? '',
+        $row['title'] ?? '',
+        $row['description'] ?? '',
+        $row['page_url'] ?? '',
+        $row['page_workflow'] ?? '',
+        $row['steps_to_reproduce'] ?? '',
+        $row['expected_behavior'] ?? '',
+        $row['actual_behavior'] ?? '',
+        $row['pasted_text'] ?? '',
+    ];
+    return strtolower(trim(implode(' ', array_filter(array_map(static fn($value) => trim((string) $value), $parts), static fn($value) => $value !== ''))));
+}
+
+function gpQaFeedbackScore(array $feedbackRows, string $path, array $aliases): array
+{
+    $score = 0;
+    $matches = [];
+    $baseName = strtolower(basename($path));
+    foreach ($feedbackRows as $row) {
+        $text = gpQaFeedbackText($row);
+        if ($text === '') {
+            continue;
+        }
+
+        $rowScore = 0;
+        foreach ($aliases as $alias) {
+            $alias = strtolower(trim((string) $alias));
+            if ($alias !== '' && str_contains($text, $alias)) {
+                $rowScore += 1;
+            }
+        }
+
+        if ($baseName !== '' && str_contains($text, str_replace('_', ' ', rtrim($baseName, '.php')))) {
+            $rowScore += 2;
+        }
+
+        if (!empty($row['page_url']) && str_contains(strtolower((string) $row['page_url']), $baseName)) {
+            $rowScore += 3;
+        }
+        if (!empty($row['page_workflow']) && str_contains(strtolower((string) $row['page_workflow']), str_replace('_', ' ', rtrim($baseName, '.php')))) {
+            $rowScore += 2;
+        }
+
+        $status = strtolower(trim((string) ($row['status'] ?? 'new')));
+        $priority = strtolower(trim((string) ($row['priority'] ?? 'normal')));
+        $statusBoost = match ($status) {
+            'new' => 5,
+            'reviewing' => 4,
+            'planned' => 3,
+            'fixed' => 2,
+            'closed' => 1,
+            default => 2,
+        };
+        $priorityBoost = match ($priority) {
+            'urgent' => 4,
+            'high' => 3,
+            'normal' => 2,
+            'low' => 1,
+            default => 1,
+        };
+
+        if ($rowScore > 0) {
+            $score += $rowScore * $statusBoost * $priorityBoost;
+            $matches[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'title' => (string) ($row['title'] ?? ''),
+                'status' => $status,
+                'priority' => $priority,
+            ];
+        }
+    }
+
+    return ['score' => $score, 'matches' => $matches];
+}
+
 $adminCookie = tempnam(sys_get_temp_dir(), 'gpqa_admin_');
 $regularCookie = tempnam(sys_get_temp_dir(), 'gpqa_user_');
 $adminCookieHeader = '';
@@ -166,6 +370,45 @@ if ($adminLoggedIn) {
         'video_review_page_loads' => 'video_review.php',
         'coach_review_page_loads' => 'coach_review.php',
     ];
+
+    $feedbackRows = [];
+    $feedbackSummary = [];
+    $feedbackPdo = gpQaFeedbackPdo($feedbackDbHost, $feedbackDbPort, $feedbackDbName, $feedbackDbUser, $feedbackDbPass);
+    if ($feedbackPdo instanceof PDO) {
+        $feedbackRows = gpQaFeedbackRows($feedbackPdo, $feedbackLimit);
+        $aliasMap = gpQaFeedbackAliasMap();
+        $originalOrder = array_keys($pages);
+        $originalIndex = array_flip($originalOrder);
+        $pageScores = [];
+        foreach ($pages as $pageId => $pagePath) {
+            $pageScores[$pageId] = gpQaFeedbackScore($feedbackRows, $pagePath, $aliasMap[$pagePath] ?? []);
+        }
+        $pageOrder = array_keys($pages);
+        usort($pageOrder, static function (string $left, string $right) use ($pageScores, $originalIndex): int {
+            $leftScore = (int) ($pageScores[$left]['score'] ?? 0);
+            $rightScore = (int) ($pageScores[$right]['score'] ?? 0);
+            if ($leftScore === $rightScore) {
+                return ($originalIndex[$left] ?? 0) <=> ($originalIndex[$right] ?? 0);
+            }
+            return $rightScore <=> $leftScore;
+        });
+        $sortedPages = [];
+        foreach ($pageOrder as $pageId) {
+            $sortedPages[$pageId] = $pages[$pageId];
+        }
+        $pages = $sortedPages;
+        foreach (array_slice($pageOrder, 0, 8) as $pageId) {
+            $score = (int) ($pageScores[$pageId]['score'] ?? 0);
+            if ($score > 0) {
+                $feedbackSummary[] = $pageId . ':' . $score;
+            }
+        }
+        if ($feedbackSummary) {
+            echo 'Feedback-prioritized pages: ' . implode(', ', $feedbackSummary) . PHP_EOL;
+        }
+        echo 'Feedback reports scanned: ' . count($feedbackRows) . PHP_EOL;
+    }
+
     foreach ($pages as $id => $path) {
         $res = gpQaRequest($baseUrl, $path, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $body = strtolower($res['body']);
