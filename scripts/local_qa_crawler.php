@@ -773,6 +773,15 @@ if ($adminLoggedIn) {
     $publicProfileStatus = 0;
     $publicProfileUrl = '';
     if (preg_match('/dog_profile\.php\?dog_id=(\d+)/', $dogsPage['body'], $m)) {
+        $dogAccessPage = gpQaRequest($baseUrl, 'dog_access.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $dogAccessBody = strtolower($dogAccessPage['body']);
+        $dogAccessLooksReady = gpQaPageLooksOk($dogAccessPage)
+            && (
+                str_contains($dogAccessBody, 'dog access & status')
+                || str_contains($dogAccessBody, 'shared handlers')
+                || str_contains($dogAccessBody, 'transfer ownership')
+            );
+        gpQaResult($results, 'dog_access_selected_page_loads', $dogAccessLooksReady, 'HTTP ' . $dogAccessPage['status'] . ($dogAccessLooksReady ? ' dog access content found' : ' dog access content missing'));
         $dogProfile = gpQaRequest($baseUrl, 'dog_profile.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $dogProfileBody = strtolower($dogProfile['body']);
         $dogProfileHtml = html_entity_decode($dogProfile['body'], ENT_QUOTES | ENT_HTML5);
@@ -796,6 +805,7 @@ if ($adminLoggedIn) {
         gpQaResult($results, 'public_profile_questionnaire_link', $publicProfileQuestionnaireSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileQuestionnaireSeen ? ' breed questionnaire link found' : ' breed questionnaire link missing'));
         gpQaResult($results, 'public_profile_air_travel_link', $publicProfileAirTravelSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileAirTravelSeen ? ' air travel link found' : ' air travel link missing'));
     } else {
+        gpQaResult($results, 'dog_access_selected_page_loads', false, 'dog link missing on dogs page');
         gpQaResult($results, 'public_profile_questionnaire_link', false, 'dog profile link missing on dogs page');
         gpQaResult($results, 'public_profile_air_travel_link', false, 'dog profile link missing on dogs page');
     }

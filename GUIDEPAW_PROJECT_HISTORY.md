@@ -629,6 +629,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: none; dog profile now fails closed if the row disappears after access checks, and the crawler reports the page as its own smoke target
 
+2026-05-09 — Dog access guard and smoke check
+- Commit(s): pending
+- Files changed: dog_access.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: none; dog access now fails closed if the selected dog row disappears after access checks, and the crawler reports the selected access page explicitly
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

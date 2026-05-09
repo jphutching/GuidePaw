@@ -232,6 +232,30 @@ $dogs = getAccessibleDogs($pdo, $userId);
 $dogId = isset($_GET['dog_id']) ? (int) $_GET['dog_id'] : (int) (getActiveDogId($pdo, $userId) ?? 0);
 if ($dogId <= 0 && $dogs) $dogId = (int) $dogs[0]['id'];
 $dog = $dogId > 0 ? gpDogAccessFetchDog($pdo, $dogId, $userId) : null;
+if ($dogId > 0 && !$dog) {
+    http_response_code(404);
+    ?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dog Access &amp; Status · <?= e(appName()) ?></title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+</head>
+<body class="pb-5 bg-light">
+<?php guidepawBrandHeader(); ?>
+<?php require_once 'includes/beta_banner.php'; ?>
+<?php require_once 'includes/mobile_nav.php'; ?>
+<main class="page-shell mt-3">
+    <div class="alert alert-warning">Dog access profile not found or it is no longer available to this account.</div>
+    <a class="btn btn-outline-secondary btn-sm" href="dogs.php">Manage Dogs</a>
+</main>
+</body>
+</html>
+<?php
+    exit;
+}
 $handlers = $dog ? gpDogAccessFetchHandlers($pdo, (int) $dog['id']) : [];
 $incomingTransfers = gpDogAccessIncomingTransfers($pdo, $userId);
 $isOwner = $dog ? userOwnsDog($pdo, $userId, (int) $dog['id']) : false;
