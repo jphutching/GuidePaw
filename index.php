@@ -191,6 +191,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
                     <a class="today-action" href="certification.php"><span>✅</span>Certification</a>
                 <?php endif; ?>
+                <a class="today-action" href="stats.php"><span>📊</span>Stats</a>
                 <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
