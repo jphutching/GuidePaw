@@ -318,6 +318,7 @@ Completed changes from prior work:
 
 - Added `air_travel_rights.php` for service-dog flight guidance.
 - The Access menu now links to Air Travel Rights.
+- The dashboard Today section now includes an Air Travel shortcut.
 - The page explains the DOT service-dog cabin baseline and notes that service dogs in training are not covered by the DOT air-travel service-animal definition.
 - The ADA Access Card and Detailed ADA Notes pages link to the new flight guidance page.
 - Beta QA and the local crawler now cover the new air-travel page.

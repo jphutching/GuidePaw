@@ -180,6 +180,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
+                <a class="today-action" href="air_travel_rights.php"><span>✈️</span>Air Travel</a>
             </div>
         </div>
     </section>

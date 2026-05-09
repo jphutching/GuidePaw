@@ -280,6 +280,7 @@ if ($adminLoggedIn) {
     $regressionEngineHookSeen = str_contains($dashboardBody, 'regression engine') || str_contains($dashboardBody, 'reset plan');
     $goalBuilderHookSeen = str_contains($dashboardBody, 'goal builder');
     $airTravelHookSeen = str_contains($dashboardBody, 'air travel rights') || str_contains($dashboardBody, 'service dog rights');
+    $airTravelTodaySeen = str_contains($dashboardBody, 'air travel');
     $wearableHookSeen = str_contains($dashboardBody, 'wearable sync') || str_contains($dashboardBody, 'wearable snapshot');
     $trainerMarketplaceHookSeen = str_contains($dashboardBody, 'trainer marketplace') || str_contains($dashboardBody, 'trainer profiles');
     $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
@@ -291,6 +292,7 @@ if ($adminLoggedIn) {
     gpQaResult($results, 'dashboard_regression_engine_hook', gpQaPageLooksOk($dashboard) && $regressionEngineHookSeen, 'HTTP ' . $dashboard['status'] . ($regressionEngineHookSeen ? ' regression engine hook found' : ' regression engine hook not currently visible'));
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
     gpQaResult($results, 'dashboard_air_travel_hook', gpQaPageLooksOk($dashboard) && $airTravelHookSeen, 'HTTP ' . $dashboard['status'] . ($airTravelHookSeen ? ' air travel hook found' : ' air travel hook not currently visible'));
+    gpQaResult($results, 'dashboard_air_travel_today', gpQaPageLooksOk($dashboard) && $airTravelTodaySeen, 'HTTP ' . $dashboard['status'] . ($airTravelTodaySeen ? ' air travel today action found' : ' air travel today action not currently visible'));
     gpQaResult($results, 'dashboard_wearable_hook', gpQaPageLooksOk($dashboard) && $wearableHookSeen, 'HTTP ' . $dashboard['status'] . ($wearableHookSeen ? ' wearable hook found' : ' wearable hook not currently visible'));
     gpQaResult($results, 'dashboard_trainer_marketplace_hook', gpQaPageLooksOk($dashboard) && $trainerMarketplaceHookSeen, 'HTTP ' . $dashboard['status'] . ($trainerMarketplaceHookSeen ? ' trainer marketplace hook found' : ' trainer marketplace hook not currently visible'));
     gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));

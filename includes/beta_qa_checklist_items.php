@@ -93,6 +93,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'state_law_detection', 'text' => 'State/legal notes behavior checked.', 'expected' => 'If implemented, GPS/state-specific service dog info is accurate; if not, roadmap note remains.'],
                 ['id' => 'ada_notes_page', 'text' => 'Detailed ADA Notes page loads from menu.', 'expected' => 'service_dog_rights.php opens correctly.'],
                 ['id' => 'air_travel_rights', 'text' => 'Air Travel Rights page loads and distinguishes service dogs from service dogs in training.', 'expected' => 'air_travel_rights.php opens and shows flight guidance for service dogs plus SDIT limitations.'],
+                ['id' => 'air_travel_dashboard', 'text' => 'Dashboard exposes Air Travel as a Today shortcut.', 'expected' => 'index.php shows a direct Air Travel tile alongside the other fast actions.'],
             ],
         ],
         [
