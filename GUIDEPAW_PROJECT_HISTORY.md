@@ -734,6 +734,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun deploy_local.sh so the api/ directory is copied to the live mirror before the next smoke pass
 
+2026-05-09 — PHP crawler admin-session fallback
+- Commit(s): pending
+- Files changed: scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun the wrapper; if the PHP crawler cannot keep the admin session alive it should fall back to Playwright instead of dumping false admin failures
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.

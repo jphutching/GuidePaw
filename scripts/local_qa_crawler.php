@@ -473,6 +473,17 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $apiDogsSeen = gpQaPageLooksOk($apiDogs) && is_array($apiDogsJson) && !empty($apiDogsJson['success']) && isset($apiDogsJson['dogs']) && is_array($apiDogsJson['dogs']);
             $apiLogsSeen = gpQaPageLooksOk($apiLogs) && is_array($apiLogsJson) && !empty($apiLogsJson['success']) && isset($apiLogsJson['logs']) && is_array($apiLogsJson['logs']);
         }
+        $adminSessionProbe = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $adminSessionProbeBody = strtolower($adminSessionProbe['body']);
+        $adminSessionReady = gpQaPageLooksOk($adminSessionProbe)
+            && !str_contains($adminSessionProbeBody, 'handler login')
+            && !str_contains($adminSessionProbeBody, 'please sign in')
+            && !str_contains(strtolower($adminSessionProbe['url']), 'login.php');
+        gpQaResult($results, 'admin_session_ready', $adminSessionReady, 'HTTP ' . $adminSessionProbe['status'] . ($adminSessionReady ? ' admin session confirmed' : ' admin session did not survive login'));
+        if (!$adminSessionReady) {
+            fwrite(STDERR, "Admin session did not survive login; falling back to Playwright crawler.\n");
+            exit(1);
+        }
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
         gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));
         gpQaResult($results, 'healthz_page_loads', $healthzSeen, 'HTTP ' . $healthzPage['status'] . ($healthzSeen ? ' healthz ok found' : ' healthz ok missing'));
