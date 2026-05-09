@@ -69,6 +69,7 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'dog_profile_loads', 'text' => 'Dog Profile page loads for active dog.', 'expected' => 'No application error.'],
                 ['id' => 'qr_profile_loads', 'text' => 'Public QR profile opens with valid dog/token link.', 'expected' => 'Public page shows dog identity and inherited handler contact defaults.'],
+                ['id' => 'qr_tracking_loads', 'text' => 'QR Tracking page loads for the active dog.', 'expected' => 'Tracking page shows QR opens and recent scan activity.'],
                 ['id' => 'qr_invalid_token', 'text' => 'Invalid or missing QR token is rejected.', 'expected' => 'Public page returns a not-found style response, not private data.'],
                 ['id' => 'found_location_report', 'text' => 'Found Location form submits successfully.', 'expected' => 'Report is saved and handler/admin notifications are triggered.'],
                 ['id' => 'found_report_admin', 'text' => 'Admin found-dog reports page shows submitted report.', 'expected' => 'admin_found_dog_reports.php lists the report details.'],

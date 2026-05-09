@@ -2,6 +2,7 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
+require_once 'includes/qr_tracking.php';
 require_once 'includes/app_config.php';
 
 $dogId = isset($_GET['dog']) ? (int) $_GET['dog'] : 0;
@@ -74,6 +75,8 @@ $publicNotes = $publicContact['public_notes'] ?? '';
 $foundInstructions = $dog['found_dog_instructions'] ?? '';
 $criticalAllergies = $dog['critical_allergies'] ?? ($dog['medical_alert_notes'] ?? '');
 $reportUrl = 'report_found_dog.php?dog=' . (int) $dogId . '&token=' . rawurlencode($token);
+gpEnsureDogQrTrackingTable($pdo);
+gpLogDogQrScan($pdo, (int) $dogId);
 ?>
 <!doctype html>
 <html lang="en">

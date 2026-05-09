@@ -818,6 +818,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep admins landing on the admin control panel first and continue watching beta feedback for any other admin-first workflow gaps
 
+2026-05-09 — QR tracking enhancement
+- Commit(s): pending
+- Files changed: includes/qr_tracking.php, qr_tracking.php, public_dog_profile.php, dog_profile.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/profile_qr_smoke.spec.js, sql/migrations/pgsql/20260509_qr_tracking.sql, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: push the QR tracking slice, let beta deploy, then mark beta feedback #35 fixed after the live host confirms the new tracking page and scan counter
+
 ## Update log template
 
 When updating this file, add a short note like:

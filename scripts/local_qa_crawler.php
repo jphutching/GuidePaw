@@ -285,6 +285,7 @@ function gpQaFeedbackAliasMap(): array
         'notifications.php' => ['notification', 'alerts', 'inbox'],
         'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
         'dog_access_audit.php' => ['audit', 'timeline'],
+        'qr_tracking.php' => ['qr tracking', 'qr opens tracked', 'recent qr opens'],
         'handler_profile.php' => ['handler profile', 'public email', 'backup contact'],
         'db_status.php' => ['database', 'schema', 'migration'],
         'admin_feedback.php' => ['admin feedback', 'feedback reports'],
@@ -522,6 +523,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'backup_tools_page_loads' => 'backup.php',
         'dog_access_page_loads' => 'dog_access.php',
         'dog_audit_page_loads' => 'dog_access_audit.php',
+        'qr_tracking_page_loads' => 'qr_tracking.php',
         'handler_profile_page_loads' => 'handler_profile.php',
         'settings_page_loads' => 'settings.php',
         'profile_page_loads' => 'profile.php',
@@ -1217,6 +1219,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($dogProfileBody, 'dog profile saved')
             );
         gpQaResult($results, 'dog_profile_page_loads', $dogProfileLooksReady, 'HTTP ' . $dogProfile['status'] . ($dogProfileLooksReady ? ' dog profile content found' : ' dog profile content missing'));
+        $qrTrackingPageSeen = false;
         if (preg_match('/href="([^"]*public_dog_profile\.php\?dog=\d+&token=[^"]+)"/i', $dogProfileHtml, $pm)) {
             $publicProfileUrl = $pm[1];
             $publicProfilePage = gpQaRequest($baseUrl, ltrim(parse_url($publicProfileUrl, PHP_URL_PATH) . '?' . (parse_url($publicProfileUrl, PHP_URL_QUERY) ?? ''), '/'), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1226,6 +1229,17 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $publicProfileQuestionnaireSeen = str_contains($publicProfileBody, 'breed questionnaire');
             $publicProfileAirTravelSeen = str_contains($publicProfileBody, 'air travel rights');
             gpQaResult($results, 'public_dog_profile_page_loads', $publicProfileStatus === 200, 'HTTP ' . $publicProfileStatus . ($publicProfileStatus === 200 ? ' public dog profile found' : ' public dog profile missing'));
+            $qrTrackingPage = gpQaRequest($baseUrl, 'qr_tracking.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+            $qrTrackingBody = strtolower($qrTrackingPage['body']);
+            $qrTrackingPageSeen = gpQaPageLooksOk($qrTrackingPage)
+                && (
+                    str_contains($qrTrackingBody, 'qr tracking')
+                    || str_contains($qrTrackingBody, 'qr opens tracked')
+                    || str_contains($qrTrackingBody, 'recent qr opens')
+                );
+            $qrTrackingCountSeen = $qrTrackingPageSeen && preg_match('/qr opens tracked.*?<strong>\s*(\d+)\s*<\/strong>/is', $qrTrackingPage['body'], $qrCountMatch) && (int) ($qrCountMatch[1] ?? 0) > 0;
+            gpQaResult($results, 'qr_tracking_page_loads', $qrTrackingPageSeen, 'HTTP ' . $qrTrackingPage['status'] . ($qrTrackingPageSeen ? ' qr tracking found' : ' qr tracking missing'));
+            gpQaResult($results, 'qr_tracking_scan_logged', $qrTrackingCountSeen, 'HTTP ' . $qrTrackingPage['status'] . ($qrTrackingCountSeen ? ' qr scan count updated' : ' qr scan count not updated'));
 
             if (preg_match('/href="([^"]*report_found_dog\.php\?dog=\d+&token=[^"]+)"/i', $publicProfileHtml, $reportMatch)) {
                 $foundDogReportPath = ltrim(parse_url($reportMatch[1], PHP_URL_PATH) . '?' . (parse_url($reportMatch[1], PHP_URL_QUERY) ?? ''), '/');
@@ -1270,6 +1284,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         } else {
             $publicProfileStatus = $dogProfile['status'];
             gpQaResult($results, 'public_dog_profile_page_loads', false, 'public profile link missing');
+            gpQaResult($results, 'qr_tracking_page_loads', false, 'public profile link missing');
+            gpQaResult($results, 'qr_tracking_scan_logged', false, 'public profile link missing');
             gpQaResult($results, 'report_found_dog_page_loads', false, 'public profile link missing');
         }
         gpQaResult($results, 'public_profile_questionnaire_link', $publicProfileQuestionnaireSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileQuestionnaireSeen ? ' breed questionnaire link found' : ' breed questionnaire link missing'));
@@ -1279,6 +1295,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         gpQaResult($results, 'public_profile_questionnaire_link', false, 'dog profile link missing on dogs page');
         gpQaResult($results, 'public_profile_air_travel_link', false, 'dog profile link missing on dogs page');
         gpQaResult($results, 'public_dog_profile_page_loads', false, 'dog profile link missing on dogs page');
+        gpQaResult($results, 'qr_tracking_page_loads', false, 'dog profile link missing on dogs page');
+        gpQaResult($results, 'qr_tracking_scan_logged', false, 'dog profile link missing on dogs page');
         gpQaResult($results, 'report_found_dog_page_loads', false, 'dog profile link missing on dogs page');
     }
 
