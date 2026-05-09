@@ -42,10 +42,9 @@ $expiresAt = !empty($_SESSION['login_expires_at']) ? (int) $_SESSION['login_expi
 
     <section class="card settings-card mb-3">
         <div class="card-body">
-            <h2 class="h5 mb-1">Account</h2>
+            <h2 class="h5 mb-1">Account & security</h2>
             <p class="settings-muted mb-3">Handler sign-in, password, and account security.</p>
             <div class="mb-3"><div class="fw-semibold">Signed in as</div><div class="text-muted"><?= e($user['username'] ?? 'handler') ?></div></div>
-            <a class="settings-link" href="handler_profile.php"><span><span class="settings-icon">👤</span>Handler profile</span><span>›</span></a>
             <a class="settings-link" href="reset_password.php"><span><span class="settings-icon">🔑</span>Change password</span><span>›</span></a>
             <a class="settings-link" href="setup_2fa.php"><span><span class="settings-icon">🛡️</span><?= $is2faEnabled ? 'Manage 2-factor auth' : 'Enable 2-factor auth' ?></span><span class="badge <?= $is2faEnabled ? 'bg-success' : 'bg-secondary' ?>"><?= $is2faEnabled ? 'On' : 'Off' ?></span></a>
             <div class="settings-link"><span><span class="settings-icon">⏱️</span>Remember me</span><span class="settings-muted text-end"><?= $remembered ? 'On for this session' : 'Off' ?><?php if ($expiresAt): ?><br>Expires <?= e(date('M j, g:i A', $expiresAt)) ?><?php endif; ?></span></div>

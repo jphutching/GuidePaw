@@ -144,7 +144,7 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'quick_session', 'text' => 'Quick Session works for active dog.', 'expected' => 'Session saves and appears in history.'],
                 ['id' => 'detailed_log', 'text' => 'Detailed Log works for active dog if feature enabled.', 'expected' => 'Log saves with selected values.'],
-                ['id' => 'settings_page', 'text' => 'Settings page loads and shows account controls.', 'expected' => 'User can review password, logout, and app settings options.'],
+                ['id' => 'settings_page', 'text' => 'Settings page loads and stays focused on account controls.', 'expected' => 'User can review password, logout, and app settings options without the redundant handler profile shortcut.'],
                 ['id' => 'profile_page', 'text' => 'Dog Profile page loads and shows dog details.', 'expected' => 'User can review owner details, microchip, and edit profile controls.'],
                 ['id' => 'edit_profile_page', 'text' => 'Edit Dog Profile page loads.', 'expected' => 'edit_profile.php opens for the active dog without application error.'],
                 ['id' => 'manage_dogs_redirect', 'text' => 'Manage Dogs redirect still lands on Dogs page.', 'expected' => 'manage_dogs.php routes to dogs.php with the original query string.'],

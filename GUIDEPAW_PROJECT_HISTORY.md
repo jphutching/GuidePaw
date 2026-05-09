@@ -804,6 +804,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: keep working through the remaining beta feedback backlog if needed; the found-dog report path and related feedback rows #38, #39, #40, and #43 are now verified fixed on beta
 
+2026-05-09 — Settings page cleanup
+- Commit(s): pending
+- Files changed: settings.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep Settings focused on account/security, verify the redundant handler profile shortcut stays removed, and push the cleanup to beta
+
 2026-05-09 — Alerts and training suggestion links
 - Commit(s): pending
 - Files changed: alerts.php, training_program.php, includes/training_suggestion_links.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md

@@ -1102,6 +1102,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $habitRepairBody = strtolower($habitRepairPage['body']);
     $trainingProgramBody = strtolower($trainingProgramPage['body']);
     $alertsPageBody = strtolower($alertsPage['body']);
+    $settingsPageBody = strtolower($settingsPage['body']);
     $editProfileBody = strtolower($editProfilePage['body']);
     $viewLogsForEditBody = strtolower($viewLogsForEditPage['body']);
     $manageDogsBody = strtolower($manageDogsPage['body']);
@@ -1137,6 +1138,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
     $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
+    $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && !str_contains($settingsPageBody, 'handler_profile.php') && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
     $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
         && (
             str_contains($trainingProgramBody, 'load the starter program')
@@ -1206,6 +1208,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
     gpQaResult($results, 'training_suggestions_links', $trainingSuggestionsLinkSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingSuggestionsLinkSeen ? ' training suggestions link found' : ' training suggestions link missing'));
     gpQaResult($results, 'alerts_module_links', $alertsModuleLinkSeen, 'HTTP ' . $alertsPage['status'] . ($alertsModuleLinkSeen ? ' alerts module link found' : ' alerts module link missing'));
     gpQaResult($results, 'appointment_notifications_page_loads', $appointmentNotificationsSeen, 'HTTP ' . $appointmentNotificationsPage['status'] . ($appointmentNotificationsSeen ? ' appointment notifications found' : ' appointment notifications missing'));
