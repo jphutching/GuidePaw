@@ -89,7 +89,7 @@ $logs = $stmt->fetchAll();
                             <div class="d-flex gap-2 flex-wrap justify-content-end">
                                 <span class="badge bg-primary align-self-start">Focus <?= (int) $log['focus_level'] ?>/5</span>
                                 <?php if ($canEditLogs): ?>
-                                    <a class="btn btn-outline-primary btn-sm" href="edit_log.php?id=<?= (int) $log['id'] ?>">Edit</a>
+                                    <a class="btn btn-outline-primary btn-sm" href="edit_log.php?id=<?= (int) $log['id'] ?>">Edit Log</a>
                                 <?php endif; ?>
                             </div>
                         </div>

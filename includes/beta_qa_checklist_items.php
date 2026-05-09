@@ -151,7 +151,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'quick_log_page', 'text' => 'Quick Log page loads and shows the fast session form.', 'expected' => 'User can start a quick session and save it from the fast entry page.'],
                 ['id' => 'log_entry_page', 'text' => 'Training Log entry page loads and shows camera capture controls.', 'expected' => 'User can log training details, open the camera for photo or video capture, and save the record.'],
                 ['id' => 'view_logs_page', 'text' => 'View Logs page loads and shows training history.', 'expected' => 'User can review prior logs and queued offline entries.'],
-                ['id' => 'edit_log_page', 'text' => 'Edit Training Log page loads from history.', 'expected' => 'edit_log.php opens from a selected log entry.'],
+                ['id' => 'edit_log_page', 'text' => 'Edit Training Log page loads from history.', 'expected' => 'edit_log.php opens with editable date, location, environment, focus, skills, and notes fields.'],
                 ['id' => 'update_log_guard', 'text' => 'Update Log only accepts POST and returns to history.', 'expected' => 'update_log.php redirects to view_logs.php when opened directly.'],
                 ['id' => 'save_log_guard', 'text' => 'Save Log rejects direct GET access.', 'expected' => 'save_log.php returns a method-not-allowed response for non-POST requests.'],
                 ['id' => 'media_review', 'text' => 'Media Review page opens for logs with image/video/audio attachments.', 'expected' => 'User can rate camera stability, audio clarity, and training value.'],

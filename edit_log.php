@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/includes/form_ux.php'; 
+require_once __DIR__ . '/includes/form_ux.php';
 require_once 'includes/db_connect.php';
-require_once 'includes/brand_header.php'; 
+require_once 'includes/brand_header.php';
+require_once 'includes/validation.php';
 checkLogin(); // Security Guard
 
 $id = (int)($_GET['id'] ?? 0);
@@ -12,10 +13,13 @@ $stmt->execute([$id]);
 $log = $stmt->fetch();
 
 if (!$log || !userCanEditDog($pdo, $user_id, (int) $log['dog_id'])) {
-    die("Error: Log entry not found or you do not have permission to edit it."); 
+    http_response_code(404);
+    die("Error: Log entry not found or you do not have permission to edit it.");
 }
 
 $skills = json_decode($log['skills_practiced'], true) ?: [];
+$allowedTypes = ['In-Cab', 'Truck Stop', 'Shipper/Receiver', 'Public Store', 'Rest Area', 'Other'];
+$allowedSkills = ['Sit/Stay', 'Heel', 'Leave It', 'Under Tuck', 'DPT Task', 'PA Focus'];
 $csrf = generateCsrfToken();
 ?>
 
@@ -48,18 +52,54 @@ $csrf = generateCsrfToken();
         <form action="update_log.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
             <input type="hidden" name="id" value="<?= (int) $log['id'] ?>">
+            <input type="hidden" name="dog_id" value="<?= (int) $log['dog_id'] ?>">
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Location Name</label>
                 <input type="text" name="location_name" class="form-control" value="<?= e($log['location_name']) ?>" required>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label fw-bold">Date and time</label>
+                <input type="datetime-local" name="log_date" class="form-control" value="<?= e(date('Y-m-d\TH:i', strtotime((string) $log['log_date']))) ?>" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">City, State</label>
+                <input type="text" name="location_city_state" class="form-control" value="<?= e($log['location_city_state']) ?>">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Environment</label>
+                <select name="location_type" class="form-select">
+                    <?php foreach ($allowedTypes as $type): ?>
+                        <option value="<?= e($type) ?>" <?= ($log['location_type'] ?? 'Other') === $type ? 'selected' : '' ?>><?= e($type) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Focus Level</label>
+                <input type="range" name="focus_level" class="form-range" min="1" max="5" step="1" value="<?= (int) ($log['focus_level'] ?? 3) ?>">
+                <div class="d-flex justify-content-between small px-2"><span>Distracted</span><span>Locked In</span></div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Latitude</label>
+                    <input type="text" name="latitude" class="form-control" value="<?= e((string) ($log['latitude'] ?? '')) ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Longitude</label>
+                    <input type="text" name="longitude" class="form-control" value="<?= e((string) ($log['longitude'] ?? '')) ?>">
+                </div>
+            </div>
+
             <div class="mb-4">
-                <label class="form-label fw-bold d-block">Skills Practiced</label>
-                <div class="row g-2">
+                    <label class="form-label fw-bold d-block">Skills Practiced</label>
+                    <div class="row g-2">
                     <?php 
-                    $options = ['Sit/Stay', 'Heel', 'Leave It', 'Under Tuck', 'DPT Task', 'PA Focus'];
-                    foreach ($options as $opt): 
+                    foreach ($allowedSkills as $opt):
                         $checked = in_array($opt, $skills) ? 'checked' : '';
                         $fieldId = 'skill_' . preg_replace('/[^A-Za-z0-9_-]+/', '_', $opt);
                     ?>

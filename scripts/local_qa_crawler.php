@@ -727,6 +727,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'edit training log')
                 || str_contains($body, 'update log entry')
+                || str_contains($body, 'location name')
+                || str_contains($body, 'date and time')
+                || str_contains($body, 'focus level')
+                || str_contains($body, 'skills practiced')
                 || str_contains($body, 'permission')
             )
             : true;
@@ -1147,7 +1151,15 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $editLogPath = ltrim(parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_PATH) . '?' . (parse_url(html_entity_decode($editMatch[1], ENT_QUOTES | ENT_HTML5), PHP_URL_QUERY) ?? ''), '/');
         $editLogPage = gpQaRequest($baseUrl, $editLogPath, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $editLogBody = strtolower($editLogPage['body']);
-        $editLogSeen = gpQaPageLooksOk($editLogPage) && (str_contains($editLogBody, 'edit training log') || str_contains($editLogBody, 'update log entry') || str_contains($editLogBody, 'permission'));
+        $editLogSeen = gpQaPageLooksOk($editLogPage) && (
+            str_contains($editLogBody, 'edit training log')
+            || str_contains($editLogBody, 'update log entry')
+            || str_contains($editLogBody, 'location name')
+            || str_contains($editLogBody, 'date and time')
+            || str_contains($editLogBody, 'focus level')
+            || str_contains($editLogBody, 'skills practiced')
+            || str_contains($editLogBody, 'permission')
+        );
         gpQaResult($results, 'edit_log_page_loads', $editLogSeen, 'HTTP ' . $editLogPage['status'] . ($editLogSeen ? ' edit log found' : ' edit log missing'));
     } else {
         gpQaResult($results, 'edit_log_page_loads', false, 'edit log link missing from history page');
