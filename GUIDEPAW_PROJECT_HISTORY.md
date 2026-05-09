@@ -314,6 +314,14 @@ Completed changes from prior work:
 - ADA Access Card now auto-detects the reviewed state law summary on load when geolocation access is already granted, and still offers manual/GPS overrides.
 - The auto-detect path skips webdriver and Playwright automation sessions so crawls stay stable.
 
+### Air travel access
+
+- Added `air_travel_rights.php` for service-dog flight guidance.
+- The Access menu now links to Air Travel Rights.
+- The page explains the DOT service-dog cabin baseline and notes that service dogs in training are not covered by the DOT air-travel service-animal definition.
+- The ADA Access Card and Detailed ADA Notes pages link to the new flight guidance page.
+- Beta QA and the local crawler now cover the new air-travel page.
+
 ### E2E cleanup
 
 - Local E2E cleanup script exists:

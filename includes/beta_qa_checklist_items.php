@@ -92,6 +92,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'lock_screen_focus', 'text' => 'Lock screen mode focuses display on card content.', 'expected' => 'Screen is visually locked down to the access card content.'],
                 ['id' => 'state_law_detection', 'text' => 'State/legal notes behavior checked.', 'expected' => 'If implemented, GPS/state-specific service dog info is accurate; if not, roadmap note remains.'],
                 ['id' => 'ada_notes_page', 'text' => 'Detailed ADA Notes page loads from menu.', 'expected' => 'service_dog_rights.php opens correctly.'],
+                ['id' => 'air_travel_rights', 'text' => 'Air Travel Rights page loads and distinguishes service dogs from service dogs in training.', 'expected' => 'air_travel_rights.php opens and shows flight guidance for service dogs plus SDIT limitations.'],
             ],
         ],
         [

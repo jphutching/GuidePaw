@@ -142,6 +142,7 @@ checkLogin();
         <div class="container" style="max-width: 760px;">
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
                 <a href="ada_access_card.php" class="btn btn-outline-dark">ADA Access Card</a>
+                <a href="air_travel_rights.php" class="btn btn-outline-dark">Air Travel Rights</a>
                 <button class="btn btn-outline-secondary" onclick="window.print()">Print / Save PDF</button>
                 <a href="index.php" class="btn btn-primary">Done</a>
             </div>
