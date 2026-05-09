@@ -81,6 +81,12 @@ if php scripts/local_qa_crawler.php "${args[@]}" >"$php_output" 2>&1; then
   exit 0
 fi
 
+if grep -q 'Admin session did not survive login; falling back to Playwright crawler.' "$php_output"; then
+  rm -f "$php_output"
+  echo "PHP QA crawler could not keep the admin session alive; using Playwright fallback." >&2
+  exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js
+fi
+
 cat "$php_output" >&2
 if grep -Eq 'failed to open socket: Operation not permitted|Could not resolve host|setsockopt: Operation not permitted' "$php_output"; then
   rm -f "$php_output"

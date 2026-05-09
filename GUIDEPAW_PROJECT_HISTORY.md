@@ -741,6 +741,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: rerun the wrapper; if the PHP crawler cannot keep the admin session alive it should fall back to Playwright instead of dumping false admin failures
 
+2026-05-09 — Wrapper fallback noise reduction
+- Commit(s): pending
+- Files changed: scripts/run_local_qa_crawler.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: rerun the wrapper and confirm the admin-session fallback now jumps straight to Playwright without printing the full PHP failure table
+
 ## Open decisions / ideas
 
 - Which exact admin pages moderators should be allowed to access.
