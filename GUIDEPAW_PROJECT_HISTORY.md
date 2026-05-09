@@ -763,11 +763,11 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: rerun the crawler and confirm the detailed log form exposes direct photo/video capture controls on mobile
 
 2026-05-09 — Training goals questionnaire path links
-- Commit(s): pending
+- Commit(s): 4083dc0 add training goal path links
 - Files changed: goal_builder.php, includes/goal_builder.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
-- Next recommended step: rerun the crawler on beta and confirm the goal builder shows a recommended path plus links into the right training modules.
+- Next recommended step: none; the goal builder path links are live and beta feedback #28 is fixed.
 
 2026-05-09 — Feedback picker enhancement cleanup
 - Commit(s): 59cf331 improve feedback category picker, 8854725 note feedback picker rollout
