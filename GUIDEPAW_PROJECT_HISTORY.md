@@ -972,6 +972,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep logout visible in the mobile menu root actions while leaving the Settings session button in place
 
+2026-05-11 — Dashboard simplification pass
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the home screen to the shortest useful path: sync, quick log, training, ADA, and the menu, with alerts living off the Today row
+
 ## Update log template
 
 When updating this file, add a short note like:

@@ -65,6 +65,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
     .today-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
     .today-action { display: inline-flex; align-items: center; gap: .5rem; min-height: 0; flex: 1 1 190px; padding: .85rem 1rem; border-radius: 14px; background: #fff; border: 1px solid rgba(15,23,42,.08); color: #1f2937; text-decoration: none; font-weight: 850; box-shadow: 0 4px 12px rgba(15,23,42,.06); }
     .today-action span { font-size: 1.15rem; line-height: 1; }
+    .home-utility { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+    .home-utility .home-utility-text { color:#475569; font-size:.92rem; }
     .attention-empty { border: 1px dashed rgba(22,163,74,.36); background: #f0fdf4; border-radius: 16px; padding: 1rem; color: #166534; }
     .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
     .notification-summary{border:1px solid #bfdbfe;background:#eff6ff;border-radius:18px;padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;}
@@ -97,16 +99,15 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 </header>
 
 <main class="page-shell mt-3">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
         <span class="badge bg-dark" data-queue-count style="display:none;">0</span>
         <span data-notification-state class="badge bg-secondary">Notifications off</span>
-        <small class="text-muted">Queued offline logs/media & vet reminders</small>
+        <div class="home-utility-text">Sync and reminder settings live in Settings.</div>
         <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-sync-queued>Sync queued logs</button>
-        <button type="button" class="btn btn-outline-success btn-sm" data-enable-notifications>Enable reminders</button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-test-notification>Test alert</button>
+        <a href="settings.php" class="btn btn-outline-secondary btn-sm">Manage reminders</a>
     </div>
-    <div class="alert alert-info py-2 small">Install the app to your home screen and allow notifications for the best appointment reminder experience. Alerts work through the browser/PWA layer in this build.</div>
+    <div class="alert alert-info py-2 small">Use Settings for reminders and device notices. The bottom menu stays the same on every page.</div>
 
     <?php if ($unreadNotifications > 0): ?>
         <section class="notification-summary mb-3">
@@ -164,7 +165,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
-                <a class="today-action" href="notifications.php"><span>🔔</span>Alerts</a>
             </div>
             <div class="small text-muted mt-2"><a href="quick_log.php" class="text-decoration-none">Need more? Open the menu for logs, care, training, access, and admin tools.</a></div>
         </div>

@@ -1228,11 +1228,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($dashboardBody, 'quick session')
         && str_contains($dashboardBody, 'detailed log')
         && (str_contains($dashboardBody, 'goal builder') || str_contains($dashboardBody, 'training program'))
-        && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'))
-        && str_contains($dashboardBody, 'alerts');
+        && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'));
     $dashboardTodayActionCount = preg_match_all('/class="today-action"/i', $dashboard['body'], $todayActionMatches);
-    $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 5;
-    $alertsHookSeen = str_contains($dashboardBody, 'smart alerts');
+    $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 4;
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
     $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
@@ -1366,7 +1364,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_behavior_risk_hook', gpQaPageLooksOk($dashboard) && $behaviorRiskHookSeen, 'HTTP ' . $dashboard['status'] . ($behaviorRiskHookSeen ? ' behavior risk hook found' : ' behavior risk hook not currently visible'));
     gpQaResult($results, 'dashboard_regression_engine_hook', gpQaPageLooksOk($dashboard) && $regressionEngineHookSeen, 'HTTP ' . $dashboard['status'] . ($regressionEngineHookSeen ? ' regression engine hook found' : ' regression engine hook not currently visible'));
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
-    gpQaResult($results, 'dashboard_alerts_today', gpQaPageLooksOk($dashboard) && $alertsHookSeen, 'HTTP ' . $dashboard['status'] . ($alertsHookSeen ? ' smart alerts today action found' : ' smart alerts today action not currently visible'));
     gpQaResult($results, 'dashboard_today_core_actions', $todayCoreActionsSeen, 'HTTP ' . $dashboard['status'] . ($todayCoreActionsSeen ? ' core today actions remain' : ' core today actions missing'));
     gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
