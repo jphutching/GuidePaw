@@ -11,7 +11,7 @@ function h($value): string
 $token = trim((string) ($_GET['token'] ?? ''));
 $tokenRow = $token !== '' ? findApiTokenByPlainText($pdo, $token) : null;
 $valid = $tokenRow && empty($tokenRow['revoked_at']) && (empty($tokenRow['expires_at']) || strtotime((string) $tokenRow['expires_at']) > time());
-$bridgeTitle = $valid ? 'Wearable pairing ready' : 'Wearable pairing link';
+$bridgeTitle = $valid ? 'Pair GuidePaw on this phone' : 'Wearable pairing link';
 $bridgeMessage = $valid
     ? 'This page opens from the QR code so the phone shows a normal pairing screen instead of a raw text note.'
     : 'Create a connect code from Wearable Integrations first.';
@@ -46,6 +46,7 @@ $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'),
         <div class="card">
             <h2 class="h5">Bridge details</h2>
             <p class="small">Use this page on the phone that has Samsung Health or Health Connect. It opens here because the QR code points at a browser page instead of a plain text token.</p>
+            <p class="small"><strong>1.</strong> Tap <strong>Copy pairing code</strong>.<br><strong>2.</strong> Paste it into the phone bridge or companion app.<br><strong>3.</strong> Return to Wearable Integrations to confirm the next sync.</p>
             <div class="small muted mb-2">Connected account: <?= h((string) $tokenRow['username']) ?></div>
             <div class="small muted mb-2">Label: <?= h((string) $tokenRow['token_label']) ?></div>
             <div class="small muted mb-2">API endpoint</div>
@@ -53,7 +54,7 @@ $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'),
             <div class="small muted mt-3 mb-2">Bridge token</div>
             <code id="bridgeToken"><?= h($token) ?></code>
             <div class="row mt-3">
-                <button type="button" id="copyToken">Copy token</button>
+                <button type="button" id="copyToken">Copy pairing code</button>
                 <a class="button" href="wearable_integrations.php">Back to wearable setup</a>
             </div>
         </div>
@@ -74,7 +75,7 @@ $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'),
     btn.addEventListener('click', function () {
         navigator.clipboard.writeText(token.textContent || '').then(function () {
             btn.textContent = 'Copied';
-            setTimeout(function () { btn.textContent = 'Copy token'; }, 1600);
+            setTimeout(function () { btn.textContent = 'Copy pairing code'; }, 1600);
         });
     });
 })();

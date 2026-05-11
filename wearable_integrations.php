@@ -33,6 +33,7 @@ $status = $_GET['status'] ?? '';
 $message = '';
 $bridgePayload = '';
 $bridgeQrUrl = '';
+$bridgeLink = '';
 $bridgeTokenLabel = '';
 $bridgeDogName = '';
 $bridgeTokenIssued = false;
@@ -65,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $issued = issueApiToken($pdo, $userId, $bridgeTokenLabel);
         $bridgeTokenIssued = true;
-        $bridgeBridgeUrl = $appBaseUrl . '/wearable_bridge.php?token=' . rawurlencode($issued['token']) . '&dog_id=' . $selectedDogId;
-        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($bridgeBridgeUrl);
+        $bridgeLink = $appBaseUrl . '/wearable_bridge.php?token=' . rawurlencode($issued['token']) . '&dog_id=' . $selectedDogId;
+        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($bridgeLink);
         $message = 'Wearable connection code created.';
     }
 
@@ -173,14 +174,19 @@ $csrf = generateCsrfToken();
         <?php if ($bridgeTokenIssued && $bridgeQrUrl !== ''): ?>
             <div class="row g-3 align-items-center mt-3">
                 <div class="col-md-5 text-center">
-                    <img src="<?= h($bridgeQrUrl) ?>" alt="Wearable connect QR code" style="max-width:260px;width:100%;height:auto;border:1px solid #ddd;border-radius:12px;background:#fff;padding:10px;">
+                    <a href="<?= h($bridgeLink) ?>" class="d-inline-block" aria-label="Open wearable pairing page">
+                        <img src="<?= h($bridgeQrUrl) ?>" alt="Wearable connect QR code" style="max-width:260px;width:100%;height:auto;border:1px solid #ddd;border-radius:12px;background:#fff;padding:10px;">
+                    </a>
                 </div>
                 <div class="col-md-7">
                     <div class="fw-semibold mb-2">Connection ready</div>
-                    <div class="small mb-2">Use this on the phone. The QR opens a GuidePaw pairing page instead of a raw text note.</div>
+                    <div class="small mb-2">Scan the QR or tap the button below. Both open the GuidePaw pairing page instead of a raw text note.</div>
                     <div class="small mb-2"><strong>Device:</strong> <?= h($bridgeDogName !== '' ? $bridgeDogName : 'Selected dog') ?></div>
                     <div class="small mb-2"><strong>Source:</strong> Health Connect</div>
                     <div class="small mb-2"><strong>Open link:</strong> <code style="display:inline-block;padding:4px 6px;word-break:break-all;"><?= h($appBaseUrl . '/wearable_bridge.php') ?></code></div>
+                    <div class="mt-3">
+                        <a href="<?= h($bridgeLink) ?>" style="display:inline-block;padding:10px 14px;background:#0d6efd;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;">Open pairing page</a>
+                    </div>
                     <div class="small text-muted">Keep this page open while you pair. The next syncs will show up here automatically.</div>
                 </div>
             </div>
