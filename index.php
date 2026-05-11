@@ -100,10 +100,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 <main class="page-shell mt-3">
     <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
-        <span class="badge bg-dark" data-queue-count style="display:none;">0</span>
-        <span data-notification-state class="badge bg-secondary">Notifications off</span>
         <div class="home-utility-text">Sync and reminders live in Settings.</div>
-        <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-sync-queued>Sync queued logs</button>
+        <a href="settings.php" class="btn btn-outline-secondary btn-sm ms-auto">Settings</a>
     </div>
     <div class="alert alert-info py-2 small">Use Settings for reminders and device notices. The menu stays the same on every page.</div>
 

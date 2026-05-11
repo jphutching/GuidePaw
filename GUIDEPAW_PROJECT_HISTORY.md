@@ -991,7 +991,7 @@ php scripts/cleanup_e2e_data.php --yes
 - Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: yes
-- Next recommended step: keep the dashboard utility row light and avoid repeating Settings actions in the hero
+- Next recommended step: keep the dashboard utility row to a single status badge and a Settings link, with sync controls off the home screen
 
 ## Update log template
 
