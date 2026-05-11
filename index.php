@@ -119,9 +119,8 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <div class="command-title">
                     <div>
                         <h2 class="h5 mb-1">Active Dog</h2>
-                        <div class="small text-muted">Switch dogs or manage dog profiles.</div>
+                        <div class="small text-muted">Switch dogs from here.</div>
                     </div>
-                    <a href="dogs.php" class="btn btn-outline-primary btn-sm">Manage Dogs</a>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <?php foreach ($dogs as $dog): ?>
