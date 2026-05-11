@@ -881,6 +881,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the edit-profile escaping fix, then rerun beta smoke so the profile page and the training-log edit flow stay green together
 
+2026-05-10 — Dashboard Today simplification and menu cleanup
+- Commit(s): pending
+- Files changed: index.php, includes/mobile_nav.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: keep Today limited to the core daily actions and let the menu carry the long tail of training, care, access, and admin pages
+
 2026-05-10 — ADA Access Card state fallback and handler home state
 - Commit(s): pending
 - Files changed: ada_access_card.php, handler_profile.php, register.php, dog_profile.php, public_dog_profile.php, includes/db_connect.php, includes/beta_access.php, includes/public_contact_defaults.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md

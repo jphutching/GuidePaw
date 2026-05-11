@@ -145,8 +145,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <div class="command-title">
                 <div>
                     <h2 class="h5 mb-1">Today</h2>
-                    <div class="small text-muted">Fast actions for what handlers do most often. The full set lives in the menu.</div>
+                    <div class="small text-muted">Keep the day moving. Everything else lives in the menu.</div>
                 </div>
+                <a class="btn btn-outline-secondary btn-sm" href="#needs-attention">Needs Attention</a>
             </div>
             <div class="today-grid">
                 <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
@@ -155,53 +156,21 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <?php if (featureEnabled($pdo, 'detailed_log_enabled')): ?>
                     <a class="today-action" href="log_entry.php"><span>📝</span>Detailed Log</a>
                 <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'trucking_mode_enabled')): ?>
-                    <a class="today-action" href="trucking_mode.php"><span>🚚</span>Trucking Mode</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled')): ?>
-                    <a class="today-action" href="behavior_risk_scoring.php"><span>⚠️</span>Behavior Risk</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'regression_engine_enabled')): ?>
-                    <a class="today-action" href="regression_engine.php"><span>♻️</span>Regression Engine</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
-                    <a class="today-action" href="wearable_integrations.php"><span>⌚</span>Wearable Sync</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'alerts_enabled')): ?>
-                    <a class="today-action" href="alerts.php"><span>🧠</span>Smart Alerts</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'health_docs_enabled')): ?>
-                    <a class="today-action" href="dog_health.php"><span>🩺</span>Health Docs</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'vet_appointments_enabled')): ?>
-                    <a class="today-action" href="appointments.php"><span>📅</span>Appointments</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'medications_enabled')): ?>
-                    <a class="today-action" href="medications.php"><span>💊</span>Medications</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
-                    <a class="today-action" href="trainer_marketplace.php"><span>🤝</span>Trainer Market</a>
-                <?php endif; ?>
                 <?php if (featureEnabled($pdo, 'goal_builder_enabled')): ?>
                     <a class="today-action" href="goal_builder.php"><span>🎯</span>Goal Builder</a>
+                <?php elseif (featureEnabled($pdo, 'training_program_enabled')): ?>
+                    <a class="today-action" href="training_program.php"><span>🎓</span>Training Program</a>
                 <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'community_challenges_enabled')): ?>
-                    <a class="today-action" href="community_challenges.php"><span>🏅</span>Community Challenges</a>
-                <?php endif; ?>
-                <?php if (featureEnabled($pdo, 'certification_enabled')): ?>
-                    <a class="today-action" href="certification.php"><span>✅</span>Certification</a>
-                <?php endif; ?>
-                <a class="today-action" href="stats.php"><span>📊</span>Stats</a>
-                <a class="today-action" href="view_logs.php"><span>📋</span>History</a>
                 <?php if (featureEnabled($pdo, 'ada_wallet_enabled')): ?>
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
-                <a class="today-action" href="air_travel_rights.php"><span>✈️</span>Air Travel</a>
+                <a class="today-action" href="notifications.php"><span>🔔</span>Alerts</a>
             </div>
+            <div class="small text-muted mt-2"><a href="quick_log.php" class="text-decoration-none">Need more? Open the menu for logs, care, training, access, and admin tools.</a></div>
         </div>
     </section>
 
-    <section class="card command-card mb-3">
+    <section class="card command-card mb-3" id="needs-attention">
         <div class="card-body">
             <div class="command-title">
                 <div>

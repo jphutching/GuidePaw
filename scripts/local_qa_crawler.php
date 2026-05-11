@@ -1150,20 +1150,17 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $regressionEngineHookSeen = str_contains($dashboardBody, 'regression engine') || str_contains($dashboardBody, 'reset plan');
     $goalBuilderHookSeen = str_contains($dashboardBody, 'goal builder');
     $airTravelHookSeen = str_contains($dashboardBody, 'air travel rights') || str_contains($dashboardBody, 'service dog rights');
-    $airTravelTodaySeen = str_contains($dashboardBody, 'air travel');
-    $healthDocsTodaySeen = str_contains($dashboardBody, 'health docs') || str_contains($dashboardBody, 'dog health');
-    $appointmentsTodaySeen = str_contains($dashboardBody, 'appointments') || str_contains($dashboardBody, 'vet appointments');
-    $medicationsTodaySeen = str_contains($dashboardBody, 'medications');
-    $wearableHookSeen = str_contains($dashboardBody, 'wearable sync') || str_contains($dashboardBody, 'wearable snapshot');
+    $todayCoreActionsSeen = gpQaPageLooksOk($dashboard)
+        && str_contains($dashboardBody, 'quick session')
+        && str_contains($dashboardBody, 'detailed log')
+        && (str_contains($dashboardBody, 'goal builder') || str_contains($dashboardBody, 'training program'))
+        && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'))
+        && str_contains($dashboardBody, 'alerts');
+    $dashboardTodayActionCount = preg_match_all('/class="today-action"/i', $dashboard['body'], $todayActionMatches);
+    $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 5;
     $alertsHookSeen = str_contains($dashboardBody, 'smart alerts');
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
-    $certificationHookSeen = str_contains($dashboardBody, 'certification');
-    $statsHookSeen = str_contains($dashboardBody, 'stats');
-    $trainerMarketplaceHookSeen = str_contains($dashboardBody, 'trainer marketplace') || str_contains($dashboardBody, 'trainer profiles');
-    $communityChallengesHookSeen = str_contains($dashboardBody, 'community challenges') || str_contains($dashboardBody, 'challenge');
-    $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
-    $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
     $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
     $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog')) && (str_contains($adaAccessCardBody, 'current source') || str_contains($adaAccessCardBody, 'handler home state') || str_contains($adaAccessCardBody, 'last ping'));
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
@@ -1294,20 +1291,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_behavior_risk_hook', gpQaPageLooksOk($dashboard) && $behaviorRiskHookSeen, 'HTTP ' . $dashboard['status'] . ($behaviorRiskHookSeen ? ' behavior risk hook found' : ' behavior risk hook not currently visible'));
     gpQaResult($results, 'dashboard_regression_engine_hook', gpQaPageLooksOk($dashboard) && $regressionEngineHookSeen, 'HTTP ' . $dashboard['status'] . ($regressionEngineHookSeen ? ' regression engine hook found' : ' regression engine hook not currently visible'));
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
-    gpQaResult($results, 'dashboard_air_travel_hook', gpQaPageLooksOk($dashboard) && $airTravelHookSeen, 'HTTP ' . $dashboard['status'] . ($airTravelHookSeen ? ' air travel hook found' : ' air travel hook not currently visible'));
-    gpQaResult($results, 'dashboard_air_travel_today', gpQaPageLooksOk($dashboard) && $airTravelTodaySeen, 'HTTP ' . $dashboard['status'] . ($airTravelTodaySeen ? ' air travel today action found' : ' air travel today action not currently visible'));
     gpQaResult($results, 'dashboard_alerts_today', gpQaPageLooksOk($dashboard) && $alertsHookSeen, 'HTTP ' . $dashboard['status'] . ($alertsHookSeen ? ' smart alerts today action found' : ' smart alerts today action not currently visible'));
+    gpQaResult($results, 'dashboard_today_core_actions', $todayCoreActionsSeen, 'HTTP ' . $dashboard['status'] . ($todayCoreActionsSeen ? ' core today actions remain' : ' core today actions missing'));
+    gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
-    gpQaResult($results, 'dashboard_health_docs_today', gpQaPageLooksOk($dashboard) && $healthDocsTodaySeen, 'HTTP ' . $dashboard['status'] . ($healthDocsTodaySeen ? ' health docs today action found' : ' health docs today action not currently visible'));
-    gpQaResult($results, 'dashboard_appointments_today', gpQaPageLooksOk($dashboard) && $appointmentsTodaySeen, 'HTTP ' . $dashboard['status'] . ($appointmentsTodaySeen ? ' appointments today action found' : ' appointments today action not currently visible'));
-    gpQaResult($results, 'dashboard_medications_today', gpQaPageLooksOk($dashboard) && $medicationsTodaySeen, 'HTTP ' . $dashboard['status'] . ($medicationsTodaySeen ? ' medications today action found' : ' medications today action not currently visible'));
-    gpQaResult($results, 'dashboard_certification_today', gpQaPageLooksOk($dashboard) && $certificationHookSeen, 'HTTP ' . $dashboard['status'] . ($certificationHookSeen ? ' certification today action found' : ' certification today action not currently visible'));
-    gpQaResult($results, 'dashboard_stats_today', gpQaPageLooksOk($dashboard) && $statsHookSeen, 'HTTP ' . $dashboard['status'] . ($statsHookSeen ? ' stats today action found' : ' stats today action not currently visible'));
-    gpQaResult($results, 'dashboard_wearable_hook', gpQaPageLooksOk($dashboard) && $wearableHookSeen, 'HTTP ' . $dashboard['status'] . ($wearableHookSeen ? ' wearable hook found' : ' wearable hook not currently visible'));
-    gpQaResult($results, 'dashboard_trainer_marketplace_hook', gpQaPageLooksOk($dashboard) && $trainerMarketplaceHookSeen, 'HTTP ' . $dashboard['status'] . ($trainerMarketplaceHookSeen ? ' trainer marketplace hook found' : ' trainer marketplace hook not currently visible'));
-    gpQaResult($results, 'dashboard_community_challenges_hook', gpQaPageLooksOk($dashboard) && $communityChallengesHookSeen, 'HTTP ' . $dashboard['status'] . ($communityChallengesHookSeen ? ' challenge hook found' : ' challenge hook not currently visible'));
-    gpQaResult($results, 'dashboard_trucking_hook', gpQaPageLooksOk($dashboard) && $truckingHookSeen, 'HTTP ' . $dashboard['status'] . ($truckingHookSeen ? ' trucking hook found' : ' trucking hook not currently visible'));
-    gpQaResult($results, 'dashboard_coach_review_hook', gpQaPageLooksOk($dashboard), 'HTTP ' . $dashboard['status'] . ($coachHookSeen ? ' coach review hook found' : ' coach review hook not currently visible'));
     gpQaResult($results, 'dashboard_menu_search', gpQaPageLooksOk($dashboard) && $menuSearchSeen, 'HTTP ' . $dashboard['status'] . ($menuSearchSeen ? ' menu search found' : ' menu search not currently visible'));
     gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
