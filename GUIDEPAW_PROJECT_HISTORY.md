@@ -958,6 +958,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep Samsung Health and Health Connect as direct store links on the wearable setup pages so the phone prerequisites are one tap away
 
+2026-05-10 — Bridge APK deploy path
+- Commit(s): pending
+- Files changed: bridge_apk.php, scripts/deploy_local.sh, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: copy the built bridge APK into the site during deploy so the download button serves a real file instead of a placeholder path
+
 ## Update log template
 
 When updating this file, add a short note like:

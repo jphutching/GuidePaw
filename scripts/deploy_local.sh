@@ -16,6 +16,14 @@ sudo cp -r api "$LIVE/"
 sudo cp app.js sw.js manifest.json offline.html styles.css "$LIVE/" 2>/dev/null || true
 sudo cp -r includes "$LIVE/"
 sudo cp -r assets "$LIVE/"
+if [ -f android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk ]; then
+  sudo mkdir -p "$LIVE/bridge"
+  sudo cp android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk "$LIVE/bridge/GuidePaw-Bridge-debug.apk"
+fi
+if [ -f android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk ]; then
+  sudo mkdir -p "$LIVE/bridge"
+  sudo cp android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk "$LIVE/bridge/GuidePaw-Bridge-debug.apk"
+fi
 
 echo "== PHP syntax: live =="
 cd "$LIVE"

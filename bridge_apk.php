@@ -1,8 +1,20 @@
 <?php
 require_once __DIR__ . '/includes/brand_header.php';
 
-$apkPath = __DIR__ . '/android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk';
-if (is_file($apkPath) && isset($_GET['download'])) {
+$apkCandidates = [
+    __DIR__ . '/android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk',
+    __DIR__ . '/android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk',
+    __DIR__ . '/bridge/GuidePaw-Bridge-debug.apk',
+];
+$apkPath = '';
+foreach ($apkCandidates as $candidate) {
+    if (is_file($candidate)) {
+        $apkPath = $candidate;
+        break;
+    }
+}
+
+if ($apkPath !== '' && isset($_GET['download'])) {
     header('Content-Type: application/vnd.android.package-archive');
     header('Content-Disposition: attachment; filename="GuidePaw-Bridge-debug.apk"');
     header('Content-Length: ' . filesize($apkPath));
@@ -37,7 +49,7 @@ http_response_code(200);
             <a class="button" style="margin-right:8px;" href="https://play.google.com/store/apps/details?id=com.sec.android.app.shealth" target="_blank" rel="noopener noreferrer">Samsung Health</a>
             <a class="button" href="https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata" target="_blank" rel="noopener noreferrer">Health Connect</a>
         </p>
-        <?php if (is_file($apkPath)): ?>
+        <?php if ($apkPath !== ''): ?>
             <p><a class="button" href="bridge_apk.php?download=1">Download Bridge APK</a></p>
         <?php else: ?>
             <p class="small">The APK is not published on this server yet. Once it is available, use the download button above to install it on the phone you are pairing.</p>
