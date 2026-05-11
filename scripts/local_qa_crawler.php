@@ -446,9 +446,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $apiMe = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiDogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiLogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiWearables = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiMeSeen = false;
         $apiDogsSeen = false;
         $apiLogsSeen = false;
+        $apiWearablesSeen = false;
         if ($checkApiRoutes) {
             $apiTokensPage = gpQaRequest($baseUrl, 'api_tokens.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
             $apiTokensBody = strtolower($apiTokensPage['body']);
@@ -483,6 +485,24 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $apiMeSeen = gpQaPageLooksOk($apiMe) && is_array($apiMeJson) && !empty($apiMeJson['success']) && !empty($apiMeJson['user']['username']);
             $apiDogsSeen = gpQaPageLooksOk($apiDogs) && is_array($apiDogsJson) && !empty($apiDogsJson['success']) && isset($apiDogsJson['dogs']) && is_array($apiDogsJson['dogs']);
             $apiLogsSeen = gpQaPageLooksOk($apiLogs) && is_array($apiLogsJson) && !empty($apiLogsJson['success']) && isset($apiLogsJson['logs']) && is_array($apiLogsJson['logs']);
+            $apiWearableDogId = (int) (($apiDogsJson['dogs'][0]['id'] ?? 0) ?: 0);
+            if ($apiWearableDogId > 0 && $apiToken !== '') {
+                $apiWearables = gpQaApiRequest($baseUrl, 'api/wearables.php', $apiToken, 'POST', [
+                    'dog_id' => $apiWearableDogId,
+                    'source' => 'health_connect',
+                    'device_name' => 'Galaxy Watch QA',
+                    'recorded_for_date' => date('Y-m-d'),
+                    'steps' => 8421,
+                    'active_minutes' => 77,
+                    'distance_miles' => 3.9,
+                    'avg_heart_rate' => 92,
+                    'sleep_hours' => 7.4,
+                    'summary_text' => 'Automated wearable sync test from Health Connect.',
+                    'notes' => 'Posted by local QA crawler.',
+                ]);
+                $apiWearablesJson = json_decode($apiWearables['body'], true);
+                $apiWearablesSeen = gpQaPageLooksOk($apiWearables) && is_array($apiWearablesJson) && !empty($apiWearablesJson['success']) && !empty($apiWearablesJson['event_id']);
+            }
         }
         $adminSessionProbe = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminSessionProbeBody = strtolower($adminSessionProbe['body']);
@@ -522,12 +542,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_me_endpoint', $apiMeSeen, 'HTTP ' . $apiMe['status'] . ($apiMeSeen ? ' api me ok' : ' api me missing'));
             gpQaResult($results, 'api_dogs_endpoint', $apiDogsSeen, 'HTTP ' . $apiDogs['status'] . ($apiDogsSeen ? ' api dogs ok' : ' api dogs missing'));
             gpQaResult($results, 'api_logs_endpoint', $apiLogsSeen, 'HTTP ' . $apiLogs['status'] . ($apiLogsSeen ? ' api logs ok' : ' api logs missing'));
+            gpQaResult($results, 'api_wearables_endpoint', $apiWearablesSeen, 'HTTP ' . $apiWearables['status'] . ($apiWearablesSeen ? ' wearable sync recorded' : ' wearable sync missing'));
         } else {
             gpQaResult($results, 'api_tokens_page_loads', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api_tokens.php and bearer-token endpoints');
             gpQaResult($results, 'api_login_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/login.php');
             gpQaResult($results, 'api_me_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/me.php');
             gpQaResult($results, 'api_dogs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/dogs.php');
             gpQaResult($results, 'api_logs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/logs.php');
+            gpQaResult($results, 'api_wearables_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php');
         }
         $pages = [
             'dashboard_loads' => 'index.php',
@@ -1018,6 +1040,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'wearable integrations')
                 || str_contains($body, 'wearable snapshot')
                 || str_contains($body, 'recent syncs')
+                || str_contains($body, 'automatic sync')
+                || str_contains($body, 'api/wearables.php')
             )
             : true;
         $alertsPageLooksReady = $path === 'alerts.php'

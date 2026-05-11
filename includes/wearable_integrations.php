@@ -74,6 +74,96 @@ function gpWearableParseSummary(string $payload): array
     ];
 }
 
+function gpWearableFirstValue(array $input, array $keys, string $default = ''): string
+{
+    foreach ($keys as $key) {
+        if (!array_key_exists($key, $input)) {
+            continue;
+        }
+        $value = trim((string) ($input[$key] ?? ''));
+        if ($value !== '') {
+            return $value;
+        }
+    }
+
+    return $default;
+}
+
+function gpWearableNumericValue(array $input, array $keys, bool $float = false): mixed
+{
+    foreach ($keys as $key) {
+        if (!array_key_exists($key, $input)) {
+            continue;
+        }
+        $value = $input[$key];
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_numeric($value)) {
+            return $float ? (float) $value : (int) $value;
+        }
+    }
+
+    return null;
+}
+
+function gpWearableNormalizeDateValue(mixed $value): ?string
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return null;
+    }
+
+    $timestamp = strtotime($value);
+    if ($timestamp === false) {
+        return $value;
+    }
+
+    return date('Y-m-d', $timestamp);
+}
+
+function gpWearableNormalizeRecordInput(array $input, string $defaultSource = 'manual'): array
+{
+    $merged = $input;
+    $rawPayload = $input['raw_payload'] ?? $input['wearable_payload'] ?? $input['payload'] ?? '';
+
+    if (is_string($rawPayload) && trim($rawPayload) !== '') {
+        $parsed = gpWearableParseSummary($rawPayload);
+        if ($parsed) {
+            $merged = array_merge($parsed, $merged);
+        }
+    } elseif (is_array($rawPayload)) {
+        $merged = array_merge($rawPayload, $merged);
+        $rawPayload = json_encode($rawPayload, JSON_UNESCAPED_SLASHES);
+    } elseif (is_array($input['payload'] ?? null)) {
+        $merged = array_merge($input['payload'], $merged);
+        if ($rawPayload === '') {
+            $rawPayload = json_encode($input['payload'], JSON_UNESCAPED_SLASHES);
+        }
+    }
+
+    $source = gpWearableFirstValue($merged, ['source', 'provider', 'vendor'], $defaultSource);
+    $deviceName = gpWearableFirstValue($merged, ['device_name', 'deviceName', 'device', 'watch_name', 'watchName'], '');
+    $recordedForDate = gpWearableNormalizeDateValue(gpWearableFirstValue($merged, ['recorded_for_date', 'recordedForDate', 'date', 'recorded_at', 'recordedAt'], ''));
+    $summaryText = gpWearableFirstValue($merged, ['summary_text', 'summaryText', 'summary'], '');
+    $notes = gpWearableFirstValue($merged, ['notes', 'note'], '');
+
+    return [
+        'dog_id' => isset($merged['dog_id']) && $merged['dog_id'] !== '' ? (int) $merged['dog_id'] : null,
+        'source' => $source !== '' ? $source : $defaultSource,
+        'device_name' => $deviceName !== '' ? $deviceName : null,
+        'recorded_for_date' => $recordedForDate,
+        'steps' => gpWearableNumericValue($merged, ['steps', 'step_count', 'stepCount']),
+        'active_minutes' => gpWearableNumericValue($merged, ['active_minutes', 'activeMinutes', 'active_time_minutes'], false),
+        'distance_miles' => gpWearableNumericValue($merged, ['distance_miles', 'distanceMiles', 'distance'], true),
+        'avg_heart_rate' => gpWearableNumericValue($merged, ['avg_heart_rate', 'avgHeartRate', 'heart_rate', 'heartRate'], false),
+        'sleep_hours' => gpWearableNumericValue($merged, ['sleep_hours', 'sleepHours'], true),
+        'summary_text' => $summaryText !== '' ? $summaryText : null,
+        'notes' => $notes !== '' ? $notes : null,
+        'raw_payload' => is_string($rawPayload) ? trim($rawPayload) : null,
+    ];
+}
+
 function gpWearableRecentEvents(PDO $pdo, int $userId, ?int $dogId = null, int $limit = 12): array
 {
     if (!gpWearableIntegrationsTableReady($pdo)) {
@@ -170,4 +260,3 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
 
     return (int) $stmt->fetchColumn();
 }
-

@@ -101,7 +101,7 @@ $csrf = generateCsrfToken();
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Wearable Integrations</h1>
-    <p class="small">Record a summary from a watch, collar tracker, or exported health snapshot. This page stores structured summaries now, without vendor API hookups.</p>
+    <p class="small">Record a summary from a watch, collar tracker, or exported health snapshot. This page now supports both manual entry and automatic API syncs.</p>
 
     <?php if ($status === 'saved'): ?>
         <div class="card">Wearable snapshot saved.</div>
@@ -114,6 +114,18 @@ $csrf = generateCsrfToken();
         <div class="metric"><div class="small">Total steps</div><strong><?= (int) $summary['total_steps'] ?></strong></div>
         <div class="metric"><div class="small">Active minutes</div><strong><?= (int) $summary['total_active_minutes'] ?></strong></div>
         <div class="metric"><div class="small">Avg heart rate</div><strong><?= $summary['avg_heart_rate'] === null ? '—' : h(number_format((float) $summary['avg_heart_rate'], 0)) ?></strong></div>
+    </div>
+
+    <div class="card">
+        <h2 class="h5">Automatic sync</h2>
+        <p class="small mb-2">Samsung watches sync through Samsung Health on the phone, then Health Connect can feed an Android bridge that POSTs to GuidePaw automatically. Use a GuidePaw API token and send JSON to <code>/api/wearables.php</code>.</p>
+        <div class="small mb-2">Source values you can use: <code>health_connect</code>, <code>samsung_health</code>, <code>fitbit</code>, <code>garmin</code>, or <code>manual</code>.</div>
+        <div class="small mb-2"><a href="api_tokens.php">Create or manage API tokens</a> for the bearer token used by your bridge.</div>
+        <pre class="mb-0" style="white-space:pre-wrap; background:#f8f9fa; border:1px solid #ddd; border-radius:8px; padding:12px;">POST /api/wearables.php
+Authorization: Bearer YOUR_API_TOKEN
+Content-Type: application/json
+
+{"source":"health_connect","device_name":"Galaxy Watch / Samsung Health","recorded_for_date":"2026-05-10","steps":8421,"active_minutes":77,"distance_miles":3.9,"avg_heart_rate":92,"sleep_hours":7.4,"summary_text":"Long walk and calm evening.","dog_id":123}</pre>
     </div>
 
     <div class="card">
