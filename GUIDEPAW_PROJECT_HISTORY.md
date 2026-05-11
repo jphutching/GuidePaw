@@ -930,12 +930,12 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the found-dog notifications using Google Maps only for real map-like locations, and fall back to the dog profile for synthetic or non-map text so the notification links stay usable
 
-2026-05-10 — Wearable connect flow simplification and bug fix
+2026-05-10 — Wearable connect flow simplification, bridge page, and bug fix
 - Commit(s): pending
-- Files changed: wearable_integrations.php, includes/wearable_integrations.php, api/wearables.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, GUIDEPAW_PROJECT_HISTORY.md
+- Files changed: wearable_integrations.php, wearable_bridge.php, includes/api_auth.php, includes/wearable_integrations.php, api/wearables.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, scripts/deploy_local.sh, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: yes
 - In-progress item changed: yes
-- Next recommended step: verify the connect-code UI and bridge QR on both local and beta, then keep Samsung Health / Health Connect syncing through the simplified wearable setup without the missing-include connect crash
+- Next recommended step: verify the connect-code UI opens the bridge page on both local and beta, then keep Samsung Health / Health Connect syncing through the simplified wearable setup without the missing-include connect crash
 
 ## Update log template
 

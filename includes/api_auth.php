@@ -32,6 +32,19 @@ function issueApiToken(PDO $pdo, int $userId, string $label = 'Mobile Token'): a
     return ['token' => $plain, 'prefix' => $prefix, 'expires_at' => $expiresAt];
 }
 
+function findApiTokenByPlainText(PDO $pdo, string $token): ?array {
+    $token = trim($token);
+    if ($token === '') {
+        return null;
+    }
+
+    $hash = hash('sha256', $token);
+    $stmt = $pdo->prepare('SELECT t.id, t.user_id, t.token_label, t.token_prefix, t.expires_at, t.revoked_at, t.created_at, u.username FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ? LIMIT 1');
+    $stmt->execute([$hash]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
 function requireApiUser(PDO $pdo): array {
     $token = getBearerToken();
     if (!$token) {

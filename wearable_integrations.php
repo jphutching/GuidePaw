@@ -65,14 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $issued = issueApiToken($pdo, $userId, $bridgeTokenLabel);
         $bridgeTokenIssued = true;
-        $bridgePayload = json_encode([
-            'endpoint' => $appBaseUrl . '/api/wearables.php',
-            'token' => $issued['token'],
-            'dog_id' => $selectedDogId,
-            'dog_name' => $bridgeDogName,
-            'source' => 'health_connect',
-        ], JSON_UNESCAPED_SLASHES);
-        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode((string) $bridgePayload);
+        $bridgeBridgeUrl = $appBaseUrl . '/wearable_bridge.php?token=' . rawurlencode($issued['token']) . '&dog_id=' . $selectedDogId;
+        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($bridgeBridgeUrl);
         $message = 'Wearable connection code created.';
     }
 
@@ -183,9 +177,10 @@ $csrf = generateCsrfToken();
                 </div>
                 <div class="col-md-7">
                     <div class="fw-semibold mb-2">Connection ready</div>
-                    <div class="small mb-2">Use this for Samsung Health / Health Connect on the phone side. The bridge only needs to scan the code once.</div>
+                    <div class="small mb-2">Use this on the phone. The QR opens a GuidePaw pairing page instead of a raw text note.</div>
                     <div class="small mb-2"><strong>Device:</strong> <?= h($bridgeDogName !== '' ? $bridgeDogName : 'Selected dog') ?></div>
                     <div class="small mb-2"><strong>Source:</strong> Health Connect</div>
+                    <div class="small mb-2"><strong>Open link:</strong> <code style="display:inline-block;padding:4px 6px;word-break:break-all;"><?= h($appBaseUrl . '/wearable_bridge.php') ?></code></div>
                     <div class="small text-muted">Keep this page open while you pair. The next syncs will show up here automatically.</div>
                 </div>
             </div>

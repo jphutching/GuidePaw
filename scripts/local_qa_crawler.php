@@ -1050,6 +1050,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $wearableConnectPage = $res;
             $wearableConnectBody = strtolower($wearableConnectPage['body']);
             $wearableConnectPostedSeen = false;
+            $wearableBridgeTargetSeen = false;
             if (preg_match('/<option[^>]+value="(\d+)"[^>]*selected/i', $wearableConnectPage['body'], $wearableDogMatch) || preg_match('/<option[^>]+value="(\d+)"/i', $wearableConnectPage['body'], $wearableDogMatch)) {
                 if (!preg_match('/name="csrf_token" value="([^"]+)"/i', $wearableConnectPage['body'], $wearableCsrfMatch)) {
                     $wearableCsrfMatch = [null, ''];
@@ -1068,9 +1069,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                         || str_contains($wearableConnectPostBody, 'connection ready')
                         || str_contains($wearableConnectPostBody, 'scan the qr')
                     );
+                    $wearableBridgeTargetSeen = gpQaPageLooksOk($wearableConnectPost) && str_contains($wearableConnectPost['body'], 'wearable_bridge.php%3Ftoken%3D');
                 }
             }
             gpQaResult($results, 'wearable_connect_code', $wearableConnectPostedSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableConnectPostedSeen ? ' wearable connect code created' : ' wearable connect code missing'));
+            gpQaResult($results, 'wearable_bridge_qr_target', $wearableBridgeTargetSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableBridgeTargetSeen ? ' wearable bridge URL found in QR' : ' wearable bridge URL missing from QR'));
         }
         $alertsPageLooksReady = $path === 'alerts.php'
             ? (
