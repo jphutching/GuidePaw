@@ -1236,6 +1236,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
     $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
+    $menuLogoutSeen = str_contains($dashboardBody, 'logout') && str_contains($dashboardBody, 'settings');
     $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog')) && (str_contains($adaAccessCardBody, 'current source') || str_contains($adaAccessCardBody, 'handler home state') || str_contains($adaAccessCardBody, 'last ping'));
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
@@ -1370,6 +1371,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
     gpQaResult($results, 'dashboard_menu_search', gpQaPageLooksOk($dashboard) && $menuSearchSeen, 'HTTP ' . $dashboard['status'] . ($menuSearchSeen ? ' menu search found' : ' menu search not currently visible'));
+    gpQaResult($results, 'dashboard_menu_logout', gpQaPageLooksOk($dashboard) && $menuLogoutSeen, 'HTTP ' . $dashboard['status'] . ($menuLogoutSeen ? ' menu logout found' : ' menu logout not currently visible'));
     gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));

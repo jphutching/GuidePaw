@@ -965,6 +965,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: copy the built bridge APK into the site during deploy so the download button serves a real file instead of a placeholder path
 
+2026-05-11 — Logout shortcut restored to the menu shell
+- Commit(s): pending
+- Files changed: includes/mobile_nav.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep logout visible in the mobile menu root actions while leaving the Settings session button in place
+
 ## Update log template
 
 When updating this file, add a short note like:
