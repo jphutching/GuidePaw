@@ -1007,6 +1007,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the `More` bucket readable by splitting optional training extras from admin-only tools
 
+2026-05-11 — Menu search removal
+- Commit(s): pending
+- Files changed: includes/mobile_nav.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: keep the menu readable on first glance by removing search and leaving the grouped sections only
+
 ## Update log template
 
 When updating this file, add a short note like:

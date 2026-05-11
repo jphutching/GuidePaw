@@ -100,10 +100,9 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 <main class="page-shell mt-3">
     <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
-        <div class="home-utility-text">Sync and reminders live in Settings.</div>
+        <div class="home-utility-text">Settings handles sync, reminders, and device notices.</div>
         <a href="settings.php" class="btn btn-outline-secondary btn-sm ms-auto">Settings</a>
     </div>
-    <div class="alert alert-info py-2 small">Use Settings for reminders and device notices. The menu stays the same on every page.</div>
 
     <?php if ($unreadNotifications > 0): ?>
         <section class="notification-summary mb-3">

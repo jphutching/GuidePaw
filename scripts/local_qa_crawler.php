@@ -1234,7 +1234,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $homeUtilitySimplified = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'sync queued logs') && !str_contains($dashboardBody, 'notifications off') && !str_contains($dashboardBody, 'data-queue-count');
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
-    $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
+    $menuSearchRemoved = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'search pages, tools, or training tracks');
     $menuLogoutSeen = str_contains($dashboardBody, 'logout') && str_contains($dashboardBody, 'settings');
     $menuSectionCount = preg_match_all('/<details class="gp-menu-section"/i', $dashboard['body'], $menuSectionMatches);
     $menuSimplifiedSeen = gpQaPageLooksOk($dashboard) && (int) $menuSectionCount <= 5;
@@ -1370,9 +1370,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_today_core_actions', $todayCoreActionsSeen, 'HTTP ' . $dashboard['status'] . ($todayCoreActionsSeen ? ' core today actions remain' : ' core today actions missing'));
     gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
-    gpQaResult($results, 'dashboard_menu_search', gpQaPageLooksOk($dashboard) && $menuSearchSeen, 'HTTP ' . $dashboard['status'] . ($menuSearchSeen ? ' menu search found' : ' menu search not currently visible'));
     gpQaResult($results, 'dashboard_menu_logout', gpQaPageLooksOk($dashboard) && $menuLogoutSeen, 'HTTP ' . $dashboard['status'] . ($menuLogoutSeen ? ' menu logout found' : ' menu logout not currently visible'));
     gpQaResult($results, 'dashboard_menu_simplified', $menuSimplifiedSeen, 'HTTP ' . $dashboard['status'] . ($menuSimplifiedSeen ? ' menu kept to the core sections' : ' menu still has too many sections'));
+    gpQaResult($results, 'dashboard_menu_search_removed', $menuSearchRemoved, 'HTTP ' . $dashboard['status'] . ($menuSearchRemoved ? ' menu search removed' : ' menu search still visible'));
     gpQaResult($results, 'dashboard_home_utility_simplified', $homeUtilitySimplified, 'HTTP ' . $dashboard['status'] . ($homeUtilitySimplified ? ' home utility reduced' : ' home utility still has extra controls'));
     gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
