@@ -1231,6 +1231,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'));
     $dashboardTodayActionCount = preg_match_all('/class="today-action"/i', $dashboard['body'], $todayActionMatches);
     $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 4;
+    $homeUtilitySimplified = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'manage reminders') && !str_contains($dashboardBody, 'settings.php" class="btn btn-outline-light btn-sm">settings');
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
     $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
@@ -1372,6 +1373,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_menu_search', gpQaPageLooksOk($dashboard) && $menuSearchSeen, 'HTTP ' . $dashboard['status'] . ($menuSearchSeen ? ' menu search found' : ' menu search not currently visible'));
     gpQaResult($results, 'dashboard_menu_logout', gpQaPageLooksOk($dashboard) && $menuLogoutSeen, 'HTTP ' . $dashboard['status'] . ($menuLogoutSeen ? ' menu logout found' : ' menu logout not currently visible'));
     gpQaResult($results, 'dashboard_menu_simplified', $menuSimplifiedSeen, 'HTTP ' . $dashboard['status'] . ($menuSimplifiedSeen ? ' menu kept to the core sections' : ' menu still has too many sections'));
+    gpQaResult($results, 'dashboard_home_utility_simplified', $homeUtilitySimplified, 'HTTP ' . $dashboard['status'] . ($homeUtilitySimplified ? ' home utility reduced' : ' home utility still has extra controls'));
     gpQaResult($results, 'ada_access_card_page_loads', $adaAccessCardSeen, 'HTTP ' . $adaAccessCardPage['status'] . ($adaAccessCardSeen ? ' ada access card found' : ' ada access card missing'));
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));

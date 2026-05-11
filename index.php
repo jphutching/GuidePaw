@@ -93,7 +93,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <?php endif; ?>
                 </div>
             </div>
-            <a href="settings.php" class="btn btn-outline-light btn-sm">Settings</a>
         </div>
     </div>
 </header>
@@ -103,11 +102,10 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
         <span data-network-status class="badge bg-secondary">Checking...</span>
         <span class="badge bg-dark" data-queue-count style="display:none;">0</span>
         <span data-notification-state class="badge bg-secondary">Notifications off</span>
-        <div class="home-utility-text">Sync and reminder settings live in Settings.</div>
+        <div class="home-utility-text">Sync and reminders live in Settings.</div>
         <button type="button" class="btn btn-outline-primary btn-sm ms-auto" data-sync-queued>Sync queued logs</button>
-        <a href="settings.php" class="btn btn-outline-secondary btn-sm">Manage reminders</a>
     </div>
-    <div class="alert alert-info py-2 small">Use Settings for reminders and device notices. The bottom menu stays the same on every page.</div>
+    <div class="alert alert-info py-2 small">Use Settings for reminders and device notices. The menu stays the same on every page.</div>
 
     <?php if ($unreadNotifications > 0): ?>
         <section class="notification-summary mb-3">
@@ -166,7 +164,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
             </div>
-            <div class="small text-muted mt-2"><a href="quick_log.php" class="text-decoration-none">Need more? Open the menu for logs, care, training, access, and admin tools.</a></div>
+            <div class="small text-muted mt-2"><a href="quick_log.php" class="text-decoration-none">Need more? Open the menu.</a></div>
         </div>
     </section>
 
