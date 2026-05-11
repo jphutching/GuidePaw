@@ -133,6 +133,7 @@ function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
         'display_name' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
+        'home_state' => 'TEXT',
         'profile_photo_url' => 'TEXT',
         'backup_contact_name' => 'TEXT',
         'backup_contact_phone' => 'TEXT',
@@ -178,6 +179,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
             display_name = COALESCE(NULLIF(display_name, ''), ?),
             phone = COALESCE(NULLIF(phone, ''), ?),
             public_email = COALESCE(NULLIF(public_email, ''), NULLIF(email, ''), ?),
+            home_state = COALESCE(NULLIF(home_state, ''), ?),
             backup_contact_name = COALESCE(NULLIF(backup_contact_name, ''), ?),
             backup_contact_phone = COALESCE(NULLIF(backup_contact_phone, ''), ?),
             public_notes = COALESCE(NULLIF(public_notes, ''), ?)
@@ -189,6 +191,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
             $row['display_name'],
             $row['phone'],
             $row['public_email'],
+            '',
             $row['backup_contact_name'],
             $row['backup_contact_phone'],
             $row['public_notes'],

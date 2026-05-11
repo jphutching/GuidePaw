@@ -2,6 +2,9 @@
 require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once 'includes/beta_access.php';
+require_once 'includes/ada_state_laws.php';
+
+gpEnsureRequiredHandlerProfileColumns($pdo);
 
 $publicRegistration = betaBool($pdo, 'public_registration_enabled', false);
 $betaEnabled = betaBool($pdo, 'beta_access_enabled', true);
@@ -21,6 +24,7 @@ $success = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullName = trim($_POST['full_name'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
+    $homeState = strtoupper(trim($_POST['home_state'] ?? ''));
     $email = strtolower(trim($_POST['email'] ?? ''));
     $confirmEmail = strtolower(trim($_POST['confirm_email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
@@ -30,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Name, email, and password are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
+    } elseif ($homeState !== '' && !array_key_exists($homeState, adaStateNames())) {
+        $error = 'Please choose a valid home state code.';
     } elseif ($email !== $confirmEmail) {
         $error = 'Email confirmation does not match.';
     } elseif (strlen($password) < 10) {
@@ -50,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email' => $email,
                     'full_name' => $fullName,
                     'phone' => $phone,
+                    'home_state' => $homeState,
                     'password' => $password,
                     'beta_request_id' => $betaRequestId,
                 ]);
@@ -115,6 +122,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="mb-3">
                     <label class="form-label">Phone number</label>
                     <input class="form-control" name="phone" value="<?= e($_POST['phone'] ?? '') ?>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Home state</label>
+                    <select class="form-select" name="home_state">
+                        <option value="">Choose a state</option>
+                        <?php foreach (adaStateNames() as $code => $name): ?>
+                            <option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($_POST['home_state'] ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">Used as the ADA card fallback when GPS is unavailable and for public QR lost-dog context.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Email / login</label>

@@ -70,6 +70,7 @@ $chipNumber = $dog['chip_number'] ?? ($dog['microchip_id'] ?? '');
 $chipRegistry = $dog['chip_registry'] ?? ($dog['microchip_registry'] ?? '');
 $dogPhoto = $dog['profile_photo_url'] ?? ($dog['photo_url'] ?? '');
 $handlerPhoto = $publicContact['handler_photo_url'] ?? '';
+$homeState = $publicContact['home_state'] ?? '';
 $tasks = $dog['service_tasks'] ?? '';
 $publicNotes = $publicContact['public_notes'] ?? '';
 $foundInstructions = $dog['found_dog_instructions'] ?? '';
@@ -149,6 +150,16 @@ body { background: #f1f5f9; color:#0f172a; }
             <?php if ($backupPhone): ?><a class="btn btn-outline-success btn-call" href="tel:<?= e(preg_replace('/[^0-9+]/', '', $backupPhone)) ?>">Call Backup<?= $backupName ? ': ' . e($backupName) : '' ?></a><?php endif; ?>
             <?php if (!$handlerPhone && !$handlerEmail && !$backupPhone): ?><div class="text-muted">No public contact method has been added yet.</div><?php endif; ?>
         </div>
+        <?php if ($homeState): ?>
+            <div class="mt-3">
+                <div class="label">Home state</div>
+                <div class="value"><?= e($homeState) ?></div>
+                <?php if (($publicContact['home_state_source'] ?? '') === 'handler_profile'): ?>
+                    <div class="inherited-hint">Using handler profile defaults.</div>
+                <?php endif; ?>
+                <div class="inherited-hint">Used as the ADA card fallback and for lost-dog contact context when GPS is unavailable.</div>
+            </div>
+        <?php endif; ?>
     </section>
 
     <?php if ($vet): ?>

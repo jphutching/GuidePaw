@@ -267,7 +267,7 @@ function gpQaFeedbackAliasMap(): array
         'beta_qa_checklist_state.php' => ['beta qa checklist state', 'checked_items'],
         'beta_request.php' => ['request guidepaw beta access', 'beta access'],
         'beta_token.php' => ['validate beta access token', 'beta token'],
-        'register.php' => ['create handler account', 'create guidepaw handler account'],
+        'register.php' => ['create handler account', 'create guidepaw handler account', 'home state'],
         'reset_password.php' => ['account recovery', 'password recovery'],
         'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
@@ -286,7 +286,7 @@ function gpQaFeedbackAliasMap(): array
         'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
         'dog_access_audit.php' => ['audit', 'timeline'],
         'qr_tracking.php' => ['qr tracking', 'qr opens tracked', 'recent qr opens'],
-        'handler_profile.php' => ['handler profile', 'public email', 'backup contact'],
+        'handler_profile.php' => ['handler profile', 'public email', 'backup contact', 'home state'],
         'db_status.php' => ['database', 'schema', 'migration'],
         'admin_feedback.php' => ['admin feedback', 'feedback reports'],
         'admin_beta_requests.php' => ['beta access requests', 'access mode'],
@@ -1165,7 +1165,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $truckingHookSeen = str_contains($dashboardBody, 'trucking mode');
     $coachHookSeen = str_contains($dashboardBody, 'coach review') || str_contains($dashboardBody, 'review queue');
     $menuSearchSeen = str_contains($dashboardBody, 'search pages, tools, or training tracks');
-    $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog'));
+    $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog')) && (str_contains($adaAccessCardBody, 'current source') || str_contains($adaAccessCardBody, 'handler home state') || str_contains($adaAccessCardBody, 'last ping'));
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
     $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));

@@ -11,21 +11,49 @@ $user = getUserRecord($pdo, $userId);
 
 $dogName = $dog['name'] ?? ($_SESSION['dog_name'] ?? 'Your dog');
 $handlerName = $user['username'] ?? 'Handler';
+$homeState = strtoupper(trim((string) ($user['home_state'] ?? '')));
 $stateNames = adaStateNames();
 $stateProfiles = adaStateLawProfiles();
 if (function_exists('adaExtraReviewedStateProfiles')) {
     $stateProfiles = array_replace($stateProfiles, adaExtraReviewedStateProfiles());
 }
-$stateCode = strtoupper(trim((string) ($_GET['state'] ?? $_SESSION['ada_access_state'] ?? 'UT')));
-if (!array_key_exists($stateCode, $stateNames)) {
-    $stateCode = 'UT';
+$stateSource = 'default';
+$requestedStateSource = strtolower(trim((string) ($_GET['state_source'] ?? '')));
+$allowedStateSources = ['query', 'manual', 'gps', 'saved'];
+$stateCode = strtoupper(trim((string) ($_GET['state'] ?? '')));
+if ($stateCode !== '' && !array_key_exists($stateCode, $stateNames)) {
+    $stateCode = '';
+}
+if ($stateCode !== '') {
+    $stateSource = in_array($requestedStateSource, $allowedStateSources, true) ? $requestedStateSource : 'query';
+} else {
+    $sessionState = strtoupper(trim((string) ($_SESSION['ada_access_state'] ?? '')));
+    if ($sessionState !== '' && array_key_exists($sessionState, $stateNames)) {
+        $stateCode = $sessionState;
+        $stateSource = (string) ($_SESSION['ada_access_state_source'] ?? 'session');
+    } elseif ($homeState !== '' && array_key_exists($homeState, $stateNames)) {
+        $stateCode = $homeState;
+        $stateSource = 'home';
+    } else {
+        $stateCode = 'UT';
+    }
 }
 $_SESSION['ada_access_state'] = $stateCode;
+$_SESSION['ada_access_state_source'] = $stateSource;
 $stateLaw = $stateProfiles[$stateCode] ?? adaDefaultStateLawProfile($stateCode, $stateNames[$stateCode]);
 $federalLaw = adaFederalLawProfile();
 $calmScript = 'This is my service dog. You may ask whether the dog is required because of a disability and what work or task the dog is trained to perform.';
 $adaFaqUrl = 'https://www.ada.gov/resources/service-animals-faqs/';
 $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/aviation-consumer-protection/service-animals';
+$stateSourceLabel = match ($stateSource) {
+    'query' => 'Manual selection',
+    'manual' => 'Manual selection',
+    'gps' => 'GPS ping',
+    'saved' => 'Last ping restored',
+    'session' => 'Last ping',
+    'home' => 'Handler home state',
+    default => 'Default state',
+};
 ?>
 <!doctype html>
 <html lang="en">
@@ -60,7 +88,7 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
     <a class="btn btn-outline-light btn-sm" href="#state-law">State notes</a>
     <a class="btn btn-outline-light btn-sm" href="#air-travel">Air travel section</a>
 </div>
-<div><span class="pill">Handler: <?= e($handlerName) ?></span><span class="pill">Dog: <?= e($dogName) ?></span><span class="pill hide-lock">State: <?= e($stateLaw['state_name']) ?></span></div>
+<div><span class="pill">Handler: <?= e($handlerName) ?></span><span class="pill">Dog: <?= e($dogName) ?></span><span class="pill hide-lock">State: <?= e($stateLaw['state_name']) ?></span><span class="pill hide-lock" id="stateSourcePill">Source: <?= e($stateSourceLabel) ?></span></div>
 </section>
 <section class="grid"><div class="access-card"><div class="kicker">Calm script</div><p class="script mb-0" id="calmScript">“<?= e($calmScript) ?>”</p><div class="script-tools hide-print hide-lock"><button class="btn btn-outline-light" type="button" id="copyScriptBtn">Copy script</button><button class="btn btn-outline-light" type="button" id="shareScriptBtn">Share script</button></div><div class="script-feedback hide-lock" id="scriptFeedback" aria-live="polite"></div></div></section>
 <section class="grid two"><div class="access-card"><div class="kicker">Only two questions</div><ol class="qa mb-0"><li>Is the dog required because of a disability?</li><li>What work or task is it trained to perform?</li></ol></div><div class="access-card"><div class="kicker">Not required</div><ul class="mb-0 qa"><li>Certification or registry papers</li><li>Medical records or diagnosis details</li><li>A task demonstration on demand</li></ul></div></section>
@@ -94,7 +122,7 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
 </section>
 <section class="grid two hide-lockscreen">
 <div class="access-card" id="faq"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">Federal ADA baseline</div><div class="law-title"><?= e($federalLaw['title']) ?></div></div><span class="status">Reviewed <?= e($federalLaw['last_reviewed']) ?></span></div><p class="muted mt-3"><?= e($federalLaw['summary']) ?></p><ul><?php foreach ($federalLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><p class="mb-0 hide-lock"><a href="<?= e($federalLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($federalLaw['source_label']) ?></a></p></div>
-<div class="access-card" id="state-law"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div><div class="muted small mt-2">When location access is already granted, GuidePaw will try to auto-detect your state on load.</div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
+<div class="access-card" id="state-law"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div><div class="muted small mt-2">When location access is already granted, GuidePaw will try to auto-detect your state on load.</div><div class="muted small mt-2">Current source: <strong id="stateSourceText"><?= e($stateSourceLabel) ?></strong></div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
 </section>
 <section class="grid hide-lockscreen"><div class="access-card note">Access decisions should be based on the dog’s actual behavior and control, not on stereotypes, missing paperwork, or the fact that the dog is not wearing a vest.</div><div class="access-card"><div class="kicker">Need help now?</div><div style="font-size:clamp(1.6rem,5vw,2.35rem);font-weight:850;">800-514-0301</div><p class="muted mb-0">DOJ ADA Information Line · TTY 833-610-1264</p></div><div class="access-card muted small" id="air-travel">GuidePaw provides general service-animal information and official source links. This is not legal advice. Laws may vary by city, county, housing context, workplace, school, transportation setting, and facts of the situation. For airline-specific rules, use the DOT service animal page and the airline’s own policy before travel.</div></section>
 <section class="grid utility hide-print hide-lock"><button class="btn btn-outline-light" type="button" onclick="window.print()">Print / Save PDF</button><a href="service_dog_rights.php" class="btn btn-outline-light">Detailed ADA notes</a><a href="air_travel_rights.php" class="btn btn-outline-light">Air Travel Rights</a><a href="<?= e($adaFaqUrl) ?>" class="btn btn-outline-light" target="_blank" rel="noopener">Official ADA.gov FAQ</a><a href="settings.php" class="btn btn-outline-light">Settings</a></section>
@@ -111,14 +139,28 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
     var stateSelect = document.getElementById('stateSelect');
     var gpsBtn = document.getElementById('gpsBtn');
     var gpsStatus = document.getElementById('gpsStatus');
+    var stateSourceText = document.getElementById('stateSourceText');
     var copyScriptBtn = document.getElementById('copyScriptBtn');
     var shareScriptBtn = document.getElementById('shareScriptBtn');
     var scriptFeedback = document.getElementById('scriptFeedback');
     var wakeLock = null;
+    var initialStateCode = <?= json_encode($stateCode, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    var initialStateSource = <?= json_encode($stateSource, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    var initialStateSourceLabel = <?= json_encode($stateSourceLabel, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 
     function status(message) {
         if (gpsStatus) {
             gpsStatus.textContent = message || '';
+        }
+    }
+
+    function setStateSource(label) {
+        if (stateSourceText) {
+            stateSourceText.textContent = label || '';
+        }
+        var stateSourcePill = document.getElementById('stateSourcePill');
+        if (stateSourcePill) {
+            stateSourcePill.textContent = 'Source: ' + (label || '');
         }
     }
 
@@ -128,12 +170,36 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
         }
     }
 
-    function go(code) {
+    function storeState(code, source) {
+        try {
+            localStorage.setItem('gpAdaAccessState', code);
+            localStorage.setItem('gpAdaAccessStateSource', source || 'manual');
+        } catch (e) {
+        }
+    }
+
+    function restoreSavedStateIfAvailable() {
+        try {
+            var savedState = localStorage.getItem('gpAdaAccessState') || '';
+            var savedSource = localStorage.getItem('gpAdaAccessStateSource') || 'saved';
+            if (savedState && profiles[savedState] && savedState !== initialStateCode && (initialStateSource === 'default' || initialStateSource === 'home' || initialStateSource === 'session')) {
+                status('Restoring last state: ' + profiles[savedState].state_name + '.');
+                go(savedState, savedSource);
+                return true;
+            }
+        } catch (e) {
+        }
+        return false;
+    }
+
+    function go(code, source) {
         if (!profiles[code]) {
             return;
         }
+        storeState(code, source);
         var url = new URL(window.location.href);
         url.searchParams.set('state', code);
+        url.searchParams.set('state_source', source || 'manual');
         window.location.href = url.toString();
     }
 
@@ -263,15 +329,18 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
         }
 
         if (!navigator.geolocation || !navigator.permissions || !navigator.permissions.query) {
+            restoreSavedStateIfAvailable();
             return;
         }
 
         try {
             var permission = await navigator.permissions.query({ name: 'geolocation' });
             if (!permission || permission.state !== 'granted') {
+                restoreSavedStateIfAvailable();
                 return;
             }
         } catch (e) {
+            restoreSavedStateIfAvailable();
             return;
         }
 
@@ -283,16 +352,22 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
                     var stateCode = await reverseLookupState(position.coords.latitude, position.coords.longitude);
                     if (stateCode) {
                         status('Detected ' + profiles[stateCode].state_name + '. Loading...');
-                        go(stateCode);
+                        go(stateCode, 'gps');
                     } else {
+                        if (!restoreSavedStateIfAvailable()) {
                         status('Could not detect a supported state. Choose your state manually.');
+                        }
                     }
                 } catch (e) {
-                    status('Could not reverse lookup GPS location. Choose your state manually.');
+                    if (!restoreSavedStateIfAvailable()) {
+                        status('Could not reverse lookup GPS location. Choose your state manually.');
+                    }
                 }
             },
             function (error) {
-                status(error && error.message ? error.message : 'Location permission was not granted. Choose your state manually.');
+                if (!restoreSavedStateIfAvailable()) {
+                    status(error && error.message ? error.message : 'Location permission was not granted. Choose your state manually.');
+                }
             },
             { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
         );
@@ -346,7 +421,7 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
 
     if (stateSelect) {
         stateSelect.addEventListener('change', function () {
-            go(stateSelect.value);
+            go(stateSelect.value, 'manual');
         });
     }
 
@@ -365,7 +440,7 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
                         var stateCode = await reverseLookupState(position.coords.latitude, position.coords.longitude);
                         if (stateCode) {
                             status('Detected ' + profiles[stateCode].state_name + '. Loading...');
-                            go(stateCode);
+                            go(stateCode, 'gps');
                         } else {
                             status('Could not detect a supported state. Choose your state manually.');
                         }
@@ -382,6 +457,7 @@ $dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/av
     }
 
     autoDetectStateOnLoad();
+    setStateSource(initialStateSourceLabel);
 })();
 </script>
 </body>

@@ -212,6 +212,7 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
         'name' => $fullName,
         'phone' => $phone,
         'phone_number' => $phone,
+        'home_state' => strtoupper(trim((string) ($data['home_state'] ?? ''))),
         'password_hash' => $passwordHash,
         'password' => $passwordHash,
         'recovery_key' => $recovery,

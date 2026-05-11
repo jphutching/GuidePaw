@@ -26,6 +26,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'login_admin', 'text' => 'Admin account can log in.', 'expected' => 'Admin lands on dashboard or required Handler Profile page if missing required fields.'],
                 ['id' => 'login_test_acct', 'text' => 'Test account can log in.', 'expected' => 'Test account can proceed after required fields are present.'],
                 ['id' => 'required_profile_gate', 'text' => 'Incomplete account is redirected to Handler Profile before continuing.', 'expected' => 'Only Display name, Public phone, and Public email are blocking fields.'],
+                ['id' => 'home_state_optional', 'text' => 'Home State can be added to Handler Profile and registration.', 'expected' => 'State code saves and is available as the ADA card fallback.'],
                 ['id' => 'backup_optional', 'text' => 'Backup contact name/phone can be left blank.', 'expected' => 'User can save and continue without backup contact info.'],
                 ['id' => 'return_after_save', 'text' => 'Required profile save returns user to the originally requested page.', 'expected' => 'Save and Continue redirects correctly.'],
                 ['id' => 'beta_token_page', 'text' => 'Beta Token page loads for approved access.', 'expected' => 'beta_token.php opens and can continue to account creation.'],
@@ -42,7 +43,7 @@ function gpBetaQaChecklistItems(): array
             'title' => 'Handler Profile and Images',
             'description' => 'Confirm handler profile defaults, cropped images, and persistence after redeploy/reload.',
             'items' => [
-                ['id' => 'handler_profile_save', 'text' => 'Handler Profile saves display name, phone, public email, optional backup, notes.', 'expected' => 'Saved values reload correctly.'],
+                ['id' => 'handler_profile_save', 'text' => 'Handler Profile saves display name, phone, public email, home state, optional backup, notes.', 'expected' => 'Saved values reload correctly and home state carries through.'],
                 ['id' => 'handler_photo_upload', 'text' => 'Upload/crop/save handler profile picture.', 'expected' => 'Preview updates and save succeeds.'],
                 ['id' => 'handler_photo_persists', 'text' => 'Handler profile picture persists after logout/login and page refresh.', 'expected' => 'Image still displays because new photos are stored in database.'],
                 ['id' => 'handler_defaults_inherited', 'text' => 'Handler defaults are inherited by dog QR/public profile.', 'expected' => 'Dog profile does not require retyping shared handler info.'],

@@ -5,6 +5,7 @@ require_once 'includes/db_connect.php';
 require_once 'includes/validation.php';
 require_once 'includes/profile_image_tools.php';
 require_once 'includes/app_config.php';
+require_once 'includes/ada_state_laws.php';
 require_once __DIR__ . '/includes/sms_notifications.php';
 checkLogin();
 
@@ -14,6 +15,7 @@ function gpEnsureHandlerProfileColumns(PDO $pdo): void
         'display_name' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
+        'home_state' => 'TEXT',
         'profile_photo_url' => 'TEXT',
         'backup_contact_name' => 'TEXT',
         'backup_contact_phone' => 'TEXT',
@@ -65,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $displayName = cleanText($_POST['display_name'] ?? '', 120);
     $phone = cleanText($_POST['phone'] ?? '', 80);
     $publicEmail = cleanText($_POST['public_email'] ?? '', 160);
+    $homeState = strtoupper(trim((string) ($_POST['home_state'] ?? '')));
     $backupName = cleanText($_POST['backup_contact_name'] ?? '', 120);
     $backupPhone = cleanText($_POST['backup_contact_phone'] ?? '', 80);
     $publicNotes = cleanTextarea($_POST['public_notes'] ?? '', 1200);
@@ -88,13 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($publicEmail !== '' && !filter_var($publicEmail, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Public email must be valid.';
     }
+    if ($homeState !== '' && !array_key_exists($homeState, adaStateNames())) {
+        $errors[] = 'Home state must be a valid US state code.';
+    }
     if ($smsEnabled && $smsPhoneNormalized === '') {
         $errors[] = 'SMS notifications require a valid mobile phone number.';
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
-        $stmt->execute([$displayName, $phone, $publicEmail, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
+        $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
+        $stmt->execute([$displayName, $phone, $publicEmail, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -111,6 +117,7 @@ $stmt->execute([$userId]);
 $user = $stmt->fetch();
 $csrf = generateCsrfToken();
 $completionRequired = (($_GET['required'] ?? '') === '1') || !empty($_SESSION['handler_profile_required_missing']);
+$stateNames = adaStateNames();
 $missingLabels = [];
 if (function_exists('gpMissingRequiredHandlerProfileFields')) {
     $missingLabels = gpProfileMissingLabelsVisible(array_values(gpMissingRequiredHandlerProfileFields($user ?: [])));
@@ -200,6 +207,16 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
                 <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
+                <div class="col-md-6">
+                    <label class="form-label">Home State</label>
+                    <select name="home_state" class="form-select">
+                        <option value="">Choose a state</option>
+                        <?php foreach ($stateNames as $code => $name): ?>
+                            <option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($user['home_state'] ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="form-text">Used as the ADA card fallback and for lost-dog contact context when GPS is unavailable.</div>
+                </div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_name'] ?? '')) ?>"></div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_phone'] ?? '')) ?>"></div>
                 <div class="col-12 sms-box">
