@@ -159,7 +159,10 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
             </div>
-            <div class="small text-muted mt-2"><a href="quick_log.php" class="text-decoration-none">Need more? Open the menu.</a></div>
+            <div class="small text-muted mt-2">
+                Need more?
+                <button type="button" class="btn btn-link p-0 align-baseline text-decoration-none" onclick="document.getElementById('gpMenuOpen')?.click();">Open the menu.</button>
+            </div>
         </div>
     </section>
 
@@ -322,7 +325,7 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 
     <section class="menu-hint mb-4">
         <div class="fw-bold mb-1">Need another tool?</div>
-        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now grouped under Dog, Logs, Training, Care, Access, Support, and Admin.</div>
+        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now grouped under Dog, Logs, Training, Care, and More.</div>
     </section>
 </main>
 
