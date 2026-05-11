@@ -117,7 +117,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                 <div class="command-title">
                     <div>
                         <h2 class="h5 mb-1">Active Dog</h2>
-                        <div class="small text-muted">Switch dogs from here.</div>
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
@@ -138,7 +137,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
             <div class="command-title">
                 <div>
                     <h2 class="h5 mb-1">Today</h2>
-                    <div class="small text-muted">Keep the day moving. Everything else lives in the menu.</div>
                 </div>
             </div>
             <div class="today-grid">

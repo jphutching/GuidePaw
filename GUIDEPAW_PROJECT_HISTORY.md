@@ -1056,6 +1056,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the Today card to direct action tiles only, with no extra jump buttons in the header
 
+2026-05-11 — Home subtitle cleanup
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the Home cards label-only where the action buttons already explain the next step
+
 ## Update log template
 
 When updating this file, add a short note like:
