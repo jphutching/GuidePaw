@@ -1063,6 +1063,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the Home cards label-only where the action buttons already explain the next step
 
+2026-05-11 — Menu prose removal
+- Commit(s): pending
+- Files changed: includes/mobile_nav.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: keep the menu as grouped destinations only, with the wording stripped down to titles and labels
+
 ## Update log template
 
 When updating this file, add a short note like:
