@@ -141,6 +141,7 @@ function gpQaApiRequest(string $baseUrl, string $path, ?string $bearerToken = nu
     $headers = ['User-Agent: GuidePawLocalQACrawler/1.0', 'Accept: application/json'];
     if ($bearerToken !== null && $bearerToken !== '') {
         $headers[] = 'Authorization: Bearer ' . $bearerToken;
+        $headers[] = 'X-API-Token: ' . $bearerToken;
     }
     $body = null;
     if ($method === 'POST') {
