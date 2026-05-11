@@ -1035,6 +1035,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the home hint pointing at the real menu opener and keep the grouped menu labels current
 
+2026-05-11 — Home utility status-only cleanup
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the home utility row to a live status badge only, with settings access living in the menu
+
 ## Update log template
 
 When updating this file, add a short note like:

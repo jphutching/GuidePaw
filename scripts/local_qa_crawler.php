@@ -1235,6 +1235,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && !str_contains($dashboardBody, 'sync queued logs')
         && !str_contains($dashboardBody, 'notifications off')
         && !str_contains($dashboardBody, 'data-queue-count')
+        && !str_contains($dashboardBody, 'settings handles sync, reminders, and device notices')
         && !preg_match('/<div class="home-utility"[^>]*>.*?<a[^>]*href="settings\\.php"/is', $dashboard['body']);
     $menuHintSeen = gpQaPageLooksOk($dashboard) && str_contains($dashboardBody, 'tap <strong>menu</strong> in the bottom navigation') && str_contains($dashboardBody, 'tools are now grouped under dog, logs, training, care, and more');
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
