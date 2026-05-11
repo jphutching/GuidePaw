@@ -24,6 +24,8 @@ $_SESSION['ada_access_state'] = $stateCode;
 $stateLaw = $stateProfiles[$stateCode] ?? adaDefaultStateLawProfile($stateCode, $stateNames[$stateCode]);
 $federalLaw = adaFederalLawProfile();
 $calmScript = 'This is my service dog. You may ask whether the dog is required because of a disability and what work or task the dog is trained to perform.';
+$adaFaqUrl = 'https://www.ada.gov/resources/service-animals-faqs/';
+$dotServiceAnimalsUrl = 'https://www.transportation.gov/resources/individuals/aviation-consumer-protection/service-animals';
 ?>
 <!doctype html>
 <html lang="en">
@@ -48,16 +50,54 @@ $calmScript = 'This is my service dog. You may ask whether the dog is required b
 <div class="kicker">Service dog public-access reference</div><h1 class="mb-2">ADA Access Card</h1>
 <p class="muted mb-3 hide-lock">Fast access reminders for <?= e($dogName) ?> with federal ADA notes and selected state guidance.</p>
 <div class="hide-print d-grid gap-2 d-md-flex mb-3 hide-lock"><button class="btn btn-success flex-fill" id="lockBtn" type="button">Enter lockscreen display</button><button class="btn btn-outline-light flex-fill" id="contrastBtn" type="button">High contrast</button><button class="btn btn-outline-light flex-fill" id="screenshotBtn" type="button">Screenshot-ready</button></div>
+<div class="d-flex flex-wrap gap-2 mb-2 hide-lock">
+    <a class="btn btn-outline-light btn-sm" href="<?= e($adaFaqUrl) ?>" target="_blank" rel="noopener">ADA FAQ</a>
+    <a class="btn btn-outline-light btn-sm" href="<?= e($dotServiceAnimalsUrl) ?>" target="_blank" rel="noopener">Airline rules</a>
+</div>
+<div class="d-flex flex-wrap gap-2 mb-3 hide-lock">
+    <a class="btn btn-outline-light btn-sm" href="#faq">ADA FAQ</a>
+    <a class="btn btn-outline-light btn-sm" href="#definitions">Service dog / SDIT / ESA</a>
+    <a class="btn btn-outline-light btn-sm" href="#state-law">State notes</a>
+    <a class="btn btn-outline-light btn-sm" href="#air-travel">Air travel</a>
+</div>
 <div><span class="pill">Handler: <?= e($handlerName) ?></span><span class="pill">Dog: <?= e($dogName) ?></span><span class="pill hide-lock">State: <?= e($stateLaw['state_name']) ?></span></div>
 </section>
 <section class="grid"><div class="access-card"><div class="kicker">Calm script</div><p class="script mb-0" id="calmScript">“<?= e($calmScript) ?>”</p><div class="script-tools hide-print hide-lock"><button class="btn btn-outline-light" type="button" id="copyScriptBtn">Copy script</button><button class="btn btn-outline-light" type="button" id="shareScriptBtn">Share script</button></div><div class="script-feedback hide-lock" id="scriptFeedback" aria-live="polite"></div></div></section>
 <section class="grid two"><div class="access-card"><div class="kicker">Only two questions</div><ol class="qa mb-0"><li>Is the dog required because of a disability?</li><li>What work or task is it trained to perform?</li></ol></div><div class="access-card"><div class="kicker">Not required</div><ul class="mb-0 qa"><li>Certification or registry papers</li><li>Medical records or diagnosis details</li><li>A task demonstration on demand</li></ul></div></section>
-<section class="grid two hide-lockscreen">
-<div class="access-card"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">Federal ADA baseline</div><div class="law-title"><?= e($federalLaw['title']) ?></div></div><span class="status">Reviewed <?= e($federalLaw['last_reviewed']) ?></span></div><p class="muted mt-3"><?= e($federalLaw['summary']) ?></p><ul><?php foreach ($federalLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><p class="mb-0 hide-lock"><a href="<?= e($federalLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($federalLaw['source_label']) ?></a></p></div>
-<div class="access-card"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div><div class="muted small mt-2">When location access is already granted, GuidePaw will try to auto-detect your state on load.</div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
+<section class="grid two" id="definitions">
+<div class="access-card">
+    <div class="kicker">Service dog</div>
+    <p class="qa mb-0">A service dog is individually trained to do work or perform tasks for a person with a disability. That is the ADA public-access category for businesses and other covered places.</p>
+</div>
+<div class="access-card">
+    <div class="kicker">SDIT and ESA</div>
+    <ul class="qa mb-0">
+        <li><strong>SDIT:</strong> not a service animal under the ADA until the dog is trained; some state laws are different.</li>
+        <li><strong>ESA:</strong> comfort-only animals are not service animals under the ADA; housing and airline rules can be separate.</li>
+    </ul>
+</div>
 </section>
-<section class="grid hide-lockscreen"><div class="access-card note">Access decisions should be based on the dog’s actual behavior and control, not on stereotypes, missing paperwork, or the fact that the dog is not wearing a vest.</div><div class="access-card"><div class="kicker">Need help now?</div><div style="font-size:clamp(1.6rem,5vw,2.35rem);font-weight:850;">800-514-0301</div><p class="muted mb-0">DOJ ADA Information Line · TTY 833-610-1264</p></div><div class="access-card muted small">GuidePaw provides general service-animal information and official source links. This is not legal advice. Laws may vary by city, county, housing context, workplace, school, transportation setting, and facts of the situation.</div></section>
-<section class="grid utility hide-print hide-lock"><button class="btn btn-outline-light" type="button" onclick="window.print()">Print / Save PDF</button><a href="service_dog_rights.php" class="btn btn-outline-light">Detailed ADA notes</a><a href="air_travel_rights.php" class="btn btn-outline-light">Air Travel Rights</a><a href="settings.php" class="btn btn-outline-light">Settings</a></section>
+<section class="grid two">
+<div class="access-card">
+    <div class="kicker">Scam warning</div>
+    <p class="qa mb-0">Online registrations, certificates, ID cards, and vests do not create ADA rights. The ADA does not require certification, registration, a vest, or a special harness.</p>
+</div>
+<div class="access-card">
+    <div class="kicker">Official links</div>
+    <p class="qa mb-2">Use the official federal pages when you want the source text.</p>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-light btn-sm" href="<?= e($adaFaqUrl) ?>" target="_blank" rel="noopener">ADA FAQ</a>
+        <a class="btn btn-outline-light btn-sm" href="<?= e($dotServiceAnimalsUrl) ?>" target="_blank" rel="noopener">Airline rules</a>
+        <a class="btn btn-outline-light btn-sm" href="service_dog_rights.php">Detailed ADA notes</a>
+    </div>
+</div>
+</section>
+<section class="grid two hide-lockscreen">
+<div class="access-card" id="faq"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">Federal ADA baseline</div><div class="law-title"><?= e($federalLaw['title']) ?></div></div><span class="status">Reviewed <?= e($federalLaw['last_reviewed']) ?></span></div><p class="muted mt-3"><?= e($federalLaw['summary']) ?></p><ul><?php foreach ($federalLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><p class="mb-0 hide-lock"><a href="<?= e($federalLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($federalLaw['source_label']) ?></a></p></div>
+<div class="access-card" id="state-law"><div class="d-flex justify-content-between gap-2 flex-wrap align-items-start"><div><div class="kicker">State law notes</div><div class="law-title"><?= e($stateLaw['state_name']) ?></div></div><span class="status"><?= e($stateLaw['status'] === 'reviewed' ? 'Reviewed ' . $stateLaw['last_reviewed'] : 'Pending review') ?></span></div><div class="hide-lock hide-print mt-3"><label class="kicker" for="stateSelect">Choose state manually</label><select class="form-select" id="stateSelect"><?php foreach ($stateNames as $code => $name): ?><option value="<?= e($code) ?>" <?= $code === $stateCode ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><button type="button" class="btn btn-outline-light w-100 mt-2" id="gpsBtn">Use GPS to detect state</button><div class="muted small mt-2" id="gpsStatus"></div><div class="muted small mt-2">When location access is already granted, GuidePaw will try to auto-detect your state on load.</div></div><p class="muted mt-3"><?= e($stateLaw['summary']) ?></p><ul><?php foreach ($stateLaw['bullets'] as $bullet): ?><li><?= e($bullet) ?></li><?php endforeach; ?></ul><div class="note mt-3"><strong>Training:</strong> <?= e($stateLaw['training_note']) ?></div><div class="note mt-3"><strong>Housing:</strong> <?= e($stateLaw['housing_note']) ?></div><p class="mb-0 mt-3 hide-lock"><?php if (!empty($stateLaw['source_url'])): ?><a href="<?= e($stateLaw['source_url']) ?>" target="_blank" rel="noopener"><?= e($stateLaw['source_label']) ?></a><?php else: ?><span class="muted"><?= e($stateLaw['source_label']) ?></span><?php endif; ?></p></div>
+</section>
+<section class="grid hide-lockscreen"><div class="access-card note">Access decisions should be based on the dog’s actual behavior and control, not on stereotypes, missing paperwork, or the fact that the dog is not wearing a vest.</div><div class="access-card"><div class="kicker">Need help now?</div><div style="font-size:clamp(1.6rem,5vw,2.35rem);font-weight:850;">800-514-0301</div><p class="muted mb-0">DOJ ADA Information Line · TTY 833-610-1264</p></div><div class="access-card muted small" id="air-travel">GuidePaw provides general service-animal information and official source links. This is not legal advice. Laws may vary by city, county, housing context, workplace, school, transportation setting, and facts of the situation. For airline-specific rules, use the DOT service animal page and the airline’s own policy before travel.</div></section>
+<section class="grid utility hide-print hide-lock"><button class="btn btn-outline-light" type="button" onclick="window.print()">Print / Save PDF</button><a href="service_dog_rights.php" class="btn btn-outline-light">Detailed ADA notes</a><a href="air_travel_rights.php" class="btn btn-outline-light">Air Travel Rights</a><a href="<?= e($adaFaqUrl) ?>" class="btn btn-outline-light" target="_blank" rel="noopener">ADA FAQ</a><a href="settings.php" class="btn btn-outline-light">Settings</a></section>
 </div>
 <script>
 (function () {

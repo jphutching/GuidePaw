@@ -881,6 +881,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: push the edit-profile escaping fix, then rerun beta smoke so the profile page and the training-log edit flow stay green together
 
+2026-05-10 — ADA Access Card guidance update
+- Commit(s): pending
+- Files changed: ada_access_card.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the ADA Access Card focused on the official federal FAQ, plain-language protection differences, state-law jump points, and airline-specific rules so the handler can get to the right source quickly
+
 2026-05-09 — Training log edit workflow
 - Commit(s): pending
 - Files changed: edit_log.php, update_log.php, view_logs.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/edit_log_smoke.spec.js, GUIDEPAW_PROJECT_HISTORY.md
