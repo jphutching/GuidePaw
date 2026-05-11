@@ -1042,6 +1042,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the home utility row to a live status badge only, with settings access living in the menu
 
+2026-05-11 — Home menu prompt removal
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: rely on the bottom menu button itself instead of repeating a text prompt on Home
+
 ## Update log template
 
 When updating this file, add a short note like:

@@ -158,10 +158,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <a class="today-action" href="ada_access_card.php"><span>🪪</span>ADA Access</a>
                 <?php endif; ?>
             </div>
-            <div class="small text-muted mt-2">
-                Need more?
-                <button type="button" class="btn btn-link p-0 align-baseline text-decoration-none" onclick="document.getElementById('gpMenuOpen')?.click();">Open the menu.</button>
-            </div>
         </div>
     </section>
 
