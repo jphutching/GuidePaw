@@ -160,7 +160,7 @@ $csrf = generateCsrfToken();
         <div class="small mb-3">
             Android bridge app:
             <a href="bridge_apk.php" class="btn btn-sm btn-outline-primary ms-1">Bridge APK</a>
-            <span class="ms-2">or open the Android Studio project in <code>android/guidepaw-bridge</code>.</span>
+            <span class="ms-2">for the current Android phone you are pairing.</span>
         </div>
         <form method="post" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
@@ -196,7 +196,7 @@ $csrf = generateCsrfToken();
                 </div>
             </div>
         <?php else: ?>
-            <div class="small text-muted mt-2">Samsung Health on the phone can feed Health Connect, and the GuidePaw bridge can send data here automatically after pairing.</div>
+            <div class="small text-muted mt-2">Samsung Health on the phone can feed Health Connect, and the GuidePaw bridge can send data here automatically after pairing on the current phone.</div>
         <?php endif; ?>
     </div>
 

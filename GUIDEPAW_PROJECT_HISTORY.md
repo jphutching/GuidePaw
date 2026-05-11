@@ -944,6 +944,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: re-sync Android Studio with the stable Health Connect dependency, then run the app on the phone and pair through the GuidePaw bridge page
 
+2026-05-10 — Bridge APK wording cleanup
+- Commit(s): pending
+- Files changed: bridge_apk.php, wearable_integrations.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the wearable page focused on the download button and current-phone pairing flow, without mentioning APK build steps to end users
+
 ## Update log template
 
 When updating this file, add a short note like:

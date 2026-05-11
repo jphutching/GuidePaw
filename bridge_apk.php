@@ -31,12 +31,11 @@ http_response_code(200);
 <div class="wrap">
     <div class="card">
         <h1>GuidePaw Bridge APK</h1>
-        <p class="small">The Android bridge APK is ready to download here once the debug build exists on this machine. If the file has not been built yet, open <code>android/guidepaw-bridge</code> in Android Studio and build the debug APK first.</p>
-        <p class="small">This is the phone companion that reads Health Connect and syncs wearable summaries back to GuidePaw.</p>
+        <p class="small">This is the phone companion for your current Android device. It reads Health Connect and syncs wearable summaries back to GuidePaw.</p>
         <?php if (is_file($apkPath)): ?>
             <p><a class="button" href="bridge_apk.php?download=1">Download Bridge APK</a></p>
         <?php else: ?>
-            <p class="small">No APK file is present yet. Open <code>android/guidepaw-bridge</code> in Android Studio and build the debug APK, then come back here to download it.</p>
+            <p class="small">The APK is not published on this server yet. Once it is available, use the download button above to install it on the phone you are pairing.</p>
         <?php endif; ?>
         <p><a class="button" href="wearable_integrations.php">Back to wearable setup</a></p>
     </div>
