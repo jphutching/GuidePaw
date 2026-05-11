@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Switch
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -169,8 +168,10 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val granted = runCatching {
-                val hc = androidx.health.connect.client.HealthConnectClient.getOrCreate(this@MainActivity)
-                hc.permissionController.getGrantedPermissions().containsAll(requiredPermissions)
+                withContext(Dispatchers.IO) {
+                    val hc = androidx.health.connect.client.HealthConnectClient.getOrCreate(this@MainActivity)
+                    hc.permissionController.getGrantedPermissions().containsAll(requiredPermissions)
+                }
             }.getOrDefault(false)
 
             if (!granted) {

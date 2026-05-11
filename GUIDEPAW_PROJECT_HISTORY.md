@@ -937,6 +937,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the connect-code UI opens the bridge page on both local and beta, then keep Samsung Health / Health Connect syncing through the simplified wearable setup without the missing-include connect crash
 
+2026-05-10 — Android bridge build fix
+- Commit(s): pending
+- Files changed: android/guidepaw-bridge/app/build.gradle.kts, android/guidepaw-bridge/app/src/main/AndroidManifest.xml, android/guidepaw-bridge/app/src/main/java/com/guidepaw/bridge/MainActivity.kt, android/guidepaw-bridge/app/src/main/java/com/guidepaw/bridge/PermissionsRationaleActivity.kt
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: re-sync Android Studio with the stable Health Connect dependency, then run the app on the phone and pair through the GuidePaw bridge page
+
 ## Update log template
 
 When updating this file, add a short note like:

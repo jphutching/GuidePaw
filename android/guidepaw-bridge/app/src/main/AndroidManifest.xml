@@ -28,5 +28,13 @@
                 <data android:scheme="guidepawbridge" android:host="pair" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PermissionsRationaleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

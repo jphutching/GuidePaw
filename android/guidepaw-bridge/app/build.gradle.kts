@@ -43,5 +43,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("androidx.health.connect:connect-client:1.2.0-alpha04")
+    implementation("androidx.health.connect:connect-client:1.1.0")
 }
