@@ -1000,6 +1000,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the main menu to the core handler tasks and tuck advanced training/admin tools behind one extra disclosure
 
+2026-05-11 — Menu subgroup split
+- Commit(s): pending
+- Files changed: includes/mobile_nav.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the `More` bucket readable by splitting optional training extras from admin-only tools
+
 ## Update log template
 
 When updating this file, add a short note like:
