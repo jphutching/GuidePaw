@@ -30,6 +30,12 @@ $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 $defaultDogId = (int) ($dogs[0]['id'] ?? 0);
 $status = $_GET['status'] ?? '';
 $message = '';
+$bridgePayload = '';
+$bridgeQrUrl = '';
+$bridgeTokenLabel = '';
+$bridgeDogName = '';
+$bridgeTokenIssued = false;
+$appBaseUrl = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'), '/');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
@@ -38,29 +44,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if (isset($_POST['connect_wearable'])) {
+        $selectedDogId = (int) ($_POST['dog_id'] ?? $defaultDogId);
+        if ($selectedDogId <= 0 || !in_array($selectedDogId, array_map(static fn($dog) => (int) $dog['id'], $dogs), true)) {
+            $selectedDogId = $defaultDogId;
+        }
+        $selectedDog = null;
+        foreach ($dogs as $dog) {
+            if ((int) $dog['id'] === $selectedDogId) {
+                $selectedDog = $dog;
+                break;
+            }
+        }
+
+        $bridgeTokenLabel = 'Wearable Bridge';
+        if ($selectedDog && !empty($selectedDog['name'])) {
+            $bridgeTokenLabel .= ' - ' . trim((string) $selectedDog['name']);
+            $bridgeDogName = trim((string) $selectedDog['name']);
+        }
+        $issued = issueApiToken($pdo, $userId, $bridgeTokenLabel);
+        $bridgeTokenIssued = true;
+        $bridgePayload = json_encode([
+            'endpoint' => $appBaseUrl . '/api/wearables.php',
+            'token' => $issued['token'],
+            'dog_id' => $selectedDogId,
+            'dog_name' => $bridgeDogName,
+            'source' => 'health_connect',
+        ], JSON_UNESCAPED_SLASHES);
+        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode((string) $bridgePayload);
+        $message = 'Wearable connection code created.';
+    }
+
     $payload = trim((string) ($_POST['wearable_payload'] ?? ''));
-    $parsed = gpWearableParseSummary($payload);
-    $data = array_merge($parsed, [
-        'dog_id' => (int) ($_POST['dog_id'] ?? $defaultDogId),
-        'source' => trim((string) ($_POST['source'] ?? ($parsed['source'] ?? 'manual'))),
-        'device_name' => trim((string) ($_POST['device_name'] ?? ($parsed['device_name'] ?? ''))),
-        'recorded_for_date' => trim((string) ($_POST['recorded_for_date'] ?? ($parsed['recorded_for_date'] ?? ''))),
-        'steps' => $_POST['steps'] ?? ($parsed['steps'] ?? ''),
-        'active_minutes' => $_POST['active_minutes'] ?? ($parsed['active_minutes'] ?? ''),
-        'distance_miles' => $_POST['distance_miles'] ?? ($parsed['distance_miles'] ?? ''),
-        'avg_heart_rate' => $_POST['avg_heart_rate'] ?? ($parsed['avg_heart_rate'] ?? ''),
-        'sleep_hours' => $_POST['sleep_hours'] ?? ($parsed['sleep_hours'] ?? ''),
-        'summary_text' => trim((string) ($_POST['summary_text'] ?? ($parsed['summary_text'] ?? ''))),
-        'notes' => trim((string) ($_POST['notes'] ?? ($parsed['notes'] ?? ''))),
-        'raw_payload' => $payload,
-    ]);
-    $eventId = gpWearableRecordEvent($pdo, $userId, $data);
-    writeAuditLog($pdo, 'wearable_sync_recorded', 'wearable_sync_events', $eventId, 'Wearable snapshot recorded.');
-    header('Location: wearable_integrations.php?status=saved');
-    exit;
+    if (isset($_POST['save_snapshot'])) {
+        $parsed = gpWearableParseSummary($payload);
+        $data = array_merge($parsed, [
+            'dog_id' => (int) ($_POST['dog_id'] ?? $defaultDogId),
+            'source' => trim((string) ($_POST['source'] ?? ($parsed['source'] ?? 'manual'))),
+            'device_name' => trim((string) ($_POST['device_name'] ?? ($parsed['device_name'] ?? ''))),
+            'recorded_for_date' => trim((string) ($_POST['recorded_for_date'] ?? ($parsed['recorded_for_date'] ?? ''))),
+            'steps' => $_POST['steps'] ?? ($parsed['steps'] ?? ''),
+            'active_minutes' => $_POST['active_minutes'] ?? ($parsed['active_minutes'] ?? ''),
+            'distance_miles' => $_POST['distance_miles'] ?? ($parsed['distance_miles'] ?? ''),
+            'avg_heart_rate' => $_POST['avg_heart_rate'] ?? ($parsed['avg_heart_rate'] ?? ''),
+            'sleep_hours' => $_POST['sleep_hours'] ?? ($parsed['sleep_hours'] ?? ''),
+            'summary_text' => trim((string) ($_POST['summary_text'] ?? ($parsed['summary_text'] ?? ''))),
+            'notes' => trim((string) ($_POST['notes'] ?? ($parsed['notes'] ?? ''))),
+            'raw_payload' => $payload,
+        ]);
+        $eventId = gpWearableRecordEvent($pdo, $userId, $data);
+        writeAuditLog($pdo, 'wearable_sync_recorded', 'wearable_sync_events', $eventId, 'Wearable snapshot recorded.');
+        header('Location: wearable_integrations.php?status=saved');
+        exit;
+    }
 }
 
-$selectedDogId = (int) ($_GET['dog_id'] ?? $defaultDogId);
+$selectedDogId = (int) ($_GET['dog_id'] ?? ($_POST['dog_id'] ?? $defaultDogId));
 if ($selectedDogId > 0) {
     $allowedDogIds = array_map(static fn($dog) => (int) $dog['id'], $dogs);
     if (!in_array($selectedDogId, $allowedDogIds, true)) {
@@ -101,12 +140,15 @@ $csrf = generateCsrfToken();
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Wearable Integrations</h1>
-    <p class="small">Record a summary from a watch, collar tracker, or exported health snapshot. This page now supports both manual entry and automatic API syncs.</p>
+    <p class="small">Connect a watch or collar once, then let GuidePaw bring in the summary automatically.</p>
 
     <?php if ($status === 'saved'): ?>
         <div class="card">Wearable snapshot saved.</div>
     <?php elseif ($status === 'need_dog'): ?>
         <div class="card">Add a dog profile before saving wearable snapshots.</div>
+    <?php endif; ?>
+    <?php if ($bridgeTokenIssued && $bridgeQrUrl !== ''): ?>
+        <div class="card">Wearable connection code created. Scan the QR from the phone bridge to finish pairing.</div>
     <?php endif; ?>
 
     <div class="grid">
@@ -117,20 +159,49 @@ $csrf = generateCsrfToken();
     </div>
 
     <div class="card">
-        <h2 class="h5">Automatic sync</h2>
-        <p class="small mb-2">Samsung watches sync through Samsung Health on the phone, then Health Connect can feed an Android bridge that POSTs to GuidePaw automatically. Use a GuidePaw API token and send JSON to <code>/api/wearables.php</code>.</p>
-        <div class="small mb-2">Source values you can use: <code>health_connect</code>, <code>samsung_health</code>, <code>fitbit</code>, <code>garmin</code>, or <code>manual</code>.</div>
-        <div class="small mb-2"><a href="api_tokens.php">Create or manage API tokens</a> for the bearer token used by your bridge.</div>
-        <pre class="mb-0" style="white-space:pre-wrap; background:#f8f9fa; border:1px solid #ddd; border-radius:8px; padding:12px;">POST /api/wearables.php
-Authorization: Bearer YOUR_API_TOKEN
-Content-Type: application/json
-
-{"source":"health_connect","device_name":"Galaxy Watch / Samsung Health","recorded_for_date":"2026-05-10","steps":8421,"active_minutes":77,"distance_miles":3.9,"avg_heart_rate":92,"sleep_hours":7.4,"summary_text":"Long walk and calm evening.","dog_id":123}</pre>
+        <h2 class="h5 mb-2">Connect Wearable</h2>
+        <p class="small mb-3">Pick the dog once, then create a connection code. The phone bridge scans the QR and sends future summaries automatically. You do not need to copy an API token.</p>
+        <form method="post" class="row g-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+            <div class="col-md-6">
+                <label>Dog</label>
+                <select name="dog_id">
+                    <?php foreach ($dogs as $dog): ?>
+                        <option value="<?= (int) $dog['id'] ?>" <?= $selectedDogId === (int) $dog['id'] ? 'selected' : '' ?>><?= h($dog['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-6 d-grid">
+                <button type="submit" name="connect_wearable" value="1">Create Connect Code</button>
+            </div>
+        </form>
+        <?php if ($bridgeTokenIssued && $bridgeQrUrl !== ''): ?>
+            <div class="row g-3 align-items-center mt-3">
+                <div class="col-md-5 text-center">
+                    <img src="<?= h($bridgeQrUrl) ?>" alt="Wearable connect QR code" style="max-width:260px;width:100%;height:auto;border:1px solid #ddd;border-radius:12px;background:#fff;padding:10px;">
+                </div>
+                <div class="col-md-7">
+                    <div class="fw-semibold mb-2">Connection ready</div>
+                    <div class="small mb-2">Use this for Samsung Health / Health Connect on the phone side. The bridge only needs to scan the code once.</div>
+                    <div class="small mb-2"><strong>Device:</strong> <?= h($bridgeDogName !== '' ? $bridgeDogName : 'Selected dog') ?></div>
+                    <div class="small mb-2"><strong>Source:</strong> Health Connect</div>
+                    <div class="small text-muted">Keep this page open while you pair. The next syncs will show up here automatically.</div>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="small text-muted mt-2">Samsung Health on the phone can feed Health Connect, and the GuidePaw bridge can send data here automatically after pairing.</div>
+        <?php endif; ?>
     </div>
 
-    <div class="card">
+    <details class="card">
+        <summary class="h5 mb-0">Manual entry</summary>
+        <div class="mt-3">
+            <p class="small mb-2">For a pasted summary or a one-off import, use the manual form below.</p>
+            <div class="small mb-2">Source values you can use: <code>health_connect</code>, <code>samsung_health</code>, <code>fitbit</code>, <code>garmin</code>, or <code>manual</code>.</div>
+        </div>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+            <input type="hidden" name="save_snapshot" value="1">
             <label>Dog</label>
             <select name="dog_id">
                 <option value="0" <?= $selectedDogId === 0 ? 'selected' : '' ?>>All dogs</option>

@@ -1041,8 +1041,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'wearable integrations')
                 || str_contains($body, 'wearable snapshot')
                 || str_contains($body, 'recent syncs')
-                || str_contains($body, 'automatic sync')
-                || str_contains($body, 'api/wearables.php')
+                || str_contains($body, 'connect wearable')
+                || str_contains($body, 'connection ready')
+                || str_contains($body, 'manual entry')
             )
             : true;
         $alertsPageLooksReady = $path === 'alerts.php'
