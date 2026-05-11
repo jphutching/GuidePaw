@@ -162,6 +162,11 @@ $csrf = generateCsrfToken();
             <a href="bridge_apk.php" class="btn btn-sm btn-outline-primary ms-1">Bridge APK</a>
             <span class="ms-2">for the current Android phone you are pairing.</span>
         </div>
+        <div class="small mb-3">
+            Prerequisites on the phone:
+            <a href="https://play.google.com/store/apps/details?id=com.sec.android.app.shealth" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-1">Samsung Health</a>
+            <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-1">Health Connect</a>
+        </div>
         <form method="post" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
             <div class="col-md-6">

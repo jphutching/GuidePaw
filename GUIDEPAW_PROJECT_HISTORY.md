@@ -951,6 +951,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the wearable page focused on the download button and current-phone pairing flow, without mentioning APK build steps to end users
 
+2026-05-10 — Wearable prerequisite app links
+- Commit(s): pending
+- Files changed: bridge_apk.php, wearable_integrations.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep Samsung Health and Health Connect as direct store links on the wearable setup pages so the phone prerequisites are one tap away
+
 ## Update log template
 
 When updating this file, add a short note like:

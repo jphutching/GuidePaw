@@ -32,6 +32,11 @@ http_response_code(200);
     <div class="card">
         <h1>GuidePaw Bridge APK</h1>
         <p class="small">This is the phone companion for your current Android device. It reads Health Connect and syncs wearable summaries back to GuidePaw.</p>
+        <p class="small">
+            Prerequisites on the phone:
+            <a class="button" style="margin-right:8px;" href="https://play.google.com/store/apps/details?id=com.sec.android.app.shealth" target="_blank" rel="noopener noreferrer">Samsung Health</a>
+            <a class="button" href="https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata" target="_blank" rel="noopener noreferrer">Health Connect</a>
+        </p>
         <?php if (is_file($apkPath)): ?>
             <p><a class="button" href="bridge_apk.php?download=1">Download Bridge APK</a></p>
         <?php else: ?>
