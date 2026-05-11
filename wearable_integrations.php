@@ -157,6 +157,11 @@ $csrf = generateCsrfToken();
     <div class="card">
         <h2 class="h5 mb-2">Connect Wearable</h2>
         <p class="small mb-3">Pick the dog once, then create a connection code. The phone bridge scans the QR and sends future summaries automatically. You do not need to copy an API token.</p>
+        <div class="small mb-3">
+            Android bridge app:
+            <a href="bridge_apk.php" class="btn btn-sm btn-outline-primary ms-1">Bridge APK</a>
+            <span class="ms-2">or open the Android Studio project in <code>android/guidepaw-bridge</code>.</span>
+        </div>
         <form method="post" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
             <div class="col-md-6">

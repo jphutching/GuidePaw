@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.guidepaw.bridge"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.guidepaw.bridge"

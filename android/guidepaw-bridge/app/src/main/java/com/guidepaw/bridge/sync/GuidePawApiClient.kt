@@ -12,6 +12,7 @@ class GuidePawApiClient {
             requestMethod = "POST"
             doOutput = true
             setRequestProperty("Authorization", "Bearer ${config.token}")
+            setRequestProperty("X-API-Token", config.token)
             setRequestProperty("Content-Type", "application/json; charset=utf-8")
             connectTimeout = 15000
             readTimeout = 15000

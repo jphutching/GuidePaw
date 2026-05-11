@@ -601,6 +601,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'training_history_page_loads' => 'training_history.php',
         'stats_page_loads' => 'stats.php',
         'air_travel_rights_page_loads' => 'air_travel_rights.php',
+        'bridge_apk_page_loads' => 'bridge_apk.php',
         'wearable_integrations_page_loads' => 'wearable_integrations.php',
         'alerts_page_loads' => 'alerts.php',
         'dog_health_page_loads' => 'dog_health.php',
