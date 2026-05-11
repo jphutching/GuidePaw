@@ -1049,6 +1049,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: rely on the bottom menu button itself instead of repeating a text prompt on Home
 
+2026-05-11 — Home today shortcut removal
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: keep the Today card to direct action tiles only, with no extra jump buttons in the header
+
 ## Update log template
 
 When updating this file, add a short note like:

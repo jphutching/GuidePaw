@@ -140,7 +140,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <h2 class="h5 mb-1">Today</h2>
                     <div class="small text-muted">Keep the day moving. Everything else lives in the menu.</div>
                 </div>
-                <a class="btn btn-outline-secondary btn-sm" href="#needs-attention">Needs Attention</a>
             </div>
             <div class="today-grid">
                 <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>

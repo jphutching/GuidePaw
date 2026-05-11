@@ -1231,6 +1231,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'));
     $dashboardTodayActionCount = preg_match_all('/class="today-action"/i', $dashboard['body'], $todayActionMatches);
     $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 4;
+    $todayAttentionShortcutRemoved = gpQaPageLooksOk($dashboard) && !str_contains($dashboard['body'], 'href="#needs-attention"');
     $homeUtilitySimplified = gpQaPageLooksOk($dashboard)
         && !str_contains($dashboardBody, 'sync queued logs')
         && !str_contains($dashboardBody, 'notifications off')
@@ -1376,6 +1377,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
     gpQaResult($results, 'dashboard_today_core_actions', $todayCoreActionsSeen, 'HTTP ' . $dashboard['status'] . ($todayCoreActionsSeen ? ' core today actions remain' : ' core today actions missing'));
     gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
+    gpQaResult($results, 'dashboard_today_attention_shortcut_removed', $todayAttentionShortcutRemoved, 'HTTP ' . $dashboard['status'] . ($todayAttentionShortcutRemoved ? ' today attention shortcut removed' : ' today attention shortcut still visible'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));
     gpQaResult($results, 'dashboard_menu_logout', gpQaPageLooksOk($dashboard) && $menuLogoutSeen, 'HTTP ' . $dashboard['status'] . ($menuLogoutSeen ? ' menu logout found' : ' menu logout not currently visible'));
     gpQaResult($results, 'dashboard_menu_simplified', $menuSimplifiedSeen, 'HTTP ' . $dashboard['status'] . ($menuSimplifiedSeen ? ' menu kept to the core sections' : ' menu still has too many sections'));
