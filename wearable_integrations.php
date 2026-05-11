@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/api_auth.php';
 require_once __DIR__ . '/includes/wearable_integrations.php';
 
 checkLogin();

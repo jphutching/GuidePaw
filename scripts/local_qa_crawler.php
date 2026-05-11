@@ -1046,6 +1046,32 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'manual entry')
             )
             : true;
+        if ($path === 'wearable_integrations.php' && gpQaPageLooksOk($res)) {
+            $wearableConnectPage = $res;
+            $wearableConnectBody = strtolower($wearableConnectPage['body']);
+            $wearableConnectPostedSeen = false;
+            if (preg_match('/<option[^>]+value="(\d+)"[^>]*selected/i', $wearableConnectPage['body'], $wearableDogMatch) || preg_match('/<option[^>]+value="(\d+)"/i', $wearableConnectPage['body'], $wearableDogMatch)) {
+                if (!preg_match('/name="csrf_token" value="([^"]+)"/i', $wearableConnectPage['body'], $wearableCsrfMatch)) {
+                    $wearableCsrfMatch = [null, ''];
+                }
+                $wearableConnectDogId = (int) $wearableDogMatch[1];
+                $wearableConnectCsrf = html_entity_decode($wearableCsrfMatch[1], ENT_QUOTES | ENT_HTML5);
+                if ($wearableConnectDogId > 0 && $wearableConnectCsrf !== '') {
+                    $wearableConnectPost = gpQaRequest($baseUrl, 'wearable_integrations.php', 'POST', [
+                        'csrf_token' => $wearableConnectCsrf,
+                        'dog_id' => $wearableConnectDogId,
+                        'connect_wearable' => '1',
+                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $wearableConnectPostBody = strtolower($wearableConnectPost['body']);
+                    $wearableConnectPostedSeen = gpQaPageLooksOk($wearableConnectPost) && (
+                        str_contains($wearableConnectPostBody, 'wearable connection code created')
+                        || str_contains($wearableConnectPostBody, 'connection ready')
+                        || str_contains($wearableConnectPostBody, 'scan the qr')
+                    );
+                }
+            }
+            gpQaResult($results, 'wearable_connect_code', $wearableConnectPostedSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableConnectPostedSeen ? ' wearable connect code created' : ' wearable connect code missing'));
+        }
         $alertsPageLooksReady = $path === 'alerts.php'
             ? (
                 str_contains($body, 'smart alerts')
