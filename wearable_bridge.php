@@ -9,6 +9,7 @@ function h($value): string
 }
 
 $token = trim((string) ($_GET['token'] ?? ''));
+$dogId = (int) ($_GET['dog_id'] ?? 0);
 $tokenRow = $token !== '' ? findApiTokenByPlainText($pdo, $token) : null;
 $valid = $tokenRow && empty($tokenRow['revoked_at']) && (empty($tokenRow['expires_at']) || strtotime((string) $tokenRow['expires_at']) > time());
 $bridgeTitle = $valid ? 'Pair GuidePaw on this phone' : 'Wearable pairing link';
@@ -16,6 +17,9 @@ $bridgeMessage = $valid
     ? 'This page opens from the QR code so the phone shows a normal pairing screen instead of a raw text note.'
     : 'Create a connect code from Wearable Integrations first.';
 $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/api/wearables.php';
+$bridgeAppLink = $valid
+    ? 'guidepawbridge://pair?endpoint=' . rawurlencode($bridgeEndpoint) . '&token=' . rawurlencode($token) . '&dog_id=' . rawurlencode((string) $dogId) . '&dog_name=' . rawurlencode((string) $tokenRow['token_label']) . '&source=health_connect'
+    : '';
 ?>
 <!doctype html>
 <html lang="en">
@@ -55,6 +59,7 @@ $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'),
             <code id="bridgeToken"><?= h($token) ?></code>
             <div class="row mt-3">
                 <button type="button" id="copyToken">Copy pairing code</button>
+                <?php if ($valid): ?><a class="button" href="<?= h($bridgeAppLink) ?>">Open in GuidePaw Bridge</a><?php endif; ?>
                 <a class="button" href="wearable_integrations.php">Back to wearable setup</a>
             </div>
         </div>

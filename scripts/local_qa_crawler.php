@@ -1081,6 +1081,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                             $wearableBridgeBody = strtolower($wearableBridgePage['body']);
                             $wearableBridgePageSeen = gpQaPageLooksOk($wearableBridgePage) && (
                                 str_contains($wearableBridgeBody, 'pair guidepaw on this phone')
+                                || str_contains($wearableBridgeBody, 'open in guidepaw bridge')
                                 || str_contains($wearableBridgeBody, 'copy pairing code')
                                 || str_contains($wearableBridgeBody, 'bridge details')
                             );

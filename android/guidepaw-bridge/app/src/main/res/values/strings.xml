@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">GuidePaw Bridge</string>
+    <string name="bridge_intro">Pair the phone once, grant Health Connect access, and let the app sync the watch summary automatically.</string>
+    <string name="endpoint_hint">GuidePaw API endpoint</string>
+    <string name="token_hint">Pairing code</string>
+    <string name="dog_id_hint">Dog ID</string>
+    <string name="dog_name_hint">Dog name</string>
+    <string name="source_hint">Source (health_connect)</string>
+    <string name="save_pairing">Save pairing</string>
+    <string name="open_bridge">Open pairing page</string>
+    <string name="request_health_connect">Request Health Connect access</string>
+    <string name="sync_now">Sync now</string>
+    <string name="manage_access">Open system settings</string>
+    <string name="auto_sync">Enable automatic sync every 6 hours</string>
+    <string name="status_idle">Status: waiting for pairing</string>
+    <string name="last_sync_never">Last sync: never</string>
+</resources>
