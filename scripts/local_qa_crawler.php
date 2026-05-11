@@ -1231,7 +1231,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && (str_contains($dashboardBody, 'ada access') || str_contains($dashboardBody, 'access card'));
     $dashboardTodayActionCount = preg_match_all('/class="today-action"/i', $dashboard['body'], $todayActionMatches);
     $todayExtrasPruned = gpQaPageLooksOk($dashboard) && (int) $dashboardTodayActionCount <= 4;
-    $homeUtilitySimplified = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'sync queued logs') && !str_contains($dashboardBody, 'notifications off') && !str_contains($dashboardBody, 'data-queue-count');
+    $homeUtilitySimplified = gpQaPageLooksOk($dashboard)
+        && !str_contains($dashboardBody, 'sync queued logs')
+        && !str_contains($dashboardBody, 'notifications off')
+        && !str_contains($dashboardBody, 'data-queue-count')
+        && !preg_match('/<div class="home-utility"[^>]*>.*?<a[^>]*href="settings\\.php"/is', $dashboard['body']);
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
     $menuSearchRemoved = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'search pages, tools, or training tracks');

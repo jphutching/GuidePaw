@@ -101,7 +101,6 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
     <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
         <div class="home-utility-text">Settings handles sync, reminders, and device notices.</div>
-        <a href="settings.php" class="btn btn-outline-secondary btn-sm ms-auto">Settings</a>
     </div>
 
     <?php if ($unreadNotifications > 0): ?>

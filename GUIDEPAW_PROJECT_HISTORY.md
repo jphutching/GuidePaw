@@ -1021,6 +1021,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep dog management in the menu and leave the home card focused on dog switching only
 
+2026-05-11 — Home settings shortcut removal
+- Commit(s): pending
+- Files changed: index.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep Settings reachable from the menu root only, not duplicated on Home
+
 ## Update log template
 
 When updating this file, add a short note like:
