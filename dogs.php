@@ -112,6 +112,15 @@ $csrf = generateCsrfToken();
 .breed-search-name{display:block;font-weight:600;}
 .breed-search-meta{display:block;color:#6c757d;font-size:.82rem;margin-top:2px;}
 .breed-search-empty{padding:11px 12px;color:#6c757d;}
+.add-dog-card{border:1px solid rgba(15,23,42,.08);}
+.add-dog-card > summary{list-style:none;cursor:pointer;padding:1rem 1rem .85rem;display:flex;align-items:flex-start;gap:.75rem;flex-wrap:wrap;justify-content:space-between;user-select:none;}
+.add-dog-card > summary::-webkit-details-marker{display:none;}
+.add-dog-card[open] > summary{border-bottom:1px solid rgba(15,23,42,.08);}
+.add-dog-kicker{display:block;width:100%;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:800;}
+.add-dog-title{font-size:1.05rem;color:#111827;line-height:1.2;}
+.add-dog-chev{margin-left:auto;color:#6b7280;font-size:1rem;line-height:1.2;}
+.add-dog-card[open] .add-dog-chev{transform:rotate(180deg);}
+.add-dog-card > .card-body{padding-top:0;}
 
 </style>
 
@@ -218,9 +227,14 @@ $csrf = generateCsrfToken();
             </div>
         </div>
         <div class="col-lg-5">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Add Another Dog</h5>
+            <details class="card shadow-sm add-dog-card" <?= $dogs ? '' : 'open' ?>>
+                <summary class="add-dog-summary">
+                    <span class="add-dog-kicker"><?= $dogs ? 'Need another dog?' : 'Start here' ?></span>
+                    <strong class="add-dog-title"><?= $dogs ? 'Add Another Dog' : 'Add Your First Dog' ?></strong>
+                    <span class="add-dog-chev" aria-hidden="true">▾</span>
+                </summary>
+                <div class="card-body pt-0">
+                    <div class="small text-muted mb-3"><?= $dogs ? 'Tap to open the form only when you need it.' : 'Complete the form to create your first active dog.' ?></div>
                     <form method="post" class="row g-3">
                         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                         <input type="hidden" name="action" value="add_dog">
@@ -229,7 +243,7 @@ $csrf = generateCsrfToken();
                             <label class="form-label">Breed</label>
                             <input type="text" name="breed" class="form-control breed-input" autocomplete="off" placeholder="Type 2+ letters or enter a custom breed/mix">
                             <div class="form-text">Type at least 2 letters to search. You can still type any custom breed/mix.</div>
-                    <div class="breed-search-results d-none" role="listbox" aria-label="Breed search results"></div>
+                            <div class="breed-search-results d-none" role="listbox" aria-label="Breed search results"></div>
                         </div>
                         <div class="col-12">
                             <div class="breed-card breed-card-live">
@@ -270,7 +284,7 @@ $csrf = generateCsrfToken();
                         <div class="col-12"><button class="btn btn-primary w-100">Save Dog</button></div>
                     </form>
                 </div>
-            </div>
+            </details>
         </div>
     </div>
 </div>

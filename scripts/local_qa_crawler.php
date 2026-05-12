@@ -947,6 +947,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'archived dogs')
                 || str_contains($body, 'no archived dogs yet')
                 || str_contains($body, 'your accessible dogs')
+            ) && (
+                str_contains($body, 'add another dog')
+                || str_contains($body, 'add your first dog')
+                || str_contains($body, 'need another dog?')
             )
             : true;
         $candidatePageLooksReady = $path === 'candidate_assessment.php'
@@ -1429,7 +1433,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'notification_prefs_controls', gpQaPageLooksOk($notificationsPage) && $notificationPrefsSeen, 'HTTP ' . $notificationsPage['status'] . ($notificationPrefsSeen ? ' notification preferences found' : ' notification preferences missing'));
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));
     gpQaResult($results, 'collaboration_page_loads', $collaborationSeen, 'HTTP ' . $collaborationPage['status'] . ($collaborationSeen ? ' collaboration page found' : ' collaboration page missing'));
-    gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split found' : ' archive split not currently visible'));
+    gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split and add-dog toggle found' : ' archive split or add-dog toggle missing'));
 
     $publicProfileQuestionnaireSeen = false;
     $publicProfileAirTravelSeen = false;

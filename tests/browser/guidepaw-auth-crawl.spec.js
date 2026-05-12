@@ -71,6 +71,26 @@ test('GuidePaw login works', async ({ page }) => {
   await expect(page).not.toHaveURL(/login\.php/);
 });
 
+test('GuidePaw dogs page keeps add-dog form collapsed for existing handlers', async ({ page }) => {
+  test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
+
+  await page.goto(`${BASE_URL}/login.php`);
+  await expect(page.locator('input[name="username"]')).toBeVisible();
+
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.getByRole('button', { name: /login/i }).click();
+
+  await page.waitForLoadState('networkidle');
+  await page.goto(`${BASE_URL}/dogs.php`);
+  await page.waitForLoadState('networkidle');
+
+  const addDogPanel = page.locator('details.add-dog-card');
+  await expect(addDogPanel).toBeVisible();
+  await expect(addDogPanel).not.toHaveAttribute('open', /./);
+  await expect(page.locator('details.add-dog-card summary')).toContainText(/add another dog|add your first dog/i);
+});
+
 test('GuidePaw authenticated link crawl', async ({ page }) => {
   test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
 

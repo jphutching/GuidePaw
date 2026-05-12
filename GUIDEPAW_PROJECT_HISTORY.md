@@ -1078,6 +1078,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the menu as grouped destinations only, with the wording stripped down to titles and labels
 
+2026-05-11 — Dogs add-form disclosure
+- Commit(s): pending
+- Files changed: dogs.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: keep the add-dog form collapsed behind the disclosure once a handler already has at least one dog
+
 2026-05-11 — First-run onboarding walkthrough
 - Commit(s): f9322c9 add first-run onboarding walkthrough
 - Files changed: onboarding_setup.php, includes/db_connect.php, login.php, index.php, register.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, sql/migrations/pgsql/20260511_onboarding_walkthrough.sql, GUIDEPAW_PROJECT_HISTORY.md
