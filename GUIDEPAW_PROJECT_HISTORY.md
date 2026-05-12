@@ -1106,6 +1106,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the walkthrough as the first-login gate and only revisit if new users report confusion
 
+2026-05-12 — Found dog admin bulk controls
+- Commit(s): pending
+- Files changed: admin_found_dog_reports.php, includes/found_dog_reports.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, tests/browser/guidepaw-admin-safe.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: verify the collapsible report cards, bulk status controls, and automatic status aging on beta
+
 ## Update log template
 
 When updating this file, add a short note like:

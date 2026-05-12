@@ -27,6 +27,25 @@ function gpEnsureFoundDogReportsTable(PDO $pdo): void
     )");
 }
 
+function gpAdvanceFoundDogReportStatuses(PDO $pdo): void
+{
+    $pdo->exec("
+        UPDATE found_dog_reports
+        SET status = 'closed',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE status = 'resolved'
+          AND updated_at < CURRENT_TIMESTAMP - INTERVAL '7 days'
+    ");
+
+    $pdo->exec("
+        UPDATE found_dog_reports
+        SET status = 'archived',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE status = 'closed'
+          AND updated_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
+    ");
+}
+
 function gpFoundDogColumnExists(PDO $pdo, string $table, string $column): bool
 {
     return gpPublicContactColumnExists($pdo, $table, $column);

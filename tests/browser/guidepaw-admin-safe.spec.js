@@ -100,6 +100,13 @@ test.describe.serial('GuidePaw admin-safe crawler', () => {
           status,
           detail: `Visible app/PHP error: ${errorMatch[0].replace(/\s+/g, ' ').trim()}`
         });
+        continue;
+      }
+
+      if (path === '/admin_found_dog_reports.php') {
+        expect(bodyText).toMatch(/bulk status/i);
+        expect(bodyText).toMatch(/select all/i);
+        expect(bodyText).toMatch(/archived/i);
       }
     }
 

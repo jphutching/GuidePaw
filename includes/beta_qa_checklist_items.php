@@ -229,7 +229,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'certification_page', 'text' => 'Certification page loads and shows readiness tracking.', 'expected' => 'Certification tracking page displays the checklist and assessment snapshot.'],
                 ['id' => 'admin_notification_test', 'text' => 'Admin Notification Test page loads and shows settings.', 'expected' => 'Admin can send email, SMS, or Telegram tests.'],
                 ['id' => 'admin_profile_completion', 'text' => 'Admin Profile Completion page loads and shows missing required fields.', 'expected' => 'Admin can review completion counts and missing fields.'],
-                ['id' => 'admin_found_dog_reports', 'text' => 'Admin Found Dog Reports page loads and lists reports.', 'expected' => 'Admin can review found-dog submissions and templates.'],
+                ['id' => 'admin_found_dog_reports', 'text' => 'Admin Found Dog Reports page loads, collapses each report, and supports bulk status updates.', 'expected' => 'Admin can review found-dog submissions, select multiple reports, and move them between new, reviewing, contacted, resolved, closed, and archived.'],
                 ['id' => 'api_tokens', 'text' => 'API Tokens page loads and can create/revoke tokens.', 'expected' => 'Admin can manage API tokens for the account.'],
                 ['id' => 'api_wearables_endpoint', 'text' => 'Wearable API endpoint can record an automatic sync snapshot.', 'expected' => 'api/wearables.php accepts bearer-auth JSON and stores a wearable snapshot.'],
                 ['id' => 'backup_tools', 'text' => 'Backup Tools page loads and exposes export/restore options.', 'expected' => 'Admin can download backups and start restore flow.'],

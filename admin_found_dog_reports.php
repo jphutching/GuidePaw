@@ -6,10 +6,21 @@ require_once __DIR__ . '/includes/found_dog_reports.php';
 requireAdmin();
 
 gpEnsureFoundDogReportsTable($pdo);
+gpAdvanceFoundDogReportStatuses($pdo);
 
 function h($value): string {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+
+$allowedStatuses = ['new', 'reviewing', 'contacted', 'resolved', 'closed', 'archived'];
+$statusRank = [
+    'new' => 0,
+    'reviewing' => 1,
+    'contacted' => 2,
+    'resolved' => 3,
+    'closed' => 4,
+    'archived' => 5,
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reportId = (int) ($_POST['report_id'] ?? 0);
@@ -60,8 +71,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if ($action === 'bulk_update_status') {
+        $status = (string) ($_POST['bulk_status'] ?? 'reviewing');
+        $reportIds = array_values(array_filter(array_map('intval', (array) ($_POST['report_ids'] ?? []))));
+        if ($reportIds && in_array($status, $allowedStatuses, true)) {
+            $stmt = $pdo->prepare('UPDATE found_dog_reports SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            foreach ($reportIds as $id) {
+                $stmt->execute([$status, $id]);
+            }
+            header('Location: admin_found_dog_reports.php?msg=bulk_updated&count=' . count($reportIds) . '&status=' . urlencode($status));
+            exit;
+        }
+        header('Location: admin_found_dog_reports.php?msg=bulk_failed');
+        exit;
+    }
+
     $status = (string) ($_POST['status'] ?? 'new');
-    if ($reportId > 0 && in_array($status, ['new', 'reviewing', 'contacted', 'resolved', 'closed'], true)) {
+    if ($reportId > 0 && in_array($status, $allowedStatuses, true)) {
         $stmt = $pdo->prepare('UPDATE found_dog_reports SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $stmt->execute([$status, $reportId]);
     }
@@ -72,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $statusFilter = $_GET['status'] ?? '';
 $params = [];
 $where = '';
-if ($statusFilter !== '' && in_array($statusFilter, ['new', 'reviewing', 'contacted', 'resolved', 'closed'], true)) {
+if ($statusFilter !== '' && in_array($statusFilter, $allowedStatuses, true)) {
     $where = 'WHERE r.status = ?';
     $params[] = $statusFilter;
 }
@@ -81,10 +107,23 @@ $stmt = $pdo->prepare("SELECT r.*, d.name AS dog_name, d.breed AS dog_breed, d.h
     FROM found_dog_reports r
     JOIN dogs d ON d.id = r.dog_id
     $where
-    ORDER BY r.created_at DESC
+    ORDER BY CASE r.status
+        WHEN 'new' THEN 0
+        WHEN 'reviewing' THEN 1
+        WHEN 'contacted' THEN 2
+        WHEN 'resolved' THEN 3
+        WHEN 'closed' THEN 4
+        WHEN 'archived' THEN 5
+        ELSE 6
+    END ASC, r.created_at DESC, r.id DESC
     LIMIT 200");
 $stmt->execute($params);
 $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$reportCountByStatus = [];
+foreach ($reports as $report) {
+    $reportStatus = (string) ($report['status'] ?? 'new');
+    $reportCountByStatus[$reportStatus] = ($reportCountByStatus[$reportStatus] ?? 0) + 1;
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -106,17 +145,45 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
         <a class="btn btn-outline-secondary" href="admin.php">Back to Admin</a>
     </div>
 
-    <div class="cardx d-flex flex-wrap gap-2">
+    <div class="cardx d-flex flex-wrap gap-2 align-items-center">
         <a class="btn btn-dark" href="admin_found_dog_reports.php">All</a>
-        <?php foreach (['new', 'reviewing', 'contacted', 'resolved', 'closed'] as $s): ?>
+        <?php foreach ($allowedStatuses as $s): ?>
             <a class="btn btn-outline-secondary" href="admin_found_dog_reports.php?status=<?= h($s) ?>"><?= h(ucfirst($s)) ?></a>
         <?php endforeach; ?>
     </div>
 
+    <form method="post" id="bulkFoundDogForm" class="cardx d-flex flex-wrap gap-2 align-items-end">
+        <input type="hidden" name="action" value="bulk_update_status">
+        <div class="me-3">
+            <label class="form-label fw-semibold mb-1">Bulk status</label>
+            <select name="bulk_status" class="form-select">
+                <?php foreach ($allowedStatuses as $s): ?>
+                    <option value="<?= h($s) ?>"><?= h(ucfirst($s)) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <button class="btn btn-primary">Update selected</button>
+        <label class="form-check ms-auto mb-0">
+            <input class="form-check-input" type="checkbox" id="selectAllFoundDogReports">
+            <span class="form-check-label fw-semibold">Select all</span>
+        </label>
+    </form>
+
     <?php if (($_GET['msg'] ?? '') === 'updated'): ?><div class="alert alert-success">Report updated.</div><?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'bulk_updated'): ?><div class="alert alert-success">Updated <?= (int) ($_GET['count'] ?? 0) ?> report(s) to <?= h(ucfirst((string) ($_GET['status'] ?? ''))) ?>.</div><?php endif; ?>
     <?php if (($_GET['msg'] ?? '') === 'email_sent'): ?><div class="alert alert-success">Found-dog email sent to <?= (int) ($_GET['sent'] ?? 0) ?> recipient(s).</div><?php endif; ?>
     <?php if (($_GET['msg'] ?? '') === 'email_failed'): ?><div class="alert alert-warning">Found-dog email was not sent. Check recipients and mail settings.</div><?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'bulk_failed'): ?><div class="alert alert-warning">Select at least one report and choose a valid status.</div><?php endif; ?>
     <?php if (!$reports): ?><div class="cardx">No found dog location reports yet.</div><?php endif; ?>
+
+    <?php if ($reportCountByStatus): ?>
+        <div class="cardx d-flex flex-wrap gap-2">
+            <?php foreach ($statusRank as $statusKey => $rank): ?>
+                <?php if (!isset($reportCountByStatus[$statusKey])) continue; ?>
+                <span class="badge-status"><?= h(ucfirst($statusKey)) ?> <?= (int) $reportCountByStatus[$statusKey] ?></span>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 
     <?php foreach ($reports as $report):
         $location = (string) ($report['finder_location'] ?? '');
@@ -126,16 +193,24 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
         $emailSubject = $emailDog ? gpFoundDogEmailSubject($emailDog) : '';
         $emailBody = $emailDog ? gpFoundDogEmailBody($emailDog, $report, $locationLink) : '';
         $emailId = 'foundDogEmail' . (int) $report['id'];
+        $isNew = ($report['status'] ?? '') === 'new';
     ?>
-        <section class="cardx">
-            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <details class="cardx" <?= $isNew ? 'open' : '' ?>>
+            <summary class="d-flex justify-content-between align-items-start gap-2 flex-wrap" style="list-style:none; cursor:pointer;">
                 <div>
-                    <h2 class="h5 mb-1">#<?= h($report['id']) ?> <?= h($report['dog_name']) ?></h2>
+                    <h2 class="h5 mb-1">#<?= h($report['id']) ?> <?= h($report['dog_name']) ?> <?= $isNew ? '<span class="badge-status ms-2">New focus</span>' : '' ?></h2>
                     <div class="meta">Submitted <?= h($report['created_at']) ?> · Status <span class="badge-status"><?= h($report['status']) ?></span> · Notification <?= !empty($report['notification_sent']) ? 'sent' : 'not sent' ?></div>
                 </div>
-                <a class="btn btn-outline-primary btn-sm" href="dog_profile.php?dog_id=<?= (int) $report['dog_id'] ?>">Dog Profile</a>
-            </div>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <label class="form-check mb-0">
+                        <input class="form-check-input found-dog-select" type="checkbox" name="report_ids[]" value="<?= h($report['id']) ?>" form="bulkFoundDogForm">
+                        <span class="form-check-label">Select</span>
+                    </label>
+                    <a class="btn btn-outline-primary btn-sm" href="dog_profile.php?dog_id=<?= (int) $report['dog_id'] ?>">Dog Profile</a>
+                </div>
+            </summary>
 
+            <div class="pt-3">
             <hr>
             <div class="row g-3">
                 <div class="col-md-6"><strong>Reported location</strong><br><?= h($location ?: 'GPS only / not typed') ?></div>
@@ -188,18 +263,27 @@ body{background:#f3f6fb;color:#1f2937;padding-bottom:90px}.wrap{max-width:1100px
                 <input type="hidden" name="action" value="update_status">
                 <label class="form-label mb-0">Status</label>
                 <select name="status" class="form-select" style="max-width:220px;">
-                    <?php foreach (['new', 'reviewing', 'contacted', 'resolved', 'closed'] as $s): ?>
+                    <?php foreach ($allowedStatuses as $s): ?>
                         <option value="<?= h($s) ?>" <?= $report['status'] === $s ? 'selected' : '' ?>><?= h(ucfirst($s)) ?></option>
                     <?php endforeach; ?>
                 </select>
                 <button class="btn btn-primary">Update</button>
                 <?php if (!empty($report['finder_phone'])): ?><a class="btn btn-outline-success" href="tel:<?= h(preg_replace('/[^0-9+]/', '', (string) $report['finder_phone'])) ?>">Call Finder</a><?php endif; ?>
             </form>
-        </section>
+            </div>
+        </details>
     <?php endforeach; ?>
 </div>
 <?php include __DIR__ . '/includes/mobile_nav.php'; ?>
 <script>
+const selectAll = document.getElementById('selectAllFoundDogReports');
+if (selectAll) {
+    selectAll.addEventListener('change', function () {
+        document.querySelectorAll('.found-dog-select').forEach(function (input) {
+            input.checked = selectAll.checked;
+        });
+    });
+}
 document.querySelectorAll('[data-copy-target]').forEach(function(button){
     button.addEventListener('click', function(){
         var target = document.getElementById(button.getAttribute('data-copy-target'));
