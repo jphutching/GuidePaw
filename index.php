@@ -98,6 +98,10 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
 </header>
 
 <main class="page-shell mt-3">
+    <?php if (($_GET['msg'] ?? '') === 'setup_complete'): ?>
+        <div class="alert alert-success mb-3">Setup complete. You can use the dashboard now.</div>
+    <?php endif; ?>
+
     <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
     </div>

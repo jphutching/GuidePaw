@@ -146,6 +146,31 @@ function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
     $ensured = true;
 }
 
+function gpEnsureOnboardingColumns(PDO $pdo): void {
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'users'
+          AND column_name = 'onboarding_completed_at'
+        LIMIT 1
+    ");
+    $stmt->execute();
+    $exists = (bool) $stmt->fetchColumn();
+
+    if (!$exists) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN onboarding_completed_at TIMESTAMP');
+        $pdo->exec("UPDATE users SET onboarding_completed_at = CURRENT_TIMESTAMP WHERE onboarding_completed_at IS NULL AND created_at < CURRENT_TIMESTAMP - INTERVAL '1 hour'");
+    }
+
+    $ensured = true;
+}
+
 function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
     static $backfilled = false;
     if ($backfilled) {
@@ -242,6 +267,20 @@ function gpProfileCompletionGateAllowedPage(): bool {
     return in_array(gpCurrentPageName(), $allowed, true);
 }
 
+function gpOnboardingGateAllowedPage(): bool {
+    if (gpCurrentPageName() !== 'onboarding_setup.php') {
+        return in_array(gpCurrentPageName(), [
+            'logout.php',
+            'login.php',
+            'register.php',
+            'reset_password.php',
+            'handler_profile.php',
+        ], true);
+    }
+
+    return (string) ($_GET['preview'] ?? '') === '1';
+}
+
 function gpEnforceHandlerProfileCompletion(PDO $pdo, array $user): void {
     if (gpProfileCompletionGateAllowedPage()) {
         return;
@@ -258,6 +297,32 @@ function gpEnforceHandlerProfileCompletion(PDO $pdo, array $user): void {
     exit;
 }
 
+function gpNeedsOnboarding(array $user): bool {
+    return trim((string) ($user['onboarding_completed_at'] ?? '')) === '';
+}
+
+function gpEnforceOnboardingCompletion(PDO $pdo, array $user): void {
+    gpEnsureOnboardingColumns($pdo);
+
+    if (gpOnboardingGateAllowedPage()) {
+        return;
+    }
+
+    if (!gpNeedsOnboarding($user)) {
+        return;
+    }
+
+    $_SESSION['onboarding_return_to'] = $_SERVER['REQUEST_URI'] ?? 'index.php';
+    header('Location: onboarding_setup.php?required=1');
+    exit;
+}
+
+function gpMarkOnboardingComplete(PDO $pdo, int $userId): void {
+    gpEnsureOnboardingColumns($pdo);
+    $stmt = $pdo->prepare('UPDATE users SET onboarding_completed_at = CURRENT_TIMESTAMP WHERE id = ?');
+    $stmt->execute([$userId]);
+}
+
 function checkLogin(): void {
     if (empty($_SESSION['user_id'])) {
         redirectToAuth();
@@ -270,6 +335,7 @@ function checkLogin(): void {
     }
 
     gpBackfillKnownRequiredHandlerProfiles($GLOBALS['pdo']);
+    gpEnsureOnboardingColumns($GLOBALS['pdo']);
 
     $user = getUserRecord($GLOBALS['pdo'], $userId);
     if (!$user) {

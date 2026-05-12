@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user_input = strtolower(trim($_POST['username']));
     $pass_input = $_POST['password'];
     $rememberMe = !empty($_POST['remember_me']);
+    gpEnsureOnboardingColumns($pdo);
 
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$user_input]);
@@ -54,6 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         getActiveDogId($pdo, (int) $user['id']);
+        gpEnsureOnboardingColumns($pdo);
+        if (gpNeedsOnboarding($user)) {
+            header('Location: onboarding_setup.php');
+            exit;
+        }
         header("Location: " . (!empty($user['is_admin']) ? "admin.php" : "index.php"));
         exit;
     } else {

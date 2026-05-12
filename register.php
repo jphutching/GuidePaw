@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card shadow p-4">
         <?php if ($success): ?>
             <h1 class="h3">Account created</h1>
-            <p>Your handler account is ready. Dog profiles can be added after login.</p>
+            <p>Your handler account is ready. On your first sign-in, GuidePaw will open a short setup walkthrough for your profile and first dog.</p>
             <a class="btn btn-primary" href="login.php">Login</a>
         <?php else: ?>
             <h1 class="h3">Create Handler Account</h1>
