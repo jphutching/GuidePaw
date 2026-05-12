@@ -1171,6 +1171,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify tactical access requests, the plans page special-access card, and the tactical request approval flow on beta
 
+2026-05-12 — Updated the shared brand lockup with the new GuidePaw logo
+- Commit(s): pending
+- Files changed: includes/brand_header.php, assets/brand/guidepaw-logo.png, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: verify the shared header and menu shell still fit cleanly on phone-width pages
+
 ## Update log template
 
 When updating this file, add a short note like:
