@@ -1148,6 +1148,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the community hub renders the merch and Discord entry points and that the forum can create a thread and reply
 
+2026-05-12 — Contact Us social row update
+- Commit(s): pending
+- Files changed: contact_us.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: verify Contact Us surfaces the official GuidePaw Facebook link plus the saved handler link
+
 ## Update log template
 
 When updating this file, add a short note like:

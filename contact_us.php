@@ -7,6 +7,7 @@ checkLogin();
 $userId = (int) $_SESSION['user_id'];
 $user = getUserRecord($pdo, $userId);
 $facebookUrl = trim((string) ($user['facebook_url'] ?? ''));
+$guidepawFacebookUrl = 'https://www.facebook.com/share/1J2hMnUBbm/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,6 +59,17 @@ $facebookUrl = trim((string) ($user['facebook_url'] ?? ''));
             <?php else: ?>
                 <div class="contact-muted">No Facebook link has been saved on this account yet.</div>
             <?php endif; ?>
+        </div>
+    </section>
+
+    <section class="card contact-card mb-3">
+        <div class="card-body">
+            <h2 class="h5 mb-1">Social</h2>
+            <p class="contact-muted mb-3">Follow the official GuidePaw page and keep your own social link on the handler profile.</p>
+            <a class="contact-link" href="<?= e($guidepawFacebookUrl) ?>" target="_blank" rel="noopener noreferrer">
+                <span><span class="contact-icon">📘</span>GuidePaw Facebook</span>
+                <span class="contact-url"><?= e($guidepawFacebookUrl) ?></span>
+            </a>
         </div>
     </section>
 
