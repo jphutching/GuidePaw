@@ -43,6 +43,7 @@ async function visiblePageTextForErrorScan(page) {
     clone.querySelectorAll('.card').forEach(node => {
       if (node.querySelector('.details')) node.remove();
     });
+    clone.querySelectorAll('select, option').forEach(node => node.remove());
     return clone.innerText || '';
   }).catch(() => '');
 }
