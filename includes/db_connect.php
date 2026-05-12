@@ -135,6 +135,7 @@ function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
         'home_address' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
+        'facebook_url' => 'TEXT',
         'home_state' => 'TEXT',
         'profile_photo_url' => 'TEXT',
         'backup_contact_name' => 'TEXT',

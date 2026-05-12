@@ -743,6 +743,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'settings')
                 || str_contains($body, 'change password')
+                || str_contains($body, 'social')
                 || str_contains($body, 'logout')
             )
             : true;

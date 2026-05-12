@@ -27,6 +27,7 @@ $expiresAt = !empty($_SESSION['login_expires_at']) ? (int) $_SESSION['login_expi
     .settings-link:first-of-type { border-top:0; }
     .settings-icon { font-size:1.25rem; margin-right:.45rem; }
     .settings-muted { color:#6b7280; font-size:.9rem; }
+    .settings-social-url { word-break: break-word; }
 </style>
 </head>
 <body class="pb-5 bg-light">
@@ -52,6 +53,23 @@ $expiresAt = !empty($_SESSION['login_expires_at']) ? (int) $_SESSION['login_expi
     </section>
 
     <section class="card settings-card mb-3"><div class="card-body"><h2 class="h5 mb-1">Notifications</h2><p class="settings-muted mb-3">Browser/PWA reminders and queued offline sync.</p><div class="d-grid gap-2"><button type="button" class="btn btn-outline-success" data-enable-notifications>Enable reminders</button><button type="button" class="btn btn-outline-secondary" data-test-notification>Test notification</button><button type="button" class="btn btn-outline-primary" data-sync-queued>Sync queued logs</button></div><div class="mt-3 d-flex flex-wrap gap-2"><span data-network-status class="badge bg-secondary">Checking...</span><span data-notification-state class="badge bg-secondary">Notifications off</span><span class="badge bg-dark" data-queue-count style="display:none;">0</span></div></div></section>
+
+    <section class="card settings-card mb-3">
+        <div class="card-body">
+            <h2 class="h5 mb-1">Social</h2>
+            <p class="settings-muted mb-3">Quick links from your handler profile.</p>
+            <?php if (!empty($user['facebook_url'])): ?>
+                <a class="settings-link" href="<?= e($user['facebook_url']) ?>" target="_blank" rel="noopener noreferrer">
+                    <span><span class="settings-icon">📘</span>Facebook</span>
+                    <span class="settings-social-url"><?= e($user['facebook_url']) ?></span>
+                </a>
+            <?php else: ?>
+                <div class="settings-muted">No Facebook link has been added yet.</div>
+            <?php endif; ?>
+            <div class="settings-muted mt-2">Use the handler profile if you want to change the saved link.</div>
+            <a class="settings-link" href="handler_profile.php"><span><span class="settings-icon">👤</span>Edit handler profile</span><span>›</span></a>
+        </div>
+    </section>
 
     <section class="card settings-card mb-3"><div class="card-body"><h2 class="h5 mb-1">Session</h2><p class="settings-muted mb-3">Sign out of GuidePaw on this device.</p><a href="logout.php" class="btn btn-danger w-100">Logout</a></div></section>
 </main>

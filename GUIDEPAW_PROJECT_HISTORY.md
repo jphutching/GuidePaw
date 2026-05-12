@@ -1127,6 +1127,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the home address requirement stays private on the public QR profile while still flowing into handler defaults
 
+2026-05-12 — Handler Facebook link in settings
+- Commit(s): pending
+- Files changed: handler_profile.php, settings.php, includes/db_connect.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: yes
+- Next recommended step: verify the saved Facebook link appears in Settings and opens the stored profile URL
+
 ## Update log template
 
 When updating this file, add a short note like:

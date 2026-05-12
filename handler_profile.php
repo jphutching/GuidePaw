@@ -54,6 +54,18 @@ function gpOptionalBackupDisplay(?string $value): string
     return $value === 'Not applicable' ? '' : $value;
 }
 
+function gpNormalizeOptionalUrl(string $value): string
+{
+    $value = trim($value);
+    if ($value === '') {
+        return '';
+    }
+    if (!preg_match('#^https?://#i', $value)) {
+        $value = 'https://' . ltrim($value, '/');
+    }
+    return filter_var($value, FILTER_VALIDATE_URL) ? $value : '';
+}
+
 gpEnsureHandlerProfileColumns($pdo);
 $userId = (int) $_SESSION['user_id'];
 $errors = [];
@@ -69,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $homeAddress = cleanText($_POST['home_address'] ?? '', 255);
     $phone = cleanText($_POST['phone'] ?? '', 80);
     $publicEmail = cleanText($_POST['public_email'] ?? '', 160);
+    $facebookUrl = gpNormalizeOptionalUrl((string) ($_POST['facebook_url'] ?? ''));
     $homeState = strtoupper(trim((string) ($_POST['home_state'] ?? '')));
     $backupName = cleanText($_POST['backup_contact_name'] ?? '', 120);
     $backupPhone = cleanText($_POST['backup_contact_phone'] ?? '', 80);
@@ -104,8 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE users SET display_name=?, home_address=?, phone=?, public_email=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
-        $stmt->execute([$displayName, $homeAddress, $phone, $publicEmail, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
+        $stmt = $pdo->prepare('UPDATE users SET display_name=?, home_address=?, phone=?, public_email=?, facebook_url=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
+        $stmt->execute([$displayName, $homeAddress, $phone, $publicEmail, $facebookUrl ?: null, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -213,6 +226,7 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Home Address <span class="req">*</span></label><input type="text" name="home_address" class="form-control" value="<?= e($user['home_address'] ?? '') ?>" placeholder="Street, city, state, ZIP" required><div class="form-text">Used as the default address for dog profiles and contact context.</div></div>
                 <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
+                <div class="col-md-6"><label class="form-label">Facebook Link <span class="opt">optional</span></label><input type="url" name="facebook_url" class="form-control" value="<?= e($user['facebook_url'] ?? '') ?>" placeholder="https://www.facebook.com/your.profile"><div class="form-text">Saved on your handler profile for quick sharing.</div></div>
                 <div class="col-md-6">
                     <label class="form-label">Home State</label>
                     <select name="home_state" class="form-select">
