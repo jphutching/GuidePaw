@@ -210,6 +210,7 @@ test('GuidePaw plans page and premium tool paywalls are visible to free handlers
   await expect(page.locator('body')).toContainText(/plans and access|current plan/i);
   await expect(page.locator('body')).toContainText(/free|plus|pro/i);
   await expect(page.locator('body')).toContainText(/a la carte services|extra dog slot|qr tracking/i);
+  await expect(page.locator('body')).toContainText(/support funding/i);
 
   await page.goto(`${BASE_URL}/trainer_marketplace.php`);
   await page.waitForLoadState('networkidle');
@@ -218,6 +219,10 @@ test('GuidePaw plans page and premium tool paywalls are visible to free handlers
   await page.goto(`${BASE_URL}/ai_training_assistant.php`);
   await page.waitForLoadState('networkidle');
   await expect(page.locator('body')).toContainText(/current premium plan tier|view plans|ai training assistant/i);
+
+  await page.goto(`${BASE_URL}/support_funding.php`);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('body')).toContainText(/support guidepaw|support funding|funding link not configured/i);
 });
 
 test('GuidePaw found-dog public report submits and reaches admin queue', async ({ page }) => {

@@ -47,6 +47,7 @@ $serviceDefinitions = gpPaywallServiceRows($pdo);
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <a class="btn btn-light btn-sm" href="contact_us.php">Contact Us</a>
+                <a class="btn btn-outline-light btn-sm" href="support_funding.php">Support Funding</a>
                 <?php if (function_exists('currentUserIsAdmin') && currentUserIsAdmin()): ?>
                     <a class="btn btn-outline-light btn-sm" href="admin_paywall_catalog.php">Manage catalog</a>
                 <?php endif; ?>
@@ -111,6 +112,7 @@ $serviceDefinitions = gpPaywallServiceRows($pdo);
                 <li><strong>AI Training Assistant</strong> is on the Pro gate.</li>
                 <li><strong>QR Tracking</strong> is sold per dog as a lifetime add-on.</li>
                 <li><strong>Extra Dog Slot</strong> keeps the first dog free but allows another dog when purchased.</li>
+                <li><strong>Support Funding</strong> is a separate support page for project backers.</li>
             </ul>
         </div>
     </div>

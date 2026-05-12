@@ -46,6 +46,10 @@ $swagItems = gpCommunitySwagItems();
         <div class="card-body">
             <h2 class="h5 mb-1">Handler Community</h2>
             <p class="community-muted mb-3">Swag, live discussion, and a place for handlers to stay connected.</p>
+            <a class="community-link" href="support_funding.php">
+                <span><span class="me-2">💙</span>Support GuidePaw</span>
+                <span>›</span>
+            </a>
             <a class="community-link" href="forum.php">
                 <span><span class="me-2">💬</span>Open forum</span>
                 <span>›</span>
