@@ -1120,6 +1120,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the daily win prompt saves as a training log and stays unique by day
 
+2026-05-12 — Registration and handler address requirement
+- Commit(s): pending
+- Files changed: register.php, handler_profile.php, includes/db_connect.php, includes/beta_access.php, includes/public_contact_defaults.php, dog_profile.php, public_dog_profile.php, admin_profile_completion.php, onboarding_setup.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: verify the home address requirement stays private on the public QR profile while still flowing into handler defaults
+
 ## Update log template
 
 When updating this file, add a short note like:

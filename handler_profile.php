@@ -13,6 +13,7 @@ function gpEnsureHandlerProfileColumns(PDO $pdo): void
 {
     $columns = [
         'display_name' => 'TEXT',
+        'home_address' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
         'home_state' => 'TEXT',
@@ -65,6 +66,7 @@ $user = $stmt->fetch();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     $displayName = cleanText($_POST['display_name'] ?? '', 120);
+    $homeAddress = cleanText($_POST['home_address'] ?? '', 255);
     $phone = cleanText($_POST['phone'] ?? '', 80);
     $publicEmail = cleanText($_POST['public_email'] ?? '', 160);
     $homeState = strtoupper(trim((string) ($_POST['home_state'] ?? '')));
@@ -81,6 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($displayName === '') {
         $errors[] = 'Display name is required.';
+    }
+    if ($homeAddress === '') {
+        $errors[] = 'Home address is required.';
     }
     if ($phone === '') {
         $errors[] = 'Public phone is required.';
@@ -99,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE users SET display_name=?, phone=?, public_email=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
-        $stmt->execute([$displayName, $phone, $publicEmail, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
+        $stmt = $pdo->prepare('UPDATE users SET display_name=?, home_address=?, phone=?, public_email=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
+        $stmt->execute([$displayName, $homeAddress, $phone, $publicEmail, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -205,6 +210,7 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 
                 <div class="col-md-6"><label class="form-label">Display Name <span class="req">*</span></label><input type="text" name="display_name" class="form-control" value="<?= e($user['display_name'] ?? ($user['username'] ?? '')) ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
+                <div class="col-md-6"><label class="form-label">Home Address <span class="req">*</span></label><input type="text" name="home_address" class="form-control" value="<?= e($user['home_address'] ?? '') ?>" placeholder="Street, city, state, ZIP" required><div class="form-text">Used as the default address for dog profiles and contact context.</div></div>
                 <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
                 <div class="col-md-6">

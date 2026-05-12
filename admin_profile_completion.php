@@ -14,17 +14,21 @@ $pdo->exec("UPDATE users SET backup_contact_name = COALESCE(NULLIF(TRIM(backup_c
 
 $requiredFields = [
     'display_name' => 'Display name',
+    'home_address' => 'Home address',
     'phone' => 'Public phone',
     'public_email' => 'Public email',
 ];
 
 $totalAccounts = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-$allRows = $pdo->query("SELECT id, username, email, display_name, phone, public_email, backup_contact_name, backup_contact_phone FROM users ORDER BY username ASC, id ASC")->fetchAll() ?: [];
+$allRows = $pdo->query("SELECT id, username, email, display_name, home_address, phone, public_email, backup_contact_name, backup_contact_phone FROM users ORDER BY username ASC, id ASC")->fetchAll() ?: [];
 $missingRows = [];
 foreach ($allRows as $row) {
     $missing = [];
     if (trim((string) ($row['display_name'] ?? '')) === '') {
         $missing[] = 'Display name';
+    }
+    if (trim((string) ($row['home_address'] ?? '')) === '') {
+        $missing[] = 'Home address';
     }
     if (trim((string) ($row['phone'] ?? '')) === '') {
         $missing[] = 'Public phone';
@@ -70,7 +74,7 @@ $optionalBackupMissing = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE COA
         <a class="btn btn-outline-secondary btn-sm" href="admin.php">Admin</a>
     </div>
 
-    <div class="alert alert-success small">Optional backup contact blanks were backfilled automatically for compatibility with the current login gate.</div>
+    <div class="alert alert-success small">Required handler profile defaults were backfilled automatically for the seeded beta accounts.</div>
 
     <div class="row g-3 mb-3">
         <div class="col-6 col-md-3"><div class="card metric"><div class="card-body"><div class="text-muted small">Total accounts</div><div class="num"><?= (int) $totalAccounts ?></div></div></div></div>

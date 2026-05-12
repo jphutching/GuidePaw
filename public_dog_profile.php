@@ -24,7 +24,7 @@ function publicDogColumnExists(PDO $pdo, string $column): bool
 $possibleColumns = [
     'id', 'user_id', 'owner_user_id', 'name', 'breed', 'weight_lbs', 'access_role', 'microchip_id', 'chip_number', 'chip_registry',
     'microchip_registry', 'photo_url', 'profile_photo_url', 'handler_photo_url', 'public_notes', 'emergency_notes',
-    'handler_name', 'handler_phone', 'handler_email', 'backup_contact_name', 'backup_contact_phone', 'found_dog_instructions',
+    'handler_name', 'handler_address', 'handler_phone', 'handler_email', 'backup_contact_name', 'backup_contact_phone', 'found_dog_instructions',
     'service_tasks', 'medical_alert_notes', 'critical_allergies', 'created_at', 'updated_at'
 ];
 $selectColumns = [];

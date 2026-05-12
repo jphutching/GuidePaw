@@ -132,6 +132,7 @@ function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
 
     $columns = [
         'display_name' => 'TEXT',
+        'home_address' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
         'home_state' => 'TEXT',
@@ -183,6 +184,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
         [
             'usernames' => ['admin'],
             'display_name' => 'GuidePaw Admin',
+            'home_address' => '123 GuidePaw Lane, Denver, CO 80202',
             'phone' => '555-0100',
             'public_email' => 'admin@guidepaw.app',
             'backup_contact_name' => 'GuidePaw Backup Contact',
@@ -192,6 +194,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
         [
             'usernames' => ['test acct', 'test_acct', 'test account', 'test'],
             'display_name' => 'Test Handler',
+            'home_address' => '456 GuidePaw Lane, Denver, CO 80203',
             'phone' => '555-0102',
             'public_email' => 'test@example.com',
             'backup_contact_name' => 'Test Backup Contact',
@@ -203,6 +206,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
     $stmt = $pdo->prepare("UPDATE users
         SET
             display_name = COALESCE(NULLIF(display_name, ''), ?),
+            home_address = COALESCE(NULLIF(home_address, ''), ?),
             phone = COALESCE(NULLIF(phone, ''), ?),
             public_email = COALESCE(NULLIF(public_email, ''), NULLIF(email, ''), ?),
             home_state = COALESCE(NULLIF(home_state, ''), ?),
@@ -215,6 +219,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
     foreach ($rows as $row) {
         $stmt->execute([
             $row['display_name'],
+            $row['home_address'],
             $row['phone'],
             $row['public_email'],
             '',
@@ -231,10 +236,9 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
 function gpRequiredHandlerProfileFields(): array {
     return [
         'display_name' => 'Display name',
+        'home_address' => 'Home address',
         'phone' => 'Public phone',
         'public_email' => 'Public email',
-        'backup_contact_name' => 'Backup contact name',
-        'backup_contact_phone' => 'Backup contact phone',
     ];
 }
 

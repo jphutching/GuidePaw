@@ -268,7 +268,7 @@ function gpQaFeedbackAliasMap(): array
         'beta_qa_checklist_state.php' => ['beta qa checklist state', 'checked_items'],
         'beta_request.php' => ['request guidepaw beta access', 'beta access'],
         'beta_token.php' => ['validate beta access token', 'beta token'],
-        'register.php' => ['create handler account', 'create guidepaw handler account', 'home state'],
+        'register.php' => ['create handler account', 'create guidepaw handler account', 'home address', 'phone number'],
         'reset_password.php' => ['account recovery', 'password recovery'],
         'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
@@ -287,7 +287,7 @@ function gpQaFeedbackAliasMap(): array
         'dog_access.php' => ['dog access', 'shared access', 'co-op', 'transfer'],
         'dog_access_audit.php' => ['audit', 'timeline'],
         'qr_tracking.php' => ['qr tracking', 'qr opens tracked', 'recent qr opens'],
-        'handler_profile.php' => ['handler profile', 'public email', 'backup contact', 'home state'],
+        'handler_profile.php' => ['handler profile', 'public email', 'backup contact', 'home address', 'home state'],
         'db_status.php' => ['database', 'schema', 'migration'],
         'admin_feedback.php' => ['admin feedback', 'feedback reports'],
         'admin_beta_requests.php' => ['beta access requests', 'access mode'],
@@ -918,6 +918,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'create handler account')
                 || str_contains($body, 'create account')
                 || str_contains($body, 'dog profiles are set up after login')
+                || str_contains($body, 'home address')
             )
             : true;
         $resetPasswordPageLooksReady = $path === 'reset_password.php'

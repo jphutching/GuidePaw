@@ -23,6 +23,7 @@ $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullName = trim($_POST['full_name'] ?? '');
+    $homeAddress = trim($_POST['home_address'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
     $homeState = strtoupper(trim($_POST['home_state'] ?? ''));
     $email = strtolower(trim($_POST['email'] ?? ''));
@@ -30,8 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = (string) ($_POST['password'] ?? '');
     $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
 
-    if ($fullName === '' || $email === '' || $password === '') {
-        $error = 'Name, email, and password are required.';
+    if ($fullName === '' || $homeAddress === '' || $phone === '' || $email === '' || $password === '') {
+        $error = 'Name, home address, phone number, email, and password are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
     } elseif ($homeState !== '' && !array_key_exists($homeState, adaStateNames())) {
@@ -55,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId = betaInsertUserFlexible($pdo, [
                     'email' => $email,
                     'full_name' => $fullName,
+                    'home_address' => $homeAddress,
                     'phone' => $phone,
                     'home_state' => $homeState,
                     'password' => $password,
@@ -120,8 +122,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input class="form-control" name="full_name" required value="<?= e($_POST['full_name'] ?? $prefillName) ?>">
                 </div>
                 <div class="mb-3">
+                    <label class="form-label">Home address</label>
+                    <input class="form-control" name="home_address" required value="<?= e($_POST['home_address'] ?? '') ?>" placeholder="Street, city, state, ZIP">
+                    <div class="form-text">Used for handler defaults and dog profile contact context.</div>
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Phone number</label>
-                    <input class="form-control" name="phone" value="<?= e($_POST['phone'] ?? '') ?>">
+                    <input class="form-control" name="phone" required value="<?= e($_POST['phone'] ?? '') ?>">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Home state</label>

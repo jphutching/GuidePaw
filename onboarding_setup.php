@@ -83,7 +83,7 @@ function h($value): string {
                 <div class="step-actions">
                     <a class="btn btn-outline-secondary btn-sm" href="handler_profile.php?return_to=<?= h('onboarding_setup.php?preview=1') ?>">Open profile</a>
                 </div>
-                <div class="small text-muted mt-2">Home state, phone, and email are the main items.</div>
+                <div class="small text-muted mt-2">Home address, phone, email, and home state are the main items.</div>
             </div>
         </div>
         <div class="col-md-4">

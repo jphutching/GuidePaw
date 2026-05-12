@@ -208,6 +208,7 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
         'username' => $email,
         'email' => $email,
         'full_name' => $fullName,
+        'home_address' => trim((string) ($data['home_address'] ?? '')),
         'handler_name' => $fullName,
         'name' => $fullName,
         'phone' => $phone,
@@ -242,6 +243,8 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
         if (!$nullable && !$hasDefault) {
             if (str_contains($col, 'dog')) {
                 $values[$col] = 'Pending setup';
+            } elseif (str_contains($col, 'address')) {
+                $values[$col] = trim((string) ($data['home_address'] ?? ''));
             } elseif (str_contains($col, 'email')) {
                 $values[$col] = $email;
             } elseif (str_contains($col, 'name')) {
