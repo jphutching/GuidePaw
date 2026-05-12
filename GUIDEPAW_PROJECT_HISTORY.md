@@ -1157,6 +1157,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify Contact Us surfaces the official GuidePaw Facebook link plus the saved handler link
 
+2026-05-12 — Editable paywall catalog and a la carte services
+- Commit(s): pending
+- Files changed: includes/paywall_catalog.php, paywalls.php, admin_paywall_catalog.php, trainer_marketplace.php, ai_training_assistant.php, qr_tracking.php, dogs.php, admin.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-auth-crawl.spec.js, tests/browser/guidepaw-admin-safe.spec.js, sql/migrations/pgsql/20260512_paywall_catalog.sql, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: verify beta loads the editable paywall catalog, the service add-ons render on the plans page, and the QR Tracking and extra dog slot gates behave as expected
+
 ## Update log template
 
 When updating this file, add a short note like:

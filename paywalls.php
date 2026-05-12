@@ -2,13 +2,16 @@
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/paywalls.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 
 checkLogin();
+gpPaywallCatalogEnsureSchema($pdo);
 
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 $user = getUserRecord($pdo, $userId) ?: [];
 $currentTier = gpUserTier($user);
-$tierDefinitions = gpTierDefinitions();
+$tierDefinitions = gpPaywallPlanRows($pdo);
+$serviceDefinitions = gpPaywallServiceRows($pdo);
 ?>
 <!doctype html>
 <html lang="en">
@@ -40,9 +43,14 @@ $tierDefinitions = gpTierDefinitions();
             <div>
                 <div class="small opacity-75">GuidePaw plans and access</div>
                 <h1 class="mb-2">Plans & Access</h1>
-                <p class="mb-0 opacity-75">Free keeps the core handler workflow. Plus and Pro unlock the premium training surfaces that are currently gated in app.</p>
+                <p class="mb-0 opacity-75">Free keeps the core handler workflow and one dog. Plus and Pro unlock the premium training surfaces, and a la carte services can be added per dog or per account.</p>
             </div>
-            <a class="btn btn-light btn-sm" href="contact_us.php">Contact Us</a>
+            <div class="d-flex gap-2 flex-wrap">
+                <a class="btn btn-light btn-sm" href="contact_us.php">Contact Us</a>
+                <?php if (function_exists('currentUserIsAdmin') && currentUserIsAdmin()): ?>
+                    <a class="btn btn-outline-light btn-sm" href="admin_paywall_catalog.php">Manage catalog</a>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </header>
@@ -62,7 +70,7 @@ $tierDefinitions = gpTierDefinitions();
     </div>
 
     <div class="row g-3">
-        <?php foreach ($tierDefinitions as $tierKey => $tier): ?>
+        <?php foreach ($tierDefinitions as $tier): ?>
             <div class="col-md-4">
                 <div class="plan-card p-3 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-2">
@@ -70,21 +78,21 @@ $tierDefinitions = gpTierDefinitions();
                             <div class="plan-badge"><?= e($tier['label']) ?></div>
                             <h2 class="h5 mt-2 mb-1"><?= e($tier['label']) ?></h2>
                         </div>
-                        <?php if ($currentTier === $tierKey): ?>
+                        <?php if ($currentTier === gpNormalizeUserTier((string) ($tier['required_tier'] ?? 'free'))): ?>
                             <span class="badge bg-success">Current</span>
                         <?php endif; ?>
                     </div>
                     <p class="muted mt-2 mb-3"><?= e($tier['summary']) ?></p>
                     <div class="fw-bold mb-2">Included</div>
                     <ul class="plan-list mb-3">
-                        <?php foreach ($tier['highlights'] as $item): ?>
+                        <?php foreach (gpPaywallCatalogBullets((string) ($tier['included_text'] ?? '')) as $item): ?>
                             <li><?= e($item) ?></li>
                         <?php endforeach; ?>
                     </ul>
-                    <?php if (!empty($tier['locked'])): ?>
+                    <?php if (gpPaywallCatalogBullets((string) ($tier['locked_text'] ?? ''))): ?>
                         <div class="fw-bold mb-2">Still locked below this plan</div>
                         <ul class="plan-list mb-0">
-                            <?php foreach ($tier['locked'] as $item): ?>
+                            <?php foreach (gpPaywallCatalogBullets((string) ($tier['locked_text'] ?? '')) as $item): ?>
                                 <li><?= e($item) ?></li>
                             <?php endforeach; ?>
                         </ul>
@@ -97,12 +105,45 @@ $tierDefinitions = gpTierDefinitions();
     <div class="card mt-3">
         <div class="card-body">
             <h2 class="h5 mb-2">How the gate works</h2>
-            <p class="mb-2">Free users can still use the core app. When they open a premium page, GuidePaw shows the plan notice and points them back here. Admin accounts can still review and manage everything from User Management.</p>
+            <p class="mb-2">Free users can still use the core app and one dog. When they open a premium page or an add-on service, GuidePaw shows the plan notice and points them back here. Admin accounts can still review and manage everything from User Management.</p>
             <ul class="mb-0">
                 <li><strong>Trainer Marketplace</strong> is on the Plus gate.</li>
                 <li><strong>AI Training Assistant</strong> is on the Pro gate.</li>
-                <li>The rest of the handler workflow stays open.</li>
+                <li><strong>QR Tracking</strong> is sold per dog as a lifetime add-on.</li>
+                <li><strong>Extra Dog Slot</strong> keeps the first dog free but allows another dog when purchased.</li>
             </ul>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h2 class="h5 mb-2">A la carte services</h2>
+            <p class="mb-3">These are separate from monthly plans. They can be enabled one at a time for a user or for a dog.</p>
+            <div class="row g-3">
+                <?php foreach ($serviceDefinitions as $service): ?>
+                    <div class="col-md-6">
+                        <div class="plan-card p-3">
+                            <div class="d-flex justify-content-between gap-2 flex-wrap">
+                                <div>
+                                    <div class="plan-badge"><?= e($service['label']) ?></div>
+                                    <h3 class="h5 mt-2 mb-1"><?= e($service['label']) ?></h3>
+                                </div>
+                                <span class="badge bg-secondary"><?= e(strtoupper((string) ($service['billing_model'] ?? 'service'))) ?></span>
+                            </div>
+                            <p class="muted mt-2 mb-3"><?= e($service['summary']) ?></p>
+                            <div class="small text-muted mb-2">Scope: <?= e((string) ($service['scope'] ?? 'user')) ?> · Price: $<?= e(number_format(((int) ($service['price_cents'] ?? 0)) / 100, 2)) ?></div>
+                            <?php if (gpPaywallCatalogBullets((string) ($service['included_text'] ?? ''))): ?>
+                                <div class="fw-bold mb-2">Includes</div>
+                                <ul class="plan-list mb-0">
+                                    <?php foreach (gpPaywallCatalogBullets((string) ($service['included_text'] ?? '')) as $item): ?>
+                                        <li><?= e($item) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
 </main>

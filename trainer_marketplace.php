@@ -5,22 +5,25 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/paywalls.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 require_once __DIR__ . '/includes/trainer_marketplace.php';
 
 checkLogin();
+gpPaywallCatalogEnsureSchema($pdo);
 
 if (!featureEnabled($pdo, 'trainer_marketplace_enabled')) {
     header('Location: index.php?msg=feature_disabled');
     exit;
 }
 
-if (!gpCurrentUserHasTierAccess($pdo, 'plus')) {
+$requiredTier = gpPaywallCatalogItemTier($pdo, 'trainer_marketplace', 'plus');
+if (!gpCurrentUserHasTierAccess($pdo, $requiredTier)) {
     gpRenderTierAccessNotice(
         $pdo,
-        'plus',
+        $requiredTier,
         'Trainer Marketplace',
-        'This directory is reserved for Plus and Pro plans.',
-        ['Browse trainer contacts saved to your dogs.', 'Search by trainer name, business, credentials, or focus.', 'Use the plan page to see how access is organized.']
+        'This directory is reserved for the current paid plan tier.',
+        ['Browse trainer contacts saved to your dogs.', 'Search by trainer name, business, credentials, or focus.', 'Use the plans page to see how access is organized.']
     );
     exit;
 }

@@ -15,6 +15,7 @@ const SAFE_ADMIN_PAGES = [
   '/admin_notification_test.php',
   '/admin_profile_completion.php',
   '/admin_users.php',
+  '/admin_paywall_catalog.php',
   '/api_tokens.php',
   '/db_status.php',
   '/backup.php'
@@ -107,6 +108,11 @@ test.describe.serial('GuidePaw admin-safe crawler', () => {
         expect(bodyText).toMatch(/bulk status/i);
         expect(bodyText).toMatch(/select all/i);
         expect(bodyText).toMatch(/archived/i);
+      }
+
+      if (path === '/admin_paywall_catalog.php') {
+        expect(bodyText).toMatch(/paywall catalog/i);
+        expect(bodyText).toMatch(/a la carte services|grant dog add-ons/i);
       }
     }
 

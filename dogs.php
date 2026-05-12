@@ -5,7 +5,9 @@ require 'includes/db_connect.php';
 require 'includes/validation.php';
 require 'includes/dog_breeds.php';
 require_once 'includes/training_data.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 checkLogin();
+gpPaywallCatalogEnsureSchema($pdo);
 
 $userId = (int) $_SESSION['user_id'];
 $currentUser = getUserRecord($pdo, $userId);
@@ -41,6 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($name === '') {
             $errors[] = 'Dog name is required.';
+        }
+
+        if (!$errors && !gpUserCanCreateAnotherDog($pdo, $userId)) {
+            $errors[] = 'Free accounts include one dog. Open Plans to add an Extra Dog Slot or upgrade your account to add another dog.';
         }
 
         if (!$errors) {

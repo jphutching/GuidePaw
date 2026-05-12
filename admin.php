@@ -72,6 +72,7 @@ $csrf = generateCsrfToken();
             <a class="btn" href="admin_feedback.php">Feedback Reports</a>
             <a class="btn" href="admin_beta_requests.php">Beta Requests</a>
             <a class="btn" href="admin_feature_roadmap.php">Feature Roadmap</a>
+            <a class="btn" href="admin_paywall_catalog.php">Paywall Catalog</a>
             <a class="btn" href="db_status.php">System Health</a>
             <a class="btn" href="admin_found_dog_reports.php">Found Dog Reports</a>
         </div>

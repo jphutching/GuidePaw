@@ -6,8 +6,10 @@ require_once 'includes/mobile_nav.php';
 require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
 require_once 'includes/qr_tracking.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 
 checkLogin();
+gpPaywallCatalogEnsureSchema($pdo);
 gpEnsureDogQrTrackingTable($pdo);
 
 $userId = (int) $_SESSION['user_id'];
@@ -41,6 +43,19 @@ $dog = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$dog) {
     http_response_code(404);
     exit('Dog not found.');
+}
+
+if (!gpDogQrTrackingAvailable($pdo, $userId, $dogId)) {
+    gpRenderDogServiceAccessNotice(
+        $pdo,
+        $dog,
+        'qr_tracking',
+        'QR Tracking',
+        'QR Tracking is sold as a lifetime add-on for each dog after the first free dog.',
+        ['Public QR profile opens', 'Scan logging', 'Found-dog alerts', 'Lifetime access for this dog'],
+        'paywalls.php'
+    );
+    exit;
 }
 
 $publicUrl = publicDogProfileUrl((int) $dog['id']);

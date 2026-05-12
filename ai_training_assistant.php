@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/paywalls.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 require_once __DIR__ . '/includes/training_assistant.php';
 require_once __DIR__ . '/includes/validation.php';
 
@@ -14,14 +15,16 @@ if (!featureEnabled($pdo, 'ai_training_assistant_enabled')) {
 }
 
 checkLogin();
+gpPaywallCatalogEnsureSchema($pdo);
 
-if (!gpCurrentUserHasTierAccess($pdo, 'pro')) {
+$requiredTier = gpPaywallCatalogItemTier($pdo, 'ai_training_assistant', 'pro');
+if (!gpCurrentUserHasTierAccess($pdo, $requiredTier)) {
     gpRenderTierAccessNotice(
         $pdo,
-        'pro',
+        $requiredTier,
         'AI Training Assistant',
-        'This coaching tool is reserved for Pro plans.',
-        ['Give the assistant the problem, context, and what you tried.', 'Get a narrow next-step plan, safety flags, and follow-up questions.', 'Use the plan page to compare Free, Plus, and Pro access.']
+        'This coaching tool is reserved for the current premium plan tier.',
+        ['Give the assistant the problem, context, and what you tried.', 'Get a narrow next-step plan, safety flags, and follow-up questions.', 'Use the plans page to compare Free, Plus, and Pro access.']
     );
     exit;
 }
