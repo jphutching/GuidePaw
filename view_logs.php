@@ -34,8 +34,16 @@ $logs = $stmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Training History</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="styles.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+<style>
+    .fold-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; background: #fff; }
+    .fold-card > summary { list-style: none; cursor: pointer; padding: 1rem 1rem .85rem; display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+    .fold-card > summary::-webkit-details-marker { display: none; }
+    .fold-card > summary::after { content: '⌄'; color: #6b7280; font-size: 1.2rem; line-height: 1; transition: transform .15s ease; flex: 0 0 auto; margin-top: .1rem; }
+    .fold-card[open] > summary::after { transform: rotate(180deg); }
+    .fold-card .card-body { padding-top: 0; }
+</style>
 </head>
 <body class="pb-5">
 <?php guidepawBrandHeader(); ?>
@@ -74,24 +82,23 @@ $logs = $stmt->fetchAll();
     <?php else: ?>
         <div class="vstack gap-3">
             <?php foreach ($logs as $log): ?>
-                <article class="card shadow-sm" id="log-<?= (int) $log['id'] ?>">
+                <details class="card shadow-sm fold-card" id="log-<?= (int) $log['id'] ?>">
+                    <summary>
+                        <div class="min-w-0">
+                            <h2 class="h5 card-title mb-1"><?= e($log['location_name']) ?></h2>
+                            <div class="small text-muted">
+                                <?= e(date('M d, Y g:i A', strtotime((string) $log['log_date']))) ?>
+                                <?= !empty($log['location_city_state']) ? ' • ' . e($log['location_city_state']) : '' ?>
+                                <?= !empty($log['location_type']) ? ' • ' . e($log['location_type']) : '' ?>
+                            </div>
+                            <div class="small text-muted">Handler: <?= e($log['handler_username']) ?> · Focus <?= (int) $log['focus_level'] ?>/5</div>
+                        </div>
+                    </summary>
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                            <div class="min-w-0">
-                                <h2 class="h5 card-title mb-1"><?= e($log['location_name']) ?></h2>
-                                <div class="small text-muted">
-                                    <?= e(date('M d, Y g:i A', strtotime((string) $log['log_date']))) ?>
-                                    <?= !empty($log['location_city_state']) ? ' • ' . e($log['location_city_state']) : '' ?>
-                                    <?= !empty($log['location_type']) ? ' • ' . e($log['location_type']) : '' ?>
-                                </div>
-                                <div class="small text-muted">Handler: <?= e($log['handler_username']) ?></div>
-                            </div>
-                            <div class="d-flex gap-2 flex-wrap justify-content-end">
-                                <span class="badge bg-primary align-self-start">Focus <?= (int) $log['focus_level'] ?>/5</span>
-                                <?php if ($canEditLogs): ?>
-                                    <a class="btn btn-outline-primary btn-sm" href="edit_log.php?id=<?= (int) $log['id'] ?>">Edit Log</a>
-                                <?php endif; ?>
-                            </div>
+                        <div class="d-flex gap-2 flex-wrap justify-content-end mb-3">
+                            <?php if ($canEditLogs): ?>
+                                <a class="btn btn-outline-primary btn-sm" href="edit_log.php?id=<?= (int) $log['id'] ?>">Edit Log</a>
+                            <?php endif; ?>
                         </div>
 
                         <?php $skills = json_decode($log['skills_practiced'] ?? '[]', true) ?: []; ?>
@@ -129,7 +136,7 @@ $logs = $stmt->fetchAll();
                             </div>
                         <?php endif; ?>
                     </div>
-                </article>
+                </details>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

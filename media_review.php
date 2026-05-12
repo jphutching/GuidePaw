@@ -71,7 +71,7 @@ function h($value): string
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>
-body{background:#f1f5f9;color:#0f172a}.review-shell{max-width:1040px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.review-grid{display:grid;gap:1rem}.review-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:18px;overflow:hidden}.media-box{border-radius:14px;border:1px solid #dbe3ef;background:#fff;overflow:hidden}.rating-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}.rating-grid select,.rating-grid textarea{border-radius:12px}.meta{color:#64748b;font-size:.84rem}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.74rem;font-weight:900;background:#eef2ff;color:#4338ca}.review-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.media-review-summary{display:flex;gap:.5rem;flex-wrap:wrap}.score{font-weight:900;color:#0f172a}.inline-media{max-height:420px;object-fit:contain;background:#000}.jump-target{scroll-margin-top:1rem}
+body{background:#f1f5f9;color:#0f172a}.review-shell{max-width:1040px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.review-grid{display:grid;gap:1rem}.review-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:18px;overflow:hidden}.media-box{border-radius:14px;border:1px solid #dbe3ef;background:#fff;overflow:hidden}.rating-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}.rating-grid select,.rating-grid textarea{border-radius:12px}.meta{color:#64748b;font-size:.84rem}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.74rem;font-weight:900;background:#eef2ff;color:#4338ca}.review-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.media-review-summary{display:flex;gap:.5rem;flex-wrap:wrap}.score{font-weight:900;color:#0f172a}.inline-media{max-height:420px;object-fit:contain;background:#000}.jump-target{scroll-margin-top:1rem}.fold-card{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08);overflow:hidden;background:#fff}.fold-card>summary{list-style:none;cursor:pointer;padding:1rem 1rem .85rem;display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}.fold-card>summary::-webkit-details-marker{display:none}.fold-card>summary::after{content:'⌄';color:#6b7280;font-size:1.2rem;line-height:1;transition:transform .15s ease;flex:0 0 auto;margin-top:.1rem}.fold-card[open]>summary::after{transform:rotate(180deg)}.fold-card .p-3{padding-top:0!important}
 </style>
 </head>
 <body>
@@ -106,20 +106,20 @@ body{background:#f1f5f9;color:#0f172a}.review-shell{max-width:1040px;margin:0 au
     <?php else: ?>
         <div class="review-grid">
             <?php foreach ($entries as $entry): ?>
-                <article class="review-card jump-target" id="log-<?= (int) $entry['id'] ?>">
-                    <div class="p-3 p-md-4">
-                        <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start">
-                            <div class="min-w-0">
-                                <div class="fw-bold fs-5 text-break"><?= e($entry['location_name']) ?></div>
-                                <div class="meta">
-                                    <?= e(date('M d, Y g:i A', strtotime((string) $entry['log_date']))) ?>
-                                    <?= !empty($entry['location_city_state']) ? ' • ' . e($entry['location_city_state']) : '' ?>
-                                    <?= !empty($entry['location_type']) ? ' • ' . e($entry['location_type']) : '' ?>
-                                </div>
-                                <div class="meta">Handler: <?= e($entry['handler_username']) ?></div>
+                <details class="review-card fold-card jump-target" id="log-<?= (int) $entry['id'] ?>">
+                    <summary>
+                        <div class="min-w-0">
+                            <div class="fw-bold fs-5 text-break"><?= e($entry['location_name']) ?></div>
+                            <div class="meta">
+                                <?= e(date('M d, Y g:i A', strtotime((string) $entry['log_date']))) ?>
+                                <?= !empty($entry['location_city_state']) ? ' • ' . e($entry['location_city_state']) : '' ?>
+                                <?= !empty($entry['location_type']) ? ' • ' . e($entry['location_type']) : '' ?>
                             </div>
-                            <a class="btn btn-outline-secondary btn-sm" href="view_logs.php#log-<?= (int) $entry['id'] ?>">Open log</a>
+                            <div class="meta">Handler: <?= e($entry['handler_username']) ?></div>
                         </div>
+                    </summary>
+                    <div class="p-3 p-md-4">
+                        <a class="btn btn-outline-secondary btn-sm mb-3" href="view_logs.php#log-<?= (int) $entry['id'] ?>">Open log</a>
 
                         <?php if (!empty($entry['media_url'])): ?>
                             <div class="media-box mt-3">
@@ -207,7 +207,7 @@ body{background:#f1f5f9;color:#0f172a}.review-shell{max-width:1040px;margin:0 au
                             <div class="mt-3 small text-muted">Review form is unavailable until the media review table exists in this database.</div>
                         <?php endif; ?>
                     </div>
-                </article>
+                </details>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>

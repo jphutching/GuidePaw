@@ -40,6 +40,14 @@ async function visiblePageTextForErrorScan(page) {
   }).catch(() => '');
 }
 
+async function expandAllDetails(page) {
+  await page.evaluate(() => {
+    document.querySelectorAll('details').forEach(details => {
+      details.open = true;
+    });
+  }).catch(() => {});
+}
+
 async function loginAsAdmin(page) {
   test.skip(!ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set GUIDEPAW_ADMIN_TEST_USERNAME and GUIDEPAW_ADMIN_TEST_PASSWORD');
 
@@ -69,6 +77,12 @@ test('GuidePaw login works', async ({ page }) => {
 
   await page.waitForLoadState('networkidle');
   await expect(page).not.toHaveURL(/login\.php/);
+
+  await page.goto(`${BASE_URL}/index.php`);
+  await page.waitForLoadState('networkidle');
+  const dashboardHtml = await page.content();
+  expect(dashboardHtml).toMatch(/<details[^>]*id="today"[^>]*open[^>]*>/);
+  expect(dashboardHtml).toMatch(/<details[^>]*id="needs-attention"[^>]*>/);
 });
 
 test('GuidePaw dogs page keeps add-dog form collapsed for existing handlers', async ({ page }) => {
@@ -134,6 +148,8 @@ test('GuidePaw authenticated link crawl', async ({ page }) => {
         detail: `PHP/application error text found on page: ${errorMatch[0].replace(/\\s+/g, ' ').trim()}`
       });
     }
+
+    await expandAllDetails(page);
 
     const links = await page.locator('a[href]').evaluateAll(anchors =>
       anchors.map(a => a.href).filter(Boolean)

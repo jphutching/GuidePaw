@@ -116,6 +116,14 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
 <link href="styles.css" rel="stylesheet">
 <style>
 .notification-card{border-radius:20px;border:1px solid rgba(15,23,42,.08);box-shadow:0 8px 20px rgba(15,23,42,.07);overflow:hidden}.notification-item{border-bottom:1px solid rgba(15,23,42,.08);padding:1rem;background:#fff}.notification-item:last-child{border-bottom:0}.notification-item.unread{background:#f0f7ff}.notification-title{font-weight:900;color:#0f172a}.notification-body{color:#475569;white-space:pre-wrap;overflow-wrap:anywhere}.priority-high{border-left:5px solid #dc3545}.priority-normal{border-left:5px solid #0d6efd}.priority-low{border-left:5px solid #64748b}.notification-meta{font-size:.82rem;color:#64748b}.notification-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}.notification-actions .btn{white-space:normal}.empty-state{border:1px dashed rgba(22,163,74,.36);background:#f0fdf4;border-radius:16px;padding:1rem;color:#166534}</style>
+<style>
+.fold-card{border-radius:20px;border:1px solid rgba(15,23,42,.08);box-shadow:0 8px 20px rgba(15,23,42,.07);overflow:hidden;background:#fff}
+.fold-card>summary{list-style:none;cursor:pointer;padding:1rem 1rem .85rem;display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
+.fold-card>summary::-webkit-details-marker{display:none}
+.fold-card>summary::after{content:'⌄';color:#6b7280;font-size:1.2rem;line-height:1;transition:transform .15s ease;flex:0 0 auto;margin-top:.1rem}
+.fold-card[open]>summary::after{transform:rotate(180deg)}
+.fold-card .card-body{padding-top:0}
+</style>
 </head>
 <body class="bg-light pb-5">
 <?php guidepawBrandHeader(); ?>
@@ -146,14 +154,15 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
     <?php if (($_GET['status'] ?? '') === 'invite_declined'): ?><div class="alert alert-info">Dog access invite declined.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
-    <section class="card notification-card mb-3">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
-                <div>
-                    <h2 class="h5 mb-1">Notification Preferences</h2>
-                    <div class="text-muted small">Hide categories you do not want in the inbox. Unread badge counts still stay visible in the app chrome.</div>
-                </div>
+    <details class="card notification-card mb-3 fold-card">
+        <summary>
+            <div>
+                <div class="small text-uppercase text-muted fw-semibold">Filter</div>
+                <h2 class="h5 mb-1">Notification Preferences</h2>
+                <div class="text-muted small">Hide categories you do not want in the inbox.</div>
             </div>
+        </summary>
+        <div class="card-body">
             <form method="post" class="row g-3 align-items-end">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                 <input type="hidden" name="action" value="save_notification_preferences">
@@ -176,17 +185,18 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
                 </div>
             </form>
         </div>
-    </section>
+    </details>
 
     <?php if ($pendingInvites): ?>
-        <section class="card notification-card mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
-                    <div>
-                        <h2 class="h5 mb-1">Pending Dog Access Invites</h2>
-                        <div class="text-muted small">Accepting an invite adds the dog to your accessible profiles.</div>
-                    </div>
+        <details class="card notification-card mb-3 fold-card">
+            <summary>
+                <div>
+                    <div class="small text-uppercase text-muted fw-semibold">Pending</div>
+                    <h2 class="h5 mb-1">Pending Dog Access Invites</h2>
+                    <div class="text-muted small">Accepting an invite adds the dog to your accessible profiles.</div>
                 </div>
+            </summary>
+            <div class="card-body">
                 <div class="row g-3">
                     <?php foreach ($pendingInvites as $invite): ?>
                         <div class="col-12 col-lg-6">
@@ -222,17 +232,18 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
                     <?php endforeach; ?>
                 </div>
             </div>
-        </section>
+        </details>
     <?php endif; ?>
 
-    <section class="card notification-card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start gap-2 mb-3 flex-wrap">
-                <div>
-                    <h2 class="h5 mb-1">Inbox</h2>
-                    <div class="text-muted small"><?= (int) $visibleUnreadCount ?> unread visible alert<?= $visibleUnreadCount === 1 ? '' : 's' ?><?php if ($hiddenNotificationCount > 0): ?> · <?= (int) $hiddenNotificationCount ?> hidden by category preferences<?php endif; ?>.</div>
-                </div>
+    <details class="card notification-card fold-card" open>
+        <summary>
+            <div>
+                <div class="small text-uppercase text-muted fw-semibold">Messages</div>
+                <h2 class="h5 mb-1">Inbox</h2>
+                <div class="text-muted small"><?= (int) $visibleUnreadCount ?> unread visible alert<?= $visibleUnreadCount === 1 ? '' : 's' ?><?php if ($hiddenNotificationCount > 0): ?> · <?= (int) $hiddenNotificationCount ?> hidden by category preferences<?php endif; ?>.</div>
             </div>
+        </summary>
+        <div class="card-body">
             <form id="notificationBulkDeleteForm" method="post" class="mb-3">
                 <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                 <input type="hidden" name="action" value="delete_selected_notifications">
@@ -302,7 +313,7 @@ $pendingInvites = gpDogAccessPendingInvites($pdo, $userId);
                 <div class="alert alert-light border mt-3 mb-0">Some alerts are hidden by your notification preferences.</div>
             <?php endif; ?>
         </div>
-    </section>
+    </details>
 </main>
 <script src="app.js"></script>
 </body>

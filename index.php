@@ -97,6 +97,12 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
     .attention-empty { border: 1px dashed rgba(22,163,74,.36); background: #f0fdf4; border-radius: 16px; padding: 1rem; color: #166534; }
     .menu-hint { border: 1px dashed rgba(13,110,253,.38); background: #f8fbff; border-radius: 18px; padding: 1rem; }
     .notification-summary{border:1px solid #bfdbfe;background:#eff6ff;border-radius:18px;padding:1rem;display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;}
+    .fold-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; background: #fff; }
+    .fold-card > summary { list-style: none; cursor: pointer; padding: 1rem 1rem .85rem; display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+    .fold-card > summary::-webkit-details-marker { display: none; }
+    .fold-card > summary::after { content: '⌄'; color: #6b7280; font-size: 1.2rem; line-height: 1; transition: transform .15s ease; flex: 0 0 auto; margin-top: .1rem; }
+    .fold-card[open] > summary::after { transform: rotate(180deg); }
+    .fold-card .card-body { padding-top: 0; }
 </style>
 </head>
 <body class="pb-5">
@@ -155,13 +161,14 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
     <?php gpDashboardRenderDogTransferAlerts($incomingDogTransfers); ?>
 
     <?php if ($dogs): ?>
-        <section class="card command-card mb-3">
-            <div class="card-body">
-                <div class="command-title">
-                    <div>
-                        <h2 class="h5 mb-1">Active Dog</h2>
-                    </div>
+        <details class="fold-card mb-3" open>
+            <summary>
+                <div>
+                    <div class="small text-uppercase text-muted fw-semibold">Current dog</div>
+                    <h2 class="h5 mb-1">Active Dog</h2>
                 </div>
+            </summary>
+            <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
                     <?php foreach ($dogs as $dog): ?>
                         <a href="index.php?set_dog=<?= (int) $dog['id'] ?>" class="btn <?= ($activeDog && (int) $activeDog['id'] === (int) $dog['id']) ? 'btn-primary' : 'btn-outline-secondary' ?> btn-sm">
@@ -170,18 +177,19 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
                     <?php endforeach; ?>
                 </div>
             </div>
-        </section>
+        </details>
     <?php else: ?>
         <div class="alert alert-warning">No dog profiles yet. <a href="dogs.php" class="alert-link">Create your first dog</a>.</div>
     <?php endif; ?>
 
-    <section class="card command-card mb-3" id="today">
-        <div class="card-body">
-            <div class="command-title">
-                <div>
-                    <h2 class="h5 mb-1">Today</h2>
-                </div>
+    <details class="fold-card mb-3" open id="today">
+        <summary>
+            <div>
+                <div class="small text-uppercase text-muted fw-semibold">Quick path</div>
+                <h2 class="h5 mb-1">Today</h2>
             </div>
+        </summary>
+        <div class="card-body">
             <?php if ($dailyWinPrompt): ?>
                 <div class="mb-3 p-3 border rounded-4 bg-light">
                     <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
@@ -232,16 +240,17 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
                 <?php endif; ?>
             </div>
         </div>
-    </section>
+    </details>
 
-    <section class="card command-card mb-3" id="needs-attention">
+    <details class="fold-card mb-3" id="needs-attention">
+        <summary>
+            <div>
+                <div class="small text-uppercase text-muted fw-semibold">Review queue</div>
+                <h2 class="h5 mb-1">Needs Attention</h2>
+                <div class="small text-muted"><?= (int) $attentionCount ?> item<?= $attentionCount === 1 ? '' : 's' ?> needing review.</div>
+            </div>
+        </summary>
         <div class="card-body">
-            <div class="command-title">
-                <div>
-                    <h2 class="h5 mb-1">Needs Attention</h2>
-            <div class="small text-muted"><?= (int) $attentionCount ?> item<?= $attentionCount === 1 ? '' : 's' ?> needing review.</div>
-        </div>
-    </div>
 
             <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && !$openVideoReviews && $unreadNotifications === 0): ?>
                 <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, video reviews, or upcoming vet reminders right now.</div>
@@ -381,7 +390,7 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
                 </div>
             <?php endif; ?>
         </div>
-    </section>
+    </details>
 
     <?php if (($_GET['msg'] ?? '') === 'feature_disabled'): ?>
         <div class="alert alert-info">That GuidePaw feature is not enabled yet. It is on the roadmap and may be available in a future beta.</div>
