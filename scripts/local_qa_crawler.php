@@ -1235,6 +1235,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $trainingHistoryExportBody = strtolower($trainingHistoryExportPage['body']);
     $trainingHistoryExportHeaders = strtolower($trainingHistoryExportPage['headers']);
     $backupExportHeaders = strtolower($backupExportPage['headers']);
+    $dailyWinPromptSeen = str_contains($dashboardBody, 'daily quick win')
+        && str_contains($dashboardBody, 'done today')
+        && str_contains($dashboardBody, 'save quick win');
     $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'no archived dogs yet') || str_contains($dogsPageBody, 'active dogs stay in the working list');
     $notificationPrefsSeen = str_contains($notificationsPageBody, 'notification preferences') && str_contains($notificationsPageBody, 'delete selected') && str_contains($notificationsPageBody, 'bulk delete');
     $notificationBadgeSeen = str_contains($dashboardBody, 'gp-nav-badge') || str_contains($notificationsPageBody, 'gp-nav-badge');
@@ -1264,6 +1267,25 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $menuHintSeen = gpQaPageLooksOk($dashboard) && str_contains($dashboardBody, 'tap <strong>menu</strong> in the bottom navigation') && str_contains($dashboardBody, 'tools are now grouped under dog, logs, training, care, and more');
     $dashboardAlertModuleLinkSeen = str_contains($dashboardBody, 'start module')
         && preg_match('/href="[^"]*(training_program\\.php|candidate_assessment\\.php|log_entry\\.php|certification\\.php)/i', $dashboard['body']);
+    $dailyWinSavedSeen = false;
+    if (preg_match('/name="action" value="save_daily_win"/i', $dashboard['body']) && preg_match('/name="csrf_token" value="([^"]+)"/i', $dashboard['body'], $dailyWinCsrfMatch)) {
+        $dailyWinPost = gpQaRequest($baseUrl, 'index.php', 'POST', [
+            'csrf_token' => html_entity_decode($dailyWinCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+            'action' => 'save_daily_win',
+            'daily_win_complete' => '1',
+        ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+        $dailyWinPostBody = strtolower($dailyWinPost['body']);
+        $dailyWinSavedSeen = gpQaPageLooksOk($dailyWinPost) && (
+            str_contains($dailyWinPostBody, 'daily win saved')
+            || str_contains($dailyWinPostBody, 'saved today')
+            || str_contains($dailyWinPostBody, 'training log')
+        );
+        if (!$dailyWinSavedSeen && str_contains(strtolower($dailyWinPost['url']), 'view_logs.php')) {
+            $dailyWinSavedSeen = true;
+        }
+    } elseif (str_contains($dashboardBody, 'saved today') || str_contains($dashboardBody, 'already saved')) {
+        $dailyWinSavedSeen = true;
+    }
     $menuSearchRemoved = gpQaPageLooksOk($dashboard) && !str_contains($dashboardBody, 'search pages, tools, or training tracks');
     $menuLogoutSeen = str_contains($dashboardBody, 'logout') && str_contains($dashboardBody, 'settings');
     $menuSectionCount = preg_match_all('/<details class="gp-menu-section"/i', $dashboard['body'], $menuSectionMatches);
@@ -1407,6 +1429,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'dashboard_regression_engine_hook', gpQaPageLooksOk($dashboard) && $regressionEngineHookSeen, 'HTTP ' . $dashboard['status'] . ($regressionEngineHookSeen ? ' regression engine hook found' : ' regression engine hook not currently visible'));
     gpQaResult($results, 'dashboard_goal_builder_hook', gpQaPageLooksOk($dashboard) && $goalBuilderHookSeen, 'HTTP ' . $dashboard['status'] . ($goalBuilderHookSeen ? ' goal builder hook found' : ' goal builder hook not currently visible'));
     gpQaResult($results, 'dashboard_today_core_actions', $todayCoreActionsSeen, 'HTTP ' . $dashboard['status'] . ($todayCoreActionsSeen ? ' core today actions remain' : ' core today actions missing'));
+    gpQaResult($results, 'daily_win_today_prompt', $dailyWinPromptSeen, 'HTTP ' . $dashboard['status'] . ($dailyWinPromptSeen ? ' daily win prompt found' : ' daily win prompt missing'));
+    gpQaResult($results, 'daily_win_today_save', $dailyWinSavedSeen, 'HTTP ' . $dashboard['status'] . ($dailyWinSavedSeen ? ' daily win saved to training log' : ' daily win save missing'));
     gpQaResult($results, 'dashboard_today_pruned', $todayExtrasPruned, 'HTTP ' . $dashboard['status'] . ($todayExtrasPruned ? ' today extras pruned' : ' still has extra today clutter'));
     gpQaResult($results, 'dashboard_today_attention_shortcut_removed', $todayAttentionShortcutRemoved, 'HTTP ' . $dashboard['status'] . ($todayAttentionShortcutRemoved ? ' today attention shortcut removed' : ' today attention shortcut still visible'));
     gpQaResult($results, 'dashboard_alert_module_links', gpQaPageLooksOk($dashboard) && $dashboardAlertModuleLinkSeen, 'HTTP ' . $dashboard['status'] . ($dashboardAlertModuleLinkSeen ? ' dashboard alert module link found' : ' dashboard alert module link not currently visible'));

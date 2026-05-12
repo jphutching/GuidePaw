@@ -144,6 +144,7 @@ function gpBetaQaChecklistItems(): array
             'description' => 'Smoke-test core handler features after access/status changes.',
             'items' => [
                 ['id' => 'quick_session', 'text' => 'Quick Session works for active dog.', 'expected' => 'Session saves and appears in history.'],
+                ['id' => 'daily_win', 'text' => 'Home page shows a daily quick win checkbox that saves as a training log.', 'expected' => 'Today page displays one quick-win prompt, accepts completion, and records a log entry.'],
                 ['id' => 'detailed_log', 'text' => 'Detailed Log works for active dog if feature enabled.', 'expected' => 'Log saves with selected values.'],
                 ['id' => 'settings_page', 'text' => 'Settings page loads and stays focused on account controls.', 'expected' => 'User can review password, logout, and app settings options without the redundant handler profile shortcut.'],
                 ['id' => 'profile_page', 'text' => 'Dog Profile page loads and shows dog details.', 'expected' => 'User can review owner details, microchip, and edit profile controls.'],

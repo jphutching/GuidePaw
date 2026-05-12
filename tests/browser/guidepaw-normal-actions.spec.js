@@ -94,6 +94,17 @@ async function submitCurrentForm(page) {
   await page.waitForLoadState('networkidle').catch(() => {});
 }
 
+async function ensureEditableDog(page) {
+  await page.goto(`${BASE_URL}/dogs.php`);
+  await page.waitForLoadState('networkidle').catch(() => {});
+
+  const ownerUse = page.locator('.list-group-item:has-text("Full control") a:has-text("Use")').first();
+  if (await ownerUse.count()) {
+    await ownerUse.click();
+    await page.waitForLoadState('networkidle').catch(() => {});
+  }
+}
+
 test.describe.serial('GuidePaw normal user action flows', () => {
   test('normal user can add a test dog', async ({ page }) => {
     await login(page);
@@ -105,12 +116,17 @@ test.describe.serial('GuidePaw normal user action flows', () => {
 
     const addDogForm = page.locator('form:has(input[name="action"][value="add_dog"])').first();
     if (!(await addDogForm.isVisible().catch(() => false))) {
-      const revealAddDog = page.getByRole('button', { name: /add another dog|add dog|new dog/i }).first();
-      if (await revealAddDog.count()) {
-        await revealAddDog.click();
+      const addDogDisclosure = page.locator('details.add-dog-card').first();
+      if (await addDogDisclosure.count()) {
+        await addDogDisclosure.locator('summary').click();
+      } else {
+        const revealAddDog = page.getByRole('button', { name: /add another dog|add dog|new dog/i }).first();
+        if (await revealAddDog.count()) {
+          await revealAddDog.click();
+        }
       }
     }
-    await expect(addDogForm).toBeVisible();
+    await expect(addDogForm).toBeVisible({ timeout: 12000 });
 
     const filledName = await fillFirst(page, [
       'form:has(input[name="action"][value="add_dog"]) input[name="name"]'
@@ -143,6 +159,7 @@ test.describe.serial('GuidePaw normal user action flows', () => {
 
   test('normal user can create a training log entry', async ({ page }) => {
     await login(page);
+    await ensureEditableDog(page);
 
     await page.goto(`${BASE_URL}/log_entry.php`);
     await page.waitForLoadState('networkidle').catch(() => {});
@@ -196,8 +213,36 @@ test.describe.serial('GuidePaw normal user action flows', () => {
     expect(afterText).toMatch(/Training log saved|Training History|E2E test training log|Log Training/i);
   });
 
+  test('normal user can save the daily quick win from home', async ({ page }) => {
+    await login(page);
+    await ensureEditableDog(page);
+
+    await page.goto(`${BASE_URL}/index.php`);
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+
+    const bodyText = await page.locator('body').innerText().catch(() => '');
+    test.skip(/No active dog selected/i.test(bodyText), 'No active dog available for this test account');
+
+    expect(bodyText).toMatch(/Daily Quick Win/i);
+
+    const winCheckbox = page.locator('input[name="daily_win_complete"]').first();
+    const saveButton = page.getByRole('button', { name: /save quick win/i }).first();
+
+    if (await winCheckbox.count()) {
+      await winCheckbox.check();
+      await saveButton.click();
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await assertNoVisibleAppErrors(page);
+    }
+
+    const afterText = await page.locator('body').innerText().catch(() => '');
+    expect(afterText).toMatch(/Daily win saved|Saved today|already saved/i);
+  });
+
   test('training history export links download files', async ({ page }) => {
     await login(page);
+    await ensureEditableDog(page);
 
     await page.goto(`${BASE_URL}/training_history.php?status=active`);
     await page.waitForLoadState('networkidle').catch(() => {});

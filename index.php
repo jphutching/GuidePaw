@@ -16,6 +16,7 @@ require_once __DIR__ . '/includes/trainer_marketplace.php';
 require_once __DIR__ . '/includes/dog_access_expiry.php';
 require_once __DIR__ . '/includes/notifications.php';
 require_once __DIR__ . '/includes/training_suggestion_links.php';
+require_once __DIR__ . '/includes/daily_wins.php';
 require_once 'includes/app_config.php';
 checkLogin();
 
@@ -44,8 +45,34 @@ $wearableEvents = gpWearableRecentEvents($pdo, $userId, $activeDog ? (int) $acti
 $latestWearableSync = $wearableEvents[0] ?? null;
 $trainerMarketplaceEntries = gpTrainerMarketplaceEntries($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
+$dailyWinPrompt = $activeDog ? gpDailyWinPromptForDate() : null;
+$dailyWinLogName = $dailyWinPrompt ? gpDailyWinLogName($dailyWinPrompt) : '';
+$dailyWinExisting = ($activeDog && $dailyWinPrompt) ? gpDailyWinExistingLog($pdo, $userId, (int) $activeDog['id'], $dailyWinLogName) : null;
 $candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
 $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + $openRegressionCount + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') === 'save_daily_win') {
+    verifyCsrfToken($_POST['csrf_token'] ?? '');
+    $prompt = $activeDog ? gpDailyWinPromptForDate() : null;
+    if (!$activeDog || !$prompt) {
+        header('Location: index.php?msg=daily_win_missing');
+        exit;
+    }
+    if (!userCanEditDog($pdo, $userId, (int) $activeDog['id'])) {
+        header('Location: index.php?msg=daily_win_forbidden');
+        exit;
+    }
+    if (empty($_POST['daily_win_complete'])) {
+        header('Location: index.php?msg=daily_win_checkbox');
+        exit;
+    }
+    if (!$dailyWinExisting) {
+        gpSaveDailyWin($pdo, $userId, (int) $activeDog['id'], $prompt, trim((string) ($_POST['daily_win_note'] ?? '')));
+    }
+    header('Location: index.php?msg=daily_win_saved');
+    exit;
+}
+$dailyWinSavedToday = (bool) $dailyWinExisting;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,6 +128,18 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
     <?php if (($_GET['msg'] ?? '') === 'setup_complete'): ?>
         <div class="alert alert-success mb-3">Setup complete. You can use the dashboard now.</div>
     <?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'daily_win_saved'): ?>
+        <div class="alert alert-success mb-3">Daily win saved as a training log.</div>
+    <?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'daily_win_checkbox'): ?>
+        <div class="alert alert-warning mb-3">Check the box before saving today's quick win.</div>
+    <?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'daily_win_forbidden'): ?>
+        <div class="alert alert-warning mb-3">You only have view access for this dog, so the quick win cannot be saved.</div>
+    <?php endif; ?>
+    <?php if (($_GET['msg'] ?? '') === 'daily_win_missing'): ?>
+        <div class="alert alert-warning mb-3">Pick an active dog before saving today's quick win.</div>
+    <?php endif; ?>
 
     <div class="home-utility mb-3">
         <span data-network-status class="badge bg-secondary">Checking...</span>
@@ -143,6 +182,39 @@ $attentionCount = count($activeAlerts) + count($upcomingReminders) + count($inco
                     <h2 class="h5 mb-1">Today</h2>
                 </div>
             </div>
+            <?php if ($dailyWinPrompt): ?>
+                <div class="mb-3 p-3 border rounded-4 bg-light">
+                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Daily Quick Win</div>
+                            <div class="fw-bold"><?= e($dailyWinPrompt['title']) ?></div>
+                            <div class="small text-muted">Day <?= (int) $dailyWinPrompt['day'] ?> of <?= (int) $dailyWinPrompt['total'] ?>.</div>
+                        </div>
+                        <?php if ($dailyWinSavedToday): ?>
+                            <span class="badge bg-success">Saved today</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="small mb-3"><?= e($dailyWinPrompt['detail']) ?></div>
+                    <?php if ($dailyWinExisting): ?>
+                        <div class="alert alert-success py-2 mb-3">
+                            This quick win is already saved as a training log.
+                            <a href="view_logs.php" class="alert-link">Open history</a>.
+                        </div>
+                    <?php else: ?>
+                        <form method="post" class="vstack gap-3">
+                            <input type="hidden" name="csrf_token" value="<?= e(generateCsrfToken()) ?>">
+                            <input type="hidden" name="action" value="save_daily_win">
+                            <input type="hidden" name="daily_win_title" value="<?= e($dailyWinPrompt['title']) ?>">
+                            <input type="hidden" name="daily_win_detail" value="<?= e($dailyWinPrompt['detail']) ?>">
+                            <label class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" name="daily_win_complete" value="1">
+                                <span class="form-check-label fw-semibold">Done today</span>
+                            </label>
+                            <button class="btn btn-primary btn-sm align-self-start">Save quick win</button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
             <div class="today-grid">
                 <?php if (featureEnabled($pdo, 'quick_session_enabled')): ?>
                     <a class="today-action" href="quick_log.php"><span>⚡</span>Quick Session</a>
