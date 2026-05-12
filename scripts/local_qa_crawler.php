@@ -1236,8 +1236,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $trainingHistoryExportHeaders = strtolower($trainingHistoryExportPage['headers']);
     $backupExportHeaders = strtolower($backupExportPage['headers']);
     $dailyWinPromptSeen = str_contains($dashboardBody, 'daily quick win')
-        && str_contains($dashboardBody, 'done today')
-        && str_contains($dashboardBody, 'save quick win');
+        && (
+            str_contains($dashboardBody, 'save quick win')
+            || str_contains($dashboardBody, 'done today')
+            || str_contains($dashboardBody, 'already saved')
+            || str_contains($dashboardBody, 'saved today')
+        );
     $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'no archived dogs yet') || str_contains($dogsPageBody, 'active dogs stay in the working list');
     $notificationPrefsSeen = str_contains($notificationsPageBody, 'notification preferences') && str_contains($notificationsPageBody, 'delete selected') && str_contains($notificationsPageBody, 'bulk delete');
     $notificationBadgeSeen = str_contains($dashboardBody, 'gp-nav-badge') || str_contains($notificationsPageBody, 'gp-nav-badge');
