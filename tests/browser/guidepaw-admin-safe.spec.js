@@ -7,6 +7,7 @@ const ADMIN_PASSWORD = process.env.GUIDEPAW_ADMIN_TEST_PASSWORD || '';
 const SAFE_ADMIN_PAGES = [
   '/admin.php',
   '/admin_feedback.php',
+  '/admin_feedback_ai.php',
   '/admin_beta_requests.php',
   '/admin_feature_roadmap.php',
   '/admin_audit_log.php',

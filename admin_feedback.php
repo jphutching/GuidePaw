@@ -114,7 +114,10 @@ function formatBytes($bytes): string {
 <div class="wrap">
     <div class="top">
         <h1>Feedback Reports</h1>
-        <a class="btn secondary" href="admin.php">Back to Admin</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn secondary" href="admin_feedback_ai.php">AI Issue Assistant</a>
+            <a class="btn secondary" href="admin.php">Back to Admin</a>
+        </div>
     </div>
 
     <div class="card filters">

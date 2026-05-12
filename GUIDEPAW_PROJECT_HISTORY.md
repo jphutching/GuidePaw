@@ -1085,6 +1085,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: keep the add-dog form collapsed behind the disclosure once a handler already has at least one dog
 
+2026-05-11 — AI issue assistant
+- Commit(s): pending
+- Files changed: admin_feedback_ai.php, includes/feedback_triage.php, admin_feedback.php, includes/mobile_nav.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-admin-safe.spec.js, includes/beta_qa_checklist_items.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: keep the issue assistant focused on bounded triage and avoid auto-changing feedback statuses
+
 2026-05-11 — First-run onboarding walkthrough
 - Commit(s): f9322c9 add first-run onboarding walkthrough
 - Files changed: onboarding_setup.php, includes/db_connect.php, login.php, index.php, register.php, scripts/local_qa_crawler.php, includes/beta_qa_checklist_items.php, sql/migrations/pgsql/20260511_onboarding_walkthrough.sql, GUIDEPAW_PROJECT_HISTORY.md

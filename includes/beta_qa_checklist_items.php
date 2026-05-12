@@ -238,6 +238,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'public_profile_questionnaire_link', 'text' => 'Public dog profile links to the Breed Questionnaire.', 'expected' => 'Public profile page exposes the questionnaire CTA.'],
                 ['id' => 'public_profile_air_travel_link', 'text' => 'Public dog profile links to Air Travel Rights.', 'expected' => 'Public profile page exposes the flight guidance CTA.'],
                 ['id' => 'admin_feedback', 'text' => 'Admin Feedback Reports page shows submitted feedback.', 'expected' => 'Submitted bug report is visible to admin.'],
+                ['id' => 'admin_feedback_ai', 'text' => 'AI Issue Assistant page loads from the admin feedback workflow.', 'expected' => 'Admin can open the issue assistant and see a recommended status and next steps.'],
                 ['id' => 'user_management', 'text' => 'Admin User Management page loads.', 'expected' => 'Admin can inspect/manage users as expected.'],
                 ['id' => 'feature_roadmap', 'text' => 'Admin Feature Roadmap page loads.', 'expected' => 'Flags/roadmap remain visible.'],
                 ['id' => 'system_health', 'text' => 'System Health / DB status page loads.', 'expected' => 'Database status and migration info are readable.'],
