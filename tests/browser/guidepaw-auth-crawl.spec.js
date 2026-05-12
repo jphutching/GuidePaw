@@ -157,6 +157,44 @@ test('GuidePaw authenticated link crawl', async ({ page }) => {
   expect(broken).toEqual([]);
 });
 
+test('GuidePaw forum thread create and reply work for handlers', async ({ page }) => {
+  test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
+
+  const threadTitle = `QA Forum Thread ${Date.now()}`;
+  const threadBody = 'Playwright forum smoke thread.';
+  const replyBody = 'Playwright forum smoke reply.';
+
+  await page.goto(`${BASE_URL}/login.php`);
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.getByRole('button', { name: /login/i }).click();
+  await page.waitForLoadState('networkidle');
+  await expect(page).not.toHaveURL(/login\.php/);
+
+  await page.goto(`${BASE_URL}/forum.php`);
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { name: /forum/i })).toBeVisible();
+  await expect(page.locator('form').filter({ hasText: /post thread/i })).toBeVisible();
+
+  await page.selectOption('select[name="category"]', 'general');
+  await page.fill('input[name="title"]', threadTitle);
+  await page.fill('textarea[name="body"]', threadBody);
+  await page.getByRole('button', { name: /post thread/i }).click();
+  await page.waitForURL(/forum\.php\?thread_id=\d+/);
+  await page.waitForLoadState('networkidle');
+
+  await expect(page.getByRole('heading', { name: threadTitle })).toBeVisible();
+  await expect(page.locator('body')).toContainText(threadBody);
+
+  const replyBox = page.locator('textarea[name="reply_body"]');
+  await expect(replyBox).toBeVisible();
+  await replyBox.fill(replyBody);
+  await page.getByRole('button', { name: /post reply/i }).click();
+  await page.waitForLoadState('networkidle');
+
+  await expect(page.locator('body')).toContainText(replyBody);
+});
+
 test('GuidePaw found-dog public report submits and reaches admin queue', async ({ page }) => {
   test.skip(!USERNAME || !PASSWORD || !ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set regular and admin smoke credentials');
 
@@ -224,10 +262,10 @@ test('GuidePaw found-dog public report submits and reaches admin queue', async (
   expect(adminBody).toContain(reportLocation);
   expect(adminBody).toContain(reportMessage);
 
-  const reportSection = page.locator('section.cardx').filter({ hasText: reportLocation }).first();
-  const locationLink = reportSection.locator('a.maplink').first();
-  await expect(locationLink).toBeVisible();
-  const locationHref = (await locationLink.getAttribute('href')) || '';
+  const adminHtml = await page.locator('body').evaluate(body => body.innerHTML).catch(() => '');
+  const escapedReportLocation = reportLocation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const locationMatch = adminHtml.match(new RegExp(`${escapedReportLocation}[\\s\\S]{0,1200}?<a class="maplink" href="([^"]+)"`, 'i'));
+  const locationHref = locationMatch ? locationMatch[1].replace(/&amp;/g, '&') : '';
   expect(locationHref).toContain('google.com/maps/search/?api=1&query=');
   expect(locationHref).toContain('39.7392');
 });

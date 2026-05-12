@@ -1141,6 +1141,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the Contact Us page loads and surfaces the saved Facebook link from the handler profile
 
+2026-05-12 — Community hub and handler forum
+- Commit(s): pending
+- Files changed: community.php, forum.php, includes/community_hub.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, sql/migrations/pgsql/20260512_community_forum.sql, .env.render.example, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: verify the community hub renders the merch and Discord entry points and that the forum can create a thread and reply
+
 ## Update log template
 
 When updating this file, add a short note like:

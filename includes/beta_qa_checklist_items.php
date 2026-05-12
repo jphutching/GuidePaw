@@ -188,6 +188,8 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'alerts_page', 'text' => 'Smart Alerts page loads and shows current alerts.', 'expected' => 'User can open alerts and see the current alert list.'],
                 ['id' => 'alerts_module_links', 'text' => 'Smart Alerts surfaces module start links when training guidance is shown.', 'expected' => 'alerts.php and the dashboard include Start module links for coaching-style alerts.'],
                 ['id' => 'alerts_today', 'text' => 'Dashboard exposes Smart Alerts as a Today shortcut.', 'expected' => 'index.php shows a direct Smart Alerts tile.'],
+                ['id' => 'community_page', 'text' => 'Community page loads and shows merch, Discord, and forum entry points.', 'expected' => 'User can open the hub and see the swag store, Discord join link, and forum shortcut.'],
+                ['id' => 'forum_page', 'text' => 'Forum page loads and lets handlers start a thread and reply.', 'expected' => 'User can create a discussion thread and post a reply in the thread view.'],
                 ['id' => 'today_core_actions', 'text' => 'Dashboard Today card stays focused on core actions.', 'expected' => 'Quick Session, Detailed Log, Training Plan, ADA Access, and Alerts are present; extras are moved to the menu.'],
                 ['id' => 'today_pruned', 'text' => 'Dashboard Today card excludes the long tail of tool shortcuts.', 'expected' => 'Health Docs, Appointments, Medications, Wearable Sync, Trucker, Stats, Certification, and similar clutter are not shown there.'],
             ],
