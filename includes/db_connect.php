@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/roles.php';
+require_once __DIR__ . '/paywalls.php';
 require_once __DIR__ . '/training_data.php';
 
 $dbDriver = 'pgsql';
@@ -348,6 +349,7 @@ function checkLogin(): void {
 
     gpBackfillKnownRequiredHandlerProfiles($GLOBALS['pdo']);
     gpEnsureOnboardingColumns($GLOBALS['pdo']);
+    gpEnsureUserTierColumn($GLOBALS['pdo']);
 
     $user = getUserRecord($GLOBALS['pdo'], $userId);
     if (!$user) {

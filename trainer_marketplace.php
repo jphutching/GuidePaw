@@ -4,12 +4,24 @@ require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
+require_once __DIR__ . '/includes/paywalls.php';
 require_once __DIR__ . '/includes/trainer_marketplace.php';
 
 checkLogin();
 
 if (!featureEnabled($pdo, 'trainer_marketplace_enabled')) {
     header('Location: index.php?msg=feature_disabled');
+    exit;
+}
+
+if (!gpCurrentUserHasTierAccess($pdo, 'plus')) {
+    gpRenderTierAccessNotice(
+        $pdo,
+        'plus',
+        'Trainer Marketplace',
+        'This directory is reserved for Plus and Pro plans.',
+        ['Browse trainer contacts saved to your dogs.', 'Search by trainer name, business, credentials, or focus.', 'Use the plan page to see how access is organized.']
+    );
     exit;
 }
 

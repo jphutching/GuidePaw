@@ -1,6 +1,6 @@
 # GuidePaw Project History / Handoff
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 This file is the durable project memory for GuidePaw. Use it before starting or resuming work so the project can continue without backtracking when a chat gets long, scattered, or sidetracked.
 
@@ -34,6 +34,8 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Admin user management now exposes the role tiers directly, and the beta QA checklist understands the new tiers.
 - The local mirror and beta smoke path were revalidated after the role-tier change.
 - Beta feedback `#24` (`Admin upgrade`) was updated to `fixed`.
+- The app now has a stored `user_tier` plan layer (`free`, `plus`, `pro`) with a public Plans & Access page, admin plan controls, and premium gates on Trainer Marketplace and AI Training Assistant.
+- Beta feedback `#49` (`Paywall tiers`) and `#50` (`Paywalls`) are the active backlog items driving the plan work.
 
 ## Important operating rules
 

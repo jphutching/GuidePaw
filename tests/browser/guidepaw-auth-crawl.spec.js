@@ -195,6 +195,30 @@ test('GuidePaw forum thread create and reply work for handlers', async ({ page }
   await expect(page.locator('body')).toContainText(replyBody);
 });
 
+test('GuidePaw plans page and premium tool paywalls are visible to free handlers', async ({ page }) => {
+  test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
+
+  await page.goto(`${BASE_URL}/login.php`);
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.getByRole('button', { name: /login/i }).click();
+  await page.waitForLoadState('networkidle');
+  await expect(page).not.toHaveURL(/login\.php/);
+
+  await page.goto(`${BASE_URL}/paywalls.php`);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('body')).toContainText(/plans and access|current plan/i);
+  await expect(page.locator('body')).toContainText(/free|plus|pro/i);
+
+  await page.goto(`${BASE_URL}/trainer_marketplace.php`);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('body')).toContainText(/plus and pro plans|view plans|trainer marketplace/i);
+
+  await page.goto(`${BASE_URL}/ai_training_assistant.php`);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('body')).toContainText(/pro plans|view plans|ai training assistant/i);
+});
+
 test('GuidePaw found-dog public report submits and reaches admin queue', async ({ page }) => {
   test.skip(!USERNAME || !PASSWORD || !ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set regular and admin smoke credentials');
 
