@@ -272,6 +272,7 @@ function gpQaFeedbackAliasMap(): array
         'reset_password.php' => ['account recovery', 'password recovery'],
         'setup_2fa.php' => ['setup 2fa', 'manage 2fa'],
         'settings.php' => ['settings', 'change password', 'logout'],
+        'contact_us.php' => ['contact us', 'facebook', 'feedback'],
         'profile.php' => ['profile', 'microchip', 'owner'],
         'collaboration.php' => ['handler collaboration', 'handshake'],
         'admin.php' => ['guidepaw admin', 'feature flags', 'backup snapshot'],
@@ -576,6 +577,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             'qr_tracking_page_loads' => 'qr_tracking.php',
             'handler_profile_page_loads' => 'handler_profile.php',
             'settings_page_loads' => 'settings.php',
+            'contact_us_page_loads' => 'contact_us.php',
             'profile_page_loads' => 'profile.php',
             'quick_log_page_loads' => 'quick_log.php',
             'log_entry_page_loads' => 'log_entry.php',
@@ -743,7 +745,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'settings')
                 || str_contains($body, 'change password')
-                || str_contains($body, 'social')
                 || str_contains($body, 'logout')
             )
             : true;

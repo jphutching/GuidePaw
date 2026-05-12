@@ -1134,6 +1134,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify the saved Facebook link appears in Settings and opens the stored profile URL
 
+2026-05-12 — Facebook link moved to Contact Us
+- Commit(s): pending
+- Files changed: contact_us.php, settings.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: verify the Contact Us page loads and surfaces the saved Facebook link from the handler profile
+
 ## Update log template
 
 When updating this file, add a short note like:
