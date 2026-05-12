@@ -1,0 +1,10 @@
+[Unit]
+Description=GuidePaw laptop network watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=GUIDEPAW_WATCHDOG_SITE_URL=https://beta.guidepaw.app/healthz.php
+Environment=GUIDEPAW_WATCHDOG_LOCAL_URL=http://127.0.0.1/healthz.php
+ExecStart=/home/james/projects/gpb3/gpb3/scripts/laptop_network_watchdog.sh
