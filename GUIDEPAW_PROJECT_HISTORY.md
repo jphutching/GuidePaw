@@ -1164,6 +1164,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: yes
 - Next recommended step: verify beta loads the editable paywall catalog, the service add-ons render on the plans page, and the QR Tracking and extra dog slot gates behave as expected
 
+2026-05-12 — Tactical training special access
+- Commit(s): pending
+- Files changed: tactical_training.php, admin_tactical_requests.php, includes/tactical_access.php, admin.php, paywalls.php, includes/paywalls.php, includes/paywall_catalog.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/deploy_local.sh, scripts/local_qa_crawler.php, tests/browser/guidepaw-auth-crawl.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: yes
+- Next recommended step: verify tactical access requests, the plans page special-access card, and the tactical request approval flow on beta
+
 ## Update log template
 
 When updating this file, add a short note like:

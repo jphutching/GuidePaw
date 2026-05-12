@@ -53,6 +53,7 @@ function gpTierDefinitions(): array
             'locked' => [
                 'Trainer Marketplace',
                 'AI Training Assistant',
+                'Tactical Training',
             ],
         ],
         'plus' => [
@@ -203,7 +204,7 @@ function gpRenderTierAccessNotice(PDO $pdo, string $requiredTier, string $featur
         <div class="card plan-card mb-3">
             <div class="card-body">
                 <h2 class="h5 mb-2">Why you are seeing this</h2>
-                <p class="mb-0">This page is part of the plan gate. Free accounts keep the core GuidePaw workflow. Paid tiers unlock the premium training surfaces.</p>
+                <p class="mb-0">This page is part of the plan gate. Free accounts keep the core GuidePaw workflow. Paid tiers unlock the premium training surfaces, and special access pages may require an application review instead of a simple upgrade.</p>
             </div>
         </div>
     </main>
@@ -211,4 +212,3 @@ function gpRenderTierAccessNotice(PDO $pdo, string $requiredTier, string $featur
     </html>
     <?php
 }
-

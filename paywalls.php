@@ -112,8 +112,26 @@ $serviceDefinitions = gpPaywallServiceRows($pdo);
                 <li><strong>AI Training Assistant</strong> is on the Pro gate.</li>
                 <li><strong>QR Tracking</strong> is sold per dog as a lifetime add-on.</li>
                 <li><strong>Extra Dog Slot</strong> keeps the first dog free but allows another dog when purchased.</li>
+                <li><strong>Tactical Training</strong> is application-only for verified working teams.</li>
                 <li><strong>Support Funding</strong> is a separate support page for project backers.</li>
             </ul>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h2 class="h5 mb-2">Special access training</h2>
+            <p class="mb-3">Some training surfaces are not a monthly purchase. They require an approved application or verified team review before access is granted.</p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="plan-card p-3">
+                        <div class="plan-badge">Special access</div>
+                        <h3 class="h5 mt-2 mb-1">Tactical Training</h3>
+                        <p class="muted mt-2 mb-3">Verified working teams can apply for this focused training area. Approval is reviewed inside the app.</p>
+                        <a class="btn btn-primary btn-sm" href="tactical_training.php">Open tactical training</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -65,6 +65,21 @@ async function loginAsAdmin(page) {
   await expect(page).toHaveURL(/admin\.php/);
 }
 
+async function loginAsRegular(page) {
+  test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
+
+  await page.context().clearCookies().catch(() => {});
+  await page.goto(`${BASE_URL}/login.php`);
+  await expect(page.locator('input[name="username"]')).toBeVisible();
+
+  await page.fill('input[name="username"]', USERNAME);
+  await page.fill('input[name="password"]', PASSWORD);
+  await page.getByRole('button', { name: /login/i }).click();
+
+  await page.waitForLoadState('networkidle').catch(() => {});
+  await expect(page).not.toHaveURL(/login\.php/);
+}
+
 test('GuidePaw login works', async ({ page }) => {
   test.skip(!USERNAME || !PASSWORD, 'Set GUIDEPAW_TEST_USERNAME and GUIDEPAW_TEST_PASSWORD');
 
@@ -81,7 +96,7 @@ test('GuidePaw login works', async ({ page }) => {
   await page.goto(`${BASE_URL}/index.php`);
   await page.waitForLoadState('networkidle');
   const dashboardHtml = await page.content();
-  expect(dashboardHtml).toMatch(/<details[^>]*id="today"[^>]*open[^>]*>/);
+  expect(dashboardHtml).toMatch(/<details[^>]*(?:id="today"[^>]*open|open[^>]*id="today")/);
   expect(dashboardHtml).toMatch(/<details[^>]*id="needs-attention"[^>]*>/);
 });
 
@@ -209,6 +224,51 @@ test('GuidePaw forum thread create and reply work for handlers', async ({ page }
   await page.waitForLoadState('networkidle');
 
   await expect(page.locator('body')).toContainText(replyBody);
+});
+
+test('GuidePaw tactical training request and approval flow works for verified teams', async ({ page }) => {
+  test.skip(!USERNAME || !PASSWORD || !ADMIN_USERNAME || !ADMIN_PASSWORD, 'Set regular and admin smoke credentials');
+
+  const requestName = `QA Tactical ${Date.now()}`;
+  const requestEmail = `qa+tactical-${Date.now()}@example.com`;
+  const requestReason = `Playwright tactical request ${Date.now()}`;
+
+  await loginAsRegular(page);
+  await page.goto(`${BASE_URL}/tactical_training.php`);
+  await page.waitForLoadState('networkidle');
+
+  const tacticalBody = await page.locator('body').innerText().catch(() => '');
+  if (!/access approved|tactical readiness path/i.test(tacticalBody)) {
+    await expect(page.locator('form')).toContainText(/submit request/i);
+    await page.fill('input[name="full_name"]', requestName);
+    await page.fill('input[name="email"]', requestEmail);
+    await page.fill('input[name="organization"]', 'QA Tactical Unit');
+    await page.fill('input[name="role_title"]', 'Handler');
+    await page.selectOption('select[name="service_type"]', 'security');
+    await page.fill('textarea[name="verification_notes"]', 'QA smoke verification');
+    await page.fill('textarea[name="reason"]', requestReason);
+    await page.getByRole('button', { name: /submit request/i }).click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('body')).toContainText(/request saved|pending review/i);
+
+    await loginAsAdmin(page);
+    await page.goto(`${BASE_URL}/admin_tactical_requests.php?status=all`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('body')).toContainText(requestReason);
+
+    const requestCard = page.locator('.card').filter({ hasText: requestReason }).first();
+    await expect(requestCard).toBeVisible();
+    await requestCard.getByRole('button', { name: /approve/i }).click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('body')).toContainText(/request approved|approved/i);
+
+    await loginAsRegular(page);
+    await page.goto(`${BASE_URL}/tactical_training.php`);
+    await page.waitForLoadState('networkidle');
+  }
+
+  await expect(page.locator('body')).toContainText(/tactical readiness path|access approved/i);
+  await expect(page.locator('body')).toContainText(/operational foundation|search \/ response work/i);
 });
 
 test('GuidePaw plans page and premium tool paywalls are visible to free handlers', async ({ page }) => {
