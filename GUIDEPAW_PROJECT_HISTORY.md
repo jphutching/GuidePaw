@@ -1,6 +1,6 @@
 # GuidePaw Project History / Handoff
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 This file is the durable project memory for GuidePaw. Use it before starting or resuming work so the project can continue without backtracking when a chat gets long, scattered, or sidetracked.
 
@@ -26,6 +26,14 @@ This file is the durable project memory for GuidePaw. Use it before starting or 
 - Admin sender configuration has been tested with `admin@guidepaw.app`.
 - Telegram bot notifications are admin-oriented and should remain optional/admin-only. Bot tokens must never be committed.
 - SMS notifications are an opt-in handler/user alert layer using configurable Twilio support. Twilio credentials and phone numbers must never be committed.
+
+## Current status
+
+- The admin role model now supports `master_admin`, `basic_admin`, `moderator`, `pro_trainer`, and `user`.
+- The built-in `admin` account stays protected at the database level and is treated as `master_admin` in the app.
+- Admin user management now exposes the role tiers directly, and the beta QA checklist understands the new tiers.
+- The local mirror and beta smoke path were revalidated after the role-tier change.
+- Beta feedback `#24` (`Admin upgrade`) was updated to `fixed`.
 
 ## Important operating rules
 

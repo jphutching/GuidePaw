@@ -1549,6 +1549,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($adminBody, 'current admin account cannot be changed')
         );
     gpQaResult($results, 'builtin_admin_protected_in_ui', $adminProtected, $adminProtected ? 'protected badge/message found' : 'protected marker missing');
+    $adminRoleTiersVisible = gpQaPageLooksOk($adminUsers)
+        && str_contains($adminBody, 'role tiers')
+        && str_contains($adminBody, 'master admin')
+        && str_contains($adminBody, 'basic admin')
+        && str_contains($adminBody, 'moderator')
+        && str_contains($adminBody, 'pro trainer');
+    gpQaResult($results, 'admin_role_tiers_visible', $adminRoleTiersVisible, $adminRoleTiersVisible ? 'role tiers found' : 'role tiers missing');
 
     $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adminSeesRoleChecks = str_contains($qaAdmin['body'], 'User Role Permissions') && str_contains($qaAdmin['body'], 'Admin/beta checks');

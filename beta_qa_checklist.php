@@ -11,7 +11,7 @@ require_once 'includes/app_config.php';
 checkLogin();
 
 $currentRole = gpCurrentUserRole($pdo);
-$isAdminQa = $currentRole === 'admin';
+$isAdminQa = in_array($currentRole, ['master_admin', 'basic_admin'], true);
 $adminOnlySections = [
     'render_deploy_environment',
     'admin_support',

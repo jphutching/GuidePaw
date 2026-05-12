@@ -1,5 +1,6 @@
 <?php 
 require 'includes/db_connect.php'; 
+require_once __DIR__ . '/includes/roles.php';
 
 if (!empty($_SESSION['user_id'])) {
     $existingUser = getUserRecord($pdo, (int) $_SESSION['user_id']);
@@ -39,7 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['dog_name'] = $user['dog_name'];
         $_SESSION['username'] = $user['username'];
-        $_SESSION['is_admin'] = !empty($user['is_admin']) ? 1 : 0;
+        $_SESSION['user_role'] = gpUserRole($user);
+        $_SESSION['is_admin'] = in_array($_SESSION['user_role'], ['master_admin', 'basic_admin'], true) ? 1 : 0;
         $_SESSION['remember_me'] = $rememberMe ? 1 : 0;
         $_SESSION['login_expires_at'] = time() + ($rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 12);
 
@@ -60,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Location: onboarding_setup.php');
             exit;
         }
-        header("Location: " . (!empty($user['is_admin']) ? "admin.php" : "index.php"));
+        header("Location: " . (in_array($_SESSION['user_role'], ['master_admin', 'basic_admin'], true) ? "admin.php" : "index.php"));
         exit;
     } else {
         $error = "Invalid username or password.";

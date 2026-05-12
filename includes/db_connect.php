@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/error_handler.php';
+require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/training_data.php';
 
 $dbDriver = 'pgsql';
@@ -165,7 +166,7 @@ function gpEnsureOnboardingColumns(PDO $pdo): void {
 
     if (!$exists) {
         $pdo->exec('ALTER TABLE users ADD COLUMN onboarding_completed_at TIMESTAMP');
-        $pdo->exec("UPDATE users SET onboarding_completed_at = CURRENT_TIMESTAMP WHERE onboarding_completed_at IS NULL AND created_at < CURRENT_TIMESTAMP - INTERVAL '1 hour'");
+        $pdo->exec("UPDATE users SET onboarding_completed_at = CURRENT_TIMESTAMP WHERE onboarding_completed_at IS NULL AND created_at < CURRENT_TIMESTAMP - INTERVAL '1 hour' AND lower(coalesce(username, '')) <> 'admin'");
     }
 
     $ensured = true;
@@ -208,7 +209,7 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
             backup_contact_name = COALESCE(NULLIF(backup_contact_name, ''), ?),
             backup_contact_phone = COALESCE(NULLIF(backup_contact_phone, ''), ?),
             public_notes = COALESCE(NULLIF(public_notes, ''), ?)
-        WHERE lower(username) = ANY(?)
+        WHERE lower(username) = ANY(?) AND lower(coalesce(username, '')) <> 'admin'
     ");
 
     foreach ($rows as $row) {
@@ -282,6 +283,9 @@ function gpOnboardingGateAllowedPage(): bool {
 }
 
 function gpEnforceHandlerProfileCompletion(PDO $pdo, array $user): void {
+    if (strtolower(trim((string) ($user['username'] ?? ''))) === 'admin') {
+        return;
+    }
     if (gpProfileCompletionGateAllowedPage()) {
         return;
     }
@@ -298,6 +302,9 @@ function gpEnforceHandlerProfileCompletion(PDO $pdo, array $user): void {
 }
 
 function gpNeedsOnboarding(array $user): bool {
+    if (strtolower(trim((string) ($user['username'] ?? ''))) === 'admin') {
+        return false;
+    }
     return trim((string) ($user['onboarding_completed_at'] ?? '')) === '';
 }
 
@@ -351,7 +358,8 @@ function checkLogin(): void {
     $_SESSION['user_id'] = (int) $user['id'];
     $_SESSION['dog_name'] = $user['dog_name'] ?? '';
     $_SESSION['username'] = $user['username'] ?? '';
-    $_SESSION['is_admin'] = !empty($user['is_admin']) ? 1 : 0;
+    $_SESSION['user_role'] = gpUserRole($user);
+    $_SESSION['is_admin'] = in_array($_SESSION['user_role'], ['master_admin', 'basic_admin'], true) ? 1 : 0;
 
     gpEnforceHandlerProfileCompletion($GLOBALS['pdo'], $user);
 }
