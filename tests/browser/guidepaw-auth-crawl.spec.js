@@ -176,10 +176,18 @@ test('GuidePaw found-dog public report submits and reaches admin queue', async (
   await reportLink.click();
   await page.waitForLoadState('networkidle').catch(() => {});
 
+  await page.context().grantPermissions(['geolocation'], { origin: BASE_URL }).catch(() => {});
+  await page.context().setGeolocation({
+    latitude: 39.7392,
+    longitude: -104.9903,
+    accuracy: 25,
+  }).catch(() => {});
+
   await page.fill('input[name="finder_location"]', reportLocation);
-  await page.fill('input[name="finder_latitude"]', '39.7392000');
-  await page.fill('input[name="finder_longitude"]', '-104.9903000');
-  await page.fill('input[name="finder_accuracy_m"]', '25');
+  await page.getByRole('button', { name: /share my current location once/i }).click();
+  await expect(page.locator('input[name="finder_latitude"]')).toHaveValue('39.7392000');
+  await expect(page.locator('input[name="finder_longitude"]')).toHaveValue('-104.9903000');
+  await expect(page.locator('input[name="finder_accuracy_m"]')).toHaveValue('25');
   await page.fill('input[name="finder_phone"]', '555-0100');
   await page.fill('textarea[name="finder_message"]', reportMessage);
   await page.getByRole('button', { name: /send location report/i }).click();
