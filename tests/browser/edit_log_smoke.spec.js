@@ -45,7 +45,7 @@ test.describe('GuidePaw training log editing smoke test', () => {
     await page.goto(`${baseURL}/view_logs.php`);
     await expect(page.getByRole('heading', { name: /training history/i })).toBeVisible();
 
-    const logCard = page.locator('article', { hasText: `QA Original Log ${stamp}` }).first();
+    const logCard = page.locator('details[id^="log-"]').filter({ hasText: `QA Original Log ${stamp}` }).first();
     await expect(logCard).toBeVisible();
     const logCardId = await logCard.getAttribute('id');
     expect(logCardId).toMatch(/^log-\d+$/);
@@ -58,6 +58,14 @@ test.describe('GuidePaw training log editing smoke test', () => {
     await expect(page.locator('select[name="location_type"]')).toBeVisible();
     await expect(page.locator('input[name="focus_level"]')).toBeVisible();
     await expect(page.locator('textarea[name="handler_notes"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: /update gps coordinates/i })).toBeVisible();
+    await expect(page.locator('details.mt-2')).toContainText(/manual coordinates/i);
+    await page.locator('details.mt-2').evaluate((el) => { el.open = true; });
+    await page.locator('#latitudeManual').fill('39.7392000');
+    await page.locator('#longitudeManual').fill('-104.9903000');
+    await expect(page.locator('input[name="latitude"]')).toHaveValue('39.7392000');
+    await expect(page.locator('input[name="longitude"]')).toHaveValue('-104.9903000');
+    await page.getByRole('button', { name: /update gps coordinates/i }).click();
 
     await page.locator('input[name="location_name"]').fill(newLocationName);
     await page.locator('textarea[name="handler_notes"]').fill(newNotes);
@@ -76,8 +84,9 @@ test.describe('GuidePaw training log editing smoke test', () => {
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/view_logs\.php\?status=updated/);
 
-    const historyText = await page.locator('body').innerText();
-    expect(historyText).toContain(newLocationName);
-    expect(historyText).toContain(newNotes);
+    const updatedLogCard = page.locator('details[id^="log-"]').filter({ hasText: newLocationName }).first();
+    await expect(updatedLogCard).toBeVisible();
+    await updatedLogCard.locator('summary').click();
+    await expect(updatedLogCard).toContainText(newNotes);
   });
 });

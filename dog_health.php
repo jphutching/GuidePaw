@@ -69,6 +69,16 @@ $csrf = generateCsrfToken();
 $vets = $pdo->prepare('SELECT * FROM dog_vets WHERE dog_id = ? ORDER BY is_primary DESC, clinic_name ASC');
 $vets->execute([$dogId]);
 $vets = $vets->fetchAll();
+$savedVetRowsStmt = $pdo->prepare('
+    SELECT v.*, d.name AS dog_name
+    FROM dog_vets v
+    JOIN dogs d ON d.id = v.dog_id
+    WHERE d.owner_user_id = ?
+    ORDER BY v.clinic_name ASC, d.name ASC
+    LIMIT 60
+');
+$savedVetRowsStmt->execute([$userId]);
+$savedVetRows = $savedVetRowsStmt->fetchAll();
 $docs = $pdo->prepare('SELECT dd.*, u.username FROM dog_documents dd JOIN users u ON u.id = dd.uploaded_by_user_id WHERE dd.dog_id = ? ORDER BY dd.created_at DESC');
 $docs->execute([$dogId]);
 $docs = $docs->fetchAll();
@@ -92,6 +102,13 @@ $docs = $docs->fetchAll();
         <div class="col-lg-5">
             <div class="card shadow-sm"><div class="card-body">
                 <h5 class="card-title">Vet Contacts</h5>
+                <?php if ($canEdit): ?>
+                    <div class="border rounded p-3 mb-3 bg-white">
+                        <label class="form-label small fw-bold">Search saved vets</label>
+                        <input type="search" id="vetSearch" class="form-control" placeholder="Type a clinic name or vet name">
+                        <div id="vetSearchResults" class="mt-2 d-grid gap-2"></div>
+                    </div>
+                <?php endif; ?>
                 <?php if ($vets): ?><div class="list-group list-group-flush mb-3"><?php foreach ($vets as $vet): ?><div class="list-group-item px-0"><div class="fw-semibold"><?= e($vet['clinic_name']) ?> <?php if (!empty($vet['is_primary'])): ?><span class="badge bg-primary">Primary</span><?php endif; ?></div><div class="small text-muted"><?= e($vet['vet_name']) ?><?= !empty($vet['phone']) ? ' • ' . e($vet['phone']) : '' ?></div><div class="small"><?= nl2br(e($vet['address'])) ?></div></div><?php endforeach; ?></div><?php else: ?><p class="text-muted">No vets saved yet.</p><?php endif; ?>
                 <?php if ($canEdit): ?>
                 <form method="post" class="row g-2 border-top pt-3">
@@ -128,4 +145,68 @@ $docs = $docs->fetchAll();
     </div>
 </div>
 <?php guidepawFormUx(); ?>
+<script>
+(function () {
+    var search = document.getElementById('vetSearch');
+    var results = document.getElementById('vetSearchResults');
+    if (!search || !results) return;
+
+    var vets = <?= json_encode(array_map(static function (array $vet): array {
+        return [
+            'clinic_name' => (string) ($vet['clinic_name'] ?? ''),
+            'vet_name' => (string) ($vet['vet_name'] ?? ''),
+            'phone' => (string) ($vet['phone'] ?? ''),
+            'address' => (string) ($vet['address'] ?? ''),
+            'notes' => (string) ($vet['notes'] ?? ''),
+            'dog_name' => (string) ($vet['dog_name'] ?? ''),
+            'is_primary' => !empty($vet['is_primary'])
+        ];
+    }, $savedVetRows), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+
+    var clinic = document.querySelector('input[name="clinic_name"]');
+    var vetName = document.querySelector('input[name="vet_name"]');
+    var phone = document.querySelector('input[name="phone"]');
+    var address = document.querySelector('textarea[name="address"]');
+    var notes = document.querySelector('textarea[name="notes"]');
+    var primary = document.querySelector('input[name="is_primary"]');
+
+    function render(list) {
+        results.innerHTML = '';
+        if (!list.length) {
+            results.innerHTML = '<div class="small text-muted">No saved vet matches yet.</div>';
+            return;
+        }
+
+        list.slice(0, 8).forEach(function (vet) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-outline-primary text-start';
+            button.innerHTML = '<strong>' + vet.clinic_name + '</strong><div class="small text-muted">' + (vet.vet_name || 'No vet name') + (vet.dog_name ? ' · ' + vet.dog_name : '') + '</div>';
+            button.addEventListener('click', function () {
+                if (clinic) clinic.value = vet.clinic_name || '';
+                if (vetName) vetName.value = vet.vet_name || '';
+                if (phone) phone.value = vet.phone || '';
+                if (address) address.value = vet.address || '';
+                if (notes) notes.value = vet.notes || '';
+                if (primary) primary.checked = !!vet.is_primary;
+            });
+            results.appendChild(button);
+        });
+    }
+
+    function filter() {
+        var term = (search.value || '').trim().toLowerCase();
+        if (!term) {
+            render(vets);
+            return;
+        }
+        render(vets.filter(function (vet) {
+            return [vet.clinic_name, vet.vet_name, vet.phone, vet.address, vet.dog_name].join(' ').toLowerCase().includes(term);
+        }));
+    }
+
+    search.addEventListener('input', filter);
+    filter();
+})();
+</script>
 </body></html>

@@ -21,6 +21,8 @@ $skills = json_decode($log['skills_practiced'], true) ?: [];
 $allowedTypes = ['In-Cab', 'Truck Stop', 'Shipper/Receiver', 'Public Store', 'Rest Area', 'Other'];
 $allowedSkills = ['Sit/Stay', 'Heel', 'Leave It', 'Under Tuck', 'DPT Task', 'PA Focus'];
 $csrf = generateCsrfToken();
+$latitudeValue = (string) ($log['latitude'] ?? '');
+$longitudeValue = (string) ($log['longitude'] ?? '');
 ?>
 
 <!DOCTYPE html>
@@ -84,15 +86,29 @@ $csrf = generateCsrfToken();
                 <div class="d-flex justify-content-between small px-2"><span>Distracted</span><span>Locked In</span></div>
             </div>
 
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Latitude</label>
-                    <input type="text" name="latitude" class="form-control" value="<?= e((string) ($log['latitude'] ?? '')) ?>">
+            <div class="mb-3">
+                <label class="form-label fw-bold d-block">GPS</label>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-primary" id="gpsUpdateBtn">Update GPS coordinates</button>
+                    <div id="gpsUpdateStatus" class="small text-muted">
+                        <?= $latitudeValue !== '' && $longitudeValue !== '' ? 'Saved coordinates: ' . e($latitudeValue) . ', ' . e($longitudeValue) : 'No GPS coordinates saved yet.' ?>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Longitude</label>
-                    <input type="text" name="longitude" class="form-control" value="<?= e((string) ($log['longitude'] ?? '')) ?>">
-                </div>
+                <input type="hidden" name="latitude" id="latitude" value="<?= e($latitudeValue) ?>">
+                <input type="hidden" name="longitude" id="longitude" value="<?= e($longitudeValue) ?>">
+                <details class="mt-2">
+                    <summary class="small text-muted">Manual coordinates</summary>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Latitude</label>
+                            <input type="text" class="form-control" id="latitudeManual" value="<?= e($latitudeValue) ?>" placeholder="37.7749000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Longitude</label>
+                            <input type="text" class="form-control" id="longitudeManual" value="<?= e($longitudeValue) ?>" placeholder="-122.4194000">
+                        </div>
+                    </div>
+                </details>
             </div>
 
             <div class="mb-4">
@@ -125,5 +141,44 @@ $csrf = generateCsrfToken();
     </div>
 </main>
 <?php guidepawFormUx(); ?>
+<script>
+(function () {
+    var btn = document.getElementById('gpsUpdateBtn');
+    var status = document.getElementById('gpsUpdateStatus');
+    var latitude = document.getElementById('latitude');
+    var longitude = document.getElementById('longitude');
+    var latitudeManual = document.getElementById('latitudeManual');
+    var longitudeManual = document.getElementById('longitudeManual');
+
+    function syncManual() {
+        if (latitudeManual && latitude) latitude.value = latitudeManual.value.trim();
+        if (longitudeManual && longitude) longitude.value = longitudeManual.value.trim();
+    }
+
+    if (latitudeManual) latitudeManual.addEventListener('input', syncManual);
+    if (longitudeManual) longitudeManual.addEventListener('input', syncManual);
+    syncManual();
+
+    if (!btn || !status || !latitude || !longitude) return;
+
+    btn.addEventListener('click', function () {
+        if (!navigator.geolocation) {
+            status.textContent = 'GPS is not supported on this device/browser.';
+            return;
+        }
+
+        status.textContent = 'Requesting GPS location...';
+        navigator.geolocation.getCurrentPosition(function (position) {
+            latitude.value = position.coords.latitude.toFixed(7);
+            longitude.value = position.coords.longitude.toFixed(7);
+            if (latitudeManual) latitudeManual.value = latitude.value;
+            if (longitudeManual) longitudeManual.value = longitude.value;
+            status.textContent = 'GPS coordinates updated from your device.';
+        }, function () {
+            status.textContent = 'Location permission was not granted. Use manual coordinates if needed.';
+        }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    });
+})();
+</script>
 </body>
 </html>

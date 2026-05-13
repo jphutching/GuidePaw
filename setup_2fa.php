@@ -36,6 +36,7 @@ if (!isset($_SESSION['temp_secret']) || !is_string($_SESSION['temp_secret']) || 
 $secret = $_SESSION['temp_secret'];
 $otpLabel = appShortName() . ':' . ($user['username'] ?? ('user-' . $userId));
 $otpUrl = buildTotpOtpAuthUrl($otpLabel, $secret, appShortName());
+$qrUrl = getGoogleAuthenticator()->getQRCodeGoogleUrl($otpLabel, $secret, appShortName(), ['width' => 240, 'height' => 240]);
 
 if (isset($_POST['verify'])) {
     verifyCsrfToken($_POST['csrf_token'] ?? null);
@@ -81,6 +82,8 @@ $isEnabled = !empty($user['is_2fa_enabled']) && !empty($user['google_2fa_secret'
                 <div class="fw-semibold"><?= e($otpLabel) ?></div>
                 <div class="small text-muted mt-3">Secret key</div>
                 <code class="d-block fs-5"><?= e($secret) ?></code>
+                <div class="small text-muted mt-3">Scan QR code</div>
+                <img src="<?= e($qrUrl) ?>" alt="QR code for <?= e($otpLabel) ?>" class="img-fluid rounded border bg-white p-2 mb-2" style="max-width: 240px;">
                 <div class="small text-muted mt-3">Manual OTP URI</div>
                 <textarea class="form-control form-control-sm" rows="3" readonly><?= e($otpUrl) ?></textarea>
             </div>

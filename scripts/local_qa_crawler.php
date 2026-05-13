@@ -822,11 +822,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'edit training log')
                 || str_contains($body, 'update log entry')
-                || str_contains($body, 'location name')
-                || str_contains($body, 'date and time')
-                || str_contains($body, 'focus level')
-                || str_contains($body, 'skills practiced')
-                || str_contains($body, 'permission')
+                || str_contains($body, 'update gps coordinates')
+                || str_contains($body, 'manual coordinates')
+                || str_contains($body, 'gps')
             )
             : true;
         $editProfilePageLooksReady = $path === 'edit_profile.php'
@@ -952,6 +950,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'paywall catalog')
                 || str_contains($body, 'a la carte services')
                 || str_contains($body, 'grant dog add-ons')
+                || str_contains($body, 'edit row')
             ) && $sharedAdminShellReady
             : true;
         $betaRequestPageLooksReady = $path === 'beta_request.php'
@@ -991,6 +990,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'setup 2fa')
                 || str_contains($body, 'manage 2fa')
                 || str_contains($body, 'verification code')
+                || str_contains($body, 'scan qr code')
             )
             : true;
         $apiTokensPageLooksReady = $path === 'api_tokens.php'
@@ -1193,6 +1193,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'health & documents')
                 || str_contains($body, 'vet contacts')
                 || str_contains($body, 'documents')
+                || str_contains($body, 'search saved vets')
             )
             : true;
         $appointmentsPageLooksReady = $path === 'appointments.php'
@@ -1563,7 +1564,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             if ($freshLogCreated) {
                 $freshLogsPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                 $freshLogsBody = strtolower($freshLogsPage['body']);
-                if (preg_match('/<article[^>]*id="log-(\d+)"[^>]*>.*?' . preg_quote($freshLogName, '/') . '/is', $freshLogsPage['body'], $freshLogMatch)) {
+                if (preg_match('/<details[^>]*id="log-(\d+)"[^>]*>.*?' . preg_quote($freshLogName, '/') . '/is', $freshLogsPage['body'], $freshLogMatch)) {
                     $freshLogId = (int) $freshLogMatch[1];
                 } elseif (preg_match('/href="[^"]*edit_log\.php\?id=(\d+)"/i', $freshLogsPage['body'], $freshLogMatch)) {
                     $freshLogId = (int) $freshLogMatch[1];

@@ -160,13 +160,17 @@ $userServiceRows = $pdo->query("
         .grid { display:grid; gap: 14px; }
         .plan-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
         .catalog-table { width:100%; border-collapse:collapse; }
-        .catalog-table th,.catalog-table td { border-bottom:1px solid #e5e7eb; padding:8px; vertical-align: top; }
+        .catalog-table th,.catalog-table td { border-bottom:1px solid #e5e7eb; padding:12px 10px; vertical-align: top; }
         .catalog-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
         textarea, input, select { width:100%; box-sizing:border-box; }
         textarea { min-height: 72px; }
         .mini { color:#64748b; font-size:.9rem; }
         .pill { display:inline-flex; align-items:center; border-radius:999px; padding:.2rem .55rem; background:#eef2ff; color:#4338ca; font-size:.78rem; font-weight:800; }
         .actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .catalog-inline-edit summary { cursor:pointer; font-weight:800; color:#0d6efd; }
+        .catalog-inline-edit[open] { background:#f8fafc; border:1px solid #dfe3ea; border-radius:14px; padding:10px; }
+        .catalog-inline-edit .form-control-sm,.catalog-inline-edit .form-select-sm { margin-bottom:.45rem; }
+        .catalog-inline-edit button { margin-top:.2rem; }
     </style>
 </head>
 <body>
@@ -234,7 +238,9 @@ $userServiceRows = $pdo->query("
                                     <td><?= apEsc((string) ($item['scope'] ?? 'user')) ?></td>
                                     <td>$<?= apEsc(number_format(((int) ($item['price_cents'] ?? 0)) / 100, 2)) ?></td>
                                     <td>
-                                        <form method="post" class="d-grid gap-2">
+                                        <details class="catalog-inline-edit">
+                                            <summary>Edit row</summary>
+                                        <form method="post" class="d-grid gap-2 mt-2">
                                             <input type="hidden" name="csrf_token" value="<?= apEsc($csrf) ?>">
                                             <input type="hidden" name="action" value="save_item">
                                             <input type="hidden" name="slug" value="<?= apEsc($item['slug']) ?>">
@@ -253,6 +259,7 @@ $userServiceRows = $pdo->query("
                                             <label class="small"><input type="checkbox" name="is_active" value="1" <?= !empty($item['is_active']) ? 'checked' : '' ?>> Active</label>
                                             <button class="btn btn-sm btn-outline-primary">Save row</button>
                                         </form>
+                                        </details>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -114,6 +114,7 @@ test.describe.serial('GuidePaw admin-safe crawler', () => {
       if (path === '/admin_paywall_catalog.php') {
         expect(bodyText).toMatch(/paywall catalog/i);
         expect(bodyText).toMatch(/a la carte services|grant dog add-ons/i);
+        expect(bodyText).toMatch(/edit row/i);
       }
     }
 
