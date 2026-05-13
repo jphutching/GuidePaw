@@ -1501,6 +1501,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $goalBuilderPathSeen = gpQaPageLooksOk($goalBuilderPage) && (str_contains($goalBuilderPageBody, 'recommended path') || str_contains($goalBuilderPageBody, 'program guide') || str_contains($goalBuilderPageBody, 'candidate assessment'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
     $trainingProgramCommandWordsSeen = gpQaPageLooksOk($trainingProgramPage) && (str_contains($trainingProgramBody, 'editable cue guide') || str_contains($trainingProgramBody, 'save command words'));
+    $trainingProgramBundleButtonsSeen = gpQaPageLooksOk($trainingProgramPage)
+        && str_contains($trainingProgramBody, 'helpful programs and tests')
+        && str_contains($trainingProgramBody, 'load only the matching pieces into the training ladder')
+        && str_contains($trainingProgramBody, 'bundle_code')
+        && str_contains($trainingProgramBody, 'akc s.t.a.r. puppy');
     $trainingSessionCommandWordsSeen = gpQaPageLooksOk($trainingSessionLogPage) && (str_contains($trainingSessionLogBody, 'edit them on the training program page') || str_contains($trainingSessionLogBody, 'default:'));
     $editProfileSeen = gpQaPageLooksOk($editProfilePage);
     $manageDogsSeen = gpQaPageLooksOk($manageDogsPage) && (str_contains($manageDogsBody, 'manage dogs') || str_contains($manageDogsBody, 'dogs') || str_contains($manageDogsBody, 'active dogs'));
@@ -1640,6 +1645,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'save_log_method_guard', $saveLogGuardSeen, 'HTTP ' . $saveLogGuardPage['status'] . ($saveLogGuardSeen ? ' save log guard found' : ' save log guard missing'));
     gpQaResult($results, 'training_history_export_page_loads', $trainingHistoryExportSeen, 'HTTP ' . $trainingHistoryExportPage['status'] . ($trainingHistoryExportSeen ? ' training history export found' : ' training history export missing'));
     gpQaResult($results, 'export_backup_csv_download', $backupExportSeen, 'HTTP ' . $backupExportPage['status'] . ($backupExportSeen ? ' backup export csv found' : ' backup export csv missing'));
+    gpQaResult($results, 'training_program_bundle_buttons', $trainingProgramBundleButtonsSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingProgramBundleButtonsSeen ? ' training bundle buttons found' : ' training bundle buttons missing'));
     gpQaResult($results, 'verify_2fa_redirects_to_login', $verify2faRedirectSeen, 'HTTP ' . $verify2faPage['status'] . ($verify2faRedirectSeen ? ' verify 2fa protected outside pending session' : ' verify 2fa protection missing'));
     gpQaResult($results, 'notification_prefs_controls', gpQaPageLooksOk($notificationsPage) && $notificationPrefsSeen, 'HTTP ' . $notificationsPage['status'] . ($notificationPrefsSeen ? ' notification preferences found' : ' notification preferences missing'));
     gpQaResult($results, 'notification_nav_badge', gpQaPageLooksOk($dashboard) && gpQaPageLooksOk($notificationsPage) && $notificationBadgeSeen, 'HTTP ' . $dashboard['status'] . ($notificationBadgeSeen ? ' nav badge found' : ' nav badge missing'));

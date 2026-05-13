@@ -23,6 +23,8 @@ $dogId = (int) $dog['id'];
 $canEdit = userCanEditDog($pdo, $userId, $dogId);
 $errors = [];
 $status = $_GET['status'] ?? '';
+$statusProgram = trim((string) ($_GET['program'] ?? ''));
+$statusAdded = (int) ($_GET['added'] ?? 0);
 gpTrainingCommandWordEnsureSchema($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,6 +36,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         writeAuditLog($pdo, 'training_command_words_saved', 'user_training_preferences', $userId, 'Saved training command word preferences.');
         header('Location: training_program.php?status=command_words_saved#command-words');
         exit;
+    } elseif ($action === 'load_program_bundle') {
+        if (!$canEdit) {
+            $errors[] = 'You have read-only access for this dog.';
+        } else {
+            $bundleCode = trim((string) ($_POST['bundle_code'] ?? ''));
+            $bundleCategories = getTrainingProgramBundleCategories($bundleCode);
+            if (!$bundleCategories) {
+                $errors[] = 'That program selection is not available.';
+            } else {
+                $added = seedDogTrainingProgram($pdo, $dogId, $bundleCategories);
+                $programName = trim((string) ($_POST['bundle_name'] ?? ''));
+                writeAuditLog($pdo, 'training_program_bundle_loaded', 'dog_training_items', $dogId, 'Loaded training bundle: ' . ($programName ?: $bundleCode) . ' (' . $added . ' new items).');
+                header('Location: training_program.php?status=program_loaded&program=' . rawurlencode($programName ?: $bundleCode) . '&added=' . (int) $added . '#training-ladder');
+                exit;
+            }
+        }
     } elseif (!$canEdit) {
         $errors[] = 'You have read-only access for this dog.';
     } elseif ($action === 'seed_program') {
@@ -375,7 +393,19 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
             <a class="btn btn-outline-primary btn-sm" href="training_session_log.php">Session Log</a>
             <a class="btn btn-outline-primary btn-sm" href="training_history.php">History</a>
         </div>
-    <?php if ($status): ?><div class="alert alert-success"><?= e(str_replace('_', ' ', $status)) ?>.</div><?php endif; ?>
+    <?php if ($status): ?>
+        <div class="alert alert-success">
+            <?php if ($status === 'program_loaded'): ?>
+                <?php if ($statusProgram !== ''): ?>
+                    Loaded <?= e($statusProgram) ?> pieces<?= $statusAdded > 0 ? ' (' . e((string) $statusAdded) . ' new items)' : ' (already present)' ?>.
+                <?php else: ?>
+                    Training pieces loaded.
+                <?php endif; ?>
+            <?php else: ?>
+                <?= e(str_replace('_', ' ', $status)) ?>.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
     <div class="row g-3 mb-3">
@@ -424,12 +454,13 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
                     </form>
                 </div>
             </div>
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
+            <details class="card shadow-sm mb-3" id="training-next-suggestions">
+                <summary class="card-body section-title" style="cursor:pointer; list-style:none;">Next suggestions</summary>
+                <div class="card-body pt-0">
+                    <div class="small text-muted mb-2">Quick next-step coaching from the current ladder.</div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="section-title mb-0">Next suggestions</div>
                         <?php if ($canEdit && !$items): ?>
-                            <form method="post">
+                            <form method="post" class="ms-auto">
                                 <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                                 <input type="hidden" name="action" value="seed_program">
                                 <button class="btn btn-primary btn-sm">Load starter program</button>
@@ -452,21 +483,38 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
                         </div>
                     <?php endif; ?>
                 </div>
-            </div>
-            <div class="card shadow-sm" id="program-guide">
-                <div class="card-body">
-                    <div class="section-title">Helpful programs and tests</div>
+            </details>
+            <details class="card shadow-sm" id="program-guide">
+                <summary class="card-body section-title" style="cursor:pointer; list-style:none;">Helpful programs and tests</summary>
+                <div class="card-body pt-0">
+                    <div class="small text-muted mb-3">Pick one and load only the matching pieces into the training ladder.</div>
                     <div class="vstack gap-2">
                         <?php foreach ($programGuide as $program): ?>
                             <div class="kv-box">
-                                <div class="fw-semibold"><?= e($program['name']) ?></div>
-                                <div class="small-muted"><?= e($program['best_for']) ?></div>
-                                <div class="small text-muted mt-1"><?= e($program['notes']) ?></div>
+                                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                    <div>
+                                        <div class="fw-semibold"><?= e($program['name']) ?></div>
+                                        <div class="small-muted"><?= e($program['best_for']) ?></div>
+                                        <div class="small text-muted mt-1"><?= e($program['notes']) ?></div>
+                                    </div>
+                                    <?php if ($canEdit): ?>
+                                        <form method="post" class="ms-auto">
+                                            <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="action" value="load_program_bundle">
+                                            <input type="hidden" name="bundle_code" value="<?= e($program['code']) ?>">
+                                            <input type="hidden" name="bundle_name" value="<?= e($program['name']) ?>">
+                                            <button class="btn btn-outline-primary btn-sm">Load</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if (!empty($program['load_hint'])): ?>
+                                    <div class="small text-muted mt-2"><?= e($program['load_hint']) ?></div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
-            </div>
+            </details>
         </div>
 
         <div class="col-lg-8">

@@ -634,28 +634,46 @@ function getDogTrainingItems(PDO $pdo, int $dogId): array {
     return $stmt->fetchAll() ?: [];
 }
 
-function seedDogTrainingProgram(PDO $pdo, int $dogId): void {
+function seedDogTrainingProgram(PDO $pdo, int $dogId, ?array $onlyCategories = null): int {
     $check = $pdo->prepare("SELECT COUNT(*) FROM dog_training_items WHERE dog_id = ?");
     $check->execute([$dogId]);
-    if ((int) $check->fetchColumn() > 0) {
-        return;
+    if ($onlyCategories === null && (int) $check->fetchColumn() > 0) {
+        return 0;
     }
 
     $template = getTrainingProgramTemplate();
+    $existingStmt = $pdo->prepare("
+        SELECT 1
+        FROM dog_training_items
+        WHERE dog_id = ? AND category = ? AND item_name = ? AND COALESCE(track_code, '') = COALESCE(?, '')
+        LIMIT 1
+    ");
     $stmt = $pdo->prepare("INSERT INTO dog_training_items (dog_id, category, track_code, level, item_name, description, sort_order) VALUES (?,?,?,?,?,?,?)");
+    $inserted = 0;
     foreach ($template as $category => $items) {
+        if ($onlyCategories !== null && !in_array($category, $onlyCategories, true)) {
+            continue;
+        }
         foreach ($items as $idx => $item) {
+            $trackCode = $item['track'] ?? null;
+            $existingStmt->execute([$dogId, $category, $item['item_name'], $trackCode]);
+            if ($existingStmt->fetchColumn()) {
+                continue;
+            }
             $stmt->execute([
                 $dogId,
                 $category,
-                $item['track'] ?? null,
+                $trackCode,
                 (int) ($item['level'] ?? 1),
                 $item['item_name'],
                 $item['description'] ?? null,
                 $idx + 1,
             ]);
+            $inserted++;
         }
     }
+
+    return $inserted;
 }
 
 function upsertDogTrainingProfile(PDO $pdo, int $dogId, int $userId, array $data): void {

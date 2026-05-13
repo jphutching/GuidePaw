@@ -244,6 +244,29 @@ test.describe.serial('GuidePaw normal user action flows', () => {
     await expect(page.locator('details#command-words input.form-control-sm').first()).toHaveValue(updated);
   });
 
+  test('normal user can load an AKC training bundle', async ({ page }) => {
+    await login(page);
+    await ensureEditableDog(page);
+
+    await page.goto(`${BASE_URL}/training_program.php`);
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+
+    const programGuide = page.locator('details#program-guide');
+    await programGuide.evaluate((el) => { el.open = true; });
+    await expect(programGuide).toHaveAttribute('open', '');
+
+    const bundleButton = programGuide.getByRole('button', { name: /^Load$/i }).first();
+    await expect(bundleButton).toBeVisible();
+    await bundleButton.click();
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+
+    const afterText = await page.locator('body').innerText().catch(() => '');
+    expect(afterText).toMatch(/Loaded .* pieces|already present/i);
+    expect(afterText).toMatch(/AKC S\.T\.A\.R\. Puppy|CGC|Candidate Screen/i);
+  });
+
   test('normal user can save the daily quick win from home', async ({ page }) => {
     await login(page);
     await ensureEditableDog(page);

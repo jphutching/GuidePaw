@@ -1187,6 +1187,13 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: confirm the saved command words persist across reloads and keep the session-log reference view read-only
 - Feedback resolved: #54
 
+2026-05-12 — Collapsed training helper panels and program bundle loaders
+- Commit(s): pending
+- Files changed: includes/training_data.php, includes/db_connect.php, training_program.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-normal-actions.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: verify the selected AKC program bundles load the matching training pieces on the training program page
+
 ## Update log template
 
 When updating this file, add a short note like:

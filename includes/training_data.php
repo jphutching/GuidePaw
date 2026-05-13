@@ -13,16 +13,37 @@ function getMicrochipResourceLinks(): array {
 
 function getBeneficialTrainingPrograms(): array {
     return [
-        ['name' => 'AKC S.T.A.R. Puppy', 'code' => 'akc_star_puppy', 'best_for' => 'Young puppies and new adolescent dogs needing socialization and owner basics.', 'notes' => 'Helpful first milestone before CGC. Focuses on socialization, training, activity, and responsible ownership.'],
-        ['name' => 'AKC Canine Good Citizen (CGC)', 'code' => 'akc_cgc', 'best_for' => 'Baseline manners, leash control, and polite public behavior.', 'notes' => 'Good benchmark before heavier public-access work.'],
-        ['name' => 'AKC Community Canine (CGCA)', 'code' => 'akc_cgca', 'best_for' => 'Dogs already solid on CGC skills that need busier community proofing.', 'notes' => 'Advanced CGC in more real-life settings.'],
-        ['name' => 'AKC Urban CGC (CGCU)', 'code' => 'akc_urban', 'best_for' => 'Dogs working around sidewalks, parking lots, retail, travel, and truck-stop style environments.', 'notes' => 'Strong fit for service-dog public-access prep and OTR life.'],
-        ['name' => 'AKC Temperament Test (ATT)', 'code' => 'akc_att', 'best_for' => 'Candidate screening for nerve, recovery, stability, and breed-typical temperament.', 'notes' => 'Useful information for prospect selection, but not a service-dog certification by itself.'],
-        ['name' => 'AKC Trick Dog', 'code' => 'akc_trick', 'best_for' => 'Confidence building, engagement, body awareness, and handler timing.', 'notes' => 'Useful for timid dogs and for building training momentum.'],
-        ['name' => 'AKC Virtual Home Manners', 'code' => 'akc_vhm', 'best_for' => 'Dogs that need stronger in-home control before public work.', 'notes' => 'Good stepping stone when home manners are the bottleneck.'],
-        ['name' => 'Internal Public Access Benchmark', 'code' => 'public_access_benchmark', 'best_for' => 'Service-dog teams tracking readiness for longer outings and public access.', 'notes' => 'Internal checklist only, not a government-issued certification.'],
-        ['name' => 'Service Dog Candidate Screen', 'code' => 'candidate_screen', 'best_for' => 'Choosing or evaluating a prospect before investing in heavy task specialization.', 'notes' => 'Look at recovery, neutrality, resilience, work drive, and handler fit first.'],
+        ['name' => 'AKC S.T.A.R. Puppy', 'code' => 'akc_star_puppy', 'best_for' => 'Young puppies and new adolescent dogs needing socialization and owner basics.', 'notes' => 'Helpful first milestone before CGC. Focuses on socialization, training, activity, and responsible ownership.', 'load_hint' => 'Loads the puppy foundation block.'],
+        ['name' => 'AKC Canine Good Citizen (CGC)', 'code' => 'akc_cgc', 'best_for' => 'Baseline manners, leash control, and polite public behavior.', 'notes' => 'Good benchmark before heavier public-access work.', 'load_hint' => 'Loads the CGC readiness block.'],
+        ['name' => 'AKC Community Canine (CGCA)', 'code' => 'akc_cgca', 'best_for' => 'Dogs already solid on CGC skills that need busier community proofing.', 'notes' => 'Advanced CGC in more real-life settings.', 'load_hint' => 'Loads the community proofing block.'],
+        ['name' => 'AKC Urban CGC (CGCU)', 'code' => 'akc_urban', 'best_for' => 'Dogs working around sidewalks, parking lots, retail, travel, and truck-stop style environments.', 'notes' => 'Strong fit for service-dog public-access prep and OTR life.', 'load_hint' => 'Loads the urban proofing block.'],
+        ['name' => 'AKC Temperament Test (ATT)', 'code' => 'akc_att', 'best_for' => 'Candidate screening for nerve, recovery, stability, and breed-typical temperament.', 'notes' => 'Useful information for prospect selection, but not a service-dog certification by itself.', 'load_hint' => 'Loads the confidence and temperament checks.'],
+        ['name' => 'AKC Trick Dog', 'code' => 'akc_trick', 'best_for' => 'Confidence building, engagement, body awareness, and handler timing.', 'notes' => 'Useful for timid dogs and for building training momentum.', 'load_hint' => 'Loads the engagement and body-awareness drills.'],
+        ['name' => 'AKC Virtual Home Manners', 'code' => 'akc_vhm', 'best_for' => 'Dogs that need stronger in-home control before public work.', 'notes' => 'Good stepping stone when home manners are the bottleneck.', 'load_hint' => 'Loads the home manners block.'],
+        ['name' => 'Internal Public Access Benchmark', 'code' => 'public_access_benchmark', 'best_for' => 'Service-dog teams tracking readiness for longer outings and public access.', 'notes' => 'Internal checklist only, not a government-issued certification.', 'load_hint' => 'Loads the public-access benchmark block.'],
+        ['name' => 'Service Dog Candidate Screen', 'code' => 'candidate_screen', 'best_for' => 'Choosing or evaluating a prospect before investing in heavy task specialization.', 'notes' => 'Look at recovery, neutrality, resilience, work drive, and handler fit first.', 'load_hint' => 'Loads the candidate screening block.'],
     ];
+}
+
+function getTrainingProgramBundleCategories(string $code): array {
+    $map = [
+        'akc_star_puppy' => ['AKC S.T.A.R. Puppy'],
+        'akc_cgc' => ['AKC Canine Good Citizen'],
+        'akc_cgca' => ['AKC Community Canine / Urban CGC'],
+        'akc_urban' => ['AKC Community Canine / Urban CGC'],
+        'akc_att' => ['AKC Temperament / Confidence'],
+        'akc_trick' => ['AKC Temperament / Confidence'],
+        'akc_vhm' => ['AKC Temperament / Confidence'],
+        'public_access_benchmark' => ['Internal Public Access Benchmark'],
+        'candidate_screen' => ['Service Dog Candidate Screen'],
+        'foundation_obedience' => ['Foundation Obedience', 'Intermediate Control'],
+        'public_access' => ['Intermediate Control', 'Advanced Public Access', 'Internal Public Access Benchmark'],
+        'service_task' => ['Service Dog Task Work'],
+        'working_foundation' => ['Working-Dog Foundations'],
+        'maintenance' => ['Reliability and Maintenance'],
+    ];
+
+    return $map[$code] ?? [];
 }
 
 function getTrainingProgramTemplate(): array {
