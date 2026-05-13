@@ -1173,10 +1173,11 @@ php scripts/cleanup_e2e_data.php --yes
 
 2026-05-12 — Updated the shared brand lockup with the new GuidePaw logo
 - Commit(s): pending
-- Files changed: includes/brand_header.php, assets/brand/guidepaw-logo.png, GUIDEPAW_PROJECT_HISTORY.md
+- Files changed: includes/brand_header.php, assets/brand/guidepaw-logo.jpg, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
 - Next recommended step: verify the shared header and menu shell still fit cleanly on phone-width pages
+- Feedback resolved: #52, #53
 
 ## Update log template
 
