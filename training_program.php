@@ -7,7 +7,6 @@ require_once __DIR__ . '/includes/training_data.php';
 require_once 'includes/feature_flags.php';
 require_once 'includes/training_goals.php';
 require_once 'includes/training_stats.php';
-require_once 'includes/training_goals.php';
 require_once 'includes/training_suggestion_links.php';
 require_once __DIR__ . '/includes/training_command_words.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {

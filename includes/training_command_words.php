@@ -5,15 +5,17 @@ require_once __DIR__ . '/training_data.php';
 if (!function_exists('gpTrainingCommandWordEnsureSchema')) {
     function gpTrainingCommandWordEnsureSchema(PDO $pdo): void
     {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS user_training_preferences (
-                user_id INTEGER NOT NULL,
-                preference_key VARCHAR(80) NOT NULL,
-                preference_value TEXT NOT NULL,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (user_id, preference_key)
-            )
-        ");
+        if (function_exists('tableExists') && !tableExists($pdo, 'user_training_preferences')) {
+            $pdo->exec("
+                CREATE TABLE user_training_preferences (
+                    user_id INTEGER NOT NULL,
+                    preference_key VARCHAR(80) NOT NULL,
+                    preference_value TEXT NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, preference_key)
+                )
+            ");
+        }
     }
 }
 
