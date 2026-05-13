@@ -1,6 +1,7 @@
 <?php 
 require 'includes/db_connect.php'; 
 require_once __DIR__ . '/includes/roles.php';
+require_once __DIR__ . '/includes/brand_header.php';
 
 if (!empty($_SESSION['user_id'])) {
     $existingUser = getUserRecord($pdo, (int) $_SESSION['user_id']);
@@ -81,8 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body class="container p-5 bg-light">
 <?php require_once 'includes/beta_banner.php'; ?>
+<?php guidepawBrandHeader(); ?>
     <form method="POST" class="card p-4 mx-auto shadow" style="max-width:400px;">
         <h3 class="text-center mb-4">Handler Login</h3>
+        <p class="text-center text-muted small mb-4">Sign in to continue to your GuidePaw dashboard, dogs, and training tools.</p>
         <?php if(isset($error)) echo "<div class='alert alert-danger py-2 small'>" . e($error) . "</div>"; ?>
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'reset_success') echo "<div class='alert alert-success py-2 small'>Password updated. Please login.</div>"; ?>
         <?php if(isset($_GET['msg']) && $_GET['msg'] == 'session_expired') echo "<div class='alert alert-warning py-2 small'>Your previous session no longer matches this database. Please sign in again.</div>"; ?>

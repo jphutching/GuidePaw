@@ -9,48 +9,27 @@ if (!function_exists('guidepawBrandHeader')) {
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 28px;
     box-shadow: 0 8px 18px rgba(15, 40, 90, .18);
-    padding: clamp(28px, 7vw, 54px) 18px clamp(24px, 6vw, 42px);
+    padding: clamp(22px, 6vw, 42px) 18px;
     margin: 0 0 clamp(20px, 5vw, 34px);
 }
 .gp-shared-brand-inner {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(12px, 3.5vw, 24px);
-    flex-wrap: wrap;
+    gap: 0;
+    flex-wrap: nowrap;
 }
 .gp-shared-brand-logo {
-    width: clamp(130px, 28vw, 200px);
+    width: clamp(210px, 44vw, 360px);
     height: auto;
-    border-radius: 14px;
+    border-radius: 18px;
     display: block;
     box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
-}
-.gp-shared-brand-tagline {
-    max-width: 320px;
-    font-family: "Trebuchet MS", "Arial Rounded MT Bold", system-ui, sans-serif;
-    font-size: clamp(.84rem, 2.8vw, 1.1rem);
-    font-weight: 900;
-    letter-spacing: .045em;
-    text-transform: uppercase;
-    color: #ffffff;
-    text-align: center;
-    line-height: 1.15;
-    text-shadow: 0 3px 10px rgba(0,0,0,.28);
-}
-@media (min-width: 760px) {
-    .gp-shared-brand-inner {
-        flex-wrap: nowrap;
-    }
-    .gp-shared-brand-tagline {
-        text-align: left;
-    }
 }
 </style>
 <div class="gp-shared-brand-wrap">
     <div class="gp-shared-brand-inner">
-        <img class="gp-shared-brand-logo" src="/assets/brand/guidepaw-logo.jpg" alt="GuidePaw Training Trust for the Journey">
-        <div class="gp-shared-brand-tagline">Training Trust for the Journey</div>
+        <img class="gp-shared-brand-logo" src="/assets/brand/guidepaw-logo.png" alt="GuidePaw logo">
     </div>
 </div>';
     }

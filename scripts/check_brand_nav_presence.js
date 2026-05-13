@@ -81,15 +81,13 @@ async function crawlRole(roleName, username, password) {
       const contentType = (response.headers()['content-type'] || '').toLowerCase();
       if (!contentType.includes('text/html')) continue;
 
-      const logo = await isVisible(page, 'img.gp-shared-brand-logo[alt="GuidePaw"]');
-      const tagline = await page.getByText('Training Trust for the Journey').first().isVisible().catch(() => false);
+      const logo = await isVisible(page, 'img.gp-shared-brand-logo[alt="GuidePaw logo"]');
       const primaryNav = await isVisible(page, 'nav[aria-label="Primary navigation"]');
       const menuButton = await isVisible(page, '#gpMenuOpen');
 
       checked.push(finalUrl);
       const missing = [];
       if (!logo) missing.push('logo');
-      if (!tagline) missing.push('tagline');
       if (!primaryNav) missing.push('primary nav');
       if (!menuButton) missing.push('menu button');
       if (missing.length) {

@@ -1194,6 +1194,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: verify the selected AKC program bundles load the matching training pieces on the training program page
 
+2026-05-12 — Updated beta branding and login shell
+- Commit(s): pending
+- Files changed: includes/brand_header.php, assets/brand/guidepaw-logo.png, login.php, includes/beta_access.php, scripts/check_brand_nav_presence.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: confirm the branded auth pages stay consistent after the next beta deploy
+
 ## Update log template
 
 When updating this file, add a short note like:

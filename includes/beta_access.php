@@ -94,8 +94,7 @@ function betaApprovalEmail(string $fullName, string $token): string
         "Open this page to validate your token and register:\n" .
         "https://beta.guidepaw.app/beta_token.php?token=" . rawurlencode($token) . "\n\n" .
         "After your handler account is created, dog profiles can be added after login.\n\n" .
-        "GuidePaw\n" .
-        "Training Trust for the Journey\n";
+        "GuidePaw\n";
 }
 
 function betaApproveRequest(PDO $pdo, int $requestId, int $adminUserId, bool $sendEmail = true): array
