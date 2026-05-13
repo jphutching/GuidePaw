@@ -944,6 +944,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'admin user management')
                 || str_contains($body, 'export, deactivate, reactivate')
                 || str_contains($body, 'download user data json')
+                || str_contains($body, 'purge user and dogs')
             ) && $sharedAdminShellReady
             : true;
         $adminPaywallCatalogPageLooksReady = $path === 'admin_paywall_catalog.php'
@@ -1772,7 +1773,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         gpQaResult($results, 'report_found_dog_page_loads', false, 'dog profile link missing on dogs page');
     }
 
-    $adminUsers = gpQaRequest($baseUrl, 'admin_users.php?q=admin', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $adminUsers = gpQaRequest($baseUrl, 'admin_users.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adminBody = strtolower($adminUsers['body']);
     $adminProtected = gpQaPageLooksOk($adminUsers)
         && str_contains($adminBody, 'protected')
@@ -1789,6 +1790,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($adminBody, 'moderator')
         && str_contains($adminBody, 'pro trainer');
     gpQaResult($results, 'admin_role_tiers_visible', $adminRoleTiersVisible, $adminRoleTiersVisible ? 'role tiers found' : 'role tiers missing');
+    $adminUsersPurgeVisible = gpQaPageLooksOk($adminUsers) && str_contains($adminBody, 'purge user and dogs');
+    gpQaResult($results, 'admin_users_purge_controls_visible', $adminUsersPurgeVisible, $adminUsersPurgeVisible ? 'purge controls found' : 'purge controls missing');
 
     $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adminSeesRoleChecks = str_contains($qaAdmin['body'], 'User Role Permissions') && str_contains($qaAdmin['body'], 'Admin/beta checks');

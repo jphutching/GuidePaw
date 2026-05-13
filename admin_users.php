@@ -3,6 +3,8 @@ require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require_once __DIR__ . '/includes/roles.php';
 require_once __DIR__ . '/includes/paywalls.php';
+require_once __DIR__ . '/includes/audit_log.php';
+require_once __DIR__ . '/includes/user_purge.php';
 
 checkLogin();
 if (!currentUserIsAdmin()) {
@@ -31,13 +33,13 @@ function auRoleBadge(string $role): string { $role = gpNormalizeUserRole($role);
 function auRoleOptions(): array { return ['user' => 'User', 'pro_trainer' => 'Pro trainer', 'moderator' => 'Moderator', 'basic_admin' => 'Basic admin', 'master_admin' => 'Master admin']; }
 function auTierBadge(string $tier): string { $tier = gpNormalizeUserTier($tier); $class = $tier === 'pro' ? 'text-bg-success' : ($tier === 'plus' ? 'text-bg-info' : 'text-bg-secondary'); return '<span class="badge ' . $class . '">' . e(gpTierDisplayLabel($tier)) . '</span>'; }
 function auTierOptions(): array { return gpUserTierOptions(); }
-function auDeleteWhere(PDO $pdo, string $table, string $column, array $ids): int { if (!$ids || !auTableExists($pdo, $table) || !auColumnExists($pdo, $table, $column)) return 0; $placeholders = implode(',', array_fill(0, count($ids), '?')); $stmt = $pdo->prepare("DELETE FROM {$table} WHERE {$column} IN ({$placeholders})"); $stmt->execute(array_values($ids)); return $stmt->rowCount(); }
 function auCollectUserData(PDO $pdo, int $userId): array { return ['exported_at' => gmdate('c'), 'user_id' => $userId, 'user' => auFetchOne($pdo, 'SELECT * FROM users WHERE id = ?', [$userId]), 'records' => []]; }
 function auExportUserData(PDO $pdo, int $userId): void { $data = auCollectUserData($pdo, $userId); if (!$data['user']) { http_response_code(404); die('User not found.'); } $label = preg_replace('/[^a-zA-Z0-9._-]+/', '_', auUserLabel($data['user'])); header('Content-Type: application/json; charset=utf-8'); header('Content-Disposition: attachment; filename="guidepaw-user-export-' . $userId . '-' . $label . '-' . gmdate('Ymd-His') . '.json"'); echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); exit; }
 function auDeactivateUser(PDO $pdo, int $userId, int $adminId, string $note): void { $stmt = $pdo->prepare("UPDATE users SET account_status = 'deactivated', deactivated_at = CURRENT_TIMESTAMP, deactivated_by_user_id = ?, deletion_note = NULLIF(?, '') WHERE id = ?"); $stmt->execute([$adminId, trim($note), $userId]); }
 function auReactivateUser(PDO $pdo, int $userId): void { $stmt = $pdo->prepare("UPDATE users SET account_status = 'active', deactivated_at = NULL, deactivated_by_user_id = NULL WHERE id = ?"); $stmt->execute([$userId]); }
 function auSetUserRole(PDO $pdo, int $userId, string $role): void { $role = gpNormalizeUserRole($role); $isAdmin = in_array($role, ['master_admin', 'basic_admin'], true) ? 1 : 0; $stmt = $pdo->prepare('UPDATE users SET user_role = ?, is_admin = ? WHERE id = ?'); $stmt->execute([$role, $isAdmin, $userId]); }
 function auSetUserTier(PDO $pdo, int $userId, string $tier): void { $tier = gpNormalizeUserTier($tier); $stmt = $pdo->prepare('UPDATE users SET user_tier = ? WHERE id = ?'); $stmt->execute([$tier, $userId]); }
+$currentUserRole = gpCurrentUserRole($pdo);
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $userId = (int)($_GET['user_id'] ?? $_POST['user_id'] ?? 0);
 if ($action === 'export' && $userId > 0) auExportUserData($pdo, $userId);
@@ -58,7 +60,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($action === 'set_tier') { auSetUserTier($pdo, $userId, (string)($_POST['user_tier'] ?? 'free')); $message = 'User plan updated.'; }
         elseif ($action === 'deactivate') { auDeactivateUser($pdo, $userId, (int)$_SESSION['user_id'], $note); $message = 'User deactivated. Data was retained.'; }
         elseif ($action === 'reactivate') { auReactivateUser($pdo, $userId); $message = 'User reactivated.'; }
-        elseif ($action === 'purge') { throw new RuntimeException('Hard purge is disabled during beta. Export data, then deactivate the account instead.'); }
+        elseif ($action === 'purge') {
+            if (!currentUserIsMasterAdmin()) {
+                throw new RuntimeException('Only the master admin can permanently purge a user account.');
+            }
+            $deleted = gpPurgeUserAccount($pdo, $userId, (int) $_SESSION['user_id']);
+            $dogCount = count($deleted['dog_ids'] ?? []);
+            $deleteSummary = $deleted['deleted_counts'] ?? [];
+            writeAuditLog($pdo, 'user_purged', 'users', $userId, 'Permanently purged user account with ' . $dogCount . ' owned dog(s). Deleted rows: ' . json_encode($deleteSummary, JSON_UNESCAPED_SLASHES));
+            $message = 'User and owned dogs permanently purged.';
+        }
     } catch (Throwable $e) { $error = $e->getMessage(); }
 }
 
@@ -66,18 +77,18 @@ $q = trim($_GET['q'] ?? '');
 $params = [];
 $where = '';
 if ($q !== '') { $where = "WHERE lower(coalesce(username, '')) LIKE lower(?) OR lower(coalesce(email, '')) LIKE lower(?) OR lower(coalesce(full_name, '')) LIKE lower(?)"; $params = ["%{$q}%", "%{$q}%", "%{$q}%"]; }
-$users = auFetchAll($pdo, "SELECT id, username, email, full_name, phone, dog_name, is_admin, user_role, user_tier, COALESCE(account_status, 'active') AS account_status, deactivated_at, created_at FROM users {$where} ORDER BY id DESC LIMIT 250", $params);
+$users = auFetchAll($pdo, "SELECT u.id, u.username, u.email, u.full_name, u.phone, u.dog_name, u.is_admin, u.user_role, u.user_tier, COALESCE(u.account_status, 'active') AS account_status, u.deactivated_at, u.created_at, COALESCE((SELECT COUNT(*) FROM dogs d WHERE d.owner_user_id = u.id), 0) AS owned_dog_count FROM users u {$where} ORDER BY u.id DESC LIMIT 250", $params);
 $csrf = generateCsrfToken();
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Admin User Management | GuidePaw</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="styles.css" rel="stylesheet"></head><body class="bg-light pb-5"><?php guidepawBrandHeader(); ?><?php require_once 'includes/beta_banner.php'; ?><?php require_once 'includes/mobile_nav.php'; ?>
-<main class="container-fluid py-4"><div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3"><div><h1 class="h3 mb-1">Admin User Management</h1><p class="text-muted mb-0">Export, deactivate, reactivate, or change permission roles.</p></div><a class="btn btn-outline-secondary" href="admin.php">Admin Home</a></div>
+<main class="container-fluid py-4"><div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3"><div><h1 class="h3 mb-1">Admin User Management</h1><p class="text-muted mb-0">Export, deactivate, reactivate, change permission roles, or permanently purge users if you are master admin.</p></div><a class="btn btn-outline-secondary" href="admin.php">Admin Home</a></div>
 <?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?><?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
-<div class="alert alert-info"><strong>Roles:</strong> Master admin can manage everything and stays protected. Basic admin can manage admin tools and roles. Moderator can support/review permitted tools. Pro trainer can handle training-focused tools. User can access regular site features. The built-in <code>admin</code> account is protected. Hard purge stays disabled during beta; export data first, then deactivate when needed.</div>
+<div class="alert alert-info"><strong>Roles:</strong> Master admin can manage everything and stays protected. Basic admin can manage admin tools and roles. Moderator can support/review permitted tools. Pro trainer can handle training-focused tools. User can access regular site features. The built-in <code>admin</code> account is protected. Master admin can permanently purge a user and their owned dogs after export if needed.</div>
 <div class="card card-body mb-3"><strong>Role tiers</strong><div class="small text-muted">Master admin &gt; Basic admin &gt; Moderator &gt; Pro trainer &gt; User.</div><div class="small text-muted mt-1">Plans: Pro &gt; Plus &gt; Free.</div></div>
 <form method="get" class="card card-body mb-3"><label class="form-label">Search users</label><div class="input-group"><input class="form-control" name="q" value="<?= e($q) ?>" placeholder="email, username, or name"><button class="btn btn-primary">Search</button><a class="btn btn-outline-secondary" href="admin_users.php">Reset</a></div></form>
-<div class="table-responsive bg-white shadow-sm"><table class="table table-striped align-middle mb-0"><thead><tr><th>ID</th><th>User</th><th>Name / Phone</th><th>Dog</th><th>Status</th><th>Role</th><th>Plan</th><th>Created</th><th style="min-width:620px;">Actions</th></tr></thead><tbody>
+<div class="table-responsive bg-white shadow-sm"><table class="table table-striped align-middle mb-0"><thead><tr><th>ID</th><th>User</th><th>Name / Phone</th><th>Dog</th><th>Status</th><th>Role</th><th>Plan</th><th>Created</th><th style="min-width:760px;">Actions</th></tr></thead><tbody>
 <?php foreach ($users as $u): ?>
-<?php $label = auUserLabel($u); $role = gpUserRole($u); $protected = auIsBuiltInAdmin($u); ?>
+<?php $label = auUserLabel($u); $role = gpUserRole($u); $protected = auIsBuiltInAdmin($u); $ownedDogCount = (int) ($u['owned_dog_count'] ?? 0); ?>
 <tr>
     <td><?= (int) $u['id'] ?></td>
     <td><strong><?= e($u['username'] ?? '') ?></strong><?= $protected ? ' <span class="badge text-bg-danger">Protected</span>' : '' ?><br><span class="text-muted"><?= e($u['email'] ?? '') ?></span></td>
@@ -137,6 +148,19 @@ $csrf = generateCsrfToken();
                     <input class="form-control form-control-sm mb-1" name="note" placeholder="Optional note">
                     <button class="btn btn-sm <?= $u['account_status'] === 'active' ? 'btn-warning' : 'btn-success' ?>"><?= $u['account_status'] === 'active' ? 'Deactivate / retain data' : 'Reactivate' ?></button>
                 </form>
+                <?php if ($currentUserRole === 'master_admin'): ?>
+                <form method="post" class="border rounded p-2 bg-white border-danger">
+                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
+                    <input type="hidden" name="action" value="purge">
+                    <label class="form-label small mb-1 text-danger fw-bold">Permanent purge</label>
+                    <div class="small text-muted mb-2">This permanently deletes the user, their <?= (int) $ownedDogCount ?> owned dog(s), and related rows. Export first if you need a copy.</div>
+                    <label class="form-label small mb-1">Type exactly: <code><?= e($label) ?></code></label>
+                    <input class="form-control form-control-sm mb-1" name="confirm" placeholder="<?= e($label) ?>">
+                    <input class="form-control form-control-sm mb-1" name="note" placeholder="Optional purge note">
+                    <button class="btn btn-sm btn-danger w-100">Purge user and dogs</button>
+                </form>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </td>

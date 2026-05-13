@@ -110,6 +110,11 @@ function gpCurrentUserIsModerator(PDO $pdo): bool
     return in_array(gpCurrentUserRole($pdo), ['master_admin', 'basic_admin', 'moderator', 'pro_trainer'], true);
 }
 
+function gpCurrentUserIsMasterAdmin(PDO $pdo): bool
+{
+    return gpCurrentUserRole($pdo) === 'master_admin';
+}
+
 if (!function_exists('currentUserIsAdmin')) {
     function currentUserIsAdmin(): bool
     {
@@ -128,6 +133,16 @@ if (!function_exists('currentUserIsModerator')) {
             return in_array($role, ['master_admin', 'basic_admin', 'moderator', 'pro_trainer'], true) || !empty($_SESSION['is_admin']);
         }
         return gpCurrentUserIsModerator($GLOBALS['pdo']);
+    }
+}
+
+if (!function_exists('currentUserIsMasterAdmin')) {
+    function currentUserIsMasterAdmin(): bool
+    {
+        if (!isset($GLOBALS['pdo']) || !($GLOBALS['pdo'] instanceof PDO)) {
+            return gpNormalizeUserRole((string) ($_SESSION['user_role'] ?? 'user')) === 'master_admin';
+        }
+        return gpCurrentUserIsMasterAdmin($GLOBALS['pdo']);
     }
 }
 

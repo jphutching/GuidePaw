@@ -1201,6 +1201,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: confirm the branded auth pages stay consistent after the next beta deploy
 
+2026-05-12 — Master-admin user purge flow
+- Commit(s): pending
+- Files changed: admin_users.php, includes/user_purge.php, includes/roles.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: verify a real master-admin purge on a non-protected user after export
+
 ## Update log template
 
 When updating this file, add a short note like:
