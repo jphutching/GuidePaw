@@ -1179,6 +1179,14 @@ php scripts/cleanup_e2e_data.php --yes
 - Next recommended step: verify the shared header and menu shell still fit cleanly on phone-width pages
 - Feedback resolved: #52, #53
 
+2026-05-12 — Training command words editor and defaults
+- Commit(s): pending
+- Files changed: includes/training_command_words.php, training_program.php, training_session_log.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, tests/browser/guidepaw-normal-actions.spec.js, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: confirm the saved command words persist across reloads and keep the session-log reference view read-only
+- Feedback resolved: #54
+
 ## Update log template
 
 When updating this file, add a short note like:

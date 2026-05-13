@@ -1061,6 +1061,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'training setup')
                 || str_contains($body, 'akc programs')
                 || str_contains($body, 'training ladder')
+                || str_contains($body, 'editable cue guide')
                 || str_contains($body, 'start module')
             )
             : true;
@@ -1090,6 +1091,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'training session log')
                 || str_contains($body, 'log session')
                 || str_contains($body, 'success rate')
+                || str_contains($body, 'edit them on the training program page')
             )
             : true;
         $trainingHistoryPageLooksReady = $path === 'training_history.php'
@@ -1278,6 +1280,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $goalBuilderPage = gpQaRequest($baseUrl, 'goal_builder.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $habitRepairPage = gpQaRequest($baseUrl, 'habit_repair.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $trainingProgramPage = gpQaRequest($baseUrl, 'training_program.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $trainingSessionLogPage = gpQaRequest($baseUrl, 'training_session_log.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $alertsPage = gpQaRequest($baseUrl, 'alerts.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $editProfilePage = gpQaRequest($baseUrl, 'edit_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $viewLogsForEditPage = gpQaRequest($baseUrl, 'view_logs.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1316,6 +1319,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $updateLogGuardBody = strtolower($updateLogGuardPage['body']);
     $saveLogGuardBody = strtolower($saveLogGuardPage['body']);
     $trainingHistoryExportBody = strtolower($trainingHistoryExportPage['body']);
+    $trainingSessionLogBody = strtolower($trainingSessionLogPage['body']);
     $trainingHistoryExportHeaders = strtolower($trainingHistoryExportPage['headers']);
     $backupExportHeaders = strtolower($backupExportPage['headers']);
     $dailyWinPromptSeen = str_contains($dashboardBody, 'daily quick win')
@@ -1496,6 +1500,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $goalBuilderSeen = gpQaPageLooksOk($goalBuilderPage) && (str_contains($goalBuilderPageBody, 'goal builder') || str_contains($goalBuilderPageBody, 'draft preview'));
     $goalBuilderPathSeen = gpQaPageLooksOk($goalBuilderPage) && (str_contains($goalBuilderPageBody, 'recommended path') || str_contains($goalBuilderPageBody, 'program guide') || str_contains($goalBuilderPageBody, 'candidate assessment'));
     $habitRepairSeen = gpQaPageLooksOk($habitRepairPage) && (str_contains($habitRepairBody, 'habit repair') || str_contains($habitRepairBody, 'behavior incident') || str_contains($habitRepairBody, 'regression is not failure'));
+    $trainingProgramCommandWordsSeen = gpQaPageLooksOk($trainingProgramPage) && (str_contains($trainingProgramBody, 'editable cue guide') || str_contains($trainingProgramBody, 'save command words'));
+    $trainingSessionCommandWordsSeen = gpQaPageLooksOk($trainingSessionLogPage) && (str_contains($trainingSessionLogBody, 'edit them on the training program page') || str_contains($trainingSessionLogBody, 'default:'));
     $editProfileSeen = gpQaPageLooksOk($editProfilePage);
     $manageDogsSeen = gpQaPageLooksOk($manageDogsPage) && (str_contains($manageDogsBody, 'manage dogs') || str_contains($manageDogsBody, 'dogs') || str_contains($manageDogsBody, 'active dogs'));
     $importBackupSeen = gpQaPageLooksOk($importBackupPage) && (str_contains($importBackupBody, 'backup.php') || str_contains($importBackupBody, 'backup tools'));
@@ -1625,6 +1631,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'goal_builder_page_loads', $goalBuilderSeen, 'HTTP ' . $goalBuilderPage['status'] . ($goalBuilderSeen ? ' goal builder content found' : ' goal builder content missing'));
     gpQaResult($results, 'goal_builder_path_links', $goalBuilderPathSeen, 'HTTP ' . $goalBuilderPage['status'] . ($goalBuilderPathSeen ? ' goal builder path links found' : ' goal builder path links missing'));
     gpQaResult($results, 'habit_repair_page_loads', $habitRepairSeen, 'HTTP ' . $habitRepairPage['status'] . ($habitRepairSeen ? ' habit repair found' : ' habit repair missing'));
+    gpQaResult($results, 'training_command_words_editor', $trainingProgramCommandWordsSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingProgramCommandWordsSeen ? ' command words editor found' : ' command words editor missing'));
+    gpQaResult($results, 'training_command_words_reference', $trainingSessionCommandWordsSeen, 'HTTP ' . $trainingSessionLogPage['status'] . ($trainingSessionCommandWordsSeen ? ' command words reference found' : ' command words reference missing'));
     gpQaResult($results, 'edit_profile_page_loads', $editProfileSeen, 'HTTP ' . $editProfilePage['status'] . ($editProfileSeen ? ' edit profile found' : ' edit profile missing'));
     gpQaResult($results, 'manage_dogs_redirect', $manageDogsSeen, 'HTTP ' . $manageDogsPage['status'] . ($manageDogsSeen ? ' manage dogs redirect found' : ' manage dogs redirect missing'));
     gpQaResult($results, 'import_backup_redirect', $importBackupSeen, 'HTTP ' . $importBackupPage['status'] . ($importBackupSeen ? ' import backup redirect found' : ' import backup redirect missing'));

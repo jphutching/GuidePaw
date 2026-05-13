@@ -213,6 +213,37 @@ test.describe.serial('GuidePaw normal user action flows', () => {
     expect(afterText).toMatch(/Training log saved|Training History|E2E test training log|Log Training/i);
   });
 
+  test('normal user can edit and save command words', async ({ page }) => {
+    await login(page);
+    await ensureEditableDog(page);
+
+    await page.goto(`${BASE_URL}/training_program.php`);
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+
+    const guide = page.locator('details#command-words');
+    await expect(guide).toBeVisible();
+
+    const firstCommandField = guide.locator('input.form-control-sm').first();
+    test.skip(!(await firstCommandField.count()), 'No command words editor found');
+
+    const original = await firstCommandField.inputValue();
+    const updated = `${original || 'Cue'} E2E`;
+    await firstCommandField.fill(updated);
+
+    await page.getByRole('button', { name: /save command words/i }).click();
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+
+    const afterText = await page.locator('body').innerText().catch(() => '');
+    expect(afterText).toMatch(/Command words saved/i);
+
+    await page.goto(`${BASE_URL}/training_program.php`);
+    await page.waitForLoadState('networkidle').catch(() => {});
+    await assertNoVisibleAppErrors(page);
+    await expect(page.locator('details#command-words input.form-control-sm').first()).toHaveValue(updated);
+  });
+
   test('normal user can save the daily quick win from home', async ({ page }) => {
     await login(page);
     await ensureEditableDog(page);

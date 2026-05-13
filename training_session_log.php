@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
 require_once __DIR__ . '/includes/training_progression.php';
 require_once __DIR__ . '/includes/training_data.php';
+require_once __DIR__ . '/includes/training_command_words.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -111,7 +112,7 @@ $goalsStmt->execute([$userId]);
 $goals = $goalsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $modules = $pdo->query("SELECT id, title FROM training_modules WHERE is_active = 1 ORDER BY level_number, sort_order")->fetchAll(PDO::FETCH_ASSOC);
-$commandCueGroups = getTrainingCommandCueSuggestions();
+$commandCueGroups = gpTrainingCommandWordLoad($pdo, $userId);
 
 $recentStmt = $pdo->prepare("
     SELECT s.*, d.name AS dog_name, m.title AS module_title
@@ -191,6 +192,37 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
     <p><a href="training_program.php">← Training Program</a></p>
     <h1>Training Session Log</h1>
     <p class="small">Log one tiny session. GuidePaw decides whether to progress, repeat, reset, or pause.</p>
+
+    <?php if (!empty($commandCueGroups)): ?>
+        <details class="card shadow-sm mb-3" id="command-words">
+            <summary class="card-body d-flex justify-content-between align-items-start gap-2 flex-wrap" style="list-style:none;cursor:pointer;">
+                <div>
+                    <h2 class="h5 mb-1">Suggested command words</h2>
+                    <div class="small text-muted">Current cues are shown here for quick reference. Edit them on the Training Program page.</div>
+                </div>
+                <span class="badge text-bg-primary">Cue guide</span>
+            </summary>
+            <div class="card-body pt-0">
+                <div class="row g-2">
+                    <?php foreach ($commandCueGroups as $group): ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="border rounded p-2 h-100 bg-light">
+                                <div class="fw-bold mb-1"><?= h($group['label']) ?></div>
+                                <?php foreach ($group['items'] as $cueItem): ?>
+                                    <div class="small mt-2">
+                                        <strong><?= h($cueItem['skill']) ?>:</strong>
+                                        <span class="badge text-bg-white border"><?= h($cueItem['cue']) ?></span><br>
+                                        <span class="text-muted">Default: <?= h($cueItem['default_cue']) ?></span><br>
+                                        <span class="text-muted"><?= h($cueItem['use']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </details>
+    <?php endif; ?>
 
     <?php if ($message): ?><div class="alert"><?= h($message) ?></div><?php endif; ?>
 

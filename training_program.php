@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/audit_log.php';
 require 'includes/db_connect.php';
 require_once __DIR__ . '/includes/training_data.php';
 require_once 'includes/feature_flags.php';
@@ -8,6 +9,7 @@ require_once 'includes/training_goals.php';
 require_once 'includes/training_stats.php';
 require_once 'includes/training_goals.php';
 require_once 'includes/training_suggestion_links.php';
+require_once __DIR__ . '/includes/training_command_words.php';
 if (!featureEnabled($pdo, 'training_program_enabled')) {
     header('Location: index.php?msg=feature_disabled');
     exit;
@@ -21,12 +23,18 @@ $dogId = (int) $dog['id'];
 $canEdit = userCanEditDog($pdo, $userId, $dogId);
 $errors = [];
 $status = $_GET['status'] ?? '';
+gpTrainingCommandWordEnsureSchema($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     $action = $_POST['action'] ?? '';
 
-    if (!$canEdit) {
+    if ($action === 'save_command_words') {
+        gpTrainingCommandWordSave($pdo, $userId, $_POST['command_words'] ?? []);
+        writeAuditLog($pdo, 'training_command_words_saved', 'user_training_preferences', $userId, 'Saved training command word preferences.');
+        header('Location: training_program.php?status=command_words_saved#command-words');
+        exit;
+    } elseif (!$canEdit) {
         $errors[] = 'You have read-only access for this dog.';
     } elseif ($action === 'seed_program') {
         seedDogTrainingProgram($pdo, $dogId);
@@ -99,7 +107,7 @@ $progress = count(array_filter($items, fn($i) => in_array(($i['status'] ?? ''), 
 $readyPct = $total ? (int) round(($mastered / $total) * 100) : 0;
 $suggestions = getTrainingSuggestions($pdo, $userId, $dogId);
 $programGuide = getBeneficialTrainingPrograms();
-$commandCueGroups = getTrainingCommandCueSuggestions();
+$commandCueGroups = gpTrainingCommandWordLoad($pdo, $userId);
 $csrf = generateCsrfToken();
 ?>
 <!DOCTYPE html>
@@ -249,38 +257,43 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
 
 
     <?php if (!empty($commandCueGroups)): ?>
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
-                    <div>
-                        <h2 class="h5 mb-1">Suggested command words</h2>
-                        <div class="small text-muted">Pick one cue per behavior and keep it consistent across handlers.</div>
-                    </div>
-                    <span class="badge text-bg-primary">Cue guide</span>
+        <details class="card shadow-sm mb-3" id="command-words" open>
+            <summary class="card-body d-flex justify-content-between align-items-start gap-2 flex-wrap" style="list-style:none;cursor:pointer;">
+                <div>
+                    <h2 class="h5 mb-1">Suggested command words</h2>
+                    <div class="small text-muted">Edit the cue you want to use, then save. The default stays visible under each field.</div>
                 </div>
-
-                <div class="row g-2">
-                    <?php foreach ($commandCueGroups as $groupName => $cueItems): ?>
-                        <div class="col-md-6 col-lg-4">
-                            <div class="border rounded p-2 h-100 bg-light">
-                                <div class="fw-bold mb-1"><?= e($groupName) ?></div>
-                                <?php foreach ($cueItems as $cueItem): ?>
-                                    <div class="small mt-2">
-                                        <strong><?= e($cueItem['skill']) ?>:</strong>
-                                        <span class="badge text-bg-white border"><?= e($cueItem['cue']) ?></span><br>
-                                        <span class="text-muted"><?= e($cueItem['use']) ?></span>
-                                    </div>
-                                <?php endforeach; ?>
+                <span class="badge text-bg-primary">Editable cue guide</span>
+            </summary>
+            <div class="card-body pt-0">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                    <input type="hidden" name="action" value="save_command_words">
+                    <div class="row g-2">
+                        <?php foreach ($commandCueGroups as $groupKey => $group): ?>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="border rounded p-2 h-100 bg-light">
+                                    <div class="fw-bold mb-1"><?= e($group['label']) ?></div>
+                                    <?php foreach ($group['items'] as $cueItem): ?>
+                                        <div class="small mt-2">
+                                            <label class="form-label fw-bold mb-1"><?= e($cueItem['skill']) ?></label>
+                                            <input class="form-control form-control-sm" name="command_words[<?= e($groupKey) ?>][<?= e($cueItem['key']) ?>]" value="<?= e($cueItem['cue']) ?>">
+                                            <div class="text-muted mt-1">Default: <?= e($cueItem['default_cue']) ?></div>
+                                            <div class="text-muted"><?= e($cueItem['use']) ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <div class="small text-muted mt-3">
-                    These are suggested cue words, not required words. The most important rule is that the handler uses the same word for the same behavior every time.
-                </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">Save Command Words</button>
+                        <a class="btn btn-outline-secondary" href="training_session_log.php">Use in Session Log</a>
+                    </div>
+                    <div class="small text-muted mt-2">Keep the same cue for the same behavior. If you change a cue, change it everywhere you use it.</div>
+                </form>
             </div>
-        </div>
+        </details>
     <?php endif; ?>
 
     <div class="row g-3 mb-3">
