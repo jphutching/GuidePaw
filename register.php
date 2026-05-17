@@ -58,20 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'An account already exists for this email.';
             } else {
                 $pdo->beginTransaction();
-                $homeAddress = gpComposePostalAddress([
-                    'home_street' => $homeStreet,
-                    'home_apt' => $homeApt,
-                    'home_city' => $homeCity,
-                    'home_state' => $homeState,
-                    'home_zip' => $homeZip,
-                ]);
                 $userId = betaInsertUserFlexible($pdo, [
                     'email' => $email,
                     'full_name' => $fullName,
                     'home_street' => $homeStreet,
                     'home_apt' => $homeApt,
                     'home_city' => $homeCity,
-                    'home_address' => $homeAddress,
                     'phone' => $phone,
                     'home_state' => $homeState,
                     'home_zip' => $homeZip,
