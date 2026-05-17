@@ -6,6 +6,7 @@ require_once 'includes/validation.php';
 require_once 'includes/profile_image_tools.php';
 require_once 'includes/app_config.php';
 require_once 'includes/ada_state_laws.php';
+require_once 'includes/support_badges.php';
 require_once __DIR__ . '/includes/sms_notifications.php';
 checkLogin();
 
@@ -136,6 +137,7 @@ $user = $stmt->fetch();
 $csrf = generateCsrfToken();
 $completionRequired = (($_GET['required'] ?? '') === '1') || !empty($_SESSION['handler_profile_required_missing']);
 $stateNames = adaStateNames();
+$supportBadge = gpSupportBadgeForUser($pdo, $user ?: []);
 $missingLabels = [];
 if (function_exists('gpMissingRequiredHandlerProfileFields')) {
     $missingLabels = gpProfileMissingLabelsVisible(array_values(gpMissingRequiredHandlerProfileFields($user ?: [])));
@@ -162,6 +164,8 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 .req{color:#dc2626;font-weight:900;}
 .opt{color:#64748b;font-size:.82rem;font-weight:700;}
 .sms-box{border:1px solid #bfdbfe;background:#eff6ff;border-radius:16px;padding:1rem;}
+.support-badge-card{border:1px solid rgba(59,130,246,.16);background:#eff6ff;border-radius:18px;padding:1rem;box-shadow:0 6px 16px rgba(15,23,42,.05);}
+.support-badge-card img{width:108px;height:108px;object-fit:contain;flex:0 0 auto;}
 </style>
 </head>
 <body class="pb-5 bg-light">
@@ -194,6 +198,28 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 
     <?php if (!empty($_GET['status'])): ?><div class="alert alert-success">Handler profile saved.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
+
+    <?php if ($supportBadge): ?>
+        <section class="support-badge-card mb-3">
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <img src="<?= e($supportBadge['image']) ?>" alt="<?= e($supportBadge['label']) ?>">
+                <div class="flex-grow-1">
+                    <div class="text-uppercase small fw-bold text-primary mb-1">Support badge</div>
+                    <h2 class="h4 mb-1"><?= e($supportBadge['label']) ?></h2>
+                    <div class="small text-muted">
+                        <?php if (!empty($supportBadge['lifetime'])): ?>
+                            Active for life.
+                        <?php elseif (!empty($supportBadge['expires_at'])): ?>
+                            Active until <?= e((string) $supportBadge['expires_at']) ?>.
+                        <?php else: ?>
+                            Active support badge.
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary"><?= e(strtoupper((string) ($supportBadge['tier'] ?? 'support'))) ?></span>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="card profile-card">
         <div class="card-body">

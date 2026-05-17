@@ -1814,6 +1814,16 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adminUsersPurgeVisible = gpQaPageLooksOk($adminUsers) && str_contains($adminBody, 'purge user and dogs');
     gpQaResult($results, 'admin_users_purge_controls_visible', $adminUsersPurgeVisible, $adminUsersPurgeVisible ? 'purge controls found' : 'purge controls missing');
 
+    $handlerProfile = gpQaRequest($baseUrl, 'handler_profile.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $handlerProfileBody = strtolower($handlerProfile['body']);
+    $handlerSupportBadgeVisible = gpQaPageLooksOk($handlerProfile)
+        && (
+            str_contains($handlerProfileBody, 'support badge')
+            || str_contains($handlerProfileBody, 'platinum supporter')
+            || str_contains($handlerProfileBody, 'bronze supporter')
+        );
+    gpQaResult($results, 'handler_support_badge_visible', $handlerSupportBadgeVisible, 'HTTP ' . $handlerProfile['status'] . ($handlerSupportBadgeVisible ? ' support badge found' : ' support badge missing'));
+
     $qaAdmin = gpQaRequest($baseUrl, 'beta_qa_checklist.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adminSeesRoleChecks = str_contains($qaAdmin['body'], 'User Role Permissions') && str_contains($qaAdmin['body'], 'Admin/beta checks');
     gpQaResult($results, 'qa_admin_sees_admin_sections', gpQaPageLooksOk($qaAdmin) && $adminSeesRoleChecks, 'admin checklist visibility');

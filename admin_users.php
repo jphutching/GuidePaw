@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/paywalls.php';
 require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/user_purge.php';
 require_once __DIR__ . '/includes/stripe_webhook.php';
+require_once __DIR__ . '/includes/support_badges.php';
 
 checkLogin();
 if (!currentUserIsAdmin()) {
@@ -92,6 +93,7 @@ $csrf = generateCsrfToken();
 <?php foreach ($users as $u): ?>
 <?php $label = auUserLabel($u); $role = gpUserRole($u); $protected = auIsBuiltInAdmin($u); $ownedDogCount = (int) ($u['owned_dog_count'] ?? 0); ?>
 <?php $supportSummary = $supportSummaries[(int) $u['id']] ?? null; ?>
+<?php $supportBadge = gpSupportBadgeForUser($pdo, $u); ?>
 <tr>
     <td><?= (int) $u['id'] ?></td>
     <td><strong><?= e($u['username'] ?? '') ?></strong><?= $protected ? ' <span class="badge text-bg-danger">Protected</span>' : '' ?><br><span class="text-muted"><?= e($u['email'] ?? '') ?></span></td>
@@ -101,9 +103,25 @@ $csrf = generateCsrfToken();
     <td><?= auRoleBadge($role) ?></td>
     <td><?= auTierBadge((string) ($u['user_tier'] ?? 'free')) ?></td>
     <td>
+        <?php if ($supportBadge): ?>
+            <div class="d-flex gap-2 align-items-center mb-1">
+                <img src="<?= e($supportBadge['image']) ?>" alt="<?= e($supportBadge['label']) ?>" style="width:42px;height:42px;object-fit:contain;">
+                <div>
+                    <span class="badge text-bg-primary"><?= e($supportBadge['label']) ?></span>
+                    <div class="small text-muted">
+                        <?php if (!empty($supportBadge['lifetime'])): ?>
+                            Lifetime
+                        <?php elseif (!empty($supportBadge['expires_at'])): ?>
+                            Until <?= e((string) $supportBadge['expires_at']) ?>
+                        <?php else: ?>
+                            Active
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         <?php if ($supportSummary): ?>
-            <span class="badge text-bg-success"><?= e($supportSummary['label']) ?></span>
-            <div class="small text-muted mt-1"><?= e($supportSummary['detail']) ?></div>
+            <div class="small text-muted"><?= e($supportSummary['detail']) ?></div>
         <?php else: ?>
             <span class="badge text-bg-secondary">No support</span>
         <?php endif; ?>

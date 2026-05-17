@@ -45,6 +45,7 @@ function gpBetaQaChecklistItems(): array
             'description' => 'Confirm handler profile defaults, cropped images, and persistence after redeploy/reload.',
             'items' => [
                 ['id' => 'handler_profile_save', 'text' => 'Handler Profile saves display name, home address, phone, public email, home state, optional backup, notes.', 'expected' => 'Saved values reload correctly and address carries through to dog defaults.'],
+                ['id' => 'handler_support_badge', 'text' => 'Handler Profile shows the current support badge art and status for funded or lifetime accounts.', 'expected' => 'The active badge image and label display on the handler profile without breaking the save form.'],
                 ['id' => 'handler_photo_upload', 'text' => 'Upload/crop/save handler profile picture.', 'expected' => 'Preview updates and save succeeds.'],
                 ['id' => 'handler_photo_persists', 'text' => 'Handler profile picture persists after logout/login and page refresh.', 'expected' => 'Image still displays because new photos are stored in database.'],
                 ['id' => 'handler_defaults_inherited', 'text' => 'Handler defaults are inherited by dog QR/public profile.', 'expected' => 'Dog profile does not require retyping shared handler info.'],
