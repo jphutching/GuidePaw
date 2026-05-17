@@ -162,6 +162,49 @@ if (!function_exists('gpCommunityForumListThreads')) {
     }
 }
 
+if (!function_exists('gpCommunityForumListArchivedThreads')) {
+    function gpCommunityForumListArchivedThreads(PDO $pdo, int $limit = 10, string $query = ''): array
+    {
+        gpCommunityForumEnsureSchema($pdo);
+        $limit = max(1, min(100, (int) $limit));
+        $query = trim($query);
+        $params = [];
+        $searchSql = '';
+        if ($query !== '') {
+            $needle = '%' . strtolower($query) . '%';
+            $searchSql = "
+                WHERE COALESCE(t.is_archived, FALSE) = TRUE AND (
+                    LOWER(t.title) LIKE ?
+                    OR LOWER(t.body) LIKE ?
+                    OR LOWER(t.category) LIKE ?
+                    OR LOWER(COALESCE(u.display_name, '')) LIKE ?
+                    OR LOWER(COALESCE(u.username, '')) LIKE ?
+                    OR LOWER(COALESCE(u.email, '')) LIKE ?
+                )
+            ";
+            $params = [$needle, $needle, $needle, $needle, $needle, $needle];
+        } else {
+            $searchSql = "WHERE COALESCE(t.is_archived, FALSE) = TRUE";
+        }
+        $stmt = $pdo->prepare("
+            SELECT t.*,
+                   COALESCE((SELECT COUNT(*) FROM community_forum_posts p WHERE p.thread_id = t.id), 0) AS reply_count,
+                   COALESCE(u.display_name, u.username, 'Handler') AS creator_name,
+                   u.username AS creator_username,
+                   u.email AS creator_email,
+                   u.user_role AS creator_role,
+                   u.is_admin AS creator_is_admin
+            FROM community_forum_threads t
+            LEFT JOIN users u ON u.id = t.created_by_user_id
+            {$searchSql}
+            ORDER BY t.updated_at DESC, t.created_at DESC
+            LIMIT {$limit}
+        ");
+        $stmt->execute($params);
+        return $stmt->fetchAll() ?: [];
+    }
+}
+
 if (!function_exists('gpCommunityForumGetThread')) {
     function gpCommunityForumGetThread(PDO $pdo, int $threadId): ?array
     {

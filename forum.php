@@ -27,6 +27,11 @@ function forumCanDeleteContent(string $role): bool
     return forumCanModerateThread($role);
 }
 
+function forumCanReviewArchivedThreads(string $role): bool
+{
+    return in_array($role, ['master_admin', 'basic_admin'], true);
+}
+
 function forumRoleBadgeClass(string $role): string
 {
     return match ($role) {
@@ -160,6 +165,7 @@ if (($_GET['msg'] ?? '') === 'thread_created') {
 
 $thread = $threadId > 0 ? gpCommunityForumGetThread($pdo, $threadId) : null;
 $threads = gpCommunityForumListThreads($pdo, 30, $searchQuery);
+$archivedThreads = forumCanReviewArchivedThreads($currentRole) ? gpCommunityForumListArchivedThreads($pdo, 8, $searchQuery) : [];
 $posts = $thread ? gpCommunityForumGetPosts($pdo, (int) $thread['id']) : [];
 $categories = gpCommunityForumCategories();
 ?>
@@ -179,6 +185,10 @@ $categories = gpCommunityForumCategories();
     .thread-item { display:block; text-decoration:none; color: inherit; border-top: 1px solid rgba(15,23,42,.08); padding: .9rem 0; }
     .thread-item:first-child { border-top: 0; }
     .post-card { border: 1px solid rgba(15,23,42,.08); border-radius: 16px; background: #fff; padding: 1rem; }
+    .forum-tools { display: inline-block; }
+    .forum-tools > summary { list-style: none; }
+    .forum-tools > summary::-webkit-details-marker { display: none; }
+    .forum-tools[open] > summary { margin-bottom: .5rem; }
 </style>
 </head>
 <body class="pb-5 bg-light">
@@ -311,27 +321,30 @@ $categories = gpCommunityForumCategories();
                                 <?php if (!empty($thread['is_locked'])): ?><span class="badge bg-secondary align-self-start">Closed</span><?php endif; ?>
                                 <?php if (!empty($thread['is_archived'])): ?><span class="badge text-bg-dark align-self-start">Archived</span><?php endif; ?>
                                 <?php if (forumCanModerateThread($currentRole)): ?>
-                                    <form method="post" class="d-flex gap-2 flex-wrap justify-content-end">
-                                        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
-                                        <input type="hidden" name="action" value="moderate_thread">
-                                        <input type="hidden" name="thread_id" value="<?= (int) $thread['id'] ?>">
-                                        <?php if (empty($thread['is_pinned'])): ?>
-                                            <button class="btn btn-sm btn-outline-warning" name="moderation_action" value="pin">Pin</button>
-                                        <?php else: ?>
-                                            <button class="btn btn-sm btn-outline-warning" name="moderation_action" value="unpin">Unpin</button>
-                                        <?php endif; ?>
-                                        <?php if (empty($thread['is_locked'])): ?>
-                                            <button class="btn btn-sm btn-outline-secondary" name="moderation_action" value="close">Close</button>
-                                        <?php else: ?>
-                                            <button class="btn btn-sm btn-outline-secondary" name="moderation_action" value="open">Reopen</button>
-                                        <?php endif; ?>
-                                        <?php if (empty($thread['is_archived'])): ?>
-                                            <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="archive">Archive</button>
-                                        <?php else: ?>
-                                            <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="unarchive">Restore</button>
-                                        <?php endif; ?>
-                                        <button class="btn btn-sm btn-outline-danger" name="moderation_action" value="delete_thread" onclick="return confirm('Delete this thread and all replies?');">Delete Thread</button>
-                                    </form>
+                                    <details class="forum-tools align-self-end">
+                                        <summary class="btn btn-sm btn-outline-secondary">Thread tools</summary>
+                                        <form method="post" class="d-flex gap-2 flex-wrap justify-content-end mt-2">
+                                            <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                            <input type="hidden" name="action" value="moderate_thread">
+                                            <input type="hidden" name="thread_id" value="<?= (int) $thread['id'] ?>">
+                                            <?php if (empty($thread['is_pinned'])): ?>
+                                                <button class="btn btn-sm btn-outline-warning" name="moderation_action" value="pin">Pin</button>
+                                            <?php else: ?>
+                                                <button class="btn btn-sm btn-outline-warning" name="moderation_action" value="unpin">Unpin</button>
+                                            <?php endif; ?>
+                                            <?php if (empty($thread['is_locked'])): ?>
+                                                <button class="btn btn-sm btn-outline-secondary" name="moderation_action" value="close">Close</button>
+                                            <?php else: ?>
+                                                <button class="btn btn-sm btn-outline-secondary" name="moderation_action" value="open">Reopen</button>
+                                            <?php endif; ?>
+                                            <?php if (empty($thread['is_archived'])): ?>
+                                                <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="archive">Archive</button>
+                                            <?php else: ?>
+                                                <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="unarchive">Restore</button>
+                                            <?php endif; ?>
+                                            <button class="btn btn-sm btn-outline-danger" name="moderation_action" value="delete_thread" onclick="return confirm('Delete this thread and all replies?');">Delete Thread</button>
+                                        </form>
+                                    </details>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -365,13 +378,16 @@ $categories = gpCommunityForumCategories();
                                             <div class="d-flex align-items-center gap-2">
                                                 <span class="forum-muted"><?= e(date('M j, Y g:i A', strtotime((string) $post['created_at']))) ?></span>
                                                 <?php if (forumCanDeleteContent($currentRole)): ?>
-                                                    <form method="post" onsubmit="return confirm('Delete this reply?');">
-                                                        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
-                                                        <input type="hidden" name="action" value="delete_reply">
-                                                        <input type="hidden" name="thread_id" value="<?= (int) $thread['id'] ?>">
-                                                        <input type="hidden" name="reply_id" value="<?= (int) $post['id'] ?>">
-                                                        <button class="btn btn-sm btn-outline-danger" aria-label="Delete reply">Delete Reply</button>
-                                                    </form>
+                                                    <details class="forum-tools">
+                                                        <summary class="btn btn-sm btn-outline-danger">Reply tools</summary>
+                                                        <form method="post" class="mt-2" onsubmit="return confirm('Delete this reply?');">
+                                                            <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                            <input type="hidden" name="action" value="delete_reply">
+                                                            <input type="hidden" name="thread_id" value="<?= (int) $thread['id'] ?>">
+                                                            <input type="hidden" name="reply_id" value="<?= (int) $post['id'] ?>">
+                                                            <button class="btn btn-sm btn-outline-danger" aria-label="Delete reply">Delete Reply</button>
+                                                        </form>
+                                                    </details>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -399,6 +415,66 @@ $categories = gpCommunityForumCategories();
                     <?php endif; ?>
                 </div>
             </section>
+            <?php if (forumCanReviewArchivedThreads($currentRole)): ?>
+                <section class="card forum-card mt-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h2 class="h5 mb-1">Archived review</h2>
+                                <div class="forum-muted">Admin-only review of archived threads.</div>
+                            </div>
+                            <span class="badge text-bg-dark"><?= count($archivedThreads) ?></span>
+                        </div>
+                        <?php if (!$archivedThreads): ?>
+                            <div class="forum-muted">No archived threads right now.</div>
+                        <?php else: ?>
+                            <div class="vstack gap-3">
+                                <?php foreach ($archivedThreads as $archived): ?>
+                                    <?php
+                                        $archivedAuthor = forumAuthorMeta($archived);
+                                        $archivedRole = gpUserRole($archivedAuthor);
+                                    ?>
+                                    <div class="post-card">
+                                        <div class="d-flex justify-content-between gap-2 mb-2">
+                                            <div>
+                                                <div class="fw-semibold">
+                                                    <a class="text-decoration-none" href="forum.php?thread_id=<?= (int) $archived['id'] ?>"><?= e($archived['title']) ?></a>
+                                                </div>
+                                                <div class="forum-muted d-flex flex-wrap gap-1 align-items-center">
+                                                    <span><?= e($categories[$archived['category']] ?? ucfirst((string) $archived['category'])) ?></span>
+                                                    <span>·</span>
+                                                    <span><?= e((string) ($archived['creator_name'] ?: 'Handler')) ?></span>
+                                                    <span class="badge <?= e(forumRoleBadgeClass($archivedRole)) ?>"><?= e(gpRoleDisplayLabel($archivedRole)) ?></span>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex flex-column align-items-end gap-2">
+                                                <span class="badge text-bg-dark">Archived</span>
+                                                <div class="forum-muted"><?= e(date('M j, Y g:i A', strtotime((string) $archived['updated_at']))) ?></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <form method="post">
+                                                <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                <input type="hidden" name="action" value="moderate_thread">
+                                                <input type="hidden" name="thread_id" value="<?= (int) $archived['id'] ?>">
+                                                <input type="hidden" name="moderation_action" value="unarchive">
+                                                <button class="btn btn-sm btn-outline-secondary">Restore</button>
+                                            </form>
+                                            <form method="post" onsubmit="return confirm('Delete this archived thread and all replies?');">
+                                                <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                <input type="hidden" name="action" value="moderate_thread">
+                                                <input type="hidden" name="thread_id" value="<?= (int) $archived['id'] ?>">
+                                                <input type="hidden" name="moderation_action" value="delete_thread">
+                                                <button class="btn btn-sm btn-outline-danger">Delete Thread</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
         </div>
     </div>
 </main>

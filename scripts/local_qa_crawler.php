@@ -1444,6 +1444,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $forumThreadPinnedSeen = false;
     $forumThreadClosedSeen = false;
     $forumThreadArchivedSeen = false;
+    $forumArchiveReviewSeen = false;
     $forumReplyDeleteSeen = false;
     $forumThreadDeleteSeen = false;
     $forumThreadSearchSeen = false;
@@ -1532,6 +1533,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                     $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
                     $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
                     $forumThreadArchivedSeen = $forumThreadArchivedSeen && str_contains($forumThreadCheckBody, 'archived');
+                    $forumArchiveReviewPage = gpQaRequest($baseUrl, 'forum.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumArchiveReviewBody = strtolower($forumArchiveReviewPage['body']);
+                    $forumArchiveReviewSeen = gpQaPageLooksOk($forumArchiveReviewPage)
+                        && str_contains($forumArchiveReviewBody, 'archived review')
+                        && (
+                            str_contains($forumArchiveReviewBody, strtolower($forumThreadTitle))
+                            || str_contains($forumArchiveReviewBody, 'restore')
+                        );
                     $forumSearch = gpQaRequest($baseUrl, 'forum.php?q=' . rawurlencode($forumThreadTitle), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                     $forumSearchBody = strtolower($forumSearch['body']);
                     $forumSearchSeen = gpQaPageLooksOk($forumSearch) && str_contains($forumSearchBody, strtolower($forumThreadTitle));
@@ -1604,6 +1613,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $forumThreadSearchSeen = true;
         $forumThreadRoleBadgeSeen = true;
         $forumThreadSupportBadgeSeen = true;
+        $forumArchiveReviewSeen = true;
     }
     $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
@@ -1768,6 +1778,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'forum_thread_pinned', $forumThreadPinnedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadPinnedSeen ? ' pinned thread visible' : ' pinned thread missing'));
     gpQaResult($results, 'forum_thread_closed', $forumThreadClosedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadClosedSeen ? ' closed thread visible' : ' closed thread missing'));
     gpQaResult($results, 'forum_thread_archived', $forumThreadArchivedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadArchivedSeen ? ' archived thread visible' : ' archived thread missing'));
+    gpQaResult($results, 'forum_archive_review', $forumArchiveReviewSeen, 'HTTP ' . $forumPage['status'] . ($forumArchiveReviewSeen ? ' archived review section found' : ' archived review section missing'));
     gpQaResult($results, 'forum_reply_delete', $forumReplyDeleteSeen, 'HTTP ' . $forumPage['status'] . ($forumReplyDeleteSeen ? ' reply delete handled' : ' reply delete missing'));
     gpQaResult($results, 'forum_thread_delete', $forumThreadDeleteSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadDeleteSeen ? ' thread delete handled' : ' thread delete missing'));
     gpQaResult($results, 'forum_thread_search', $forumThreadSearchSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadSearchSeen ? ' search and clear controls found' : ' search controls missing'));
