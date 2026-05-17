@@ -29,6 +29,44 @@ function afsStatus(string $value): array
     return ['label' => 'Configured', 'class' => 'bg-success-subtle text-success-emphasis'];
 }
 
+function afsMoney(int $cents): string
+{
+    return '$' . number_format($cents / 100, 2);
+}
+
+function afsPaymentLabel(?array $payment): string
+{
+    if (!$payment) {
+        return 'No support payments recorded yet.';
+    }
+
+    $parts = [];
+    $supportType = trim((string) ($payment['support_type'] ?? ''));
+    $parts[] = $supportType === 'monthly' ? 'Monthly support' : 'One-time support';
+
+    $amount = (int) ($payment['amount_total_cents'] ?? 0);
+    if ($amount > 0) {
+        $parts[] = afsMoney($amount);
+    }
+
+    $when = trim((string) ($payment['updated_at'] ?? $payment['created_at'] ?? ''));
+    if ($when !== '') {
+        $parts[] = $when;
+    }
+
+    $status = trim((string) ($payment['payment_status'] ?? ''));
+    if ($status !== '') {
+        $parts[] = $status;
+    }
+
+    $sessionId = trim((string) ($payment['stripe_checkout_session_id'] ?? ''));
+    if ($sessionId !== '') {
+        $parts[] = $sessionId;
+    }
+
+    return implode(' · ', $parts);
+}
+
 $supportUrl = trim((string) gpEnv('GUIDEPAW_SUPPORT_FUNDING_URL', ''));
 $merchUrl = trim((string) gpEnv('GUIDEPAW_MERCH_STORE_URL', ''));
 $discordUrl = trim((string) gpEnv('GUIDEPAW_DISCORD_INVITE_URL', ''));
@@ -40,6 +78,7 @@ $checkoutConfigured = gpStripeCheckoutConfigured();
 $webhookSecret = gpStripeWebhookSecret();
 $webhookConfigured = gpStripeWebhookConfigured();
 $webhookUrl = gpStripeWebhookEndpointUrl();
+$timeline = gpStripeSupportTimelineSummary($pdo);
 $recentPayments = gpStripeSupportRecentEvents($pdo, 10);
 $csrf = generateCsrfToken();
 ?>
@@ -138,6 +177,31 @@ $csrf = generateCsrfToken();
                 <div class="mini">Stored in Render environment variables only.</div>
             </div>
             <code><?= e(afsMaskSecret($webhookSecret)) ?></code>
+        </div>
+    </section>
+
+    <section class="panel mb-3">
+        <h2 class="h5 mb-1">Support timeline</h2>
+        <div class="mini mb-3">This is the plain-English summary of the first payment, latest payment, and total support received.</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="field h-100 d-block">
+                    <div class="label mb-1">First support payment</div>
+                    <div class="mini"><?= e(afsPaymentLabel($timeline['first'] ?? null)) ?></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="field h-100 d-block">
+                    <div class="label mb-1">Latest support payment</div>
+                    <div class="mini"><?= e(afsPaymentLabel($timeline['latest'] ?? null)) ?></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="field h-100 d-block">
+                    <div class="label mb-1">Total support received</div>
+                    <div class="mini"><?= e(afsMoney((int) ($timeline['total_cents'] ?? 0))) ?> across <?= e((string) ((int) ($timeline['payment_count'] ?? 0))) ?> payments</div>
+                </div>
+            </div>
         </div>
     </section>
 

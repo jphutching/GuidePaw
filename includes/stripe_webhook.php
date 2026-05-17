@@ -319,6 +319,75 @@ if (!function_exists('gpStripeSupportRevenueSummary')) {
     }
 }
 
+if (!function_exists('gpStripeSupportTimelineSummary')) {
+    function gpStripeSupportTimelineSummary(PDO $pdo): array
+    {
+        if (!gpStripeSupportPaymentsTableExists($pdo)) {
+            return [
+                'first' => null,
+                'latest' => null,
+                'payment_count' => 0,
+                'total_cents' => 0,
+            ];
+        }
+
+        $first = $pdo->query("
+            SELECT
+                stripe_event_id,
+                stripe_event_type,
+                stripe_checkout_session_id,
+                support_type,
+                support_mode,
+                user_id,
+                customer_email,
+                amount_total_cents,
+                amount_subtotal_cents,
+                currency,
+                payment_status,
+                payment_intent_id,
+                subscription_id,
+                livemode,
+                created_at,
+                updated_at
+            FROM support_funding_events
+            ORDER BY created_at ASC, id ASC
+            LIMIT 1
+        ")->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $latest = $pdo->query("
+            SELECT
+                stripe_event_id,
+                stripe_event_type,
+                stripe_checkout_session_id,
+                support_type,
+                support_mode,
+                user_id,
+                customer_email,
+                amount_total_cents,
+                amount_subtotal_cents,
+                currency,
+                payment_status,
+                payment_intent_id,
+                subscription_id,
+                livemode,
+                created_at,
+                updated_at
+            FROM support_funding_events
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+        ")->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $summary = gpStripeSupportRevenueSummary($pdo);
+
+        return [
+            'first' => is_array($first) ? $first : null,
+            'latest' => is_array($latest) ? $latest : null,
+            'payment_count' => (int) ($summary['payment_count'] ?? 0),
+            'total_cents' => (int) ($summary['total_cents'] ?? 0),
+        ];
+    }
+}
+
 if (!function_exists('gpStripeSupportUserSummaries')) {
     function gpStripeSupportUserSummaries(PDO $pdo, array $userIds): array
     {
