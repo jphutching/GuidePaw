@@ -4,6 +4,30 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+load_env_file() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$file"
+    set +a
+  fi
+}
+
+load_env_file ./.env.test.local
+load_env_file ./.env.test.admin.local
+load_env_file ./.env.test.render
+load_env_file ./.env.test.admin.render
+
+export GUIDEPAW_LOCAL_ADMIN_USER="${GUIDEPAW_LOCAL_ADMIN_USER:-${GUIDEPAW_ADMIN_TEST_USERNAME:-${GUIDEPAW_ADMIN_USER:-admin}}}"
+export GUIDEPAW_LOCAL_ADMIN_PASS="${GUIDEPAW_LOCAL_ADMIN_PASS:-${GUIDEPAW_ADMIN_TEST_PASSWORD:-${GUIDEPAW_ADMIN_PASS:-${GUIDEPAW_TEST_PASSWORD:-}}}}"
+export GUIDEPAW_BETA_ADMIN_USER="${GUIDEPAW_BETA_ADMIN_USER:-${GUIDEPAW_ADMIN_TEST_USERNAME:-${GUIDEPAW_ADMIN_USER:-admin}}}"
+export GUIDEPAW_BETA_ADMIN_PASS="${GUIDEPAW_BETA_ADMIN_PASS:-${GUIDEPAW_ADMIN_TEST_PASSWORD:-${GUIDEPAW_ADMIN_PASS:-${GUIDEPAW_TEST_PASSWORD:-}}}}"
+export GUIDEPAW_LOCAL_REGULAR_USER="${GUIDEPAW_LOCAL_REGULAR_USER:-${GUIDEPAW_TEST_USERNAME:-${GUIDEPAW_REGULAR_USER:-}}}"
+export GUIDEPAW_LOCAL_REGULAR_PASS="${GUIDEPAW_LOCAL_REGULAR_PASS:-${GUIDEPAW_TEST_PASSWORD:-${GUIDEPAW_REGULAR_PASS:-}}}"
+export GUIDEPAW_BETA_REGULAR_USER="${GUIDEPAW_BETA_REGULAR_USER:-${GUIDEPAW_TEST_USERNAME:-${GUIDEPAW_REGULAR_USER:-}}}"
+export GUIDEPAW_BETA_REGULAR_PASS="${GUIDEPAW_BETA_REGULAR_PASS:-${GUIDEPAW_TEST_PASSWORD:-${GUIDEPAW_REGULAR_PASS:-}}}"
+
 section() {
   printf '\n== %s ==\n' "$1"
 }
@@ -85,14 +109,14 @@ if [[ "${GUIDEPAW_RUN_REMOTE_COMPARE:-no}" == "yes" ]]; then
     php scripts/compare_site_crawler.php \
       --local-url="${GUIDEPAW_LOCAL_URL:-https://10.147.18.184}" \
       --beta-url="${GUIDEPAW_BETA_URL:-https://beta.guidepaw.app}" \
-      --local-admin-user="${GUIDEPAW_LOCAL_ADMIN_USER:-${GUIDEPAW_ADMIN_USER:-admin}}" \
-      --local-admin-pass="${GUIDEPAW_LOCAL_ADMIN_PASS:-${GUIDEPAW_ADMIN_PASS:-}}" \
-      --beta-admin-user="${GUIDEPAW_BETA_ADMIN_USER:-${GUIDEPAW_ADMIN_USER:-admin}}" \
-      --beta-admin-pass="${GUIDEPAW_BETA_ADMIN_PASS:-${GUIDEPAW_ADMIN_PASS:-}}" \
-      --local-regular-user="${GUIDEPAW_LOCAL_REGULAR_USER:-${GUIDEPAW_REGULAR_USER:-}}" \
-      --local-regular-pass="${GUIDEPAW_LOCAL_REGULAR_PASS:-${GUIDEPAW_REGULAR_PASS:-}}" \
-      --beta-regular-user="${GUIDEPAW_BETA_REGULAR_USER:-${GUIDEPAW_REGULAR_USER:-}}" \
-      --beta-regular-pass="${GUIDEPAW_BETA_REGULAR_PASS:-${GUIDEPAW_REGULAR_PASS:-}}" \
+      --local-admin-user="$GUIDEPAW_LOCAL_ADMIN_USER" \
+      --local-admin-pass="$GUIDEPAW_LOCAL_ADMIN_PASS" \
+      --beta-admin-user="$GUIDEPAW_BETA_ADMIN_USER" \
+      --beta-admin-pass="$GUIDEPAW_BETA_ADMIN_PASS" \
+      --local-regular-user="${GUIDEPAW_LOCAL_REGULAR_USER:-}" \
+      --local-regular-pass="${GUIDEPAW_LOCAL_REGULAR_PASS:-}" \
+      --beta-regular-user="${GUIDEPAW_BETA_REGULAR_USER:-}" \
+      --beta-regular-pass="${GUIDEPAW_BETA_REGULAR_PASS:-}" \
       --max-pages="${GUIDEPAW_COMPARE_MAX_PAGES:-160}" \
       --insecure-local-ssl="${GUIDEPAW_INSECURE_LOCAL_SSL:-yes}"
   else
