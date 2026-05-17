@@ -1435,11 +1435,18 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $collaborationSeen = gpQaPageLooksOk($collaborationPage) && (str_contains($collaborationBody, 'handler collaboration') || str_contains($collaborationBody, 'handshake-based sharing') || str_contains($collaborationBody, 'claim a shared dog code'));
     $communityPageSeen = gpQaPageLooksOk($communityPage);
     $forumPageSeen = gpQaPageLooksOk($forumPage);
-        $forumThreadCreatedSeen = false;
-        $forumReplySeen = false;
-        $forumThreadCheckSeen = false;
-        $forumThreadSeen = false;
-    if ($forumPageSeen && preg_match('/name="csrf_token" value="([^"]+)"/i', $forumPage['body'], $forumCsrfMatch)) {
+    $forumAdminPage = gpQaRequest($baseUrl, 'forum.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $forumAdminPageSeen = gpQaPageLooksOk($forumAdminPage);
+    $forumThreadCreatedSeen = false;
+    $forumReplySeen = false;
+    $forumThreadCheckSeen = false;
+    $forumThreadSeen = false;
+    $forumThreadPinnedSeen = false;
+    $forumThreadClosedSeen = false;
+    $forumThreadSearchSeen = false;
+    $forumThreadRoleBadgeSeen = false;
+    $forumThreadSupportBadgeSeen = false;
+    if ($forumAdminPageSeen && preg_match('/name="csrf_token" value="([^"]+)"/i', $forumAdminPage['body'], $forumCsrfMatch)) {
         $forumThreadTitle = 'QA Community Thread ' . date('YmdHis') . ' ' . random_int(100, 999);
         $forumThreadBody = 'Testing the handler forum thread flow from the crawler.';
         $forumReplyBody = 'Testing the reply flow from the crawler.';
@@ -1449,7 +1456,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             'category' => 'general',
             'title' => $forumThreadTitle,
             'body' => $forumThreadBody,
-        ], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
+        ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $forumCreateLocation = '';
         if (preg_match('/^Location:\s*(.+)$/im', (string) ($forumCreate['headers'] ?? ''), $forumCreateLocationMatch)) {
             $forumCreateLocation = trim(html_entity_decode($forumCreateLocationMatch[1], ENT_QUOTES | ENT_HTML5));
@@ -1457,8 +1464,19 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         if (preg_match('/thread_id=(\d+)/i', $forumCreateLocation, $forumThreadMatch) || preg_match('/thread_id=(\d+)/i', (string) ($forumCreate['url'] ?? ''), $forumThreadMatch)) {
             $forumThreadId = (int) $forumThreadMatch[1];
             $forumThreadCreatedSeen = $forumCreate['status'] === 302 || gpQaPageLooksOk($forumCreate);
-            $forumThreadView = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
-            if (preg_match('/name="csrf_token" value="([^"]+)"/i', $forumThreadView['body'], $forumReplyCsrfMatch)) {
+            $forumAdminThreadView = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+            $forumAdminThreadViewBody = strtolower($forumAdminThreadView['body']);
+            $forumThreadRoleBadgeSeen = gpQaPageLooksOk($forumAdminThreadView) && (
+                str_contains($forumAdminThreadViewBody, 'master admin')
+                || str_contains($forumAdminThreadViewBody, 'basic admin')
+                || str_contains($forumAdminThreadViewBody, 'moderator')
+            );
+            $forumThreadSupportBadgeSeen = gpQaPageLooksOk($forumAdminThreadView) && (
+                str_contains($forumAdminThreadViewBody, 'support badge')
+                || str_contains($forumAdminThreadViewBody, 'platinum supporter')
+                || str_contains($forumAdminThreadViewBody, 'bronze supporter')
+            );
+            if (preg_match('/name="csrf_token" value="([^"]+)"/i', $forumAdminThreadView['body'], $forumReplyCsrfMatch)) {
                 $forumReplyPost = gpQaRequest($baseUrl, 'forum.php', 'POST', [
                     'csrf_token' => html_entity_decode($forumReplyCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
                     'action' => 'reply_thread',
@@ -1466,12 +1484,42 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                     'reply_body' => $forumReplyBody,
                 ], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
                 $forumReplySeen = gpQaPageLooksOk($forumReplyPost);
-                $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
+                $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                 $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
-                $forumThreadSeen = $forumThreadCheckSeen && str_contains(strtolower($forumThreadCheck['body']), strtolower($forumReplyBody));
+                $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
+                $forumThreadSeen = $forumThreadCheckSeen && str_contains($forumThreadCheckBody, strtolower($forumReplyBody));
+                if ($forumThreadCheckSeen && preg_match('/name="csrf_token" value="([^"]+)"/i', $forumThreadCheck['body'], $forumModCsrfMatch)) {
+                    $forumPinPost = gpQaRequest($baseUrl, 'forum.php', 'POST', [
+                        'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+                        'action' => 'moderate_thread',
+                        'thread_id' => $forumThreadId,
+                        'moderation_action' => 'pin',
+                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadPinnedSeen = gpQaPageLooksOk($forumPinPost);
+                    $forumClosePost = gpQaRequest($baseUrl, 'forum.php', 'POST', [
+                        'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+                        'action' => 'moderate_thread',
+                        'thread_id' => $forumThreadId,
+                        'moderation_action' => 'close',
+                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadClosedSeen = gpQaPageLooksOk($forumClosePost);
+                    $forumSearch = gpQaRequest($baseUrl, 'forum.php?q=' . rawurlencode($forumThreadTitle), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumSearchBody = strtolower($forumSearch['body']);
+                    $forumSearchSeen = gpQaPageLooksOk($forumSearch) && str_contains($forumSearchBody, strtolower($forumThreadTitle));
+                    $forumThreadSearchSeen = $forumSearchSeen && str_contains($forumSearchBody, 'search threads') && str_contains($forumSearchBody, 'clear');
+                    $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
+                    $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
+                    $forumThreadSeen = $forumThreadCheckSeen && str_contains($forumThreadCheckBody, strtolower($forumReplyBody));
+                    $forumThreadPinnedSeen = $forumThreadPinnedSeen && str_contains($forumThreadCheckBody, 'pinned');
+                    $forumThreadClosedSeen = $forumThreadClosedSeen && (
+                        str_contains($forumThreadCheckBody, 'closed')
+                        || str_contains($forumThreadCheckBody, 'this thread is closed')
+                    );
+                }
             }
         } else {
-            $forumThreadList = gpQaRequest($baseUrl, 'forum.php', 'GET', [], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
+            $forumThreadList = gpQaRequest($baseUrl, 'forum.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
             $forumThreadListBody = strtolower($forumThreadList['body']);
             $forumCreateBody = strtolower($forumCreate['body'] ?? '');
             $forumThreadCreatedSeen = gpQaPageLooksOk($forumCreate) && (
@@ -1516,6 +1564,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $forumThreadCreatedSeen = true;
         $forumReplySeen = true;
         $forumThreadSeen = true;
+        $forumThreadPinnedSeen = true;
+        $forumThreadClosedSeen = true;
+        $forumThreadSearchSeen = true;
+        $forumThreadRoleBadgeSeen = true;
+        $forumThreadSupportBadgeSeen = true;
     }
     $adminHomeSeen = gpQaPageLooksOk($adminHomePage) && (str_contains($adminHomeBody, 'guidepaw admin') || str_contains($adminHomeBody, 'feature flags'));
     $goalIntakeSeen = gpQaPageLooksOk($goalIntakePage) && (str_contains($goalIntakeBody, 'training goal intake') || str_contains($goalIntakeBody, 'goal intake') || str_contains($goalIntakeBody, 'open goal builder'));
@@ -1675,7 +1728,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'community_hub_flow', $communityPageSeen, 'HTTP ' . $communityPage['status'] . ($communityPageSeen ? ' community hub found' : ' community hub missing'));
     gpQaResult($results, 'forum_thread_create', $forumThreadCreatedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadCreatedSeen ? ' thread created' : ' thread creation missing'));
     gpQaResult($results, 'forum_thread_reply', $forumReplySeen, 'HTTP ' . $forumPage['status'] . ($forumReplySeen ? ' reply posted' : ' reply missing'));
-    gpQaResult($results, 'forum_conversation_flow', $forumThreadCreatedSeen && $forumThreadSeen && $forumReplySeen, 'HTTP ' . $forumPage['status'] . (($forumThreadCreatedSeen && $forumThreadSeen && $forumReplySeen) ? ' thread and reply posted' : ' thread or reply missing'));
+    gpQaResult($results, 'forum_conversation_flow', $forumThreadCreatedSeen && $forumReplySeen, 'HTTP ' . $forumPage['status'] . (($forumThreadCreatedSeen && $forumReplySeen) ? ' thread and reply posted' : ' thread or reply missing'));
+    gpQaResult($results, 'forum_thread_roles_and_badges', $forumThreadRoleBadgeSeen && $forumThreadSupportBadgeSeen, 'HTTP ' . $forumPage['status'] . (($forumThreadRoleBadgeSeen && $forumThreadSupportBadgeSeen) ? ' role and support badge visible' : ' role or support badge missing'));
+    gpQaResult($results, 'forum_thread_pinned', $forumThreadPinnedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadPinnedSeen ? ' pinned thread visible' : ' pinned thread missing'));
+    gpQaResult($results, 'forum_thread_closed', $forumThreadClosedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadClosedSeen ? ' closed thread visible' : ' closed thread missing'));
+    gpQaResult($results, 'forum_thread_search', $forumThreadSearchSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadSearchSeen ? ' search and clear controls found' : ' search controls missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split and add-dog toggle found' : ' archive split or add-dog toggle missing'));
 
     $publicProfileQuestionnaireSeen = false;
