@@ -81,10 +81,12 @@ if (!function_exists('gpCommunityForumEnsureSchema')) {
                 body TEXT NOT NULL,
                 is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
                 is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+                is_archived BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         ");
+        $pdo->exec("ALTER TABLE community_forum_threads ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE");
 
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS community_forum_posts (
@@ -128,15 +130,18 @@ if (!function_exists('gpCommunityForumListThreads')) {
         if ($query !== '') {
             $needle = '%' . strtolower($query) . '%';
             $searchSql = "
-                WHERE
+                WHERE COALESCE(t.is_archived, FALSE) = FALSE AND (
                     LOWER(t.title) LIKE ?
                     OR LOWER(t.body) LIKE ?
                     OR LOWER(t.category) LIKE ?
                     OR LOWER(COALESCE(u.display_name, '')) LIKE ?
                     OR LOWER(COALESCE(u.username, '')) LIKE ?
                     OR LOWER(COALESCE(u.email, '')) LIKE ?
+                )
             ";
             $params = [$needle, $needle, $needle, $needle, $needle, $needle];
+        } else {
+            $searchSql = "WHERE COALESCE(t.is_archived, FALSE) = FALSE";
         }
         $stmt = $pdo->prepare("
             SELECT t.*,
@@ -224,6 +229,15 @@ if (!function_exists('gpCommunityForumAddReply')) {
     }
 }
 
+if (!function_exists('gpCommunityForumDeleteReply')) {
+    function gpCommunityForumDeleteReply(PDO $pdo, int $replyId): void
+    {
+        gpCommunityForumEnsureSchema($pdo);
+        $stmt = $pdo->prepare("DELETE FROM community_forum_posts WHERE id = ?");
+        $stmt->execute([$replyId]);
+    }
+}
+
 if (!function_exists('gpCommunityForumSetPinned')) {
     function gpCommunityForumSetPinned(PDO $pdo, int $threadId, bool $pinned): void
     {
@@ -239,5 +253,23 @@ if (!function_exists('gpCommunityForumSetLocked')) {
         gpCommunityForumEnsureSchema($pdo);
         $stmt = $pdo->prepare("UPDATE community_forum_threads SET is_locked = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
         $stmt->execute([$locked ? 1 : 0, $threadId]);
+    }
+}
+
+if (!function_exists('gpCommunityForumSetArchived')) {
+    function gpCommunityForumSetArchived(PDO $pdo, int $threadId, bool $archived): void
+    {
+        gpCommunityForumEnsureSchema($pdo);
+        $stmt = $pdo->prepare("UPDATE community_forum_threads SET is_archived = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt->execute([$archived ? 1 : 0, $threadId]);
+    }
+}
+
+if (!function_exists('gpCommunityForumDeleteThread')) {
+    function gpCommunityForumDeleteThread(PDO $pdo, int $threadId): void
+    {
+        gpCommunityForumEnsureSchema($pdo);
+        $stmt = $pdo->prepare("DELETE FROM community_forum_threads WHERE id = ?");
+        $stmt->execute([$threadId]);
     }
 }

@@ -156,7 +156,7 @@ $csrf = generateCsrfToken();
                         <div class="desc"><?= e($flag['description'] ?? '') ?></div>
                     </div>
                     <label>
-                        <input type="checkbox" name="enabled[<?= e($flag['flag_key']) ?>]" value="1" <?= ((int)$flag['is_enabled'] === 1) ? 'checked' : '' ?>>
+                        <input type="checkbox" name="enabled[<?= e($flag['flag_key']) ?>]" value="1" <?= ((int)$flag['is_enabled'] === 1) ? 'checked' : '' ?> onchange="this.form.submit()">
                     </label>
                 </div>
             </div>

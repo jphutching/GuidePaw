@@ -209,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </td>
                     <td><span class="badge <?= h($row['priority_level']) ?>"><?= h(strtoupper($row['priority_level'])) ?></span></td>
                     <td>
-                        <select name="lifecycle_status">
+                        <select name="lifecycle_status" onchange="this.form.submit()">
                             <?php foreach (['backlog','spec_ready','feature_flag_created','database_api_ready','ui_hidden_behind_flag','internal_testing','beta_enabled','metrics_reviewed','fully_released','maintenance_owner_assigned'] as $status): ?>
                                 <option value="<?= h($status) ?>" <?= $row['lifecycle_status'] === $status ? 'selected' : '' ?>><?= h($status) ?></option>
                             <?php endforeach; ?>
@@ -217,16 +217,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </td>
                     <td>
                         <label class="small">
-                            <input type="checkbox" name="is_enabled" value="1" <?= (int)$row['is_enabled'] === 1 ? 'checked' : '' ?>>
+                            <input type="checkbox" name="is_enabled" value="1" <?= (int)$row['is_enabled'] === 1 ? 'checked' : '' ?> onchange="this.form.submit()">
                             Enabled
                         </label>
                     </td>
-                    <td><input name="owner_name" value="<?= h($row['owner_name']) ?>" placeholder="Owner"></td>
-                    <td><input name="milestone" value="<?= h($row['milestone']) ?>" placeholder="Milestone"></td>
+                    <td><input name="owner_name" value="<?= h($row['owner_name']) ?>" placeholder="Owner" onchange="this.form.submit()"></td>
+                    <td><input name="milestone" value="<?= h($row['milestone']) ?>" placeholder="Milestone" onchange="this.form.submit()"></td>
                     <td><?= h($row['success_metric']) ?></td>
                     <td>
                         <strong>Acceptance:</strong> <?= h($row['acceptance_criteria']) ?><br>
-                        <textarea name="release_notes" placeholder="Notes"><?= h($row['release_notes']) ?></textarea>
+                        <textarea name="release_notes" placeholder="Notes" onchange="this.form.submit()"><?= h($row['release_notes']) ?></textarea>
                         <button type="submit">Save</button>
                     </td>
                 </form>

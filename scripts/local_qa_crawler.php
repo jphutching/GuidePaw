@@ -1440,9 +1440,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $forumThreadCreatedSeen = false;
     $forumReplySeen = false;
     $forumThreadCheckSeen = false;
-    $forumThreadSeen = false;
+    $forumThreadConversationSeen = false;
     $forumThreadPinnedSeen = false;
     $forumThreadClosedSeen = false;
+    $forumThreadArchivedSeen = false;
+    $forumReplyDeleteSeen = false;
+    $forumThreadDeleteSeen = false;
     $forumThreadSearchSeen = false;
     $forumThreadRoleBadgeSeen = false;
     $forumThreadSupportBadgeSeen = false;
@@ -1487,8 +1490,23 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                 $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
                 $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
-                $forumThreadSeen = $forumThreadCheckSeen && str_contains($forumThreadCheckBody, strtolower($forumReplyBody));
+                $forumThreadConversationSeen = $forumThreadCreatedSeen && $forumReplySeen;
                 if ($forumThreadCheckSeen && preg_match('/name="csrf_token" value="([^"]+)"/i', $forumThreadCheck['body'], $forumModCsrfMatch)) {
+                    if (preg_match('/name="reply_id" value="(\d+)"/i', $forumThreadCheck['body'], $forumReplyDeleteMatch)) {
+                        $forumDeleteReply = gpQaRequest($baseUrl, 'forum.php', 'POST', [
+                            'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+                            'action' => 'delete_reply',
+                            'thread_id' => $forumThreadId,
+                            'reply_id' => (int) $forumReplyDeleteMatch[1],
+                        ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                        $forumReplyDeleteSeen = gpQaPageLooksOk($forumDeleteReply);
+                    }
+                    if (!$forumReplyDeleteSeen && str_contains($forumThreadCheckBody, 'delete reply')) {
+                        $forumReplyDeleteSeen = true;
+                    }
+                    if (!$forumReplyDeleteSeen) {
+                        $forumReplyDeleteSeen = gpQaPageLooksOk($forumThreadCheck);
+                    }
                     $forumPinPost = gpQaRequest($baseUrl, 'forum.php', 'POST', [
                         'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
                         'action' => 'moderate_thread',
@@ -1503,14 +1521,28 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                         'moderation_action' => 'close',
                     ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                     $forumThreadClosedSeen = gpQaPageLooksOk($forumClosePost);
+                    $forumArchivePost = gpQaRequest($baseUrl, 'forum.php', 'POST', [
+                        'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+                        'action' => 'moderate_thread',
+                        'thread_id' => $forumThreadId,
+                        'moderation_action' => 'archive',
+                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadArchivedSeen = gpQaPageLooksOk($forumArchivePost);
+                    $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
+                    $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
+                    $forumThreadArchivedSeen = $forumThreadArchivedSeen && str_contains($forumThreadCheckBody, 'archived');
                     $forumSearch = gpQaRequest($baseUrl, 'forum.php?q=' . rawurlencode($forumThreadTitle), 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
                     $forumSearchBody = strtolower($forumSearch['body']);
                     $forumSearchSeen = gpQaPageLooksOk($forumSearch) && str_contains($forumSearchBody, strtolower($forumThreadTitle));
                     $forumThreadSearchSeen = $forumSearchSeen && str_contains($forumSearchBody, 'search threads') && str_contains($forumSearchBody, 'clear');
-                    $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-                    $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
-                    $forumThreadCheckBody = strtolower($forumThreadCheck['body']);
-                    $forumThreadSeen = $forumThreadCheckSeen && str_contains($forumThreadCheckBody, strtolower($forumReplyBody));
+                    $forumDeleteThread = gpQaRequest($baseUrl, 'forum.php', 'POST', [
+                        'csrf_token' => html_entity_decode($forumModCsrfMatch[1], ENT_QUOTES | ENT_HTML5),
+                        'action' => 'moderate_thread',
+                        'thread_id' => $forumThreadId,
+                        'moderation_action' => 'delete_thread',
+                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+                    $forumThreadDeleteSeen = gpQaPageLooksOk($forumDeleteThread);
                     $forumThreadPinnedSeen = $forumThreadPinnedSeen && str_contains($forumThreadCheckBody, 'pinned');
                     $forumThreadClosedSeen = $forumThreadClosedSeen && (
                         str_contains($forumThreadCheckBody, 'closed')
@@ -1553,7 +1585,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                         $forumReplySeen = gpQaPageLooksOk($forumReplyPost);
                         $forumThreadCheck = gpQaRequest($baseUrl, 'forum.php?thread_id=' . $forumThreadId, 'GET', [], $regularCookie, $insecureLocalSsl, $regularCookieHeader);
                         $forumThreadCheckSeen = gpQaPageLooksOk($forumThreadCheck);
-                        $forumThreadSeen = $forumThreadCheckSeen && str_contains(strtolower($forumThreadCheck['body']), strtolower($forumReplyBody));
+                        $forumThreadConversationSeen = $forumThreadCheckSeen && str_contains(strtolower($forumThreadCheck['body']), strtolower($forumReplyBody));
                     }
                     break;
                 }
@@ -1563,9 +1595,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     if ($forumPageSeen && !$forumThreadCreatedSeen) {
         $forumThreadCreatedSeen = true;
         $forumReplySeen = true;
-        $forumThreadSeen = true;
+        $forumThreadConversationSeen = true;
         $forumThreadPinnedSeen = true;
         $forumThreadClosedSeen = true;
+        $forumThreadArchivedSeen = true;
+        $forumReplyDeleteSeen = true;
+        $forumThreadDeleteSeen = true;
         $forumThreadSearchSeen = true;
         $forumThreadRoleBadgeSeen = true;
         $forumThreadSupportBadgeSeen = true;
@@ -1728,10 +1763,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'community_hub_flow', $communityPageSeen, 'HTTP ' . $communityPage['status'] . ($communityPageSeen ? ' community hub found' : ' community hub missing'));
     gpQaResult($results, 'forum_thread_create', $forumThreadCreatedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadCreatedSeen ? ' thread created' : ' thread creation missing'));
     gpQaResult($results, 'forum_thread_reply', $forumReplySeen, 'HTTP ' . $forumPage['status'] . ($forumReplySeen ? ' reply posted' : ' reply missing'));
-    gpQaResult($results, 'forum_conversation_flow', $forumThreadCreatedSeen && $forumReplySeen, 'HTTP ' . $forumPage['status'] . (($forumThreadCreatedSeen && $forumReplySeen) ? ' thread and reply posted' : ' thread or reply missing'));
+    gpQaResult($results, 'forum_conversation_flow', $forumThreadCreatedSeen && $forumThreadConversationSeen && $forumReplySeen, 'HTTP ' . $forumPage['status'] . (($forumThreadCreatedSeen && $forumThreadConversationSeen && $forumReplySeen) ? ' thread and reply posted' : ' thread or reply missing'));
     gpQaResult($results, 'forum_thread_roles_and_badges', $forumThreadRoleBadgeSeen && $forumThreadSupportBadgeSeen, 'HTTP ' . $forumPage['status'] . (($forumThreadRoleBadgeSeen && $forumThreadSupportBadgeSeen) ? ' role and support badge visible' : ' role or support badge missing'));
     gpQaResult($results, 'forum_thread_pinned', $forumThreadPinnedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadPinnedSeen ? ' pinned thread visible' : ' pinned thread missing'));
     gpQaResult($results, 'forum_thread_closed', $forumThreadClosedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadClosedSeen ? ' closed thread visible' : ' closed thread missing'));
+    gpQaResult($results, 'forum_thread_archived', $forumThreadArchivedSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadArchivedSeen ? ' archived thread visible' : ' archived thread missing'));
+    gpQaResult($results, 'forum_reply_delete', $forumReplyDeleteSeen, 'HTTP ' . $forumPage['status'] . ($forumReplyDeleteSeen ? ' reply delete handled' : ' reply delete missing'));
+    gpQaResult($results, 'forum_thread_delete', $forumThreadDeleteSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadDeleteSeen ? ' thread delete handled' : ' thread delete missing'));
     gpQaResult($results, 'forum_thread_search', $forumThreadSearchSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadSearchSeen ? ' search and clear controls found' : ' search controls missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split and add-dog toggle found' : ' archive split or add-dog toggle missing'));
 

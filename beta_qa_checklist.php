@@ -100,12 +100,17 @@ function applyFilter(){const q=(search?search.value:'').trim().toLowerCase();con
 async function loadRemote(){state=readLocal();if(notes)notes.value=localStorage.getItem(NOTES_KEY)||'';applyState();try{const res=await fetch(STATE_URL,{credentials:'same-origin'});const data=await res.json();if(data&&data.ok){state=data.checked_items||{};Object.keys(state).forEach(function(key){if(!document.querySelector('[data-item-id="'+CSS.escape(key)+'"]'))delete state[key];});if(notes)notes.value=data.notes||'';writeLocal();applyState();setStatus(data.updated_at?'Saved to GuidePaw account. Last update: '+data.updated_at:'Ready. Progress will save to your GuidePaw account.','saved');}else{setStatus('Using browser-only checklist storage.','error');}}catch(e){setStatus('Offline or save endpoint unavailable. Using browser-only checklist storage.','error');}}
 async function saveRemote(){writeLocal();setStatus('Saving checklist…','');try{const res=await fetch(STATE_URL,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({checked_items:state,notes:notes?notes.value:''})});const data=await res.json();if(data&&data.ok){setStatus('Saved to GuidePaw account.','saved');}else{setStatus('Could not save to account. Browser copy saved.','error');}}catch(e){setStatus('Could not save to account. Browser copy saved.','error');}}
 function queueSave(){writeLocal();window.clearTimeout(saveTimer);saveTimer=window.setTimeout(saveRemote,450);}
-checks.forEach(cb=>cb.addEventListener('change',()=>{const item=cb.closest('[data-qa-item]');state[item.dataset.itemId]=cb.checked;if(!cb.checked)delete state[item.dataset.itemId];applyState();queueSave();}));
+function flushSave(){writeLocal();window.clearTimeout(saveTimer);if(navigator.sendBeacon){try{const payload=JSON.stringify({checked_items:state,notes:notes?notes.value:''});const blob=new Blob([payload],{type:'application/json'});navigator.sendBeacon(STATE_URL,blob);setStatus('Saved to GuidePaw account.','saved');return;}catch(e){}}
+    saveRemote();
+}
+checks.forEach(cb=>cb.addEventListener('change',()=>{const item=cb.closest('[data-qa-item]');state[item.dataset.itemId]=cb.checked;if(!cb.checked)delete state[item.dataset.itemId];applyState();flushSave();}));
 if(search)search.addEventListener('input',applyFilter);if(filter)filter.addEventListener('change',applyFilter);
 const reset=document.getElementById('qaReset');if(reset)reset.addEventListener('click',()=>{if(confirm('Clear visible saved checklist checks for this account/browser?')){state={};localStorage.removeItem(STORAGE_KEY);applyState();queueSave();}});
 const expand=document.getElementById('qaExpand');if(expand)expand.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});
 const printBtn=document.getElementById('qaPrint');if(printBtn)printBtn.addEventListener('click',()=>window.print());
 if(notes)notes.addEventListener('input',queueSave);
+window.addEventListener('pagehide', flushSave);
+window.addEventListener('beforeunload', flushSave);
 loadRemote();
 })();
 </script>

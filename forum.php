@@ -22,6 +22,11 @@ function forumCanModerateThread(string $role): bool
     return in_array($role, ['master_admin', 'basic_admin', 'moderator'], true);
 }
 
+function forumCanDeleteContent(string $role): bool
+{
+    return forumCanModerateThread($role);
+}
+
 function forumRoleBadgeClass(string $role): string
 {
     return match ($role) {
@@ -72,8 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $thread = gpCommunityForumGetThread($pdo, $replyThreadId);
         if (!$thread) {
             $errors[] = 'Thread not found.';
-        } elseif (($thread['is_locked'] ?? false) && !forumCanModerateThread($currentRole)) {
-            $errors[] = 'This thread is locked.';
+        } elseif (!empty($thread['is_archived'])) {
+            $errors[] = 'This thread is archived.';
+        } elseif (!empty($thread['is_locked'])) {
+            $errors[] = 'This thread is closed.';
         } elseif ($replyBody === '') {
             $errors[] = 'Reply text is required.';
         } else {
@@ -103,11 +110,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($moderationAction === 'open') {
                 gpCommunityForumSetLocked($pdo, $moderateThreadId, false);
                 $message = 'Thread reopened.';
+            } elseif ($moderationAction === 'archive') {
+                gpCommunityForumSetArchived($pdo, $moderateThreadId, true);
+                $message = 'Thread archived.';
+            } elseif ($moderationAction === 'unarchive') {
+                gpCommunityForumSetArchived($pdo, $moderateThreadId, false);
+                $message = 'Thread restored.';
+            } elseif ($moderationAction === 'delete_thread') {
+                gpCommunityForumDeleteThread($pdo, $moderateThreadId);
+                header('Location: forum.php?msg=thread_deleted');
+                exit;
             } else {
                 $errors[] = 'Unknown moderation action.';
             }
             if (!$errors) {
                 header('Location: forum.php?thread_id=' . $moderateThreadId . '&msg=' . rawurlencode($message));
+                exit;
+            }
+        }
+    } elseif ($action === 'delete_reply') {
+        $replyId = (int) ($_POST['reply_id'] ?? 0);
+        $replyThreadId = (int) ($_POST['thread_id'] ?? 0);
+        if (!forumCanDeleteContent($currentRole)) {
+            $errors[] = 'Moderation access required.';
+        } else {
+            $thread = gpCommunityForumGetThread($pdo, $replyThreadId);
+            if (!$thread) {
+                $errors[] = 'Thread not found.';
+            } else {
+                gpCommunityForumDeleteReply($pdo, $replyId);
+                header('Location: forum.php?thread_id=' . $replyThreadId . '&msg=reply_deleted');
                 exit;
             }
         }
@@ -118,6 +150,10 @@ if (($_GET['msg'] ?? '') === 'thread_created') {
     $message = 'Thread posted.';
 } elseif (($_GET['msg'] ?? '') === 'replied') {
     $message = 'Reply posted.';
+} elseif (($_GET['msg'] ?? '') === 'reply_deleted') {
+    $message = 'Reply deleted.';
+} elseif (($_GET['msg'] ?? '') === 'thread_deleted') {
+    $message = 'Thread deleted.';
 } elseif (($_GET['msg'] ?? '') !== '') {
     $message = ucwords(str_replace('_', ' ', (string) $_GET['msg']));
 }
@@ -225,6 +261,7 @@ $categories = gpCommunityForumCategories();
                                     <div class="d-flex gap-1 flex-wrap justify-content-end">
                                         <?php if (!empty($item['is_pinned'])): ?><span class="badge text-bg-warning">Pinned</span><?php endif; ?>
                                         <?php if (!empty($item['is_locked'])): ?><span class="badge text-bg-secondary">Closed</span><?php endif; ?>
+                                        <?php if (!empty($item['is_archived'])): ?><span class="badge text-bg-dark">Archived</span><?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="small text-muted d-flex flex-wrap gap-1 align-items-center">
@@ -272,6 +309,7 @@ $categories = gpCommunityForumCategories();
                             <div class="d-flex flex-column align-items-end gap-2">
                                 <?php if (!empty($thread['is_pinned'])): ?><span class="badge text-bg-warning align-self-start">Pinned</span><?php endif; ?>
                                 <?php if (!empty($thread['is_locked'])): ?><span class="badge bg-secondary align-self-start">Closed</span><?php endif; ?>
+                                <?php if (!empty($thread['is_archived'])): ?><span class="badge text-bg-dark align-self-start">Archived</span><?php endif; ?>
                                 <?php if (forumCanModerateThread($currentRole)): ?>
                                     <form method="post" class="d-flex gap-2 flex-wrap justify-content-end">
                                         <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
@@ -287,11 +325,19 @@ $categories = gpCommunityForumCategories();
                                         <?php else: ?>
                                             <button class="btn btn-sm btn-outline-secondary" name="moderation_action" value="open">Reopen</button>
                                         <?php endif; ?>
+                                        <?php if (empty($thread['is_archived'])): ?>
+                                            <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="archive">Archive</button>
+                                        <?php else: ?>
+                                            <button class="btn btn-sm btn-outline-dark" name="moderation_action" value="unarchive">Restore</button>
+                                        <?php endif; ?>
+                                        <button class="btn btn-sm btn-outline-danger" name="moderation_action" value="delete_thread" onclick="return confirm('Delete this thread and all replies?');">Delete Thread</button>
                                     </form>
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <?php if (!empty($thread['is_locked']) && !forumCanModerateThread($currentRole)): ?>
+                        <?php if (!empty($thread['is_archived'])): ?>
+                            <div class="alert alert-dark">This thread is archived.</div>
+                        <?php elseif (!empty($thread['is_locked'])): ?>
                             <div class="alert alert-secondary">This thread is closed.</div>
                             <?php endif; ?>
                         <div class="post-card mb-3"><?= nl2br(e((string) $thread['body'])) ?></div>
@@ -316,14 +362,25 @@ $categories = gpCommunityForumCategories();
                                                     <span class="small text-muted"><?= e($postBadge['label']) ?></span>
                                                 <?php endif; ?>
                                             </div>
-                                            <span class="forum-muted"><?= e(date('M j, Y g:i A', strtotime((string) $post['created_at']))) ?></span>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="forum-muted"><?= e(date('M j, Y g:i A', strtotime((string) $post['created_at']))) ?></span>
+                                                <?php if (forumCanDeleteContent($currentRole)): ?>
+                                                    <form method="post" onsubmit="return confirm('Delete this reply?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
+                                                        <input type="hidden" name="action" value="delete_reply">
+                                                        <input type="hidden" name="thread_id" value="<?= (int) $thread['id'] ?>">
+                                                        <input type="hidden" name="reply_id" value="<?= (int) $post['id'] ?>">
+                                                        <button class="btn btn-sm btn-outline-danger" aria-label="Delete reply">Delete Reply</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                         <div><?= nl2br(e((string) $post['body'])) ?></div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
-                        <?php if (empty($thread['is_locked']) || forumCanModerateThread($currentRole)): ?>
+                        <?php if (empty($thread['is_locked']) && empty($thread['is_archived'])): ?>
                             <form method="post" class="vstack gap-3">
                                 <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
                                 <input type="hidden" name="action" value="reply_thread">
@@ -335,7 +392,7 @@ $categories = gpCommunityForumCategories();
                                 <button class="btn btn-outline-primary">Post reply</button>
                             </form>
                         <?php else: ?>
-                            <div class="alert alert-warning mb-0">This thread is closed.</div>
+                            <div class="alert alert-warning mb-0"><?= !empty($thread['is_archived']) ? 'This thread is archived.' : 'This thread is closed.' ?></div>
                         <?php endif; ?>
                     <?php else: ?>
                         <div class="forum-muted">Choose a thread on the left or start a new one.</div>
