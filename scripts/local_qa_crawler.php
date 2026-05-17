@@ -1702,6 +1702,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($dogProfileBody, 'dog profile saved')
             );
         gpQaResult($results, 'dog_profile_page_loads', $dogProfileLooksReady, 'HTTP ' . $dogProfile['status'] . ($dogProfileLooksReady ? ' dog profile content found' : ' dog profile content missing'));
+        $dogProfileSupportBadgeSeen = gpQaPageLooksOk($dogProfile)
+            && (
+                str_contains($dogProfileBody, 'support badge')
+                || str_contains($dogProfileBody, 'platinum supporter')
+                || str_contains($dogProfileBody, 'bronze supporter')
+            );
+        gpQaResult($results, 'dog_profile_support_badge_visible', $dogProfileSupportBadgeSeen, 'HTTP ' . $dogProfile['status'] . ($dogProfileSupportBadgeSeen ? ' support badge found' : ' support badge missing'));
         $qrTrackingPageSeen = false;
         if (preg_match('/href="([^"]*public_dog_profile\.php\?dog=\d+&token=[^"]+)"/i', $dogProfileHtml, $pm)) {
             $publicProfileUrl = $pm[1];
@@ -1711,7 +1718,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $publicProfileHtml = html_entity_decode($publicProfilePage['body'], ENT_QUOTES | ENT_HTML5);
             $publicProfileQuestionnaireSeen = str_contains($publicProfileBody, 'breed questionnaire');
             $publicProfileAirTravelSeen = str_contains($publicProfileBody, 'air travel rights');
+            $publicProfileSupportBadgeSeen = str_contains($publicProfileBody, 'support badge')
+                || str_contains($publicProfileBody, 'platinum supporter')
+                || str_contains($publicProfileBody, 'bronze supporter');
             gpQaResult($results, 'public_dog_profile_page_loads', $publicProfileStatus === 200, 'HTTP ' . $publicProfileStatus . ($publicProfileStatus === 200 ? ' public dog profile found' : ' public dog profile missing'));
+            gpQaResult($results, 'public_dog_profile_support_badge_visible', $publicProfileSupportBadgeSeen, 'HTTP ' . $publicProfileStatus . ($publicProfileSupportBadgeSeen ? ' support badge found' : ' support badge missing'));
             $qrTrackingPage = gpQaRequest($baseUrl, 'qr_tracking.php?dog_id=' . (int) $m[1], 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
             $qrTrackingBody = strtolower($qrTrackingPage['body']);
             $qrTrackingPageSeen = gpQaPageLooksOk($qrTrackingPage)

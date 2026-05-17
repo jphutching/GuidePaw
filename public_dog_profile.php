@@ -4,6 +4,7 @@ require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
 require_once 'includes/qr_tracking.php';
 require_once 'includes/app_config.php';
+require_once 'includes/support_badges.php';
 
 $dogId = isset($_GET['dog']) ? (int) $_GET['dog'] : 0;
 $token = trim((string) ($_GET['token'] ?? ''));
@@ -50,6 +51,7 @@ if (!$dog) {
 $ownerId = gpDogOwnerIdFromPublicDog($dog);
 $user = $ownerId > 0 ? gpFetchUserPublicContact($pdo, $ownerId) : [];
 $publicContact = gpDogPublicContactDefaults($pdo, $dog, $user);
+$supportBadge = gpSupportBadgeForUser($pdo, $user);
 
 $vet = null;
 try {
@@ -98,6 +100,8 @@ body { background: #f1f5f9; color:#0f172a; }
 .warning-note { border-left: 4px solid #dc3545; background:#fff5f5; border-radius:14px; padding:.85rem; }
 .found-card { border: 1px solid #bfdbfe; background: #eff6ff; }
 .inherited-hint { font-size:.78rem; color:#64748b; margin-top:.35rem; }
+.support-badge-card { border:1px solid rgba(59,130,246,.16); background:#fff; border-radius:22px; padding:1rem; box-shadow:0 8px 22px rgba(15,23,42,.08); }
+.support-badge-card img { width:96px; height:96px; object-fit:contain; flex:0 0 auto; }
 </style>
 </head>
 <body>
@@ -116,6 +120,27 @@ body { background: #f1f5f9; color:#0f172a; }
             </div>
         </div>
     </section>
+
+    <?php if ($supportBadge): ?>
+        <section class="support-badge-card mb-3">
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <img src="<?= e($supportBadge['image']) ?>" alt="<?= e($supportBadge['label']) ?>">
+                <div class="flex-grow-1">
+                    <div class="label mb-1">Support badge</div>
+                    <h2 class="h5 mb-1"><?= e($supportBadge['label']) ?></h2>
+                    <div class="text-muted small">
+                        <?php if (!empty($supportBadge['lifetime'])): ?>
+                            Active for life.
+                        <?php elseif (!empty($supportBadge['expires_at'])): ?>
+                            Active until <?= e((string) $supportBadge['expires_at']) ?>.
+                        <?php else: ?>
+                            Active support badge.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="cardx found-card mb-3">
         <h2 class="h5 mb-2">Found or saw <?= e($dogName) ?>?</h2>

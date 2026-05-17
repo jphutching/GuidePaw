@@ -49,6 +49,8 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'handler_photo_upload', 'text' => 'Upload/crop/save handler profile picture.', 'expected' => 'Preview updates and save succeeds.'],
                 ['id' => 'handler_photo_persists', 'text' => 'Handler profile picture persists after logout/login and page refresh.', 'expected' => 'Image still displays because new photos are stored in database.'],
                 ['id' => 'handler_defaults_inherited', 'text' => 'Handler defaults are inherited by dog QR/public profile.', 'expected' => 'Dog profile does not require retyping shared handler info.'],
+                ['id' => 'dog_profile_support_badge', 'text' => 'Dog Profile shows the support badge on the private profile page.', 'expected' => 'The active badge image and label appear above the QR profile card.'],
+                ['id' => 'public_profile_support_badge', 'text' => 'Public QR profile shows the support badge.', 'expected' => 'Visitors can see the badge on the public profile without opening admin pages.'],
             ],
         ],
         [

@@ -8,6 +8,7 @@ require_once 'includes/training_data.php';
 require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
 require_once 'includes/profile_image_tools.php';
+require_once 'includes/support_badges.php';
 checkLogin();
 
 function gpEnsureDogPublicProfileColumns(PDO $pdo): void
@@ -188,6 +189,7 @@ if (!$dog) {
     exit;
 }
 $publicContact = gpDogPublicContactDefaults($pdo, $dog);
+$supportBadge = gpSupportBadgeForUser($pdo, $publicContact['owner'] ?? []);
 $csrf = generateCsrfToken();
 $publicUrl = publicDogProfileUrl((int) $dog['id']);
 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($publicUrl);
@@ -212,7 +214,7 @@ $telegramEnabled = in_array(strtolower(trim((string) gpEnv('FOUND_DOG_NOTIFY_TEL
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>
-.breed-card{border:1px solid #dfe3e8;border-radius:12px;background:#f8fafc;padding:12px;}.breed-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#6c757d;}.breed-search-results{border:1px solid #dfe3e8;border-radius:12px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.12);max-height:280px;overflow-y:auto;margin-top:6px;position:relative;z-index:40;}.breed-search-option{display:block;width:100%;text-align:left;border:0;background:#fff;padding:11px 12px;border-bottom:1px solid #eef2f7;}.breed-search-option:last-child{border-bottom:0;}.breed-search-option:hover,.breed-search-option:focus{background:#f8fafc;outline:0;}.breed-search-name{display:block;font-weight:600;}.breed-search-meta{display:block;color:#6c757d;font-size:.82rem;margin-top:2px;}.breed-search-empty{padding:11px 12px;color:#6c757d;}.profile-photo-preview{width:86px;height:86px;border-radius:18px;object-fit:cover;background:#eef2f7;border:1px solid #dbe3ef;}.qr-card{text-align:center;}.qr-card img{max-width:260px;width:100%;height:auto;border:1px solid #e5e7eb;padding:.5rem;background:#fff;border-radius:14px;}.crop-canvas{width:100%;max-width:260px;border-radius:16px;border:1px solid #dbe3ef;touch-action:none;background:#111827;}.crop-help{font-size:.82rem;color:#6b7280;}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}.privacy-badge{border-radius:999px;padding:.35rem .65rem;font-size:.75rem;font-weight:850;letter-spacing:.04em;text-transform:uppercase}.privacy-private{background:#eef2ff;color:#3730a3}.privacy-public{background:#dcfce7;color:#166534}.public-warning{border:1px solid #bbf7d0;background:#f0fdf4;border-radius:14px;padding:.85rem;color:#166534}.handler-defaults{border:1px dashed #bfdbfe;background:#eff6ff;border-radius:14px;padding:.85rem;}.contact-route{border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:.95rem}.route-line{display:flex;justify-content:space-between;gap:1rem;border-top:1px solid #dbeafe;padding:.55rem 0}.route-line:first-child{border-top:0}.source-pill{display:inline-block;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.72rem;font-weight:850;padding:.18rem .5rem;margin-left:.25rem}.source-pill.missing{background:#fef3c7;color:#92400e}.inherited-note{font-size:.82rem;color:#075985;margin-top:.25rem}.route-value{text-align:right;word-break:break-word}
+.breed-card{border:1px solid #dfe3e8;border-radius:12px;background:#f8fafc;padding:12px;}.breed-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#6c757d;}.breed-search-results{border:1px solid #dfe3e8;border-radius:12px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.12);max-height:280px;overflow-y:auto;margin-top:6px;position:relative;z-index:40;}.breed-search-option{display:block;width:100%;text-align:left;border:0;background:#fff;padding:11px 12px;border-bottom:1px solid #eef2f7;}.breed-search-option:last-child{border-bottom:0;}.breed-search-option:hover,.breed-search-option:focus{background:#f8fafc;outline:0;}.breed-search-name{display:block;font-weight:600;}.breed-search-meta{display:block;color:#6c757d;font-size:.82rem;margin-top:2px;}.breed-search-empty{padding:11px 12px;color:#6c757d;}.profile-photo-preview{width:86px;height:86px;border-radius:18px;object-fit:cover;background:#eef2f7;border:1px solid #dbe3ef;}.qr-card{text-align:center;}.qr-card img{max-width:260px;width:100%;height:auto;border:1px solid #e5e7eb;padding:.5rem;background:#fff;border-radius:14px;}.crop-canvas{width:100%;max-width:260px;border-radius:16px;border:1px solid #dbe3ef;touch-action:none;background:#111827;}.crop-help{font-size:.82rem;color:#6b7280;}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}.privacy-badge{border-radius:999px;padding:.35rem .65rem;font-size:.75rem;font-weight:850;letter-spacing:.04em;text-transform:uppercase}.privacy-private{background:#eef2ff;color:#3730a3}.privacy-public{background:#dcfce7;color:#166534}.public-warning{border:1px solid #bbf7d0;background:#f0fdf4;border-radius:14px;padding:.85rem;color:#166534}.handler-defaults{border:1px dashed #bfdbfe;background:#eff6ff;border-radius:14px;padding:.85rem;}.contact-route{border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:.95rem}.route-line{display:flex;justify-content:space-between;gap:1rem;border-top:1px solid #dbeafe;padding:.55rem 0}.route-line:first-child{border-top:0}.source-pill{display:inline-block;border-radius:999px;background:#e0f2fe;color:#075985;font-size:.72rem;font-weight:850;padding:.18rem .5rem;margin-left:.25rem}.source-pill.missing{background:#fef3c7;color:#92400e}.inherited-note{font-size:.82rem;color:#075985;margin-top:.25rem}.route-value{text-align:right;word-break:break-word}.support-badge-card{border:1px solid rgba(59,130,246,.16);background:#eff6ff;border-radius:18px;padding:1rem;box-shadow:0 6px 16px rgba(15,23,42,.05);margin-bottom:1rem}.support-badge-card img{width:108px;height:108px;object-fit:contain;flex:0 0 auto}
 </style>
 </head>
 <body class="pb-5">
@@ -223,6 +225,27 @@ $telegramEnabled = in_array(strtolower(trim((string) gpEnv('FOUND_DOG_NOTIFY_TEL
     <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-0">🪪 <?= e($dog['name']) ?></h2><small class="text-muted">Owner: <?= e($dog['owner_username']) ?></small></div><div class="d-flex gap-2"><a href="dogs.php" class="btn btn-outline-secondary btn-sm">Dogs</a><a href="index.php?set_dog=<?= (int) $dog['id'] ?>" class="btn btn-outline-primary btn-sm">Make Active</a></div></div>
     <?php if (($_GET['status'] ?? '') === 'handler_defaults'): ?><div class="alert alert-success">Handler profile defaults applied to this dog’s public QR profile.</div><?php elseif (!empty($_GET['status'])): ?><div class="alert alert-success">Dog profile saved.</div><?php endif; ?>
     <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div><?php endif; ?>
+
+    <?php if ($supportBadge): ?>
+        <section class="support-badge-card">
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <img src="<?= e($supportBadge['image']) ?>" alt="<?= e($supportBadge['label']) ?>">
+                <div class="flex-grow-1">
+                    <div class="text-uppercase small fw-bold text-primary mb-1">Support badge</div>
+                    <h3 class="h5 mb-1"><?= e($supportBadge['label']) ?></h3>
+                    <div class="small text-muted">
+                        <?php if (!empty($supportBadge['lifetime'])): ?>
+                            Active for life.
+                        <?php elseif (!empty($supportBadge['expires_at'])): ?>
+                            Active until <?= e((string) $supportBadge['expires_at']) ?>.
+                        <?php else: ?>
+                            Active support badge.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <div class="card shadow-sm mb-3 qr-card"><div class="card-body"><h3 class="h5">Public QR Profile</h3><p class="text-muted small mb-3">This unique QR code opens a public, no-login contact page for this dog only.</p><img src="<?= e($qrUrl) ?>" alt="Public QR profile for <?= e($dog['name']) ?>"><div class="d-grid gap-2 mt-3"><a class="btn btn-outline-primary" href="<?= e($publicUrl) ?>" target="_blank" rel="noopener">Preview Public Profile</a><a class="btn btn-outline-success" href="found_dog_notification_test.php?dog_id=<?= (int) $dog['id'] ?>">Test Found-Dog Alert</a><a class="btn btn-outline-dark" href="qr_tracking.php?dog_id=<?= (int) $dog['id'] ?>">QR Tracking</a><button type="button" class="btn btn-outline-secondary" id="copyPublicUrl">Copy Public Link</button></div><div class="small text-muted mt-2" id="copyStatus"></div></div></div>
 

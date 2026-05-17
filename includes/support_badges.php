@@ -143,7 +143,7 @@ if (!function_exists('gpSupportBadgeSpecialLifetimeUser')) {
     {
         $username = strtolower(trim((string) ($user['username'] ?? '')));
         $email = strtolower(trim((string) ($user['email'] ?? '')));
-        return $username === 'admin' || in_array($email, ['jphuthing@gmail.com', 'jphutching@gmail.com'], true);
+        return $username === 'admin' || $email === 'jphutching@gmail.com';
     }
 }
 
