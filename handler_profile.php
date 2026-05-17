@@ -282,7 +282,7 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
                 <div class="col-md-6"><label class="form-label">Display Name <span class="req">*</span></label><input type="text" name="display_name" class="form-control" value="<?= e($user['display_name'] ?? ($user['username'] ?? '')) ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
                 <div class="col-12">
-                    <label class="form-label">Home Address</label>
+                    <label class="form-label">Address</label>
                     <div class="form-text mb-2">Enter the address as separate fields so GuidePaw can reuse it cleanly across QR profiles and contact defaults.</div>
                 </div>
                 <div class="col-md-6"><label class="form-label">Street <span class="req">*</span></label><input type="text" name="home_street" class="form-control" value="<?= e($homeStreetValue) ?>" placeholder="Street address" required></div>
