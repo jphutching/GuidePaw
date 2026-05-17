@@ -100,14 +100,11 @@ function h($value): string {
                 <strong>Ready when you are</strong>
                 <div class="small text-muted mt-1">Mark setup complete after you have checked the profile and added a dog. You can always open this page again later.</div>
             </div>
-            <div class="d-flex gap-2 flex-wrap justify-content-end">
-                <a class="btn btn-outline-secondary" href="index.php">Dashboard</a>
-                <form method="post" class="m-0">
-                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                    <input type="hidden" name="return_to" value="<?= h($returnTo) ?>">
-                    <button class="btn btn-primary">Finish setup</button>
-                </form>
-            </div>
+            <form method="post" class="m-0">
+                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                <input type="hidden" name="return_to" value="<?= h($returnTo) ?>">
+                <button class="btn btn-primary">Finish setup</button>
+            </form>
         </div>
     </div>
 
