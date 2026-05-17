@@ -70,41 +70,26 @@ function h($value): string {
         <?php endif; ?>
     </div>
 
-    <div class="notice mb-3">
-        <strong>Quick path</strong>
-        <div class="small mt-1">Finish your handler details, add your first dog, then go to the dashboard. You can come back here later from the login flow if you need a refresher.</div>
-    </div>
-
     <div class="row g-3">
         <div class="col-md-4">
             <div class="step h-100">
                 <strong>1. Confirm your profile</strong>
-                <div class="meta">This keeps your public QR card, lost-dog contact info, and ADA fallback state ready.</div>
+                <div class="meta">Keeps your public contact info and ADA fallback state ready.</div>
                 <div class="step-actions">
                     <a class="btn btn-outline-secondary btn-sm" href="handler_profile.php?return_to=<?= h('onboarding_setup.php?preview=1') ?>">Open profile</a>
                 </div>
-                <div class="small text-muted mt-2">Home address, phone, email, and home state are the main items.</div>
+                <div class="small text-muted mt-2">Address, phone, email, and home state are the main items.</div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="step h-100">
                 <strong>2. Add or review your dog</strong>
-                <div class="meta">GuidePaw works around an active dog. Add one if you do not have one yet.</div>
+                <div class="meta">GuidePaw works around an active dog.</div>
                 <div class="step-actions">
                     <a class="btn btn-outline-secondary btn-sm" href="dogs.php">Open dogs</a>
                     <?php if ($activeDog): ?><a class="btn btn-outline-primary btn-sm" href="index.php?set_dog=<?= (int) $activeDog['id'] ?>">Use <?= h($activeDog['name']) ?></a><?php endif; ?>
                 </div>
                 <div class="small text-muted mt-2"><?php if ($dogs): ?><?= count($dogs) ?> dog<?= count($dogs) === 1 ? '' : 's' ?> available.<?php else: ?>No dogs yet. That is fine for the walkthrough.<?php endif; ?></div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="step h-100">
-                <strong>3. Open the home screen</strong>
-                <div class="meta">The dashboard keeps the quick actions simple: session, log, training, ADA, and alerts.</div>
-                <div class="step-actions">
-                    <a class="btn btn-outline-primary btn-sm" href="index.php">Go to dashboard</a>
-                </div>
-                <div class="small text-muted mt-2">Everything else stays in the menu.</div>
             </div>
         </div>
     </div>
@@ -115,11 +100,14 @@ function h($value): string {
                 <strong>Ready when you are</strong>
                 <div class="small text-muted mt-1">Mark setup complete after you have checked the profile and added a dog. You can always open this page again later.</div>
             </div>
-            <form method="post" class="m-0">
-                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                <input type="hidden" name="return_to" value="<?= h($returnTo) ?>">
-                <button class="btn btn-primary">Finish setup</button>
-            </form>
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
+                <a class="btn btn-outline-secondary" href="index.php">Dashboard</a>
+                <form method="post" class="m-0">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                    <input type="hidden" name="return_to" value="<?= h($returnTo) ?>">
+                    <button class="btn btn-primary">Finish setup</button>
+                </form>
+            </div>
         </div>
     </div>
 
