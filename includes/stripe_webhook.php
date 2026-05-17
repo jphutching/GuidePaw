@@ -285,3 +285,99 @@ if (!function_exists('gpStripeSupportRecentEvents')) {
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 }
+
+if (!function_exists('gpStripeSupportRevenueSummary')) {
+    function gpStripeSupportRevenueSummary(PDO $pdo): array
+    {
+        if (!gpStripeSupportPaymentsTableExists($pdo)) {
+            return [
+                'payment_count' => 0,
+                'total_cents' => 0,
+                'one_time_cents' => 0,
+                'monthly_cents' => 0,
+                'last_30d_cents' => 0,
+            ];
+        }
+
+        $row = $pdo->query("
+            SELECT
+                COUNT(*) AS payment_count,
+                COALESCE(SUM(amount_total_cents), 0) AS total_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'one_time' THEN amount_total_cents ELSE 0 END), 0) AS one_time_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'monthly' THEN amount_total_cents ELSE 0 END), 0) AS monthly_cents,
+                COALESCE(SUM(CASE WHEN updated_at >= (CURRENT_TIMESTAMP - INTERVAL '30 days') THEN amount_total_cents ELSE 0 END), 0) AS last_30d_cents
+            FROM support_funding_events
+        ")->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'payment_count' => (int) ($row['payment_count'] ?? 0),
+            'total_cents' => (int) ($row['total_cents'] ?? 0),
+            'one_time_cents' => (int) ($row['one_time_cents'] ?? 0),
+            'monthly_cents' => (int) ($row['monthly_cents'] ?? 0),
+            'last_30d_cents' => (int) ($row['last_30d_cents'] ?? 0),
+        ];
+    }
+}
+
+if (!function_exists('gpStripeSupportUserSummaries')) {
+    function gpStripeSupportUserSummaries(PDO $pdo, array $userIds): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn(int $id): bool => $id > 0)));
+        if (!$userIds || !gpStripeSupportPaymentsTableExists($pdo)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $stmt = $pdo->prepare("
+            SELECT
+                user_id,
+                COUNT(*) AS payment_count,
+                COALESCE(SUM(amount_total_cents), 0) AS total_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'one_time' THEN amount_total_cents ELSE 0 END), 0) AS one_time_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'monthly' THEN amount_total_cents ELSE 0 END), 0) AS monthly_cents,
+                MAX(updated_at) AS last_support_at
+            FROM support_funding_events
+            WHERE user_id IN ({$placeholders})
+            GROUP BY user_id
+        ");
+        $stmt->execute($userIds);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $summaries = [];
+        foreach ($rows as $row) {
+            $userId = (int) ($row['user_id'] ?? 0);
+            if ($userId <= 0) {
+                continue;
+            }
+
+            $monthlyCents = (int) ($row['monthly_cents'] ?? 0);
+            $oneTimeCents = (int) ($row['one_time_cents'] ?? 0);
+            $label = $monthlyCents > 0 ? 'Monthly supporter' : ($oneTimeCents > 0 ? 'One-time supporter' : 'Supporter');
+            $detailBits = [];
+            if ((int) ($row['payment_count'] ?? 0) > 1) {
+                $detailBits[] = (string) ((int) $row['payment_count']) . ' payments';
+            } elseif ((int) ($row['payment_count'] ?? 0) === 1) {
+                $detailBits[] = '1 payment';
+            }
+            $totalCents = (int) ($row['total_cents'] ?? 0);
+            if ($totalCents > 0) {
+                $detailBits[] = '$' . number_format($totalCents / 100, 2);
+            }
+            if (!empty($row['last_support_at'])) {
+                $detailBits[] = 'Last: ' . (string) $row['last_support_at'];
+            }
+
+            $summaries[$userId] = [
+                'label' => $label,
+                'payment_count' => (int) ($row['payment_count'] ?? 0),
+                'total_cents' => $totalCents,
+                'one_time_cents' => $oneTimeCents,
+                'monthly_cents' => $monthlyCents,
+                'last_support_at' => (string) ($row['last_support_at'] ?? ''),
+                'detail' => implode(' | ', $detailBits),
+            ];
+        }
+
+        return $summaries;
+    }
+}

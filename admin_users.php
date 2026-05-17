@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/roles.php';
 require_once __DIR__ . '/includes/paywalls.php';
 require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/user_purge.php';
+require_once __DIR__ . '/includes/stripe_webhook.php';
 
 checkLogin();
 if (!currentUserIsAdmin()) {
@@ -78,6 +79,7 @@ $params = [];
 $where = '';
 if ($q !== '') { $where = "WHERE lower(coalesce(username, '')) LIKE lower(?) OR lower(coalesce(email, '')) LIKE lower(?) OR lower(coalesce(full_name, '')) LIKE lower(?)"; $params = ["%{$q}%", "%{$q}%", "%{$q}%"]; }
 $users = auFetchAll($pdo, "SELECT u.id, u.username, u.email, u.full_name, u.phone, u.dog_name, u.is_admin, u.user_role, u.user_tier, COALESCE(u.account_status, 'active') AS account_status, u.deactivated_at, u.created_at, COALESCE((SELECT COUNT(*) FROM dogs d WHERE d.owner_user_id = u.id), 0) AS owned_dog_count FROM users u {$where} ORDER BY u.id DESC LIMIT 250", $params);
+$supportSummaries = gpStripeSupportUserSummaries($pdo, array_map(static fn(array $row): int => (int) ($row['id'] ?? 0), $users));
 $csrf = generateCsrfToken();
 ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Admin User Management | GuidePaw</title><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><link href="styles.css" rel="stylesheet"></head><body class="bg-light pb-5"><?php guidepawBrandHeader(); ?><?php require_once 'includes/beta_banner.php'; ?><?php require_once 'includes/mobile_nav.php'; ?>
@@ -86,9 +88,10 @@ $csrf = generateCsrfToken();
 <div class="alert alert-info"><strong>Roles:</strong> Master admin can manage everything and stays protected. Basic admin can manage admin tools and roles. Moderator can support/review permitted tools. Pro trainer can handle training-focused tools. User can access regular site features. The built-in <code>admin</code> account is protected. Master admin can permanently purge a user and their owned dogs after export if needed.</div>
 <div class="card card-body mb-3"><strong>Role tiers</strong><div class="small text-muted">Master admin &gt; Basic admin &gt; Moderator &gt; Pro trainer &gt; User.</div><div class="small text-muted mt-1">Plans: Pro &gt; Plus &gt; Free.</div></div>
 <form method="get" class="card card-body mb-3"><label class="form-label">Search users</label><div class="input-group"><input class="form-control" name="q" value="<?= e($q) ?>" placeholder="email, username, or name"><button class="btn btn-primary">Search</button><a class="btn btn-outline-secondary" href="admin_users.php">Reset</a></div></form>
-<div class="table-responsive bg-white shadow-sm"><table class="table table-striped align-middle mb-0"><thead><tr><th>ID</th><th>User</th><th>Name / Phone</th><th>Dog</th><th>Status</th><th>Role</th><th>Plan</th><th>Created</th><th style="min-width:760px;">Actions</th></tr></thead><tbody>
+<div class="table-responsive bg-white shadow-sm"><table class="table table-striped align-middle mb-0"><thead><tr><th>ID</th><th>User</th><th>Name / Phone</th><th>Dog</th><th>Status</th><th>Role</th><th>Plan</th><th>Support</th><th>Created</th><th style="min-width:760px;">Actions</th></tr></thead><tbody>
 <?php foreach ($users as $u): ?>
 <?php $label = auUserLabel($u); $role = gpUserRole($u); $protected = auIsBuiltInAdmin($u); $ownedDogCount = (int) ($u['owned_dog_count'] ?? 0); ?>
+<?php $supportSummary = $supportSummaries[(int) $u['id']] ?? null; ?>
 <tr>
     <td><?= (int) $u['id'] ?></td>
     <td><strong><?= e($u['username'] ?? '') ?></strong><?= $protected ? ' <span class="badge text-bg-danger">Protected</span>' : '' ?><br><span class="text-muted"><?= e($u['email'] ?? '') ?></span></td>
@@ -97,6 +100,14 @@ $csrf = generateCsrfToken();
     <td><span class="badge <?= $u['account_status'] === 'active' ? 'bg-success' : 'bg-secondary' ?>"><?= e($u['account_status']) ?></span><?php if ($u['deactivated_at']): ?><br><small><?= e($u['deactivated_at']) ?></small><?php endif; ?></td>
     <td><?= auRoleBadge($role) ?></td>
     <td><?= auTierBadge((string) ($u['user_tier'] ?? 'free')) ?></td>
+    <td>
+        <?php if ($supportSummary): ?>
+            <span class="badge text-bg-success"><?= e($supportSummary['label']) ?></span>
+            <div class="small text-muted mt-1"><?= e($supportSummary['detail']) ?></div>
+        <?php else: ?>
+            <span class="badge text-bg-secondary">No support</span>
+        <?php endif; ?>
+    </td>
     <td><?= e($u['created_at'] ?? '') ?></td>
     <td>
         <div class="d-flex flex-column gap-2">
@@ -167,6 +178,6 @@ $csrf = generateCsrfToken();
 </tr>
 <?php endforeach; ?>
 <?php if (!$users): ?>
-<tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr>
+<tr><td colspan="9" class="text-center text-muted py-4">No users found.</td></tr>
 <?php endif; ?>
 </tbody></table></div></main></body></html>

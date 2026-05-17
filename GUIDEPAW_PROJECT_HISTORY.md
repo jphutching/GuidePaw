@@ -1222,6 +1222,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: create the Stripe webhook endpoint in the Dashboard, point it at /stripe_webhook.php, and set the webhook secret in Render
 
+2026-05-17 — Business costs dashboard and support status
+- Commit(s): pending
+- Files changed: admin_business_costs.php, admin.php, admin_users.php, includes/business_costs.php, includes/mobile_nav.php, includes/stripe_webhook.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, sql/migrations/pgsql/20260517_business_cost_items.sql, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: yes
+- In-progress item changed: no
+- Next recommended step: enter real monthly operating costs for Render, SMTP, SMS, Stripe, and planned expansion items
+
 ## Update log template
 
 When updating this file, add a short note like:
