@@ -776,6 +776,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $businessCostsPageLooksReady = $path === 'admin_business_costs.php'
             ? (
                 str_contains($body, 'business costs')
+                && str_contains($body, 'live provider snapshot')
                 && (str_contains($body, 'current monthly cost') || str_contains($body, 'future monthly expansion'))
             )
             : true;

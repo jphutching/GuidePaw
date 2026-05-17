@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/stripe_webhook.php';
 require_once __DIR__ . '/includes/business_costs.php';
+require_once __DIR__ . '/includes/cost_snapshots.php';
 require_once __DIR__ . '/includes/audit_log.php';
 
 checkLogin();
@@ -22,6 +23,7 @@ function abcMoney(int $cents): string
 gpBusinessCostEnsureSchema($pdo);
 $supportRevenue = gpStripeSupportRevenueSummary($pdo);
 $costSummary = gpBusinessCostSummary($pdo);
+$providerSnapshots = gpBusinessProviderSnapshots();
 $allCostRows = gpBusinessCostRows($pdo);
 $currentCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'current'));
 $futureCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'future'));
@@ -122,6 +124,84 @@ if (($_GET['msg'] ?? '') === 'updated') {
             <div class="col-md-4">
                 <div class="mini">Monthly support total</div>
                 <strong><?= abcMoney((int) $supportRevenue['monthly_cents']) ?></strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel mb-3">
+        <h2 class="h5 mb-2">Live provider snapshot</h2>
+        <div class="mini mb-3">This section pulls live provider data where the API exposes it. The editable ledger below remains the place for costs that are not exposed cleanly by a provider API.</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <?php $twilio = (array) ($providerSnapshots['twilio'] ?? []); ?>
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between gap-2 align-items-start">
+                        <div>
+                            <div class="mini">Twilio SMS</div>
+                            <strong><?= abcEsc((string) ($twilio['label'] ?? 'Twilio SMS')) ?></strong>
+                        </div>
+                        <span class="badge <?= !empty($twilio['connected']) ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= abcEsc((string) ($twilio['status'] ?? 'missing')) ?></span>
+                    </div>
+                    <div class="mt-3">
+                        <div class="mini">This month spend</div>
+                        <strong><?= isset($twilio['monthly_cents']) ? abcMoney((int) $twilio['monthly_cents']) : '—' ?></strong>
+                    </div>
+                    <div class="mt-2">
+                        <div class="mini">Messages</div>
+                        <strong><?= isset($twilio['message_count']) ? number_format((float) $twilio['message_count'], 0) : '—' ?></strong>
+                    </div>
+                    <?php if (!empty($twilio['error'])): ?><div class="mini mt-2 text-danger"><?= abcEsc((string) $twilio['error']) ?></div><?php endif; ?>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <?php $renderSnapshot = (array) ($providerSnapshots['render'] ?? []); ?>
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between gap-2 align-items-start">
+                        <div>
+                            <div class="mini">Render</div>
+                            <strong><?= abcEsc((string) ($renderSnapshot['label'] ?? 'Render')) ?></strong>
+                        </div>
+                        <span class="badge <?= !empty($renderSnapshot['connected']) ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= abcEsc((string) ($renderSnapshot['status'] ?? 'missing')) ?></span>
+                    </div>
+                    <div class="mt-3">
+                        <div class="mini">Services</div>
+                        <strong><?= isset($renderSnapshot['service_count']) ? number_format((int) $renderSnapshot['service_count']) : '—' ?></strong>
+                    </div>
+                    <div class="mt-2">
+                        <div class="mini">Databases</div>
+                        <strong><?= isset($renderSnapshot['postgres_count']) ? number_format((int) $renderSnapshot['postgres_count']) : '—' ?></strong>
+                    </div>
+                    <details class="mt-2">
+                        <summary class="mini">Show plans</summary>
+                        <div class="mt-2 mini">
+                            <?php foreach ((array) ($renderSnapshot['services'] ?? []) as $service): ?>
+                                <div><?= abcEsc((string) ($service['name'] ?? 'service')) ?><?= !empty($service['plan']) ? ' · ' . abcEsc((string) $service['plan']) : '' ?></div>
+                            <?php endforeach; ?>
+                            <?php foreach ((array) ($renderSnapshot['postgres'] ?? []) as $db): ?>
+                                <div><?= abcEsc((string) ($db['name'] ?? 'database')) ?><?= !empty($db['plan']) ? ' · ' . abcEsc((string) $db['plan']) : '' ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </details>
+                    <?php if (!empty($renderSnapshot['error'])): ?><div class="mini mt-2 text-danger"><?= abcEsc((string) $renderSnapshot['error']) ?></div><?php endif; ?>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <?php $zepto = (array) ($providerSnapshots['zeptomail'] ?? []); ?>
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between gap-2 align-items-start">
+                        <div>
+                            <div class="mini">ZeptoMail</div>
+                            <strong><?= abcEsc((string) ($zepto['label'] ?? 'ZeptoMail')) ?></strong>
+                        </div>
+                        <span class="badge <?= !empty($zepto['connected']) ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= abcEsc((string) ($zepto['status'] ?? 'missing')) ?></span>
+                    </div>
+                    <div class="mt-3">
+                        <div class="mini">Emails this month</div>
+                        <strong><?= isset($zepto['email_count']) ? number_format((int) $zepto['email_count']) : '—' ?></strong>
+                    </div>
+                    <div class="mini mt-2">ZeptoMail exposes usage logs, not a direct billing total. Keep the manual ledger row below for the actual monthly cost.</div>
+                    <?php if (!empty($zepto['error'])): ?><div class="mini mt-2 text-danger"><?= abcEsc((string) $zepto['error']) ?></div><?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
