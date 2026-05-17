@@ -53,6 +53,7 @@ function gpDogPublicContactDefaults(PDO $pdo, array $dog, ?array $owner = null):
 
     $handlerName = gpFirstPublicValue($dog['handler_name'] ?? '', $owner['display_name'] ?? '', $owner['username'] ?? '', 'Handler');
     $handlerAddress = gpFirstPublicValue(
+        gpComposePostalAddress($dog, 'handler_'),
         $dog['handler_address'] ?? '',
         gpComposePostalAddress($owner, 'home_'),
         $owner['home_address'] ?? ''
@@ -77,7 +78,7 @@ function gpDogPublicContactDefaults(PDO $pdo, array $dog, ?array $owner = null):
         'backup_contact_phone' => $backupPhone,
         'public_notes' => $publicNotes,
         'handler_email_source' => trim((string) ($dog['handler_email'] ?? '')) !== '' ? 'dog_profile' : (trim((string) ($owner['public_email'] ?? '')) !== '' ? 'handler_profile' : (trim((string) ($owner['email'] ?? '')) !== '' ? 'owner_account' : 'missing')),
-        'handler_address_source' => trim((string) ($dog['handler_address'] ?? '')) !== '' ? 'dog_profile' : (trim((string) gpComposePostalAddress($owner, 'home_')) !== '' ? 'handler_profile' : (trim((string) ($owner['home_address'] ?? '')) !== '' ? 'handler_profile' : 'missing')),
+        'handler_address_source' => trim((string) gpComposePostalAddress($dog, 'handler_')) !== '' ? 'dog_profile' : (trim((string) ($dog['handler_address'] ?? '')) !== '' ? 'dog_profile' : (trim((string) gpComposePostalAddress($owner, 'home_')) !== '' ? 'handler_profile' : (trim((string) ($owner['home_address'] ?? '')) !== '' ? 'handler_profile' : 'missing'))),
         'handler_phone_source' => trim((string) ($dog['handler_phone'] ?? '')) !== '' ? 'dog_profile' : (trim((string) ($owner['phone'] ?? '')) !== '' ? 'handler_profile' : 'missing'),
         'home_state_source' => trim((string) ($dog['home_state'] ?? '')) !== '' ? 'dog_profile' : (trim((string) ($owner['home_state'] ?? '')) !== '' ? 'handler_profile' : 'missing'),
     ];

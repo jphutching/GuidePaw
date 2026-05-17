@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/brand_header.php';
 require 'includes/db_connect.php';
 require 'includes/validation.php';
 require 'includes/dog_breeds.php';
+require_once 'includes/ada_state_laws.php';
 require_once 'includes/training_data.php';
 require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
@@ -15,7 +16,7 @@ function gpEnsureDogPublicProfileColumns(PDO $pdo): void
 {
     $columns = [
         'chip_registry' => 'TEXT', 'profile_photo_url' => 'TEXT', 'handler_photo_url' => 'TEXT',
-        'handler_name' => 'TEXT', 'handler_address' => 'TEXT', 'handler_phone' => 'TEXT', 'handler_email' => 'TEXT',
+        'handler_name' => 'TEXT', 'handler_street' => 'TEXT', 'handler_apt' => 'TEXT', 'handler_city' => 'TEXT', 'handler_address' => 'TEXT', 'handler_phone' => 'TEXT', 'handler_email' => 'TEXT', 'handler_state' => 'TEXT', 'handler_zip' => 'TEXT',
         'backup_contact_name' => 'TEXT', 'backup_contact_phone' => 'TEXT', 'found_dog_instructions' => 'TEXT',
         'public_notes' => 'TEXT', 'service_tasks' => 'TEXT', 'critical_allergies' => 'TEXT',
     ];
@@ -77,6 +78,7 @@ $canEdit = userCanEditDog($pdo, $userId, $dogId);
 $errors = [];
 $breedCatalog = getDogBreedsCatalog();
 $chipLinks = getMicrochipResourceLinks();
+$states = adaStateNames();
 
 $stmt = $pdo->prepare('SELECT d.*, u.username AS owner_username, u.email AS owner_email FROM dogs d JOIN users u ON u.id=d.owner_user_id WHERE d.id=?');
 $stmt->execute([$dogId]);
@@ -85,6 +87,7 @@ $dog = $stmt->fetch();
 $handlerStmt = $pdo->prepare('SELECT username, email, display_name, home_street, home_apt, home_city, home_address, phone, public_email, home_state, home_zip, profile_photo_url, backup_contact_name, backup_contact_phone, public_notes FROM users WHERE id = ? LIMIT 1');
 $handlerStmt->execute([$userId]);
 $handlerProfile = $handlerStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+$handlerProfileLegacyAddress = gpParseLegacyPostalAddress((string) ($handlerProfile['home_address'] ?? ''));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
@@ -92,13 +95,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
 
     if ($action === 'use_handler_defaults') {
         $defaultName = cleanText((string) ($handlerProfile['display_name'] ?? $handlerProfile['username'] ?? ''), 120);
+        $defaultStreet = cleanText(gpFirstPublicValue((string) ($handlerProfile['home_street'] ?? ''), (string) ($handlerProfileLegacyAddress['street'] ?? '')), 120);
+        $defaultApt = cleanText(gpFirstPublicValue((string) ($handlerProfile['home_apt'] ?? ''), (string) ($handlerProfileLegacyAddress['apt'] ?? '')), 80);
+        $defaultCity = cleanText(gpFirstPublicValue((string) ($handlerProfile['home_city'] ?? ''), (string) ($handlerProfileLegacyAddress['city'] ?? '')), 120);
+        $defaultState = strtoupper(trim(gpFirstPublicValue((string) ($handlerProfile['home_state'] ?? ''), (string) ($handlerProfileLegacyAddress['state'] ?? ''))));
+        $defaultZip = cleanText(gpFirstPublicValue((string) ($handlerProfile['home_zip'] ?? ''), (string) ($handlerProfileLegacyAddress['zip'] ?? '')), 20);
         $defaultAddress = cleanText(gpComposePostalAddress([
-            'home_street' => (string) ($handlerProfile['home_street'] ?? ''),
-            'home_apt' => (string) ($handlerProfile['home_apt'] ?? ''),
-            'home_city' => (string) ($handlerProfile['home_city'] ?? ''),
-            'home_state' => (string) ($handlerProfile['home_state'] ?? ''),
-            'home_zip' => (string) ($handlerProfile['home_zip'] ?? ''),
-        ]) ?: (string) ($handlerProfile['home_address'] ?? ''), 255);
+            'home_street' => $defaultStreet,
+            'home_apt' => $defaultApt,
+            'home_city' => $defaultCity,
+            'home_state' => $defaultState,
+            'home_zip' => $defaultZip,
+        ]), 255);
         $defaultPhone = cleanText((string) ($handlerProfile['phone'] ?? ''), 80);
         $defaultEmail = cleanText((string) ($handlerProfile['public_email'] ?? $handlerProfile['email'] ?? ''), 160);
         $defaultPhoto = cleanText((string) ($handlerProfile['profile_photo_url'] ?? ''), 255);
@@ -106,12 +114,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
         $backupPhone = cleanText((string) ($handlerProfile['backup_contact_phone'] ?? ''), 80);
         $publicNotes = cleanTextarea((string) ($handlerProfile['public_notes'] ?? ''), 1200);
 
-        $stmt = $pdo->prepare('UPDATE dogs SET handler_name=?, handler_address=?, handler_phone=?, handler_email=?, handler_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE dogs SET handler_name=?, handler_street=?, handler_apt=?, handler_city=?, handler_address=?, handler_phone=?, handler_email=?, handler_state=?, handler_zip=?, handler_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=? WHERE id=?');
         $stmt->execute([
             $defaultName ?: null,
+            $defaultStreet ?: null,
+            $defaultApt ?: null,
+            $defaultCity ?: null,
             $defaultAddress ?: null,
             $defaultPhone ?: null,
             $defaultEmail ?: null,
+            $defaultState ?: null,
+            $defaultZip ?: null,
             $defaultPhoto ?: null,
             $backupName ?: null,
             $backupPhone ?: null,
@@ -132,7 +145,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
     $approxAge = ($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null;
     $notes = cleanTextarea($_POST['notes'] ?? '', 2000);
     $handlerName = cleanText($_POST['handler_name'] ?? '', 120);
-    $handlerAddress = cleanText($_POST['handler_address'] ?? '', 255);
+    $handlerStreet = cleanText($_POST['handler_street'] ?? '', 120);
+    $handlerApt = cleanText($_POST['handler_apt'] ?? '', 80);
+    $handlerCity = cleanText($_POST['handler_city'] ?? '', 120);
+    $handlerState = strtoupper(trim((string) ($_POST['handler_state'] ?? '')));
+    $handlerZip = cleanText($_POST['handler_zip'] ?? '', 20);
     $handlerPhone = cleanText($_POST['handler_phone'] ?? '', 80);
     $handlerEmail = cleanText($_POST['handler_email'] ?? '', 160);
     $backupName = cleanText($_POST['backup_contact_name'] ?? '', 120);
@@ -148,15 +165,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
     if ($name === '') {
         $errors[] = 'Dog name is required.';
     }
+    $handlerAddressFields = [$handlerStreet, $handlerCity, $handlerState, $handlerZip];
+    if (array_filter($handlerAddressFields, static fn($value) => trim((string) $value) !== '') && (trim($handlerStreet) === '' || trim($handlerCity) === '' || trim($handlerState) === '' || trim($handlerZip) === '')) {
+        $errors[] = 'Handler address requires street, city, state, and ZIP when entered.';
+    }
     if ($handlerEmail !== '' && !filter_var($handlerEmail, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Handler email must be valid.';
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE dogs SET name=?, breed=?, chip_number=?, chip_registry=?, weight_lbs=?, date_of_birth=?, birth_is_approximate=?, approx_age_years=?, notes=?, profile_photo_url=?, handler_photo_url=?, handler_name=?, handler_address=?, handler_phone=?, handler_email=?, backup_contact_name=?, backup_contact_phone=?, found_dog_instructions=?, public_notes=?, service_tasks=?, critical_allergies=? WHERE id=?');
+        $handlerAddress = cleanText(gpComposePostalAddress([
+            'handler_street' => $handlerStreet,
+            'handler_apt' => $handlerApt,
+            'handler_city' => $handlerCity,
+            'handler_state' => $handlerState,
+            'handler_zip' => $handlerZip,
+        ]), 255);
+        $stmt = $pdo->prepare('UPDATE dogs SET name=?, breed=?, chip_number=?, chip_registry=?, weight_lbs=?, date_of_birth=?, birth_is_approximate=?, approx_age_years=?, notes=?, profile_photo_url=?, handler_photo_url=?, handler_name=?, handler_street=?, handler_apt=?, handler_city=?, handler_address=?, handler_phone=?, handler_email=?, handler_state=?, handler_zip=?, backup_contact_name=?, backup_contact_phone=?, found_dog_instructions=?, public_notes=?, service_tasks=?, critical_allergies=? WHERE id=?');
         $stmt->execute([
             $name, $breed ?: null, $chip ?: null, $chipRegistry ?: null, $weight, $dob, $birthApprox, $approxAge, $notes ?: null,
-            $dogPhoto ?: null, $handlerPhoto ?: null, $handlerName ?: null, $handlerAddress ?: null, $handlerPhone ?: null, $handlerEmail ?: null,
+            $dogPhoto ?: null, $handlerPhoto ?: null, $handlerName ?: null, $handlerStreet ?: null, $handlerApt ?: null, $handlerCity ?: null, $handlerAddress ?: null, $handlerPhone ?: null, $handlerEmail ?: null, $handlerState ?: null, $handlerZip ?: null,
             $backupName ?: null, $backupPhone ?: null, $foundInstructions ?: null, $publicNotes ?: null, $serviceTasks ?: null, $criticalAllergies ?: null, $dogId
         ]);
         if ((int) getActiveDogId($pdo, $userId) !== $dogId) {
@@ -199,8 +227,21 @@ $supportBadge = gpSupportBadgeForUser($pdo, $publicContact['owner'] ?? []);
 $csrf = generateCsrfToken();
 $publicUrl = publicDogProfileUrl((int) $dog['id']);
 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($publicUrl);
+$dogLegacyHandlerAddress = gpParseLegacyPostalAddress((string) ($dog['handler_address'] ?? ''));
+$publicContactHandlerAddress = gpParseLegacyPostalAddress((string) ($publicContact['handler_address'] ?? ''));
 $handlerNameValue = trim((string) ($dog['handler_name'] ?? '')) !== '' ? (string) $dog['handler_name'] : (string) ($publicContact['handler_name'] ?? '');
-$handlerAddressValue = trim((string) ($dog['handler_address'] ?? '')) !== '' ? (string) $dog['handler_address'] : (string) ($publicContact['handler_address'] ?? '');
+$handlerStreetValue = trim((string) ($dog['handler_street'] ?? '')) !== '' ? (string) $dog['handler_street'] : gpFirstPublicValue((string) ($dogLegacyHandlerAddress['street'] ?? ''), (string) ($publicContactHandlerAddress['street'] ?? ''));
+$handlerAptValue = trim((string) ($dog['handler_apt'] ?? '')) !== '' ? (string) $dog['handler_apt'] : gpFirstPublicValue((string) ($dogLegacyHandlerAddress['apt'] ?? ''), (string) ($publicContactHandlerAddress['apt'] ?? ''));
+$handlerCityValue = trim((string) ($dog['handler_city'] ?? '')) !== '' ? (string) $dog['handler_city'] : gpFirstPublicValue((string) ($dogLegacyHandlerAddress['city'] ?? ''), (string) ($publicContactHandlerAddress['city'] ?? ''));
+$handlerStateValue = strtoupper(trim((string) ($dog['handler_state'] ?? ''))) !== '' ? strtoupper(trim((string) $dog['handler_state'])) : strtoupper(trim(gpFirstPublicValue((string) ($dogLegacyHandlerAddress['state'] ?? ''), (string) ($publicContactHandlerAddress['state'] ?? ''))));
+$handlerZipValue = trim((string) ($dog['handler_zip'] ?? '')) !== '' ? (string) $dog['handler_zip'] : gpFirstPublicValue((string) ($dogLegacyHandlerAddress['zip'] ?? ''), (string) ($publicContactHandlerAddress['zip'] ?? ''));
+$handlerAddressValue = gpComposePostalAddress([
+    'handler_street' => $handlerStreetValue,
+    'handler_apt' => $handlerAptValue,
+    'handler_city' => $handlerCityValue,
+    'handler_state' => $handlerStateValue,
+    'handler_zip' => $handlerZipValue,
+]);
 $handlerPhoneValue = trim((string) ($dog['handler_phone'] ?? '')) !== '' ? (string) $dog['handler_phone'] : (string) ($publicContact['handler_phone'] ?? '');
 $handlerEmailValue = trim((string) ($dog['handler_email'] ?? '')) !== '' ? (string) $dog['handler_email'] : (string) ($publicContact['handler_email'] ?? '');
 $backupNameValue = trim((string) ($dog['backup_contact_name'] ?? '')) !== '' ? (string) $dog['backup_contact_name'] : (string) ($publicContact['backup_contact_name'] ?? '');
@@ -269,10 +310,16 @@ $telegramEnabled = in_array(strtolower(trim((string) gpEnv('FOUND_DOG_NOTIFY_TEL
             <div class="col-12"><hr><div class="section-heading"><div><h3 class="h5 mb-0">Public QR Profile Details</h3><div class="text-muted small">Anything here may be visible to anyone who scans the QR code.</div></div><span class="privacy-badge privacy-public">Public</span></div></div>
             <div class="col-12 public-warning">Use this section for return/contact information only. Avoid diagnosis details, private training notes, or full medical records. The handler address is stored as a private default for dog profiles and is not shown on the public QR page.</div>
             <div class="col-12 contact-route"><h4 class="h6 mb-2">Location reports go to</h4><div class="small text-muted mb-2">GuidePaw uses dog-specific fields first, then Handler Profile defaults, then owner/admin fallback. The handler home state is used as the ADA card fallback when GPS is not available.</div><div class="route-line"><span>Handler address <span class="source-pill <?= ($publicContact['handler_address_source'] ?? 'missing') === 'missing' ? 'missing' : '' ?>"><?= e($handlerAddressSourceLabel) ?></span></span><span class="route-value"><?= $handlerAddressValue !== '' ? nl2br(e($handlerAddressValue)) : 'Missing' ?></span></div><div class="route-line"><span>Handler email <span class="source-pill <?= ($publicContact['handler_email_source'] ?? 'missing') === 'missing' ? 'missing' : '' ?>"><?= e($handlerEmailSourceLabel) ?></span></span><span class="route-value"><?= $handlerEmailValue !== '' ? e($handlerEmailValue) : 'Missing' ?></span></div><div class="route-line"><span>Handler phone <span class="source-pill <?= ($publicContact['handler_phone_source'] ?? 'missing') === 'missing' ? 'missing' : '' ?>"><?= e($handlerPhoneSourceLabel) ?></span></span><span class="route-value"><?= $handlerPhoneValue !== '' ? e($handlerPhoneValue) : 'Missing' ?></span></div><div class="route-line"><span>Handler home state <span class="source-pill <?= ($publicContact['home_state_source'] ?? 'missing') === 'missing' ? 'missing' : '' ?>"><?= e(($publicContact['home_state_source'] ?? 'missing') === 'missing' ? 'Missing' : ucwords(str_replace('_', ' ', (string) ($publicContact['home_state_source'] ?? '')))) ?></span></span><span class="route-value"><?= !empty($publicContact['home_state']) ? e($publicContact['home_state']) : 'Missing' ?></span></div><div class="route-line"><span>Admin fallback</span><span class="route-value"><?= $adminNotifyEmail !== '' ? e($adminNotifyEmail) : 'Missing' ?></span></div><div class="route-line"><span>Telegram fallback</span><span class="route-value"><?= $telegramEnabled ? 'Enabled if token/chat ID are set' : 'Disabled' ?></span></div><div class="d-grid gap-2 mt-3"><a class="btn btn-outline-success" href="found_dog_notification_test.php?dog_id=<?= (int) $dog['id'] ?>">Send Test Found-Dog Alert</a><a class="btn btn-outline-secondary" href="handler_profile.php">Update Handler Profile Defaults</a></div></div>
-            <?php if ($canEdit): ?><div class="col-12 handler-defaults"><div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center"><div><strong>Use your Handler Profile defaults</strong><div class="small text-muted">Copies your handler address, name, public phone/email, handler photo, backup contact, and public notes to this dog.</div></div><button type="submit" name="action" value="use_handler_defaults" class="btn btn-outline-primary">Use Handler Profile info</button></div></div><?php endif; ?>
+            <?php if ($canEdit): ?><div class="col-12 handler-defaults"><div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center"><div><strong>Use your Handler Profile defaults</strong><div class="small text-muted">Copies your handler address parts, name, public phone/email, handler photo, backup contact, and public notes to this dog.</div></div><button type="submit" name="action" value="use_handler_defaults" class="btn btn-outline-primary">Use Handler Profile info</button></div></div><?php endif; ?>
             <div class="col-md-6" data-crop-wrap><label class="form-label">Dog Profile Picture</label><div class="d-flex gap-3 align-items-center mb-2"><?php if (!empty($dog['profile_photo_url'])): ?><img id="dogPhotoPreview" src="<?= e($dog['profile_photo_url']) ?>" class="profile-photo-preview" alt="Dog photo"><?php else: ?><img id="dogPhotoPreview" class="profile-photo-preview" alt="Dog photo preview"><?php endif; ?><input type="file" class="form-control" accept="image/jpeg,image/png,image/webp" data-crop-input data-crop-target="#profilePhotoCropped" data-crop-preview="#dogPhotoPreview" <?= $canEdit ? '' : 'disabled' ?>></div><input type="hidden" name="profile_photo_cropped" id="profilePhotoCropped"><canvas data-crop-canvas class="crop-canvas d-none" width="512" height="512"></canvas><div data-crop-controls class="d-none mt-2"><label class="form-label small mb-1">Zoom / drag to crop</label><input type="range" data-crop-zoom min="1" max="3" step="0.01" value="1" class="form-range"><button type="button" data-crop-clear class="btn btn-outline-secondary btn-sm">Clear crop</button></div><div class="crop-help">Square crop used on the public QR profile.</div></div>
             <div class="col-md-6" data-crop-wrap><label class="form-label">Handler Picture</label><div class="d-flex gap-3 align-items-center mb-2"><?php if (!empty($dog['handler_photo_url'])): ?><img id="handlerPhotoPreview" src="<?= e($dog['handler_photo_url']) ?>" class="profile-photo-preview" alt="Handler photo"><?php elseif (!empty($publicContact['handler_photo_url'])): ?><img id="handlerPhotoPreview" src="<?= e($publicContact['handler_photo_url']) ?>" class="profile-photo-preview" alt="Handler photo preview"><?php else: ?><img id="handlerPhotoPreview" class="profile-photo-preview" alt="Handler photo preview"><?php endif; ?><input type="file" class="form-control" accept="image/jpeg,image/png,image/webp" data-crop-input data-crop-target="#handlerPhotoCropped" data-crop-preview="#handlerPhotoPreview" <?= $canEdit ? '' : 'disabled' ?>></div><input type="hidden" name="handler_photo_cropped" id="handlerPhotoCropped"><canvas data-crop-canvas class="crop-canvas d-none" width="512" height="512"></canvas><div data-crop-controls class="d-none mt-2"><label class="form-label small mb-1">Zoom / drag to crop</label><input type="range" data-crop-zoom min="1" max="3" step="0.01" value="1" class="form-range"><button type="button" data-crop-clear class="btn btn-outline-secondary btn-sm">Clear crop</button></div><div class="crop-help">Square crop used on the public QR profile.<?php if (empty($dog['handler_photo_url']) && !empty($publicContact['handler_photo_url'])): ?> Using Handler Profile default.<?php endif; ?></div></div>
-            <div class="col-md-4"><label class="form-label">Handler Name</label><input type="text" name="handler_name" class="form-control" value="<?= e($handlerNameValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_name']) && $handlerNameValue !== ''): ?><div class="inherited-note">Using fallback/default value until saved here.</div><?php endif; ?></div><div class="col-md-4"><label class="form-label">Handler Address</label><input type="text" name="handler_address" class="form-control" value="<?= e($handlerAddressValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_address']) && $handlerAddressValue !== ''): ?><div class="inherited-note">Using <?= e($handlerAddressSourceLabel) ?> until saved here.</div><?php endif; ?></div><div class="col-md-4"><label class="form-label">Handler Phone</label><input type="text" name="handler_phone" class="form-control" value="<?= e($handlerPhoneValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_phone']) && $handlerPhoneValue !== ''): ?><div class="inherited-note">Using <?= e($handlerPhoneSourceLabel) ?> until saved here.</div><?php endif; ?></div><div class="col-md-4"><label class="form-label">Handler Email</label><input type="email" name="handler_email" class="form-control" value="<?= e($handlerEmailValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_email']) && $handlerEmailValue !== ''): ?><div class="inherited-note">Using <?= e($handlerEmailSourceLabel) ?> until saved here.</div><?php endif; ?></div>
+            <div class="col-md-4"><label class="form-label">Handler Name</label><input type="text" name="handler_name" class="form-control" value="<?= e($handlerNameValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_name']) && $handlerNameValue !== ''): ?><div class="inherited-note">Using fallback/default value until saved here.</div><?php endif; ?></div>
+            <div class="col-md-6"><label class="form-label">Street</label><input type="text" name="handler_street" class="form-control" value="<?= e($handlerStreetValue) ?>" placeholder="Street address" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_street']) && $handlerStreetValue !== ''): ?><div class="inherited-note">Using <?= e($handlerAddressSourceLabel) ?> until saved here.</div><?php endif; ?></div>
+            <div class="col-md-3"><label class="form-label">Apt / Suite <span class="text-muted small">(optional)</span></label><input type="text" name="handler_apt" class="form-control" value="<?= e($handlerAptValue) ?>" placeholder="Apt, suite, unit, or #." <?= $canEdit ? '' : 'disabled' ?>></div>
+            <div class="col-md-4"><label class="form-label">City</label><input type="text" name="handler_city" class="form-control" value="<?= e($handlerCityValue) ?>" placeholder="City" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_city']) && $handlerCityValue !== ''): ?><div class="inherited-note">Using <?= e($handlerAddressSourceLabel) ?> until saved here.</div><?php endif; ?></div>
+            <div class="col-md-4"><label class="form-label">State</label><select name="handler_state" class="form-select" <?= $canEdit ? '' : 'disabled' ?>><option value="">Select state</option><?php foreach ($states as $code => $name): ?><option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($handlerStateValue ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option><?php endforeach; ?></select><?php if (empty($dog['handler_state']) && $handlerStateValue !== ''): ?><div class="inherited-note">Using <?= e($handlerAddressSourceLabel) ?> until saved here.</div><?php endif; ?></div>
+            <div class="col-md-4"><label class="form-label">ZIP</label><input type="text" name="handler_zip" class="form-control" value="<?= e($handlerZipValue) ?>" placeholder="ZIP" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_zip']) && $handlerZipValue !== ''): ?><div class="inherited-note">Using <?= e($handlerAddressSourceLabel) ?> until saved here.</div><?php endif; ?></div>
+            <div class="col-md-4"><label class="form-label">Handler Phone</label><input type="text" name="handler_phone" class="form-control" value="<?= e($handlerPhoneValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_phone']) && $handlerPhoneValue !== ''): ?><div class="inherited-note">Using <?= e($handlerPhoneSourceLabel) ?> until saved here.</div><?php endif; ?></div><div class="col-md-4"><label class="form-label">Handler Email</label><input type="email" name="handler_email" class="form-control" value="<?= e($handlerEmailValue) ?>" <?= $canEdit ? '' : 'disabled' ?>><?php if (empty($dog['handler_email']) && $handlerEmailValue !== ''): ?><div class="inherited-note">Using <?= e($handlerEmailSourceLabel) ?> until saved here.</div><?php endif; ?></div>
             <div class="col-md-6"><label class="form-label">Backup Contact Name</label><input type="text" name="backup_contact_name" class="form-control" value="<?= e($backupNameValue) ?>" <?= $canEdit ? '' : 'disabled' ?>></div><div class="col-md-6"><label class="form-label">Backup Contact Phone</label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e($backupPhoneValue) ?>" <?= $canEdit ? '' : 'disabled' ?>></div>
             <div class="col-12"><label class="form-label">If Found / Emergency Instructions</label><textarea name="found_dog_instructions" class="form-control" rows="3" placeholder="Example: Please call handler first. If no answer, call backup contact or primary vet." <?= $canEdit ? '' : 'disabled' ?>><?= e($dog['found_dog_instructions'] ?? '') ?></textarea></div><div class="col-12"><label class="form-label">Public Service Task Notes</label><textarea name="service_tasks" class="form-control" rows="3" placeholder="Keep this general. Do not disclose diagnosis details." <?= $canEdit ? '' : 'disabled' ?>><?= e($dog['service_tasks'] ?? '') ?></textarea></div><div class="col-12"><label class="form-label">Critical Medical / Allergy Note</label><textarea name="critical_allergies" class="form-control" rows="3" placeholder="Only include urgent public safety information." <?= $canEdit ? '' : 'disabled' ?>><?= e($dog['critical_allergies'] ?? '') ?></textarea></div><div class="col-12"><label class="form-label">Public Handler Notes</label><textarea name="public_notes" class="form-control" rows="3" placeholder="Optional public note for someone who scans the QR code." <?= $canEdit ? '' : 'disabled' ?>><?= e($publicNotesValue) ?></textarea><?php if (empty($dog['public_notes']) && $publicNotesValue !== ''): ?><div class="inherited-note">Using Handler Profile public note until saved here.</div><?php endif; ?></div>
             <?php if ($canEdit): ?><div class="col-12"><button class="btn btn-primary w-100">Save Dog Profile</button></div><?php endif; ?>

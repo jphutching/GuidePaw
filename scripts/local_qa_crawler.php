@@ -1811,6 +1811,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($dogProfileBody, 'dog profile saved')
             );
         gpQaResult($results, 'dog_profile_page_loads', $dogProfileLooksReady, 'HTTP ' . $dogProfile['status'] . ($dogProfileLooksReady ? ' dog profile content found' : ' dog profile content missing'));
+        $dogProfileAddressFieldsSeen = gpQaPageLooksOk($dogProfile)
+            && str_contains($dogProfileHtml, 'name="handler_street"')
+            && str_contains($dogProfileHtml, 'name="handler_apt"')
+            && str_contains($dogProfileHtml, 'name="handler_city"')
+            && str_contains($dogProfileHtml, 'name="handler_state"')
+            && str_contains($dogProfileHtml, 'name="handler_zip"');
+        gpQaResult($results, 'dog_profile_address_fields', $dogProfileAddressFieldsSeen, 'HTTP ' . $dogProfile['status'] . ($dogProfileAddressFieldsSeen ? ' split dog address fields found' : ' split dog address fields missing'));
         $dogProfileSupportBadgeSeen = gpQaPageLooksOk($dogProfile)
             && (
                 str_contains($dogProfileBody, 'support badge')

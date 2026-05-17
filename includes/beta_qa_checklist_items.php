@@ -73,6 +73,7 @@ function gpBetaQaChecklistItems(): array
             'description' => 'Validate QR profile inheritance and found-dog contact/report workflow.',
             'items' => [
                 ['id' => 'dog_profile_loads', 'text' => 'Dog Profile page loads for active dog.', 'expected' => 'No application error.'],
+                ['id' => 'dog_profile_address_fields', 'text' => 'Dog Profile handler address uses separate street, apt, city, state, and ZIP fields.', 'expected' => 'The dog profile handler override shows split address inputs instead of one freeform line.'],
                 ['id' => 'qr_profile_loads', 'text' => 'Public QR profile opens with valid dog/token link.', 'expected' => 'Public page shows dog identity and inherited handler contact defaults.'],
                 ['id' => 'qr_tracking_loads', 'text' => 'QR Tracking page loads for the active dog or shows the add-on notice when that dog is not covered yet.', 'expected' => 'Tracking page shows QR opens and recent scan activity, or the per-dog add-on notice.'],
                 ['id' => 'qr_invalid_token', 'text' => 'Invalid or missing QR token is rejected.', 'expected' => 'Public page returns a not-found style response, not private data.'],
