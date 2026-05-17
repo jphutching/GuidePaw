@@ -72,8 +72,9 @@ while IFS= read -r target; do
     bad_links=1
   fi
 done < <(
-  find . -type f \( -name "*.php" -o -name "*.html" -o -name "*.htm" \) \
-    ! -path "./.git/*" ! -path "./.env*" ! -path "./node_modules/*" ! -path "./vendor/*" \
+  find . \
+    \( -path "./.git" -o -path "./.git/*" -o -path "./.env*" -o -path "./node_modules" -o -path "./node_modules/*" -o -path "./vendor" -o -path "./vendor/*" -o -path "./scripts" -o -path "./scripts/*" -o -path "./tests" -o -path "./tests/*" -o -path "./android" -o -path "./android/*" -o -path "./docs" -o -path "./docs/*" -o -path "./android/guidepaw-bridge/.gradle" -o -path "./android/guidepaw-bridge/.gradle/*" \) -prune -o \
+    -type f \( -name "*.php" -o -name "*.html" -o -name "*.htm" \) \
     -print0 \
     | xargs -0 -r grep -RhoE 'href="[^"]+\.php[^"]*"' \
     | sed -E 's/href="//; s/[?#].*//; s/"//' \

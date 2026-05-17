@@ -764,6 +764,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $supportFundingPageLooksReady = $path === 'support_funding.php'
             ? (
                 str_contains($body, 'support guidepaw')
+                || str_contains($body, 'support once')
+                || str_contains($body, 'support monthly')
                 || str_contains($body, 'funding link not configured')
                 || str_contains($body, 'support funding')
             )

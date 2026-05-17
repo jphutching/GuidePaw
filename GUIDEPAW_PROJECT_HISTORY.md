@@ -1208,6 +1208,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: verify a real master-admin purge on a non-protected user after export
 
+2026-05-17 — Support funding checkout flow
+- Commit(s): pending
+- Files changed: support_funding.php, includes/stripe_checkout.php, .env.render.example, render.yaml, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: set Stripe secret and funding price IDs in Render, then test one-time and monthly checkout redirects
+
 ## Update log template
 
 When updating this file, add a short note like:

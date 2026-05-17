@@ -120,6 +120,27 @@ projects:
               - key: ADMIN_NOTIFY_SMS_PHONE
                 sync: false
 
+              - key: GUIDEPAW_DISCORD_INVITE_URL
+                sync: false
+
+              - key: GUIDEPAW_MERCH_STORE_URL
+                sync: false
+
+              - key: GUIDEPAW_SUPPORT_FUNDING_URL
+                sync: false
+
+              - key: GUIDEPAW_STRIPE_SECRET_KEY
+                sync: false
+
+              - key: GUIDEPAW_STRIPE_FUNDING_ONE_TIME_PRICE_ID
+                sync: false
+
+              - key: GUIDEPAW_STRIPE_FUNDING_MONTHLY_PRICE_ID
+                sync: false
+
+              - key: GUIDEPAW_STRIPE_API_VERSION
+                value: 2026-02-25.clover
+
               # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID directly in Render Environment.
               # Do not commit real Telegram tokens to Git.
               # Set Twilio values directly in Render Environment.
