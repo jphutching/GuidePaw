@@ -269,13 +269,21 @@ $recent = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                         <strong>Suggested command words</strong>
                         <div class="small">Use these as a quick reference while logging. Pick one cue per behavior and stay consistent.</div>
                         <div class="cue-grid">
-                            <?php foreach ($commandCueGroups as $groupName => $cueItems): ?>
+                            <?php foreach ($commandCueGroups as $groupName => $group): ?>
+                                <?php
+                                    if (!is_array($group)) {
+                                        continue;
+                                    }
+                                    $groupLabel = (string) ($group['label'] ?? $groupName);
+                                    $groupItems = is_array($group['items'] ?? null) ? $group['items'] : [];
+                                ?>
                                 <div class="cue-box">
-                                    <strong><?= h($groupName) ?></strong>
-                                    <?php foreach (array_slice($cueItems, 0, 4) as $cueItem): ?>
+                                    <strong><?= h($groupLabel) ?></strong>
+                                    <?php foreach (array_slice($groupItems, 0, 4) as $cueItem): ?>
+                                        <?php if (!is_array($cueItem)) { continue; } ?>
                                         <div class="small">
-                                            <?= h($cueItem['skill']) ?>:
-                                            <span class="cue-pill"><?= h($cueItem['cue']) ?></span>
+                                            <?= h((string) ($cueItem['skill'] ?? '')) ?>:
+                                            <span class="cue-pill"><?= h((string) ($cueItem['cue'] ?? '')) ?></span>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>

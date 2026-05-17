@@ -132,6 +132,9 @@ projects:
               - key: GUIDEPAW_STRIPE_SECRET_KEY
                 sync: false
 
+              - key: GUIDEPAW_STRIPE_WEBHOOK_SECRET
+                sync: false
+
               - key: GUIDEPAW_STRIPE_FUNDING_ONE_TIME_PRICE_ID
                 sync: false
 

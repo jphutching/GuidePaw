@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/app_config.php';
 require_once __DIR__ . '/includes/stripe_checkout.php';
+require_once __DIR__ . '/includes/stripe_webhook.php';
 
 checkLogin();
 requireAdmin();
@@ -36,6 +37,10 @@ $oneTimePriceId = trim((string) gpStripeSupportPriceId('one_time'));
 $monthlyPriceId = trim((string) gpStripeSupportPriceId('monthly'));
 $apiVersion = gpStripeApiVersion();
 $checkoutConfigured = gpStripeCheckoutConfigured();
+$webhookSecret = gpStripeWebhookSecret();
+$webhookConfigured = gpStripeWebhookConfigured();
+$webhookUrl = gpStripeWebhookEndpointUrl();
+$recentPayments = gpStripeSupportRecentEvents($pdo, 10);
 $csrf = generateCsrfToken();
 ?>
 <!doctype html>
@@ -113,6 +118,30 @@ $csrf = generateCsrfToken();
     </section>
 
     <section class="panel mb-3">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-2">
+            <div>
+                <h2 class="h5 mb-1">Stripe Webhook</h2>
+                <div class="mini">Stripe calls this endpoint when checkout completes or fails asynchronously.</div>
+            </div>
+            <span class="badge <?= e(afsStatus($webhookSecret)['class']) ?>"><?= e($webhookConfigured ? 'Webhook configured' : 'Webhook not configured') ?></span>
+        </div>
+        <div class="field">
+            <div>
+                <div class="label">Webhook endpoint</div>
+                <div class="mini">Add this URL in the Stripe dashboard.</div>
+            </div>
+            <code><?= e($webhookUrl) ?></code>
+        </div>
+        <div class="field">
+            <div>
+                <div class="label">Webhook secret</div>
+                <div class="mini">Stored in Render environment variables only.</div>
+            </div>
+            <code><?= e(afsMaskSecret($webhookSecret)) ?></code>
+        </div>
+    </section>
+
+    <section class="panel mb-3">
         <h2 class="h5 mb-1">Support links</h2>
         <div class="mini mb-3">These links appear on the support hub and can backstop checkout if needed.</div>
         <div class="field">
@@ -136,6 +165,49 @@ $csrf = generateCsrfToken();
             </div>
             <code><?= e($discordUrl !== '' ? $discordUrl : 'Not configured') ?></code>
         </div>
+    </section>
+
+    <section class="panel mb-3">
+        <h2 class="h5 mb-1">Recent support payments</h2>
+        <div class="mini mb-3">Latest recorded Stripe Checkout sessions and webhook updates.</div>
+        <?php if (!$recentPayments): ?>
+            <div class="mini">No support payments recorded yet.</div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Type</th>
+                            <th>Session</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>User</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recentPayments as $payment): ?>
+                            <?php
+                                $paymentStatusLabel = trim((string) ($payment['payment_status'] ?? ''));
+                                if ($paymentStatusLabel === '') {
+                                    $paymentStatusLabel = (string) ($payment['stripe_event_type'] ?? '');
+                                }
+                            ?>
+                            <tr>
+                                <td><?= e((string) ($payment['updated_at'] ?? '')) ?></td>
+                                <td><?= e((string) ($payment['support_type'] ?? '')) ?></td>
+                                <td><code><?= e((string) ($payment['stripe_checkout_session_id'] ?? '')) ?></code></td>
+                                <td><?= e($paymentStatusLabel) ?></td>
+                                <td><?= e(number_format(((int) ($payment['amount_total_cents'] ?? 0)) / 100, 2)) ?> <?= e(strtoupper((string) ($payment['currency'] ?? 'USD'))) ?></td>
+                                <td><?= e((string) ($payment['user_id'] ?? '')) ?></td>
+                                <td><?= e((string) ($payment['customer_email'] ?? '')) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
     </section>
 
     <section class="panel">

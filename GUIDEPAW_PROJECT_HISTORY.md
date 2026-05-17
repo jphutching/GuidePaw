@@ -1217,10 +1217,10 @@ php scripts/cleanup_e2e_data.php --yes
 
 2026-05-17 — Funding settings admin view
 - Commit(s): pending
-- Files changed: admin_funding_settings.php, admin.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, support_funding.php, GUIDEPAW_PROJECT_HISTORY.md
+- Files changed: admin_funding_settings.php, admin.php, includes/mobile_nav.php, includes/stripe_webhook.php, stripe_webhook.php, sql/migrations/pgsql/20260517_support_funding_events.sql, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, support_funding.php, .env.render.example, render.yaml, GUIDEPAW_PROJECT_HISTORY.md
 - New checklist items added: no
 - In-progress item changed: no
-- Next recommended step: keep funding config read-only and centralize future pricing changes in Render or the paywall catalog
+- Next recommended step: create the Stripe webhook endpoint in the Dashboard, point it at /stripe_webhook.php, and set the webhook secret in Render
 
 ## Update log template
 
