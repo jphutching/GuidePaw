@@ -1215,6 +1215,13 @@ php scripts/cleanup_e2e_data.php --yes
 - In-progress item changed: no
 - Next recommended step: set Stripe secret and funding price IDs in Render, then test one-time and monthly checkout redirects
 
+2026-05-17 — Funding settings admin view
+- Commit(s): pending
+- Files changed: admin_funding_settings.php, admin.php, includes/mobile_nav.php, includes/beta_qa_checklist_items.php, scripts/local_qa_crawler.php, support_funding.php, GUIDEPAW_PROJECT_HISTORY.md
+- New checklist items added: no
+- In-progress item changed: no
+- Next recommended step: keep funding config read-only and centralize future pricing changes in Render or the paywall catalog
+
 ## Update log template
 
 When updating this file, add a short note like:

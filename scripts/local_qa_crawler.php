@@ -580,6 +580,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             'admin_profile_completion_page_loads' => 'admin_profile_completion.php',
             'api_tokens_page_loads' => 'api_tokens.php',
             'admin_paywall_catalog_page_loads' => 'admin_paywall_catalog.php',
+            'admin_funding_settings_page_loads' => 'admin_funding_settings.php',
             'backup_tools_page_loads' => 'backup.php',
             'dog_access_page_loads' => 'dog_access.php',
             'dog_audit_page_loads' => 'dog_access_audit.php',

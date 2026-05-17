@@ -184,6 +184,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'community_challenges', 'text' => 'Community Challenges page loads if enabled.', 'expected' => 'User can choose a challenge and see the current challenge state.'],
                 ['id' => 'trucking_mode', 'text' => 'Trucking Mode page opens for the active dog.', 'expected' => 'User can pick a day type and see the travel-day plan.'],
                 ['id' => 'trainer_marketplace', 'text' => 'Trainer Marketplace page loads and free users see the Plus paywall.', 'expected' => 'Plus users can browse saved trainer contacts while free users see the upgrade notice.'],
+                ['id' => 'admin_funding_settings', 'text' => 'Admin Funding Settings page loads and shows current support configuration.', 'expected' => 'Admin can review the configured Stripe secret status, price IDs, fallback funding URL, merch URL, and Discord URL.'],
                 ['id' => 'vet_appointments', 'text' => 'Vet Appointments page loads and saves reminder.', 'expected' => 'Appointment appears on dashboard reminders.'],
                 ['id' => 'medications', 'text' => 'Medications page loads if enabled.', 'expected' => 'Medication reminder/refill behavior remains intact.'],
                 ['id' => 'health_docs', 'text' => 'Health Docs page loads if enabled.', 'expected' => 'Documents remain associated with dog profile and saved vets can be searched while adding a contact.'],
