@@ -85,6 +85,94 @@ function gpDogHandlerDisplayStatus(array $handler): string {
     return $status !== '' ? $status : 'unknown';
 }
 
+function gpComposePostalAddress(array $row, string $prefix = 'home_'): string {
+    $street = trim((string) ($row[$prefix . 'street'] ?? ''));
+    $apt = trim((string) ($row[$prefix . 'apt'] ?? ''));
+    $city = trim((string) ($row[$prefix . 'city'] ?? ''));
+    $state = strtoupper(trim((string) ($row[$prefix . 'state'] ?? '')));
+    $zip = trim((string) ($row[$prefix . 'zip'] ?? ''));
+
+    $lines = [];
+    if ($street !== '') {
+        $line1 = $street;
+        if ($apt !== '') {
+            $line1 .= ', ' . $apt;
+        }
+        $lines[] = $line1;
+    } elseif ($apt !== '') {
+        $lines[] = $apt;
+    }
+
+    $line2Bits = [];
+    if ($city !== '') {
+        $line2Bits[] = $city;
+    }
+    if ($state !== '') {
+        $line2Bits[] = $state;
+    }
+    if ($zip !== '') {
+        $line2Bits[] = $zip;
+    }
+    if ($line2Bits) {
+        if (count($line2Bits) >= 2) {
+            $line2 = array_shift($line2Bits);
+            $line2 = $line2 . ', ' . implode(' ', $line2Bits);
+        } else {
+            $line2 = $line2Bits[0];
+        }
+        $lines[] = $line2;
+    }
+
+    return implode("\n", $lines);
+}
+
+function gpParseLegacyPostalAddress(string $address): array {
+    $address = trim(preg_replace('/\s+/', ' ', $address));
+    $result = ['street' => '', 'apt' => '', 'city' => '', 'state' => '', 'zip' => ''];
+    if ($address === '') {
+        return $result;
+    }
+
+    $lines = preg_split('/\r\n|\r|\n/', $address) ?: [];
+    if (count($lines) >= 2) {
+        $firstLine = trim((string) $lines[0]);
+        $secondLine = trim((string) $lines[count($lines) - 1]);
+        $result['street'] = $firstLine;
+        if (preg_match('/^(.+?)(?:,\s*([^,]+))?\s*,?\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/', $secondLine, $match)) {
+            $result['city'] = trim((string) $match[1]);
+            if (!empty($match[2])) {
+                $result['apt'] = trim((string) $match[2]);
+            }
+            $result['state'] = strtoupper(trim((string) $match[3]));
+            $result['zip'] = trim((string) $match[4]);
+            return $result;
+        }
+        $result['city'] = $secondLine;
+        return $result;
+    }
+
+    $parts = array_values(array_filter(array_map('trim', explode(',', $address)), static fn($part) => $part !== ''));
+    if (count($parts) >= 3) {
+        $result['street'] = $parts[0];
+        if (count($parts) === 3) {
+            $result['city'] = $parts[1];
+            $stateZip = $parts[2];
+        } else {
+            $result['apt'] = $parts[1];
+            $result['city'] = $parts[2];
+            $stateZip = $parts[3] ?? '';
+        }
+        if (preg_match('/^([A-Z]{2})(?:\s+(\d{5}(?:-\d{4})?))?$/', trim($stateZip), $match)) {
+            $result['state'] = strtoupper(trim((string) $match[1]));
+            $result['zip'] = trim((string) ($match[2] ?? ''));
+        }
+        return $result;
+    }
+
+    $result['street'] = $address;
+    return $result;
+}
+
 function upsertDogHandlerLink(PDO $pdo, int $dogId, int $userId, int $invitedByUserId, ?string $role, string $permissionLevel, string $status = 'accepted'): void {
     $canonicalRole = gpCanonicalDogHandlerRole($role, false);
     $requestedStatus = strtolower(trim($status));
@@ -133,11 +221,15 @@ function gpEnsureRequiredHandlerProfileColumns(PDO $pdo): void {
 
     $columns = [
         'display_name' => 'TEXT',
+        'home_street' => 'TEXT',
+        'home_apt' => 'TEXT',
+        'home_city' => 'TEXT',
         'home_address' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
         'facebook_url' => 'TEXT',
         'home_state' => 'TEXT',
+        'home_zip' => 'TEXT',
         'profile_photo_url' => 'TEXT',
         'backup_contact_name' => 'TEXT',
         'backup_contact_phone' => 'TEXT',
@@ -186,7 +278,12 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
         [
             'usernames' => ['admin'],
             'display_name' => 'GuidePaw Admin',
-            'home_address' => '123 GuidePaw Lane, Denver, CO 80202',
+            'home_street' => '123 GuidePaw Lane',
+            'home_apt' => '',
+            'home_city' => 'Denver',
+            'home_state' => 'CO',
+            'home_zip' => '80202',
+            'home_address' => "123 GuidePaw Lane\nDenver, CO 80202",
             'phone' => '555-0100',
             'public_email' => 'admin@guidepaw.app',
             'backup_contact_name' => 'GuidePaw Backup Contact',
@@ -196,7 +293,12 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
         [
             'usernames' => ['test acct', 'test_acct', 'test account', 'test'],
             'display_name' => 'Test Handler',
-            'home_address' => '456 GuidePaw Lane, Denver, CO 80203',
+            'home_street' => '456 GuidePaw Lane',
+            'home_apt' => '',
+            'home_city' => 'Denver',
+            'home_state' => 'CO',
+            'home_zip' => '80203',
+            'home_address' => "456 GuidePaw Lane\nDenver, CO 80203",
             'phone' => '555-0102',
             'public_email' => 'test@example.com',
             'backup_contact_name' => 'Test Backup Contact',
@@ -208,10 +310,14 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
     $stmt = $pdo->prepare("UPDATE users
         SET
             display_name = COALESCE(NULLIF(display_name, ''), ?),
+            home_street = COALESCE(NULLIF(home_street, ''), ?),
+            home_apt = COALESCE(NULLIF(home_apt, ''), ?),
+            home_city = COALESCE(NULLIF(home_city, ''), ?),
             home_address = COALESCE(NULLIF(home_address, ''), ?),
             phone = COALESCE(NULLIF(phone, ''), ?),
             public_email = COALESCE(NULLIF(public_email, ''), NULLIF(email, ''), ?),
             home_state = COALESCE(NULLIF(home_state, ''), ?),
+            home_zip = COALESCE(NULLIF(home_zip, ''), ?),
             backup_contact_name = COALESCE(NULLIF(backup_contact_name, ''), ?),
             backup_contact_phone = COALESCE(NULLIF(backup_contact_phone, ''), ?),
             public_notes = COALESCE(NULLIF(public_notes, ''), ?)
@@ -221,10 +327,14 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
     foreach ($rows as $row) {
         $stmt->execute([
             $row['display_name'],
+            $row['home_street'],
+            $row['home_apt'],
+            $row['home_city'],
             $row['home_address'],
             $row['phone'],
             $row['public_email'],
-            '',
+            $row['home_state'],
+            $row['home_zip'],
             $row['backup_contact_name'],
             $row['backup_contact_phone'],
             $row['public_notes'],
@@ -238,7 +348,10 @@ function gpBackfillKnownRequiredHandlerProfiles(PDO $pdo): void {
 function gpRequiredHandlerProfileFields(): array {
     return [
         'display_name' => 'Display name',
-        'home_address' => 'Home address',
+        'home_street' => 'Home street',
+        'home_city' => 'Home city',
+        'home_state' => 'Home state',
+        'home_zip' => 'Home ZIP',
         'phone' => 'Public phone',
         'public_email' => 'Public email',
     ];
@@ -246,10 +359,21 @@ function gpRequiredHandlerProfileFields(): array {
 
 function gpMissingRequiredHandlerProfileFields(array $user): array {
     $missing = [];
+    $validStates = [
+        'AL' => true,'AK' => true,'AZ' => true,'AR' => true,'CA' => true,'CO' => true,'CT' => true,'DE' => true,'FL' => true,'GA' => true,
+        'HI' => true,'ID' => true,'IL' => true,'IN' => true,'IA' => true,'KS' => true,'KY' => true,'LA' => true,'ME' => true,'MD' => true,
+        'MA' => true,'MI' => true,'MN' => true,'MS' => true,'MO' => true,'MT' => true,'NE' => true,'NV' => true,'NH' => true,'NJ' => true,
+        'NM' => true,'NY' => true,'NC' => true,'ND' => true,'OH' => true,'OK' => true,'OR' => true,'PA' => true,'RI' => true,'SC' => true,
+        'SD' => true,'TN' => true,'TX' => true,'UT' => true,'VT' => true,'VA' => true,'WA' => true,'WV' => true,'WI' => true,'WY' => true,
+        'DC' => true,
+    ];
     foreach (gpRequiredHandlerProfileFields() as $field => $label) {
         if (trim((string) ($user[$field] ?? '')) === '') {
             $missing[$field] = $label;
         }
+    }
+    if (!empty($user['home_state']) && !isset($validStates[strtoupper(trim((string) $user['home_state']))])) {
+        $missing['home_state'] = 'Valid home state';
     }
     if (!empty($user['public_email']) && !filter_var((string) $user['public_email'], FILTER_VALIDATE_EMAIL)) {
         $missing['public_email'] = 'Valid public email';

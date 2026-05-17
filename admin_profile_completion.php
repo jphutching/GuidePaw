@@ -12,33 +12,15 @@ if (!currentUserIsAdmin()) {
 gpEnsureRequiredHandlerProfileColumns($pdo);
 $pdo->exec("UPDATE users SET backup_contact_name = COALESCE(NULLIF(TRIM(backup_contact_name), ''), 'Optional backup contact'), backup_contact_phone = COALESCE(NULLIF(TRIM(backup_contact_phone), ''), 'Optional backup phone') WHERE COALESCE(NULLIF(TRIM(backup_contact_name), ''), '') = '' OR COALESCE(NULLIF(TRIM(backup_contact_phone), ''), '') = ''");
 
-$requiredFields = [
-    'display_name' => 'Display name',
-    'home_address' => 'Home address',
-    'phone' => 'Public phone',
-    'public_email' => 'Public email',
-];
+$requiredFields = gpRequiredHandlerProfileFields();
 
 $totalAccounts = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-$allRows = $pdo->query("SELECT id, username, email, display_name, home_address, phone, public_email, backup_contact_name, backup_contact_phone FROM users ORDER BY username ASC, id ASC")->fetchAll() ?: [];
+$allRows = $pdo->query("SELECT id, username, email, display_name, home_street, home_apt, home_city, home_state, home_zip, home_address, phone, public_email, backup_contact_name, backup_contact_phone FROM users ORDER BY username ASC, id ASC")->fetchAll() ?: [];
 $missingRows = [];
 foreach ($allRows as $row) {
-    $missing = [];
-    if (trim((string) ($row['display_name'] ?? '')) === '') {
-        $missing[] = 'Display name';
-    }
-    if (trim((string) ($row['home_address'] ?? '')) === '') {
-        $missing[] = 'Home address';
-    }
-    if (trim((string) ($row['phone'] ?? '')) === '') {
-        $missing[] = 'Public phone';
-    }
-    $publicEmail = trim((string) ($row['public_email'] ?? ''));
-    if ($publicEmail === '') {
-        $missing[] = 'Public email';
-    } elseif (!filter_var($publicEmail, FILTER_VALIDATE_EMAIL)) {
-        $missing[] = 'Valid public email';
-    }
+    $missing = function_exists('gpMissingRequiredHandlerProfileFields')
+        ? array_values(gpMissingRequiredHandlerProfileFields($row))
+        : [];
     if ($missing) {
         $row['missing_fields'] = implode(', ', $missing);
         $missingRows[] = $row;

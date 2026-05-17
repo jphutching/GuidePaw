@@ -23,20 +23,25 @@ $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fullName = trim($_POST['full_name'] ?? '');
-    $homeAddress = trim($_POST['home_address'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $homeStreet = cleanText($_POST['home_street'] ?? '', 120);
+    $homeApt = cleanText($_POST['home_apt'] ?? '', 120);
+    $homeCity = cleanText($_POST['home_city'] ?? '', 120);
     $homeState = strtoupper(trim($_POST['home_state'] ?? ''));
+    $homeZip = cleanText($_POST['home_zip'] ?? '', 20);
+    $phone = trim($_POST['phone'] ?? '');
     $email = strtolower(trim($_POST['email'] ?? ''));
     $confirmEmail = strtolower(trim($_POST['confirm_email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
     $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
 
-    if ($fullName === '' || $homeAddress === '' || $phone === '' || $email === '' || $password === '') {
-        $error = 'Name, home address, phone number, email, and password are required.';
+    if ($fullName === '' || $homeStreet === '' || $homeCity === '' || $homeState === '' || $homeZip === '' || $phone === '' || $email === '' || $password === '') {
+        $error = 'Name, street, city, state, ZIP, phone number, email, and password are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
     } elseif ($homeState !== '' && !array_key_exists($homeState, adaStateNames())) {
         $error = 'Please choose a valid home state code.';
+    } elseif (!preg_match('/^\d{5}(?:-\d{4})?$/', $homeZip)) {
+        $error = 'Please enter a valid ZIP code.';
     } elseif ($email !== $confirmEmail) {
         $error = 'Email confirmation does not match.';
     } elseif (strlen($password) < 10) {
@@ -53,12 +58,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'An account already exists for this email.';
             } else {
                 $pdo->beginTransaction();
+                $homeAddress = gpComposePostalAddress([
+                    'home_street' => $homeStreet,
+                    'home_apt' => $homeApt,
+                    'home_city' => $homeCity,
+                    'home_state' => $homeState,
+                    'home_zip' => $homeZip,
+                ]);
                 $userId = betaInsertUserFlexible($pdo, [
                     'email' => $email,
                     'full_name' => $fullName,
+                    'home_street' => $homeStreet,
+                    'home_apt' => $homeApt,
+                    'home_city' => $homeCity,
                     'home_address' => $homeAddress,
                     'phone' => $phone,
                     'home_state' => $homeState,
+                    'home_zip' => $homeZip,
                     'password' => $password,
                     'beta_request_id' => $betaRequestId,
                 ]);
@@ -121,24 +137,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="form-label">Handler full name</label>
                     <input class="form-control" name="full_name" required value="<?= e($_POST['full_name'] ?? $prefillName) ?>">
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Home address</label>
-                    <input class="form-control" name="home_address" required value="<?= e($_POST['home_address'] ?? '') ?>" placeholder="Street, city, state, ZIP">
-                    <div class="form-text">Used for handler defaults and dog profile contact context.</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Home address</label>
+                        <div class="form-text mb-2">Enter the address as separate parts so it can be reused cleanly across profiles and QR/contact pages.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Street</label>
+                        <input class="form-control" name="home_street" required value="<?= e($_POST['home_street'] ?? '') ?>" placeholder="Street address">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Apt / Suite <span class="text-muted small">(optional)</span></label>
+                        <input class="form-control" name="home_apt" value="<?= e($_POST['home_apt'] ?? '') ?>" placeholder="Apt, suite, unit, or #">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input class="form-control" name="home_city" required value="<?= e($_POST['home_city'] ?? '') ?>" placeholder="City">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">State</label>
+                        <select class="form-select" name="home_state" required>
+                            <option value="">Choose</option>
+                            <?php foreach (adaStateNames() as $code => $name): ?>
+                                <option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($_POST['home_state'] ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">ZIP</label>
+                        <input class="form-control" name="home_zip" required value="<?= e($_POST['home_zip'] ?? '') ?>" placeholder="ZIP">
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Phone number</label>
                     <input class="form-control" name="phone" required value="<?= e($_POST['phone'] ?? '') ?>">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Home state</label>
-                    <select class="form-select" name="home_state">
-                        <option value="">Choose a state</option>
-                        <?php foreach (adaStateNames() as $code => $name): ?>
-                            <option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($_POST['home_state'] ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="form-text">Used as the ADA card fallback when GPS is unavailable and for public QR lost-dog context.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Email / login</label>

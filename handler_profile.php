@@ -14,10 +14,14 @@ function gpEnsureHandlerProfileColumns(PDO $pdo): void
 {
     $columns = [
         'display_name' => 'TEXT',
+        'home_street' => 'TEXT',
+        'home_apt' => 'TEXT',
+        'home_city' => 'TEXT',
         'home_address' => 'TEXT',
         'phone' => 'TEXT',
         'public_email' => 'TEXT',
         'home_state' => 'TEXT',
+        'home_zip' => 'TEXT',
         'profile_photo_url' => 'TEXT',
         'backup_contact_name' => 'TEXT',
         'backup_contact_phone' => 'TEXT',
@@ -79,11 +83,14 @@ $user = $stmt->fetch();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     $displayName = cleanText($_POST['display_name'] ?? '', 120);
-    $homeAddress = cleanText($_POST['home_address'] ?? '', 255);
+    $homeStreet = cleanText($_POST['home_street'] ?? '', 120);
+    $homeApt = cleanText($_POST['home_apt'] ?? '', 120);
+    $homeCity = cleanText($_POST['home_city'] ?? '', 120);
+    $homeState = strtoupper(trim((string) ($_POST['home_state'] ?? '')));
+    $homeZip = cleanText($_POST['home_zip'] ?? '', 20);
     $phone = cleanText($_POST['phone'] ?? '', 80);
     $publicEmail = cleanText($_POST['public_email'] ?? '', 160);
     $facebookUrl = gpNormalizeOptionalUrl((string) ($_POST['facebook_url'] ?? ''));
-    $homeState = strtoupper(trim((string) ($_POST['home_state'] ?? '')));
     $backupName = cleanText($_POST['backup_contact_name'] ?? '', 120);
     $backupPhone = cleanText($_POST['backup_contact_phone'] ?? '', 80);
     $publicNotes = cleanTextarea($_POST['public_notes'] ?? '', 1200);
@@ -98,8 +105,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($displayName === '') {
         $errors[] = 'Display name is required.';
     }
-    if ($homeAddress === '') {
-        $errors[] = 'Home address is required.';
+    if ($homeStreet === '') {
+        $errors[] = 'Home street is required.';
+    }
+    if ($homeCity === '') {
+        $errors[] = 'Home city is required.';
+    }
+    if ($homeState === '') {
+        $errors[] = 'Home state is required.';
+    }
+    if ($homeZip === '') {
+        $errors[] = 'Home ZIP is required.';
     }
     if ($phone === '') {
         $errors[] = 'Public phone is required.';
@@ -113,13 +129,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($homeState !== '' && !array_key_exists($homeState, adaStateNames())) {
         $errors[] = 'Home state must be a valid US state code.';
     }
+    if ($homeZip !== '' && !preg_match('/^\d{5}(?:-\d{4})?$/', $homeZip)) {
+        $errors[] = 'Home ZIP must be valid.';
+    }
     if ($smsEnabled && $smsPhoneNormalized === '') {
         $errors[] = 'SMS notifications require a valid mobile phone number.';
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare('UPDATE users SET display_name=?, home_address=?, phone=?, public_email=?, facebook_url=?, home_state=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
-        $stmt->execute([$displayName, $homeAddress, $phone, $publicEmail, $facebookUrl ?: null, $homeState !== '' ? $homeState : null, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
+        $homeAddress = gpComposePostalAddress([
+            'home_street' => $homeStreet,
+            'home_apt' => $homeApt,
+            'home_city' => $homeCity,
+            'home_state' => $homeState,
+            'home_zip' => $homeZip,
+        ]);
+        $stmt = $pdo->prepare('UPDATE users SET display_name=?, home_street=?, home_apt=?, home_city=?, home_address=?, phone=?, public_email=?, facebook_url=?, home_state=?, home_zip=?, profile_photo_url=?, backup_contact_name=?, backup_contact_phone=?, public_notes=?, sms_phone=?, sms_notifications_enabled=? WHERE id=?');
+        $stmt->execute([$displayName, $homeStreet, $homeApt !== '' ? $homeApt : null, $homeCity, $homeAddress, $phone, $publicEmail, $facebookUrl ?: null, $homeState, $homeZip, $profilePhoto ?: null, $backupName !== '' ? $backupName : 'Not applicable', $backupPhone !== '' ? $backupPhone : 'Not applicable', $publicNotes ?: null, $smsPhoneNormalized ?: null, $smsEnabled, $userId]);
         $_SESSION['username'] = $user['username'];
         unset($_SESSION['handler_profile_required_missing']);
         if (($_POST['completion_required'] ?? '') === '1') {
@@ -138,6 +164,12 @@ $csrf = generateCsrfToken();
 $completionRequired = (($_GET['required'] ?? '') === '1') || !empty($_SESSION['handler_profile_required_missing']);
 $stateNames = adaStateNames();
 $supportBadge = gpSupportBadgeForUser($pdo, $user ?: []);
+$legacyAddress = gpParseLegacyPostalAddress((string) ($user['home_address'] ?? ''));
+$homeStreetValue = trim((string) ($user['home_street'] ?? '')) !== '' ? (string) $user['home_street'] : $legacyAddress['street'];
+$homeAptValue = trim((string) ($user['home_apt'] ?? '')) !== '' ? (string) $user['home_apt'] : $legacyAddress['apt'];
+$homeCityValue = trim((string) ($user['home_city'] ?? '')) !== '' ? (string) $user['home_city'] : $legacyAddress['city'];
+$homeStateValue = strtoupper(trim((string) ($user['home_state'] ?? ''))) !== '' ? strtoupper(trim((string) $user['home_state'])) : strtoupper(trim((string) $legacyAddress['state']));
+$homeZipValue = trim((string) ($user['home_zip'] ?? '')) !== '' ? (string) $user['home_zip'] : $legacyAddress['zip'];
 $missingLabels = [];
 if (function_exists('gpMissingRequiredHandlerProfileFields')) {
     $missingLabels = gpProfileMissingLabelsVisible(array_values(gpMissingRequiredHandlerProfileFields($user ?: [])));
@@ -249,20 +281,27 @@ if (!$missingLabels && !empty($_SESSION['handler_profile_required_missing'])) {
 
                 <div class="col-md-6"><label class="form-label">Display Name <span class="req">*</span></label><input type="text" name="display_name" class="form-control" value="<?= e($user['display_name'] ?? ($user['username'] ?? '')) ?>" required></div>
                 <div class="col-md-6"><label class="form-label">Username</label><input type="text" class="form-control" value="<?= e($user['username'] ?? '') ?>" disabled><div class="form-text">Username is used for login and is not changed here.</div></div>
-                <div class="col-md-6"><label class="form-label">Home Address <span class="req">*</span></label><input type="text" name="home_address" class="form-control" value="<?= e($user['home_address'] ?? '') ?>" placeholder="Street, city, state, ZIP" required><div class="form-text">Used as the default address for dog profiles and contact context.</div></div>
-                <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
-                <div class="col-md-6"><label class="form-label">Facebook Link <span class="opt">optional</span></label><input type="url" name="facebook_url" class="form-control" value="<?= e($user['facebook_url'] ?? '') ?>" placeholder="https://www.facebook.com/your.profile"><div class="form-text">Saved on your handler profile for quick sharing.</div></div>
-                <div class="col-md-6">
-                    <label class="form-label">Home State</label>
-                    <select name="home_state" class="form-select">
+                <div class="col-12">
+                    <label class="form-label">Home Address</label>
+                    <div class="form-text mb-2">Enter the address as separate fields so GuidePaw can reuse it cleanly across QR profiles and contact defaults.</div>
+                </div>
+                <div class="col-md-6"><label class="form-label">Street <span class="req">*</span></label><input type="text" name="home_street" class="form-control" value="<?= e($homeStreetValue) ?>" placeholder="Street address" required></div>
+                <div class="col-md-6"><label class="form-label">Apt / Suite <span class="opt">optional</span></label><input type="text" name="home_apt" class="form-control" value="<?= e($homeAptValue) ?>" placeholder="Apt, suite, unit, or #"></div>
+                <div class="col-md-6"><label class="form-label">City <span class="req">*</span></label><input type="text" name="home_city" class="form-control" value="<?= e($homeCityValue) ?>" placeholder="City" required></div>
+                <div class="col-md-3">
+                    <label class="form-label">State <span class="req">*</span></label>
+                    <select name="home_state" class="form-select" required>
                         <option value="">Choose a state</option>
                         <?php foreach ($stateNames as $code => $name): ?>
-                            <option value="<?= e($code) ?>" <?= strtoupper(trim((string) ($user['home_state'] ?? ''))) === $code ? 'selected' : '' ?>><?= e($name) ?></option>
+                            <option value="<?= e($code) ?>" <?= $homeStateValue === $code ? 'selected' : '' ?>><?= e($name) ?></option>
                         <?php endforeach; ?>
                     </select>
                     <div class="form-text">Used as the ADA card fallback and for lost-dog contact context when GPS is unavailable.</div>
                 </div>
+                <div class="col-md-3"><label class="form-label">ZIP <span class="req">*</span></label><input type="text" name="home_zip" class="form-control" value="<?= e($homeZipValue) ?>" placeholder="ZIP" required></div>
+                <div class="col-md-6"><label class="form-label">Public Phone <span class="req">*</span></label><input type="text" name="phone" class="form-control" value="<?= e($user['phone'] ?? '') ?>" required></div>
+                <div class="col-md-6"><label class="form-label">Public Email <span class="req">*</span></label><input type="email" name="public_email" class="form-control" value="<?= e($user['public_email'] ?? ($user['email'] ?? '')) ?>" required></div>
+                <div class="col-md-6"><label class="form-label">Facebook Link <span class="opt">optional</span></label><input type="url" name="facebook_url" class="form-control" value="<?= e($user['facebook_url'] ?? '') ?>" placeholder="https://www.facebook.com/your.profile"><div class="form-text">Saved on your handler profile for quick sharing.</div></div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Name <span class="opt">optional</span></label><input type="text" name="backup_contact_name" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_name'] ?? '')) ?>"></div>
                 <div class="col-md-6"><label class="form-label">Backup Contact Phone <span class="opt">optional</span></label><input type="text" name="backup_contact_phone" class="form-control" value="<?= e(gpOptionalBackupDisplay($user['backup_contact_phone'] ?? '')) ?>"></div>
                 <div class="col-12 sms-box">
