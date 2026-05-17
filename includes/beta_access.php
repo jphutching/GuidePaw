@@ -200,6 +200,21 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
     $phone = trim($data['phone'] ?? '');
     $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
     $recovery = strtoupper(bin2hex(random_bytes(5)));
+    $homeStreet = trim((string) ($data['home_street'] ?? ''));
+    $homeApt = trim((string) ($data['home_apt'] ?? ''));
+    $homeCity = trim((string) ($data['home_city'] ?? ''));
+    $homeState = strtoupper(trim((string) ($data['home_state'] ?? '')));
+    $homeZip = trim((string) ($data['home_zip'] ?? ''));
+    $homeAddress = trim((string) ($data['home_address'] ?? ''));
+    if ($homeAddress === '') {
+        $homeAddress = gpComposePostalAddress([
+            'home_street' => $homeStreet,
+            'home_apt' => $homeApt,
+            'home_city' => $homeCity,
+            'home_state' => $homeState,
+            'home_zip' => $homeZip,
+        ]);
+    }
 
     $values = [];
 
@@ -207,16 +222,16 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
         'username' => $email,
         'email' => $email,
         'full_name' => $fullName,
-        'home_street' => trim((string) ($data['home_street'] ?? '')),
-        'home_apt' => trim((string) ($data['home_apt'] ?? '')),
-        'home_city' => trim((string) ($data['home_city'] ?? '')),
-        'home_address' => trim((string) ($data['home_address'] ?? '')),
+        'home_street' => $homeStreet,
+        'home_apt' => $homeApt,
+        'home_city' => $homeCity,
+        'home_address' => $homeAddress,
         'handler_name' => $fullName,
         'name' => $fullName,
         'phone' => $phone,
         'phone_number' => $phone,
-        'home_state' => strtoupper(trim((string) ($data['home_state'] ?? ''))),
-        'home_zip' => trim((string) ($data['home_zip'] ?? '')),
+        'home_state' => $homeState,
+        'home_zip' => $homeZip,
         'password_hash' => $passwordHash,
         'password' => $passwordHash,
         'recovery_key' => $recovery,
@@ -247,13 +262,7 @@ function betaInsertUserFlexible(PDO $pdo, array $data): int
             if (str_contains($col, 'dog')) {
                 $values[$col] = 'Pending setup';
             } elseif (str_contains($col, 'address')) {
-                $values[$col] = gpComposePostalAddress([
-                    'home_street' => (string) ($data['home_street'] ?? ''),
-                    'home_apt' => (string) ($data['home_apt'] ?? ''),
-                    'home_city' => (string) ($data['home_city'] ?? ''),
-                    'home_state' => (string) ($data['home_state'] ?? ''),
-                    'home_zip' => (string) ($data['home_zip'] ?? ''),
-                ]);
+                $values[$col] = $homeAddress;
             } elseif (str_contains($col, 'email')) {
                 $values[$col] = $email;
             } elseif (str_contains($col, 'name')) {
