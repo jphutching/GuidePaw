@@ -89,7 +89,9 @@ set_exception_handler(function (Throwable $e): void {
     $safeErrorId = htmlspecialchars($errorId, ENT_QUOTES, 'UTF-8');
     $reportUrl = 'feedback.php?from_error=1&error_id=' . rawurlencode($errorId);
 
-    http_response_code(500);
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
     echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Application Error</title>';
     echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light">';
     echo '<div class="container py-5" style="max-width:720px"><div class="card shadow-sm"><div class="card-body">';

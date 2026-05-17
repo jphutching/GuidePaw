@@ -70,6 +70,10 @@ if (!function_exists('gpTrainingCommandWordLoad')) {
         $groups = [];
         foreach ($defaults as $groupName => $cueItems) {
             $groupKey = gpTrainingCommandWordKey($groupName);
+            $savedGroup = $saved[$groupKey] ?? [];
+            if (!is_array($savedGroup)) {
+                $savedGroup = [];
+            }
             $groups[$groupKey] = [
                 'label' => $groupName,
                 'items' => [],
@@ -77,7 +81,11 @@ if (!function_exists('gpTrainingCommandWordLoad')) {
 
             foreach ($cueItems as $cueItem) {
                 $skillKey = gpTrainingCommandWordKey((string) ($cueItem['skill'] ?? ''));
-                $savedCue = (string) ($saved[$groupKey][$skillKey] ?? ($cueItem['cue'] ?? ''));
+                $savedCue = $savedGroup[$skillKey] ?? ($cueItem['cue'] ?? '');
+                if (is_array($savedCue)) {
+                    $savedCue = '';
+                }
+                $savedCue = (string) $savedCue;
                 $groups[$groupKey]['items'][] = [
                     'key' => $skillKey,
                     'skill' => (string) ($cueItem['skill'] ?? ''),
