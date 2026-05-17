@@ -108,7 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <main class="page-shell mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">💙 Support GuidePaw</h1>
-        <a href="index.php" class="btn btn-outline-secondary btn-sm">Back</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <?php if (gpNavIsAdmin()): ?>
+                <a href="admin_funding_settings.php" class="btn btn-outline-primary btn-sm">Funding Settings</a>
+            <?php endif; ?>
+            <a href="index.php" class="btn btn-outline-secondary btn-sm">Back</a>
+        </div>
     </div>
 
     <?php if ($checkoutState === 'success'): ?>
