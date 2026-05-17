@@ -203,7 +203,7 @@ function gpBetaQaChecklistItems(): array
             'description' => 'Validate mobile navigation and browser/PWA behaviors.',
             'items' => [
                 ['id' => 'onboarding_walkthrough', 'text' => 'First login opens a setup walkthrough with profile, dog, and dashboard steps.', 'expected' => 'onboarding_setup.php shows the quick setup flow and the finish button returns to the dashboard.'],
-                ['id' => 'mobile_menu_groups', 'text' => 'Mobile menu groups open and close correctly.', 'expected' => 'Dog, Logs, Training, Care, and More sections appear as grouped categories with Training extras and Admin tools nested inside More.'],
+                ['id' => 'mobile_menu_groups', 'text' => 'Mobile menu groups open and close correctly.', 'expected' => 'Dog, Logs, Training, Care, and More sections appear as grouped categories with Training extras and Admin tools nested inside More, and Beta QA Checklist lives under Admin tools.'],
                 ['id' => 'bottom_nav', 'text' => 'Bottom nav routes work.', 'expected' => 'Home, Log, History, Alerts, Menu open expected pages.'],
                 ['id' => 'install_home_screen', 'text' => 'PWA can be installed to home screen.', 'expected' => 'Manifest/icon load and app opens standalone where supported.'],
                 ['id' => 'notification_permission', 'text' => 'Enable reminders button prompts for notifications.', 'expected' => 'Browser permission flow works or fails gracefully.'],
