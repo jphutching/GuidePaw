@@ -25,6 +25,7 @@ function abcMoney(int $cents): string
 gpBusinessCostEnsureSchema($pdo);
 gpVendorCostEnsureSchema($pdo);
 $supportRevenue = gpStripeSupportRevenueSummary($pdo);
+$supportTimeline = gpStripeSupportMonthlySeries($pdo, 6);
 $costSummary = gpBusinessCostSummary($pdo);
 $providerSnapshots = gpBusinessProviderSnapshots();
 $twilioSnapshot = (array) ($providerSnapshots['twilio'] ?? []);
@@ -34,6 +35,39 @@ $zeptoSnapshot = (array) ($providerSnapshots['zeptomail'] ?? []);
 $providerLiveBurnCents = (int) ($twilioSnapshot['monthly_cents'] ?? 0)
     + (int) ($stripeSnapshot['monthly_cents'] ?? 0)
     + (int) ($renderSnapshot['monthly_cents'] ?? 0);
+$currentBurnCents = $providerLiveBurnCents + (int) ($costSummary['current_monthly_cents'] ?? 0);
+$vendorMonthlySeries = gpVendorCostMonthlySeries($pdo, null, 6);
+$currentSupportCoveragePct = $currentBurnCents > 0 ? (int) round(((int) ($supportRevenue['last_30d_cents'] ?? 0) / $currentBurnCents) * 100) : 0;
+$currentRunwayMonths = $currentBurnCents > 0 ? round(((int) ($supportRevenue['last_30d_cents'] ?? 0) / $currentBurnCents), 1) : 0.0;
+$trendMonths = 6;
+$trendMonthKeys = [];
+$trendMonthLabels = [];
+$monthCursor = new DateTimeImmutable('first day of this month 00:00:00', new DateTimeZone('UTC'));
+for ($i = $trendMonths - 1; $i >= 0; $i--) {
+    $month = $monthCursor->modify("-{$i} months");
+    $monthKey = $month->format('Y-m');
+    $trendMonthKeys[] = $monthKey;
+    $trendMonthLabels[$monthKey] = $month->format('M Y');
+}
+$trendRows = [];
+foreach ($trendMonthKeys as $monthKey) {
+    $supportRow = (array) ($supportTimeline[$monthKey] ?? []);
+    $vendorRow = (array) ($vendorMonthlySeries[$monthKey] ?? []);
+    $supportCents = (int) ($supportRow['support_cents'] ?? 0);
+    $vendorCents = (int) ($vendorRow['imported_total_cents'] ?? 0);
+    $trendRows[] = [
+        'month_key' => $monthKey,
+        'month_label' => (string) ($trendMonthLabels[$monthKey] ?? $monthKey),
+        'support_cents' => $supportCents,
+        'vendor_cents' => $vendorCents,
+        'payment_count' => (int) ($supportRow['payment_count'] ?? 0),
+        'vendor_import_count' => (int) ($vendorRow['import_count'] ?? 0),
+        'vendor_row_count' => (int) ($vendorRow['row_count'] ?? 0),
+        'net_cents' => $supportCents - $currentBurnCents,
+    ];
+}
+$trendSupportTotal = array_sum(array_map(static fn(array $row): int => (int) ($row['support_cents'] ?? 0), $trendRows));
+$trendVendorTotal = array_sum(array_map(static fn(array $row): int => (int) ($row['vendor_cents'] ?? 0), $trendRows));
 $allCostRows = gpBusinessCostRows($pdo);
 $currentCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'current'));
 $futureCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'future'));
@@ -159,6 +193,72 @@ if (($_GET['msg'] ?? '') === 'porkbun_imported') {
             </div>
         </div>
     </div>
+
+    <details class="panel mb-3">
+        <summary class="h5 mb-2" style="cursor:pointer; list-style:none;">Cost trends</summary>
+        <div class="mini mb-3">Month-over-month support revenue, imported vendor spend, and runway against the current burn snapshot.</div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="mini">Current burn snapshot</div>
+                    <strong><?= abcMoney($currentBurnCents) ?></strong>
+                    <div class="mini">Manual ledger plus live provider burn.</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="mini">Support coverage</div>
+                    <strong><?= $currentBurnCents > 0 ? $currentSupportCoveragePct . '%' : '—' ?></strong>
+                    <div class="mini">Last 30 days support compared to the current burn snapshot.</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="mini">Runway at current pace</div>
+                    <strong><?= $currentBurnCents > 0 ? abcEsc((string) $currentRunwayMonths) . ' months' : '—' ?></strong>
+                    <div class="mini">Based on support received over the last 30 days.</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="mini">Imported vendor spend, 6 months</div>
+                    <strong><?= abcMoney($trendVendorTotal) ?></strong>
+                    <div class="mini">Actual imported vendor history, mostly Porkbun today.</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="mini">Support revenue, 6 months</div>
+                    <strong><?= abcMoney($trendSupportTotal) ?></strong>
+                    <div class="mini">Actual support payments recorded by webhook.</div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Support</th>
+                        <th>Vendor imports</th>
+                        <th>Net after burn</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($trendRows as $trendRow): ?>
+                        <tr>
+                            <td><strong><?= abcEsc($trendRow['month_label']) ?></strong></td>
+                            <td><?= abcMoney((int) $trendRow['support_cents']) ?></td>
+                            <td><?= abcMoney((int) $trendRow['vendor_cents']) ?></td>
+                            <td><?= abcMoney((int) $trendRow['net_cents']) ?></td>
+                            <td class="mini"><?= (int) $trendRow['payment_count'] ?> support payments<?= ((int) $trendRow['vendor_import_count'] > 0 ? ' · ' . (int) $trendRow['vendor_import_count'] . ' vendor imports' : '') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </details>
 
     <div class="panel mb-3">
         <div class="row g-3">

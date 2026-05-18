@@ -100,6 +100,54 @@ if (!function_exists('gpVendorCostLatestImports')) {
     }
 }
 
+if (!function_exists('gpVendorCostMonthlySeries')) {
+    function gpVendorCostMonthlySeries(PDO $pdo, ?string $vendorSlug = null, int $months = 6): array
+    {
+        gpVendorCostEnsureSchema($pdo);
+
+        $months = max(1, min(24, $months));
+        $lookbackMonths = max(0, $months - 1);
+        $params = [];
+        $where = '';
+        if ($vendorSlug !== null && trim($vendorSlug) !== '') {
+            $where = 'AND vendor_slug = ?';
+            $params[] = strtolower(trim($vendorSlug));
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT
+                TO_CHAR(date_trunc('month', created_at), 'YYYY-MM') AS month_key,
+                COALESCE(SUM(imported_total_cents), 0) AS imported_total_cents,
+                COALESCE(SUM(row_count), 0) AS row_count,
+                COUNT(*) AS import_count
+            FROM vendor_cost_imports
+            WHERE created_at >= (date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '{$lookbackMonths} months')
+            {$where}
+            GROUP BY 1
+            ORDER BY 1 ASC
+        ");
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $series = [];
+        foreach ($rows as $row) {
+            $monthKey = trim((string) ($row['month_key'] ?? ''));
+            if ($monthKey === '') {
+                continue;
+            }
+
+            $series[$monthKey] = [
+                'month_key' => $monthKey,
+                'imported_total_cents' => (int) ($row['imported_total_cents'] ?? 0),
+                'row_count' => (int) ($row['row_count'] ?? 0),
+                'import_count' => (int) ($row['import_count'] ?? 0),
+            ];
+        }
+
+        return $series;
+    }
+}
+
 if (!function_exists('gpVendorCostImportPorkbunCsv')) {
     function gpVendorCostImportPorkbunCsv(PDO $pdo, string $csv, int $calendarYear = 0): array
     {

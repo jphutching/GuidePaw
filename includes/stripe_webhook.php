@@ -323,6 +323,50 @@ if (!function_exists('gpStripeSupportRevenueSummary')) {
     }
 }
 
+if (!function_exists('gpStripeSupportMonthlySeries')) {
+    function gpStripeSupportMonthlySeries(PDO $pdo, int $months = 6): array
+    {
+        if (!gpStripeSupportPaymentsTableExists($pdo)) {
+            return [];
+        }
+
+        $months = max(1, min(24, $months));
+        $lookbackMonths = max(0, $months - 1);
+        $stmt = $pdo->prepare("
+            SELECT
+                TO_CHAR(date_trunc('month', created_at), 'YYYY-MM') AS month_key,
+                COALESCE(SUM(amount_total_cents), 0) AS support_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'one_time' THEN amount_total_cents ELSE 0 END), 0) AS one_time_cents,
+                COALESCE(SUM(CASE WHEN support_type = 'monthly' THEN amount_total_cents ELSE 0 END), 0) AS monthly_cents,
+                COUNT(*) AS payment_count
+            FROM support_funding_events
+            WHERE created_at >= (date_trunc('month', CURRENT_TIMESTAMP) - INTERVAL '{$lookbackMonths} months')
+            GROUP BY 1
+            ORDER BY 1 ASC
+        ");
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $series = [];
+        foreach ($rows as $row) {
+            $monthKey = trim((string) ($row['month_key'] ?? ''));
+            if ($monthKey === '') {
+                continue;
+            }
+
+            $series[$monthKey] = [
+                'month_key' => $monthKey,
+                'support_cents' => (int) ($row['support_cents'] ?? 0),
+                'one_time_cents' => (int) ($row['one_time_cents'] ?? 0),
+                'monthly_cents' => (int) ($row['monthly_cents'] ?? 0),
+                'payment_count' => (int) ($row['payment_count'] ?? 0),
+            ];
+        }
+
+        return $series;
+    }
+}
+
 if (!function_exists('gpStripeSupportTimelineSummary')) {
     function gpStripeSupportTimelineSummary(PDO $pdo): array
     {
