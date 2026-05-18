@@ -1497,6 +1497,23 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($breedQuestionnaireBody, 'medium · about 20-55 lbs')
         && str_contains($breedQuestionnaireBody, 'large · about 45-90 lbs')
         && str_contains($breedQuestionnaireBody, 'giant · about 85+ lbs');
+    $breedQuestionnaireFamilyBrowsePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'breed_query' => '',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+        'drill_family' => 'Toy',
+        'drill_size' => 'any',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireFamilyBrowseBody = strtolower($breedQuestionnaireFamilyBrowsePage['body']);
+    $breedQuestionnaireFamilyBrowseSeen = gpQaPageLooksOk($breedQuestionnaireFamilyBrowsePage)
+        && str_contains($breedQuestionnaireFamilyBrowseBody, 'breeds in toy')
+        && str_contains($breedQuestionnaireFamilyBrowseBody, 'research this breed')
+        && str_contains($breedQuestionnaireFamilyBrowseBody, 'browse this family');
     $breedQuestionnaireToyPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'breed_query' => '',
@@ -1905,6 +1922,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_live_suggestions', $breedQuestionnaireLiveSuggestionsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveSuggestionsSeen ? ' breed query suggestions visible' : ' breed query suggestions missing'));
     gpQaResult($results, 'breed_questionnaire_focus_filters', $breedQuestionnaireFocusFiltersSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireFocusFiltersSeen ? ' focus filters visible' : ' focus filters missing'));
     gpQaResult($results, 'breed_questionnaire_advanced_section', $breedQuestionnaireAdvancedSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireAdvancedSeen ? ' advanced section visible with secondary filters' : ' advanced section missing or incomplete'));
+    gpQaResult($results, 'breed_questionnaire_family_browse', $breedQuestionnaireFamilyBrowseSeen, 'HTTP ' . $breedQuestionnaireFamilyBrowsePage['status'] . ($breedQuestionnaireFamilyBrowseSeen ? ' family browse section found' : ' family browse section missing'));
     gpQaResult($results, 'breed_questionnaire_focus_ranking', $breedQuestionnaireFocusRankSeen, 'HTTP ' . $breedQuestionnaireFocusRankPage['status'] . ($breedQuestionnaireFocusRankSeen ? ' focus selection biases ranked results' : ' focus selection did not bias ranked results'));
     gpQaResult($results, 'breed_questionnaire_live_best_for', $breedQuestionnaireLiveBestForSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveBestForSeen ? ' live suggestions include best-for tags' : ' best-for tags missing'));
     gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));

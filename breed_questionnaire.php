@@ -523,7 +523,7 @@ usort($matches, static function (array $a, array $b): int {
     return ($b['score'] <=> $a['score']) ?: strcmp($a['breed'], $b['breed']);
 });
 
-$topBreeds = array_slice($matches, 0, 6);
+$topBreeds = array_slice($matches, 0, 12);
 
 $familyScores = [];
 foreach ($matches as $match) {
@@ -545,7 +545,17 @@ unset($row);
 uasort($familyScores, static function (array $a, array $b): int {
     return ($b['average'] <=> $a['average']) ?: strcmp($a['best']['breed'], $b['best']['breed']);
 });
-$topFamilies = array_slice($familyScores, 0, 4, true);
+$topFamilies = array_slice($familyScores, 0, 6, true);
+$familyBrowseBreeds = [];
+if ($drillFamily !== 'any' && $drillFamily !== '') {
+    $familyBrowseBreeds = array_values(array_filter($matches, static function (array $match) use ($drillFamily): bool {
+        return strcasecmp((string) ($match['group'] ?? ''), $drillFamily) === 0;
+    }));
+    usort($familyBrowseBreeds, static function (array $a, array $b): int {
+        return ($b['score'] <=> $a['score']) ?: strcmp($a['breed'], $b['breed']);
+    });
+    $familyBrowseBreeds = array_slice($familyBrowseBreeds, 0, 16);
+}
 
 $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 ?>
@@ -587,7 +597,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         <section class="card card-soft">
             <div class="card-body">
                 <h2 class="h5 mb-3">Your answers</h2>
-                <form method="post" class="row g-3">
+                <form method="post" class="row g-3" id="breed-questionnaire-form">
                     <input type="hidden" name="breed_focus" value="<?= e($breedFocus) ?>">
                     <div class="col-12">
                         <label class="form-label fw-bold">What are you trying to do?</label>
@@ -788,21 +798,55 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             </div>
                             <div class="small text-muted mb-2"><?= e(explainMatches($family['best']['reasons'])) ?></div>
                             <div class="small"><strong>Best candidate in this group:</strong> <?= e($family['best']['breed']) ?></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-3" data-browse-family="<?= e($familyName) ?>">Browse this family</button>
                         </article>
                     <?php endforeach; ?>
                 </div>
             </div>
         </section>
+
+        <?php if ($drillFamily !== 'any' && $drillFamily !== ''): ?>
+            <section class="card card-soft mt-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Breeds in <?= e($drillFamily) ?></h2>
+                            <div class="text-muted small">Pick a breed from this family to keep narrowing the list.</div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-clear-family>Back to all families</button>
+                    </div>
+                    <?php if ($familyBrowseBreeds): ?>
+                        <div class="result-grid">
+                            <?php foreach ($familyBrowseBreeds as $match): ?>
+                                <article class="family-card">
+                                    <div class="fw-bold"><?= e($match['breed']) ?></div>
+                                    <div class="subtle small mb-2"><?= e($match['group']) ?> · <?= e($match['size'] ?: 'Size not listed') ?> · Score <?= (int) $match['score'] ?></div>
+                                    <div class="small text-muted mb-2"><?= e($match['notes'] ?: 'No notes available.') ?></div>
+                                    <button type="button" class="btn btn-primary btn-sm" data-pick-breed="<?= e($match['breed']) ?>">Research this breed</button>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="question-note">No breeds matched that family with the current size and fit filters. Try <strong>Any size</strong> or a different advanced filter, or click <strong>Back to all families</strong>.</div>
+                    <?php endif; ?>
+                </div>
+            </section>
+        <?php endif; ?>
     <?php endif; ?>
 </main>
 <script>
 (() => {
     const input = document.querySelector('input[name="breed_query"]');
+    const form = document.getElementById('breed-questionnaire-form');
+    const drillFamilySelect = document.querySelector('select[name="drill_family"]');
     const focusInput = document.querySelector('input[name="breed_focus"]');
     const hint = document.getElementById('breed-query-hint');
     const live = document.getElementById('breed-query-live');
     const focusButtons = Array.from(document.querySelectorAll('[data-focus]'));
-    if (!input || !focusInput || !hint || !live || !focusButtons.length) return;
+    const familyButtons = Array.from(document.querySelectorAll('[data-browse-family]'));
+    const breedButtons = Array.from(document.querySelectorAll('[data-pick-breed]'));
+    const clearFamilyButton = document.querySelector('[data-clear-family]');
+    if (!input || !form || !drillFamilySelect || !focusInput || !hint || !live || !focusButtons.length) return;
 
     const breedItems = <?= json_encode($breedSuggestionData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     let activeFocus = 'all';
@@ -835,6 +879,27 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
         btn.addEventListener('click', () => setActiveFocus(btn.getAttribute('data-focus') || 'all'));
     });
+
+    familyButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            drillFamilySelect.value = btn.getAttribute('data-browse-family') || 'any';
+            form.requestSubmit();
+        });
+    });
+
+    breedButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            input.value = btn.getAttribute('data-pick-breed') || '';
+            form.requestSubmit();
+        });
+    });
+
+    if (clearFamilyButton) {
+        clearFamilyButton.addEventListener('click', () => {
+            drillFamilySelect.value = 'any';
+            form.requestSubmit();
+        });
+    }
 
     activeFocus = focusInput.value || 'all';
 
