@@ -473,7 +473,6 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
 
         $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
-        $fallbackRows = [];
         $currentDate = '';
         $invoiceTotalCents = null;
         foreach ($lines as $line) {
@@ -504,55 +503,20 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                     continue;
                 }
             }
-
-            $dateText = '';
-            if (preg_match('/\b((?:\d{1,2}[\/\-]\d{1,2}[\/\-](?:\d{2}|\d{4}))|(?:\d{4}-\d{2}-\d{2})|(?:[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}))\b/', $line, $dateMatch)) {
-                $dateText = trim((string) $dateMatch[1]);
-                $parsedYear = gpVendorParseDateYear($dateText);
-                if ($calendarYear > 0 && $parsedYear !== null && $parsedYear !== $calendarYear) {
-                    continue;
-                }
-                $currentDate = $dateText;
-            }
-
-            $amount = null;
-            if (preg_match('/(?:^|[^0-9])(?:\$\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/', $line, $amountMatch)) {
-                $amount = gpVendorParseMoneyCents((string) $amountMatch[1]);
-            }
-            if ($amount === null) {
-                continue;
-            }
-
-            $lineLower = strtolower($line);
-            $looksLikeDetail = $dateText !== '' || preg_match('/\b(renewal|order|invoice|charge|purchase|payment|domain|privacy|registration|ssl|dns|host|protection|service|fee|total)\b/i', $line) === 1;
-            if ($looksLikeDetail) {
-                $rows[] = [
-                    'date' => $currentDate !== '' ? $currentDate : $dateText,
-                    'amount_cents' => $amount,
-                    'order_ref' => '',
-                    'item' => $line,
-                ];
-            } else {
-                $fallbackRows[] = [
-                    'date' => $currentDate !== '' ? $currentDate : $dateText,
-                    'amount_cents' => $amount,
-                    'order_ref' => '',
-                    'item' => $line,
-                ];
-            }
         }
 
-        $matchedOrders = $rows !== [] ? $rows : $fallbackRows;
-        if ($matchedOrders === [] && $invoiceTotalCents !== null) {
+        if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
+            return ['ok' => false, 'error' => 'Could not identify a valid invoice total from the PDF.'];
+        }
+
+        $matchedOrders = $rows;
+        if ($matchedOrders === []) {
             $matchedOrders[] = [
                 'date' => $invoiceDate !== '' ? $invoiceDate : $currentDate,
                 'amount_cents' => $invoiceTotalCents,
                 'order_ref' => $invoiceNumber,
                 'item' => 'Porkbun invoice total',
             ];
-        }
-        if ($matchedOrders === []) {
-            return ['ok' => false, 'error' => 'No importable rows were found in the PDF.'];
         }
 
         $importedTotalCents = 0;
@@ -584,13 +548,15 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             }
             $matchedOrders[$rowCount - 1] = $row;
         }
-
-        if ($invoiceTotalCents !== null && $invoiceTotalCents >= 0) {
-            $importedTotalCents = $invoiceTotalCents;
-        }
+        $importedTotalCents = $invoiceTotalCents;
 
         $periodLabel = $calendarYear > 0 ? (string) $calendarYear : trim($firstDate . ($firstDate !== '' && $lastDate !== '' && $firstDate !== $lastDate ? ' to ' . $lastDate : ''));
         $sourceRef = $calendarYear > 0 ? 'porkbun-pdf-' . $calendarYear : 'porkbun-pdf';
+        $pdo->prepare("DELETE FROM vendor_cost_imports WHERE vendor_slug = :vendor_slug AND source_ref = :source_ref")
+            ->execute([
+                ':vendor_slug' => 'porkbun',
+                ':source_ref' => $sourceRef,
+            ]);
         $stmt = $pdo->prepare("
             INSERT INTO vendor_cost_imports (
                 vendor_slug,
