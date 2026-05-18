@@ -473,28 +473,8 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
 
         $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
-        $currentDate = '';
         $invoiceTotalCents = null;
-        $amountCandidates = [];
-
-        $normalizedText = trim(preg_replace('/\s+/', ' ', $text) ?? '');
-        if ($normalizedText !== '') {
-            if (preg_match('/(?:invoice total|total charged|amount due|grand total)\s*\$?\s*([\d,]+\.\d{2})/i', $normalizedText, $summaryMatch)) {
-                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
-                if ($invoiceTotalCents !== null) {
-                    $amountCandidates[] = $invoiceTotalCents;
-                }
-            }
-
-            if ($invoiceTotalCents === null && preg_match_all('/(?:^|[^0-9])(?:\$|USD\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/i', $normalizedText, $moneyMatches)) {
-                foreach (($moneyMatches[1] ?? []) as $moneyValue) {
-                    $candidateCents = gpVendorParseMoneyCents((string) $moneyValue);
-                    if ($candidateCents !== null) {
-                        $amountCandidates[] = $candidateCents;
-                    }
-                }
-            }
-        }
+        $moneyCandidates = [];
 
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
@@ -502,55 +482,44 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                 continue;
             }
 
-            if ($invoiceDate !== '' && $currentDate === '') {
-                $currentDate = $invoiceDate;
-            }
-
-            if (preg_match('/^Total Charged\s+\$?([\d,]+\.\d{2})$/i', $line, $totalMatch)) {
-                $invoiceTotalCents = gpVendorParseMoneyCents($totalMatch[1]);
-                if ($invoiceTotalCents !== null) {
-                    $amountCandidates[] = $invoiceTotalCents;
-                }
-                continue;
-            }
-
-            if (preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+(SUCCESS|PENDING|FAILED)\s+\$?([\d,]+\.\d{2})$/i', $line, $rowMatch)) {
-                $amountCents = gpVendorParseMoneyCents($rowMatch[5]);
-                if ($amountCents !== null) {
-                    $amountCandidates[] = $amountCents;
-                    $rowDate = $invoiceDate !== '' ? $invoiceDate : $currentDate;
-                    $rows[] = [
-                        'date' => $rowDate,
-                        'amount_cents' => $amountCents,
-                        'order_ref' => $invoiceNumber,
-                        'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
-                    ];
-                    continue;
-                }
-            }
-
-            if (preg_match('/(?:^|[^0-9])(?:\$|USD\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/i', $line, $moneyMatch)) {
+            if (preg_match('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatch)) {
                 $candidateCents = gpVendorParseMoneyCents((string) $moneyMatch[1]);
-                if ($candidateCents !== null) {
-                    $amountCandidates[] = $candidateCents;
+                if ($candidateCents !== null && $candidateCents > 0) {
+                    $moneyCandidates[] = $candidateCents;
+                }
+            }
+
+            if ($invoiceTotalCents === null && preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $line, $summaryMatch)) {
+                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
+            }
+
+            if (stripos($line, 'SUCCESS') !== false && preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+(SUCCESS|PENDING|FAILED)\b/i', $line, $rowMatch)) {
+                if (preg_match('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatch)) {
+                    $amountCents = gpVendorParseMoneyCents((string) $moneyMatch[1]);
+                    if ($amountCents !== null && $amountCents > 0) {
+                        $rows[] = [
+                            'date' => $invoiceDate,
+                            'amount_cents' => $amountCents,
+                            'order_ref' => $invoiceNumber,
+                            'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
+                        ];
+                    }
                 }
             }
         }
 
-        if ($invoiceTotalCents === null) {
-            $positiveCandidates = array_values(array_filter($amountCandidates, static fn(int $value): bool => $value > 0));
-            if ($positiveCandidates !== []) {
-                $invoiceTotalCents = max($positiveCandidates);
-            }
+        if ($invoiceTotalCents === null && $moneyCandidates !== []) {
+            $invoiceTotalCents = max($moneyCandidates);
+        }
+
+        if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
+            return ['ok' => false, 'error' => 'Could not identify a valid invoice total from the PDF.'];
         }
 
         $matchedOrders = $rows;
         if ($matchedOrders === []) {
-            if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
-                return ['ok' => false, 'error' => 'Could not identify a valid invoice total from the PDF.'];
-            }
             $matchedOrders[] = [
-                'date' => $invoiceDate !== '' ? $invoiceDate : $currentDate,
+                'date' => $invoiceDate,
                 'amount_cents' => $invoiceTotalCents,
                 'order_ref' => $invoiceNumber,
                 'item' => 'Porkbun invoice total',
@@ -586,15 +555,7 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             }
             $matchedOrders[$rowCount - 1] = $row;
         }
-        $rowSumCents = 0;
-        foreach ($matchedOrders as $row) {
-            $rowSumCents += max(0, (int) ($row['amount_cents'] ?? 0));
-        }
-        if ($invoiceTotalCents !== null && $invoiceTotalCents >= 50 && $invoiceTotalCents <= 1000000) {
-            $importedTotalCents = $invoiceTotalCents;
-        } else {
-            $importedTotalCents = $rowSumCents;
-        }
+        $importedTotalCents = max(0, $invoiceTotalCents);
 
         $periodLabel = $calendarYear > 0 ? (string) $calendarYear : trim($firstDate . ($firstDate !== '' && $lastDate !== '' && $firstDate !== $lastDate ? ' to ' . $lastDate : ''));
         $sourceRef = $calendarYear > 0 ? 'porkbun-pdf-' . $calendarYear : 'porkbun-pdf';
