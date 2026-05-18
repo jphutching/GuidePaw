@@ -161,6 +161,17 @@ $goalLabel = [
 ];
 
 $allBreeds = getDogBreedsCatalog();
+$familyOptions = [];
+foreach ($allBreeds as $breed) {
+    $family = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
+    if ($family !== '') {
+        $familyOptions[$family] = true;
+    }
+}
+$familyOptions = array_keys($familyOptions);
+sort($familyOptions, SORT_NATURAL | SORT_FLAG_CASE);
+$drillFamily = qv($_POST, 'drill_family', 'any');
+$drillSize = qv($_POST, 'drill_size', 'any');
 $matches = [];
 
 foreach ($allBreeds as $breedName => $breed) {
@@ -177,6 +188,7 @@ foreach ($allBreeds as $breedName => $breed) {
         $breed['shedding'] ?? '',
     ]));
 
+    $breedFamily = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
     $score = 0;
     $reasons = [];
 
@@ -224,6 +236,17 @@ foreach ($allBreeds as $breedName => $breed) {
             $reasons[] = 'Size fits the range you selected.';
         } elseif (abs($breedSize - $targetSize) >= 2) {
             $reasons[] = 'Size is farther from your preference.';
+        }
+    }
+
+    if ($drillFamily !== 'any' && $drillFamily !== '' && strcasecmp($breedFamily, $drillFamily) !== 0) {
+        continue;
+    }
+
+    if ($drillSize !== 'any' && $drillSize !== '') {
+        $drillSizeRank = pickSizeRank($drillSize);
+        if (abs($breedSize - $drillSizeRank) >= 2) {
+            continue;
         }
     }
 
@@ -483,6 +506,36 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             <option value="balanced" <?= $answers['sensitivity'] === 'balanced' ? 'selected' : '' ?>>Balanced</option>
                             <option value="drive_ok" <?= $answers['sensitivity'] === 'drive_ok' ? 'selected' : '' ?>>Drive is okay</option>
                         </select>
+                    </div>
+                    <div class="col-12">
+                        <details class="border rounded-4 p-3 bg-white">
+                            <summary class="fw-bold">Drill-down mode</summary>
+                            <div class="row g-3 mt-1">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Breed family</label>
+                                    <select class="form-select" name="drill_family">
+                                        <option value="any" <?= $drillFamily === 'any' ? 'selected' : '' ?>>Any family</option>
+                                        <?php foreach ($familyOptions as $family): ?>
+                                            <option value="<?= e($family) ?>" <?= $drillFamily === $family ? 'selected' : '' ?>><?= e($family) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Drill size</label>
+                                    <select class="form-select" name="drill_size">
+                                        <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
+                                        <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>>Toy</option>
+                                        <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>>Small</option>
+                                        <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>>Medium</option>
+                                        <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>>Large</option>
+                                        <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>>Giant</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-text">Use this when you already have a broad fit and want to narrow the list to a family or working size.</div>
+                                </div>
+                            </div>
+                        </details>
                     </div>
                     <div class="col-12">
                         <button class="btn btn-primary w-100" type="submit">Show breed ideas</button>

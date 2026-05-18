@@ -1487,6 +1487,28 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreedSize = trim((string) ($catalog[$firstBreed]['size'] ?? ''));
         $breedQuestionnaireToyAlignmentSeen = $firstBreed !== '' && gpQaBreedSizeRank($firstBreedSize) <= 2;
     }
+    $breedQuestionnaireDrilldownPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+        'drill_family' => 'Toy',
+        'drill_size' => 'toy',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireDrilldownBody = strtolower($breedQuestionnaireDrilldownPage['body']);
+    $breedQuestionnaireDrilldownSeen = gpQaPageLooksOk($breedQuestionnaireDrilldownPage)
+        && str_contains($breedQuestionnaireDrilldownBody, 'drill-down mode')
+        && str_contains($breedQuestionnaireDrilldownBody, 'top breed ideas');
+    $breedQuestionnaireDrilldownAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireDrilldownPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireDrilldownPage['body'], $breedQuestionnaireDrilldownMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireDrilldownMatch[1] ?? ''));
+        $catalog = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
+        $firstBreedSize = trim((string) ($catalog[$firstBreed]['size'] ?? ''));
+        $breedQuestionnaireDrilldownAlignmentSeen = $firstBreed !== '' && gpQaBreedSizeRank($firstBreedSize) <= 2;
+    }
     $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
     $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
         && (
@@ -1818,6 +1840,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
+    gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));
+    gpQaResult($results, 'breed_questionnaire_drilldown_alignment', $breedQuestionnaireDrilldownAlignmentSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownAlignmentSeen ? ' drill-down result stayed small/toy' : ' drill-down result drifted large'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
     gpQaResult($results, 'training_suggestions_links', $trainingSuggestionsLinkSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingSuggestionsLinkSeen ? ' training suggestions link found' : ' training suggestions link missing'));
     gpQaResult($results, 'alerts_module_links', $alertsModuleLinkSeen, 'HTTP ' . $alertsPage['status'] . ($alertsModuleLinkSeen ? ' alerts module link found' : ' alerts module link missing'));
