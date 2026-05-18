@@ -1470,6 +1470,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $breedQuestionnaireLiveSuggestionsSeen = gpQaPageLooksOk($breedQuestionnairePage)
         && str_contains($breedQuestionnaireBody, 'breed name to research')
         && str_contains($breedQuestionnaireBody, 'breed-query-options')
+        && str_contains($breedQuestionnaireBody, 'breed-query-live')
         && str_contains($breedQuestionnaireBody, 'optional. if you already have a breed in mind');
     $breedQuestionnaireSizeLabelsSeen = gpQaPageLooksOk($breedQuestionnairePage)
         && str_contains($breedQuestionnaireBody, 'toy · about 4-12 lbs')

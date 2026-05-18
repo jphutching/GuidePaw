@@ -179,6 +179,17 @@ $sizeLabel = [
 $allBreeds = getDogBreedsCatalog();
 $breedSuggestions = array_keys($allBreeds);
 sort($breedSuggestions, SORT_NATURAL | SORT_FLAG_CASE);
+$breedSuggestionData = [];
+foreach ($breedSuggestions as $breedName) {
+    $breed = $allBreeds[$breedName] ?? [];
+    $breedSuggestionData[] = [
+        'name' => $breedName,
+        'group' => trim((string) ($breed['breed_family'] ?? $breed['group'] ?? '')),
+        'notes' => trim((string) ($breed['notes'] ?? '')),
+        'traits' => trim((string) ($breed['traits'] ?? '')),
+        'size' => trim((string) ($breed['size'] ?? '')),
+    ];
+}
 $familyOptions = [];
 foreach ($allBreeds as $breed) {
     $family = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
@@ -463,6 +474,7 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 <link href="styles.css" rel="stylesheet">
 <style>
 body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.question-grid{display:grid;gap:1rem}@media(min-width:960px){.question-grid{grid-template-columns:1.1fr .9fr}}.form-select,.form-control{border-radius:14px}.result-grid{display:grid;gap:1rem}@media(min-width:900px){.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.result-item{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.rank{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:900;margin-right:.65rem;flex:0 0 auto}.subtle{color:#64748b}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:900;background:#eef2ff;color:#4338ca}.family-card{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.list-tight{margin-bottom:0;padding-left:1.1rem}.question-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.badge-line{display:flex;flex-wrap:wrap;gap:.35rem}
+.breed-live{display:grid;gap:.5rem}.breed-live-item{display:block;width:100%;text-align:left;border:1px solid rgba(15,23,42,.08);background:#fff;border-radius:14px;padding:.75rem .85rem;box-shadow:0 4px 10px rgba(15,23,42,.04)}.breed-live-item:hover,.breed-live-item:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12);outline:0}.breed-live-name{font-weight:800;color:#0f172a}.breed-live-meta{font-size:.8rem;color:#64748b;margin-top:.1rem}.breed-live-note{font-size:.85rem;color:#334155;margin-top:.2rem;line-height:1.25}
 </style>
 </head>
 <body>
@@ -510,6 +522,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             <?php endforeach; ?>
                         </datalist>
                         <div id="breed-query-hint" class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
+                        <div id="breed-query-live" class="breed-live mt-2"></div>
                     </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label fw-bold">Preferred size</label>
@@ -682,9 +695,10 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
 (() => {
     const input = document.querySelector('input[name="breed_query"]');
     const hint = document.getElementById('breed-query-hint');
-    if (!input || !hint) return;
+    const live = document.getElementById('breed-query-live');
+    if (!input || !hint || !live) return;
 
-    const breedNames = <?= json_encode($breedSuggestions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const breedItems = <?= json_encode($breedSuggestionData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const aliases = {
         'cavalier': 'Cavalier King Charles Spaniel',
         'king charles': 'Cavalier King Charles Spaniel',
@@ -704,12 +718,13 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         const query = normalize(raw);
         if (!query) {
             hint.textContent = 'Optional. If you already have a breed in mind, type it here and the results will prioritize it.';
+            live.innerHTML = '';
             return;
         }
 
         const canonical = aliases[query] || null;
-        const ranked = breedNames
-            .map((name) => ({ name, norm: normalize(name) }))
+        const ranked = breedItems
+            .map((item) => ({ ...item, norm: normalize(item.name) }))
             .filter((entry) => entry.norm.includes(query) || (canonical && entry.name === canonical))
             .sort((a, b) => {
                 if (a.name === canonical) return -1;
@@ -720,24 +735,43 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                 return a.name.localeCompare(b.name);
             })
             .slice(0, 4)
-            .map((entry) => entry.name);
+            .map((entry) => entry);
 
         if (!ranked.length && canonical) {
             hint.textContent = `Matched: ${canonical}`;
+            live.innerHTML = '';
             return;
         }
 
         if (!ranked.length) {
             hint.textContent = 'No close breed matches yet. Try a longer breed name or the breed family.';
+            live.innerHTML = '';
             return;
         }
 
-        if (ranked[0] && normalize(ranked[0]) === query) {
-            hint.textContent = `Matched: ${ranked[0]}`;
-            return;
+        if (ranked[0] && normalize(ranked[0].name) === query) {
+            hint.textContent = `Matched: ${ranked[0].name}`;
         }
 
-        hint.textContent = `Suggestions: ${ranked.join(' · ')}`;
+        hint.textContent = `Suggestions: ${ranked.map((entry) => entry.name).join(' · ')}`;
+        live.innerHTML = ranked.map((entry) => {
+            const note = entry.notes || entry.traits || 'No notes available.';
+            const meta = [entry.group, entry.size].filter(Boolean).join(' · ');
+            return `
+                <button type="button" class="breed-live-item" data-breed="${entry.name.replace(/"/g, '&quot;')}">
+                    <div class="breed-live-name">${entry.name}</div>
+                    <div class="breed-live-meta">${meta}</div>
+                    <div class="breed-live-note">${note}</div>
+                </button>
+            `;
+        }).join('');
+        live.querySelectorAll('[data-breed]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                input.value = btn.getAttribute('data-breed') || '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.focus();
+            });
+        });
     };
 
     input.addEventListener('input', render);
