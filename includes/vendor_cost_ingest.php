@@ -585,6 +585,10 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             $matchedOrders[$rowCount - 1] = $row;
         }
 
+        if ($invoiceTotalCents !== null && $invoiceTotalCents >= 0) {
+            $importedTotalCents = $invoiceTotalCents;
+        }
+
         $periodLabel = $calendarYear > 0 ? (string) $calendarYear : trim($firstDate . ($firstDate !== '' && $lastDate !== '' && $firstDate !== $lastDate ? ' to ' . $lastDate : ''));
         $sourceRef = $calendarYear > 0 ? 'porkbun-pdf-' . $calendarYear : 'porkbun-pdf';
         $stmt = $pdo->prepare("
@@ -620,6 +624,7 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                 'source' => 'pdf',
                 'invoice_number' => $invoiceNumber,
                 'invoice_date' => $invoiceDate,
+                'invoice_total_cents' => $invoiceTotalCents,
                 'matched_orders' => $matchedOrders,
                 'extracted_text_preview' => mb_substr($text, 0, 3000),
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
