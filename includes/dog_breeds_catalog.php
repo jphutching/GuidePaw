@@ -14,6 +14,7 @@ function getDogBreedsCatalog(): array
             'temperament' => 'Gentle, patient, affectionate',
             'traits' => 'Handler-focused, soft temperament, biddable, commonly successful in public access work',
             'notes' => 'Usually excellent with people. Coat care is heavier than short-coated breeds.',
+            'aliases' => ['Goldie'],
         ],
         'German Shepherd Dog' => [
             'group' => 'Herding',
@@ -546,6 +547,7 @@ function getDogBreedsCatalog(): array
     }
 
     $supplementalBreedAliases = [
+        'Great Pyrenees' => ['Great Pyr', 'Pyr'],
         'Bernese Mountain Dog' => ['Berner'],
         'Australian Cattle Dog' => ['Blue Heeler', 'Red Heeler', 'Queensland Heeler', 'ACD'],
         'French Bulldog' => ['Frenchie'],

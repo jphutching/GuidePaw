@@ -561,6 +561,8 @@ $commonBreedAliasSeeds = [
     'newfie' => 'Newfoundland',
     'newfy' => 'Newfoundland',
     'goldie' => 'Golden Retriever',
+    'great pyr' => 'Great Pyrenees',
+    'pyr' => 'Great Pyrenees',
     'blue heeler' => 'Australian Cattle Dog',
     'red heeler' => 'Australian Cattle Dog',
     'queensland heeler' => 'Australian Cattle Dog',
@@ -998,13 +1000,13 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold">Breed name to research</label>
-                        <input class="form-control" name="breed_query" list="breed-query-options" value="<?= e($breedQuery) ?>" placeholder="Example: Cavalier King Charles Spaniel" autocomplete="off">
+                        <input class="form-control" name="breed_query" list="breed-query-options" value="<?= e($breedQuery) ?>" placeholder="Example: Cavalier, Aussie, or Great Pyr" autocomplete="off">
                         <datalist id="breed-query-options">
                             <?php foreach ($breedSuggestions as $breedName): ?>
                                 <option value="<?= e($breedName) ?>">
                             <?php endforeach; ?>
                         </datalist>
-                        <div id="breed-query-hint" class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
+                        <div id="breed-query-hint" class="form-text">Optional. Type the breed name or common nickname you already know, and the results will prioritize it.</div>
                         <div class="breed-focus-group mt-2" role="radiogroup" aria-label="Breed focus filter">
                             <button type="button" class="btn btn-sm breed-focus-btn<?= $breedFocus === 'all' ? ' active' : '' ?>" data-focus="all">Any</button>
                             <button type="button" class="btn btn-sm breed-focus-btn<?= $breedFocus === 'public' ? ' active' : '' ?>" data-focus="public">Public access</button>
