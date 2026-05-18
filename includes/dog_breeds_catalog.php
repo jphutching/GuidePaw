@@ -546,6 +546,8 @@ function getDogBreedsCatalog(): array
     }
 
     $supplementalBreedAliases = [
+        'Australian Cattle Dog' => ['Blue Heeler', 'Red Heeler', 'Queensland Heeler', 'ACD'],
+        'French Bulldog' => ['Frenchie'],
         'American Cocker Spaniel' => ['American Cocker'],
         'Brittany' => ['Brittany Spaniel'],
         'Australian Shepherd' => ['Aussie'],
