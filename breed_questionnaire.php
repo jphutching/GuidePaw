@@ -214,6 +214,7 @@ $defaults = [
     'experience' => 'some',
     'sensitivity' => 'balanced',
     'breed_query' => '',
+    'breed_focus' => 'all',
 ];
 
 $answers = $defaults;
@@ -269,6 +270,7 @@ $drillFamily = qv($_POST, 'drill_family', 'any');
 $drillSize = qv($_POST, 'drill_size', 'any');
 $breedQuery = trim((string) ($_POST['breed_query'] ?? ''));
 $breedQueryNorm = normalizeBreedQuery($breedQuery);
+$breedFocus = qv($_POST, 'breed_focus', 'all');
 $matches = [];
 
 foreach ($allBreeds as $breedName => $breed) {
@@ -347,6 +349,23 @@ foreach ($allBreeds as $breedName => $breed) {
     if ($goalScore !== 0) {
         $score += $goalScore;
         $reasons[] = $goalScore > 0 ? 'Matches the work type you selected.' : 'Has traits that may be harder for this work type.';
+    }
+
+    if ($breedFocus !== 'all') {
+        $focusTargets = [
+            'public' => ['public access', 'service', 'handler-focused', 'trainable', 'steady', 'biddable'],
+            'companion' => ['grounding', 'affectionate', 'people-oriented', 'calm', 'steady'],
+            'task' => ['retrieval', 'retrieving', 'item delivery', 'alert', 'response', 'task', 'trainable', 'high drive', 'athletic'],
+        ];
+        $focusMatch = scoreKeywordMatches($blob, $focusTargets[$breedFocus] ?? []);
+        if ($focusMatch !== 0) {
+            $score += $focusMatch + 4;
+            $reasons[] = 'Matches the focus you selected.';
+        }
+        if (breedSuggestionFocus($breed) === $breedFocus) {
+            $score += 4;
+            $reasons[] = 'This breed is a strong match for that focus.';
+        }
     }
 
     $targetSize = pickSizeRank($answers['size']);
@@ -568,6 +587,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
             <div class="card-body">
                 <h2 class="h5 mb-3">Your answers</h2>
                 <form method="post" class="row g-3">
+                    <input type="hidden" name="breed_focus" value="<?= e($breedFocus) ?>">
                     <div class="col-12">
                         <label class="form-label fw-bold">What are you trying to do?</label>
                         <select class="form-select" name="goal">
@@ -589,10 +609,10 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                         </datalist>
                         <div id="breed-query-hint" class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
                         <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Breed focus filter">
-                            <button type="button" class="btn btn-outline-primary active" data-focus="all">Any</button>
-                            <button type="button" class="btn btn-outline-primary" data-focus="public">Public access</button>
-                            <button type="button" class="btn btn-outline-primary" data-focus="companion">Companion</button>
-                            <button type="button" class="btn btn-outline-primary" data-focus="task">Task work</button>
+                            <button type="button" class="btn btn-outline-primary<?= $breedFocus === 'all' ? ' active' : '' ?>" data-focus="all">Any</button>
+                            <button type="button" class="btn btn-outline-primary<?= $breedFocus === 'public' ? ' active' : '' ?>" data-focus="public">Public access</button>
+                            <button type="button" class="btn btn-outline-primary<?= $breedFocus === 'companion' ? ' active' : '' ?>" data-focus="companion">Companion</button>
+                            <button type="button" class="btn btn-outline-primary<?= $breedFocus === 'task' ? ' active' : '' ?>" data-focus="task">Task work</button>
                         </div>
                         <div id="breed-query-live" class="breed-live mt-2"></div>
                     </div>
@@ -697,6 +717,9 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                     <?php if ($breedQuery !== ''): ?>
                         <span class="pill"><?= e($breedQuery) ?></span>
                     <?php endif; ?>
+                    <?php if ($breedFocus !== 'all'): ?>
+                        <span class="pill"><?= e(ucfirst($breedFocus)) ?> focus</span>
+                    <?php endif; ?>
                     <span class="pill"><?= e($sizeLabel[$answers['size']] ?? ucfirst(str_replace('_', ' ', $answers['size']))) ?></span>
                     <span class="pill"><?= e(ucfirst(str_replace('_', ' ', $answers['energy']))) ?> energy</span>
                     <span class="pill"><?= e(ucfirst($answers['grooming'])) ?> grooming</span>
@@ -766,10 +789,11 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
 <script>
 (() => {
     const input = document.querySelector('input[name="breed_query"]');
+    const focusInput = document.querySelector('input[name="breed_focus"]');
     const hint = document.getElementById('breed-query-hint');
     const live = document.getElementById('breed-query-live');
     const focusButtons = Array.from(document.querySelectorAll('[data-focus]'));
-    if (!input || !hint || !live || !focusButtons.length) return;
+    if (!input || !focusInput || !hint || !live || !focusButtons.length) return;
 
     const breedItems = <?= json_encode($breedSuggestionData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     let activeFocus = 'all';
@@ -789,6 +813,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
 
     const setActiveFocus = (focus) => {
         activeFocus = focus;
+        focusInput.value = focus;
         focusButtons.forEach((btn) => {
             const isActive = btn.getAttribute('data-focus') === focus;
             btn.classList.toggle('active', isActive);
@@ -801,6 +826,8 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
         btn.addEventListener('click', () => setActiveFocus(btn.getAttribute('data-focus') || 'all'));
     });
+
+    activeFocus = focusInput.value || 'all';
 
     const render = () => {
         const raw = input.value.trim();

@@ -1526,6 +1526,20 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreed = trim((string) ($breedQuestionnaireBreedQueryMatch[1] ?? ''));
         $breedQuestionnaireBreedQueryAlignmentSeen = strcasecmp($firstBreed, 'Cavalier King Charles Spaniel') === 0;
     }
+    $breedQuestionnaireFocusRankPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'breed_focus' => 'public',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireFocusRankBody = strtolower($breedQuestionnaireFocusRankPage['body']);
+    $breedQuestionnaireFocusRankSeen = gpQaPageLooksOk($breedQuestionnaireFocusRankPage)
+        && str_contains($breedQuestionnaireFocusRankBody, 'public focus')
+        && str_contains($breedQuestionnaireFocusRankBody, 'matches the focus you selected');
     $breedQuestionnaireDrilldownPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'size' => 'flexible',
@@ -1880,6 +1894,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
     gpQaResult($results, 'breed_questionnaire_live_suggestions', $breedQuestionnaireLiveSuggestionsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveSuggestionsSeen ? ' breed query suggestions visible' : ' breed query suggestions missing'));
     gpQaResult($results, 'breed_questionnaire_focus_filters', $breedQuestionnaireFocusFiltersSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireFocusFiltersSeen ? ' focus filters visible' : ' focus filters missing'));
+    gpQaResult($results, 'breed_questionnaire_focus_ranking', $breedQuestionnaireFocusRankSeen, 'HTTP ' . $breedQuestionnaireFocusRankPage['status'] . ($breedQuestionnaireFocusRankSeen ? ' focus selection biases ranked results' : ' focus selection did not bias ranked results'));
     gpQaResult($results, 'breed_questionnaire_live_best_for', $breedQuestionnaireLiveBestForSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveBestForSeen ? ' live suggestions include best-for tags' : ' best-for tags missing'));
     gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
