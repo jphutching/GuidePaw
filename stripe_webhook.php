@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/audit_log.php';
 require_once __DIR__ . '/includes/stripe_webhook.php';
+require_once __DIR__ . '/includes/paywall_purchase.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     http_response_code(405);
@@ -40,13 +41,16 @@ if (!is_array($event)) {
 
 try {
     $result = gpStripeSupportHandleWebhookEvent($pdo, $event);
+    if (!empty($result['ignored'])) {
+        $result = gpPaywallPurchaseHandleWebhookEvent($pdo, $event);
+    }
     if (!empty($result['ok']) && empty($result['ignored'])) {
         writeAuditLog(
             $pdo,
-            'stripe_support_event_recorded',
-            'support_funding_events',
+            ($result['service_slug'] ?? '') !== '' ? 'stripe_paywall_event_recorded' : 'stripe_support_event_recorded',
+            ($result['service_slug'] ?? '') !== '' ? 'paywall_purchase_events' : 'support_funding_events',
             isset($result['row']['id']) ? (int) $result['row']['id'] : null,
-            'Stripe support event ' . ($result['event_type'] ?? 'unknown') . ' recorded for session ' . ($result['session_id'] ?? 'unknown') . '.'
+            (($result['service_slug'] ?? '') !== '' ? 'Stripe service event ' : 'Stripe support event ') . ($result['event_type'] ?? 'unknown') . ' recorded for session ' . ($result['session_id'] ?? 'unknown') . '.'
         );
     }
 

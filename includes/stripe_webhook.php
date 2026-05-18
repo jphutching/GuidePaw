@@ -143,6 +143,10 @@ if (!function_exists('gpStripeSupportRecordEvent')) {
         }
 
         $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
+        $purchaseType = strtolower(trim((string) ($metadata['purchase_type'] ?? 'support')));
+        if ($purchaseType !== 'support' && $purchaseType !== '') {
+            return ['ok' => true, 'ignored' => true, 'event_type' => trim((string) ($event['type'] ?? '')) ?: 'unknown'];
+        }
         $supportType = strtolower(trim((string) ($metadata['support_type'] ?? 'one_time')));
         $supportType = $supportType === 'monthly' ? 'monthly' : 'one_time';
         $supportMode = strtolower(trim((string) ($object['mode'] ?? 'payment')));

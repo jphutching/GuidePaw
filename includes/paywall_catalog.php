@@ -173,6 +173,7 @@ function gpPaywallCatalogDefaultRows(?string $itemType = null): array
             'scope' => 'dog',
             'price_cents' => 2500,
             'currency' => 'USD',
+            'stripe_price_id' => '',
             'sort_order' => 60,
             'is_active' => 1,
             'notes' => 'First dog is free; extra dogs need a QR Tracking entitlement.',
@@ -189,6 +190,7 @@ function gpPaywallCatalogDefaultRows(?string $itemType = null): array
             'scope' => 'user',
             'price_cents' => 1500,
             'currency' => 'USD',
+            'stripe_price_id' => '',
             'sort_order' => 70,
             'is_active' => 1,
             'notes' => 'Used to keep the first dog free while allowing add-on dogs.',
@@ -217,6 +219,7 @@ function gpPaywallCatalogEnsureSchema(PDO $pdo): void
             scope TEXT NOT NULL DEFAULT 'user',
             price_cents INTEGER NOT NULL DEFAULT 0,
             currency TEXT NOT NULL DEFAULT 'USD',
+            stripe_price_id TEXT NOT NULL DEFAULT '',
             sort_order INTEGER NOT NULL DEFAULT 0,
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             notes TEXT,
@@ -224,6 +227,19 @@ function gpPaywallCatalogEnsureSchema(PDO $pdo): void
             updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
     ");
+
+    $stmt = $pdo->prepare("
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'paywall_catalog_items'
+          AND column_name = 'stripe_price_id'
+        LIMIT 1
+    ");
+    $stmt->execute();
+    if (!$stmt->fetchColumn()) {
+        $pdo->exec("ALTER TABLE paywall_catalog_items ADD COLUMN IF NOT EXISTS stripe_price_id TEXT NOT NULL DEFAULT ''");
+    }
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS user_service_entitlements (
@@ -265,11 +281,11 @@ function gpPaywallCatalogEnsureSchema(PDO $pdo): void
     $stmt = $pdo->prepare("
         INSERT INTO paywall_catalog_items (
             slug, item_type, label, summary, included_text, locked_text,
-            billing_model, required_tier, scope, price_cents, currency,
+            billing_model, required_tier, scope, price_cents, currency, stripe_price_id,
             sort_order, is_active, notes, updated_at
         ) VALUES (
             :slug, :item_type, :label, :summary, :included_text, :locked_text,
-            :billing_model, :required_tier, :scope, :price_cents, :currency,
+            :billing_model, :required_tier, :scope, :price_cents, :currency, :stripe_price_id,
             :sort_order, :is_active, :notes, CURRENT_TIMESTAMP
         )
     ");
@@ -287,6 +303,7 @@ function gpPaywallCatalogEnsureSchema(PDO $pdo): void
             ':scope' => $row['scope'],
             ':price_cents' => (int) $row['price_cents'],
             ':currency' => strtoupper((string) $row['currency']),
+            ':stripe_price_id' => trim((string) ($row['stripe_price_id'] ?? '')),
             ':sort_order' => (int) $row['sort_order'],
             ':is_active' => (int) !empty($row['is_active']),
             ':notes' => $row['notes'],
@@ -335,6 +352,15 @@ function gpPaywallCatalogItemBillingModel(PDO $pdo, string $slug, string $fallba
         return strtolower(trim((string) $row['billing_model']));
     }
     return $fallback;
+}
+
+function gpPaywallCatalogItemStripePriceId(PDO $pdo, string $slug, string $fallback = ''): string
+{
+    $row = gpPaywallCatalogRow($pdo, $slug);
+    if ($row && !empty($row['stripe_price_id'])) {
+        return trim((string) $row['stripe_price_id']);
+    }
+    return trim($fallback);
 }
 
 function gpPaywallUserServiceActive(PDO $pdo, int $userId, string $serviceSlug): bool

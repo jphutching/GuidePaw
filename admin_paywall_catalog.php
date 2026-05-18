@@ -3,11 +3,13 @@ require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/paywall_catalog.php';
+require_once __DIR__ . '/includes/paywall_purchase.php';
 require_once __DIR__ . '/includes/audit_log.php';
 
 checkLogin();
 requireAdmin();
 gpPaywallCatalogEnsureSchema($pdo);
+gpPaywallPurchaseEnsureSchema($pdo);
 
 function apEsc($value): string
 {
@@ -42,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("
                 INSERT INTO paywall_catalog_items (
                     slug, item_type, label, summary, included_text, locked_text,
-                    billing_model, required_tier, scope, price_cents, currency,
+                    billing_model, required_tier, scope, price_cents, currency, stripe_price_id,
                     sort_order, is_active, notes, updated_at
                 ) VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
                 )
                 ON CONFLICT (slug) DO UPDATE SET
                     item_type = EXCLUDED.item_type,
@@ -58,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     scope = EXCLUDED.scope,
                     price_cents = EXCLUDED.price_cents,
                     currency = EXCLUDED.currency,
+                    stripe_price_id = EXCLUDED.stripe_price_id,
                     sort_order = EXCLUDED.sort_order,
                     is_active = EXCLUDED.is_active,
                     notes = EXCLUDED.notes,
@@ -70,11 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim((string) ($_POST['summary'] ?? '')),
                 apParseBullets((string) ($_POST['included_text'] ?? '')),
                 apParseBullets((string) ($_POST['locked_text'] ?? '')),
-                in_array($_POST['billing_model'] ?? 'plan', ['plan', 'lifetime_dog', 'lifetime_user', 'recurring_user'], true) ? $_POST['billing_model'] : 'plan',
+                in_array($_POST['billing_model'] ?? 'plan', ['plan', 'lifetime_dog', 'lifetime_user', 'recurring_user', 'application_only'], true) ? $_POST['billing_model'] : 'plan',
                 gpNormalizeUserTier((string) ($_POST['required_tier'] ?? 'free')),
                 in_array($_POST['scope'] ?? 'user', ['user', 'dog'], true) ? $_POST['scope'] : 'user',
                 (int) ($_POST['price_cents'] ?? 0),
                 strtoupper(trim((string) ($_POST['currency'] ?? 'USD'))) ?: 'USD',
+                trim((string) ($_POST['stripe_price_id'] ?? '')),
                 (int) ($_POST['sort_order'] ?? 0),
                 !empty($_POST['is_active']) ? 1 : 0,
                 trim((string) ($_POST['notes'] ?? '')),
@@ -144,6 +148,18 @@ $userServiceRows = $pdo->query("
     ORDER BY ent.purchased_at DESC
     LIMIT 40
 ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+$recentPurchases = $pdo->query("
+    SELECT
+        ev.*,
+        u.username,
+        u.email,
+        d.name AS dog_name
+    FROM paywall_purchase_events ev
+    LEFT JOIN users u ON u.id = ev.user_id
+    LEFT JOIN dogs d ON d.id = ev.dog_id
+    ORDER BY ev.updated_at DESC, ev.id DESC
+    LIMIT 10
+")->fetchAll(PDO::FETCH_ASSOC) ?: [];
 ?>
 <!doctype html>
 <html lang="en">
@@ -201,12 +217,13 @@ $userServiceRows = $pdo->query("
             <div class="col-md-3"><label class="form-label small">Slug</label><input name="slug" class="form-control" placeholder="qr_tracking"></div>
             <div class="col-md-3"><label class="form-label small">Label</label><input name="label" class="form-control" placeholder="QR Tracking"></div>
             <div class="col-md-2"><label class="form-label small">Type</label><select name="item_type" class="form-select"><option value="plan">Plan</option><option value="feature">Feature</option><option value="service">Service</option></select></div>
-            <div class="col-md-2"><label class="form-label small">Billing</label><select name="billing_model" class="form-select"><option value="plan">Plan</option><option value="lifetime_dog">Lifetime / dog</option><option value="lifetime_user">Lifetime / user</option><option value="recurring_user">Recurring / user</option></select></div>
+            <div class="col-md-2"><label class="form-label small">Billing</label><select name="billing_model" class="form-select"><option value="plan">Plan</option><option value="application_only">Application only</option><option value="lifetime_dog">Lifetime / dog</option><option value="lifetime_user">Lifetime / user</option><option value="recurring_user">Recurring / user</option></select></div>
             <div class="col-md-2"><label class="form-label small">Required tier</label><select name="required_tier" class="form-select"><?php foreach (gpUserTierOptions() as $value => $label): ?><option value="<?= apEsc($value) ?>"><?= apEsc($label) ?></option><?php endforeach; ?></select></div>
             <div class="col-md-6"><label class="form-label small">Summary</label><input name="summary" class="form-control" placeholder="Short description"></div>
             <div class="col-md-3"><label class="form-label small">Scope</label><select name="scope" class="form-select"><option value="user">User</option><option value="dog">Dog</option></select></div>
             <div class="col-md-1"><label class="form-label small">Price</label><input name="price_cents" class="form-control" type="number" min="0" step="1" value="0"></div>
             <div class="col-md-2"><label class="form-label small">Currency</label><input name="currency" class="form-control" value="USD"></div>
+            <div class="col-md-4"><label class="form-label small">Stripe price ID</label><input name="stripe_price_id" class="form-control" placeholder="price_..."></div>
             <div class="col-md-12"><label class="form-label small">Included text</label><textarea name="included_text" class="form-control" placeholder="One bullet per line"></textarea></div>
             <div class="col-md-12"><label class="form-label small">Locked text</label><textarea name="locked_text" class="form-control" placeholder="One bullet per line"></textarea></div>
             <div class="col-md-2"><label class="form-label small">Sort order</label><input name="sort_order" class="form-control" type="number" value="0"></div>
@@ -234,7 +251,7 @@ $userServiceRows = $pdo->query("
                                     <td><strong><?= apEsc($item['label']) ?></strong><div class="mini"><?= apEsc($item['summary']) ?></div></td>
                                     <td><?= apEsc($item['item_type']) ?></td>
                                     <td><?= apEsc(gpTierDisplayLabel((string) ($item['required_tier'] ?? 'free'))) ?></td>
-                                    <td><?= apEsc((string) ($item['billing_model'] ?? 'plan')) ?></td>
+                                    <td><?= apEsc((string) ($item['billing_model'] ?? 'plan')) ?><div class="mini"><?= apEsc((string) ($item['stripe_price_id'] ?? '')) ?></div></td>
                                     <td><?= apEsc((string) ($item['scope'] ?? 'user')) ?></td>
                                     <td>$<?= apEsc(number_format(((int) ($item['price_cents'] ?? 0)) / 100, 2)) ?></td>
                                     <td>
@@ -246,11 +263,12 @@ $userServiceRows = $pdo->query("
                                             <input type="hidden" name="slug" value="<?= apEsc($item['slug']) ?>">
                                             <label class="small">Label<input name="label" class="form-control form-control-sm" value="<?= apEsc($item['label']) ?>"></label>
                                             <label class="small">Type<select name="item_type" class="form-select form-select-sm"><option value="plan" <?= ($item['item_type'] ?? '') === 'plan' ? 'selected' : '' ?>>Plan</option><option value="feature" <?= ($item['item_type'] ?? '') === 'feature' ? 'selected' : '' ?>>Feature</option><option value="service" <?= ($item['item_type'] ?? '') === 'service' ? 'selected' : '' ?>>Service</option></select></label>
-                                            <label class="small">Billing<select name="billing_model" class="form-select form-select-sm"><option value="plan" <?= ($item['billing_model'] ?? '') === 'plan' ? 'selected' : '' ?>>Plan</option><option value="lifetime_dog" <?= ($item['billing_model'] ?? '') === 'lifetime_dog' ? 'selected' : '' ?>>Lifetime / dog</option><option value="lifetime_user" <?= ($item['billing_model'] ?? '') === 'lifetime_user' ? 'selected' : '' ?>>Lifetime / user</option><option value="recurring_user" <?= ($item['billing_model'] ?? '') === 'recurring_user' ? 'selected' : '' ?>>Recurring / user</option></select></label>
+                                            <label class="small">Billing<select name="billing_model" class="form-select form-select-sm"><option value="plan" <?= ($item['billing_model'] ?? '') === 'plan' ? 'selected' : '' ?>>Plan</option><option value="application_only" <?= ($item['billing_model'] ?? '') === 'application_only' ? 'selected' : '' ?>>Application only</option><option value="lifetime_dog" <?= ($item['billing_model'] ?? '') === 'lifetime_dog' ? 'selected' : '' ?>>Lifetime / dog</option><option value="lifetime_user" <?= ($item['billing_model'] ?? '') === 'lifetime_user' ? 'selected' : '' ?>>Lifetime / user</option><option value="recurring_user" <?= ($item['billing_model'] ?? '') === 'recurring_user' ? 'selected' : '' ?>>Recurring / user</option></select></label>
                                             <label class="small">Required tier<select name="required_tier" class="form-select form-select-sm"><?php foreach (gpUserTierOptions() as $value => $label): ?><option value="<?= apEsc($value) ?>" <?= gpNormalizeUserTier((string) ($item['required_tier'] ?? 'free')) === $value ? 'selected' : '' ?>><?= apEsc($label) ?></option><?php endforeach; ?></select></label>
                                             <label class="small">Scope<select name="scope" class="form-select form-select-sm"><option value="user" <?= ($item['scope'] ?? 'user') === 'user' ? 'selected' : '' ?>>user</option><option value="dog" <?= ($item['scope'] ?? '') === 'dog' ? 'selected' : '' ?>>dog</option></select></label>
                                             <label class="small">Price cents<input name="price_cents" class="form-control form-control-sm" type="number" min="0" step="1" value="<?= (int) ($item['price_cents'] ?? 0) ?>"></label>
                                             <label class="small">Currency<input name="currency" class="form-control form-control-sm" value="<?= apEsc($item['currency'] ?? 'USD') ?>"></label>
+                                            <label class="small">Stripe price ID<input name="stripe_price_id" class="form-control form-control-sm" value="<?= apEsc($item['stripe_price_id'] ?? '') ?>"></label>
                                             <label class="small">Sort order<input name="sort_order" class="form-control form-control-sm" type="number" value="<?= (int) ($item['sort_order'] ?? 0) ?>"></label>
                                             <label class="small">Summary<input name="summary" class="form-control form-control-sm" value="<?= apEsc($item['summary']) ?>"></label>
                                             <label class="small">Included<textarea name="included_text" class="form-control form-control-sm"><?= apEsc($item['included_text']) ?></textarea></label>
@@ -269,6 +287,32 @@ $userServiceRows = $pdo->query("
             </div>
         </div>
         <div class="col-lg-5">
+            <div class="catalog-card mb-3">
+                <h2 class="h5 mb-3">Recent Stripe purchases</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>Type</th><th>Service</th><th>Who</th><th>Amount</th></tr></thead>
+                        <tbody>
+                            <?php foreach ($recentPurchases as $purchase): ?>
+                                <tr>
+                                    <td><?= apEsc($purchase['purchase_type'] ?? '') ?></td>
+                                    <td><?= apEsc($purchase['service_slug'] ?? '') ?><div class="mini"><?= apEsc($purchase['service_label'] ?? '') ?></div></td>
+                                    <td>
+                                        <?= apEsc(($purchase['username'] ?? '') !== '' ? ($purchase['username'] . ' ' . ($purchase['email'] ?? '')) : ('user #' . (int) ($purchase['user_id'] ?? 0))) ?>
+                                        <?php if (!empty($purchase['dog_name'])): ?>
+                                            <div class="mini"><?= apEsc('Dog: ' . $purchase['dog_name']) ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>$<?= apEsc(number_format(((int) ($purchase['amount_total_cents'] ?? 0)) / 100, 2)) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (!$recentPurchases): ?>
+                                <tr><td colspan="4" class="text-muted">No Stripe purchases recorded yet.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div class="catalog-card mb-3">
                 <h2 class="h5 mb-3">Grant user add-ons</h2>
                 <form method="post" class="row g-2">

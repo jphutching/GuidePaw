@@ -3,6 +3,8 @@ require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/paywalls.php';
 require_once __DIR__ . '/includes/paywall_catalog.php';
+require_once __DIR__ . '/includes/paywall_purchase.php';
+require_once __DIR__ . '/includes/stripe_checkout.php';
 
 checkLogin();
 gpPaywallCatalogEnsureSchema($pdo);
@@ -12,6 +14,7 @@ $user = getUserRecord($pdo, $userId) ?: [];
 $currentTier = gpUserTier($user);
 $tierDefinitions = gpPaywallPlanRows($pdo);
 $serviceDefinitions = gpPaywallServiceRows($pdo);
+$activeDogId = getActiveDogId($pdo, $userId);
 ?>
 <!doctype html>
 <html lang="en">
@@ -141,6 +144,19 @@ $serviceDefinitions = gpPaywallServiceRows($pdo);
             <p class="mb-3">These are separate from monthly plans. They can be enabled one at a time for a user or for a dog.</p>
             <div class="row g-3">
                 <?php foreach ($serviceDefinitions as $service): ?>
+                    <?php
+                    $serviceSlug = (string) ($service['slug'] ?? '');
+                    $serviceBilling = strtolower(trim((string) ($service['billing_model'] ?? 'plan')));
+                    $serviceScope = strtolower(trim((string) ($service['scope'] ?? 'user')));
+                    $servicePriceId = gpPaywallCatalogItemStripePriceId($pdo, $serviceSlug);
+                    $serviceActive = $serviceScope === 'dog'
+                        ? ($activeDogId ? gpPaywallDogServiceActive($pdo, $activeDogId, $serviceSlug) : false)
+                        : gpPaywallUserServiceActive($pdo, $userId, $serviceSlug);
+                    $serviceBuyUrl = 'purchase_service.php?service=' . rawurlencode($serviceSlug);
+                    if ($serviceScope === 'dog' && $activeDogId) {
+                        $serviceBuyUrl .= '&dog_id=' . (int) $activeDogId;
+                    }
+                    ?>
                     <div class="col-md-6">
                         <div class="plan-card p-3">
                             <div class="d-flex justify-content-between gap-2 flex-wrap">
@@ -159,6 +175,21 @@ $serviceDefinitions = gpPaywallServiceRows($pdo);
                                         <li><?= e($item) ?></li>
                                     <?php endforeach; ?>
                                 </ul>
+                            <?php endif; ?>
+                            <?php if (in_array($serviceBilling, ['lifetime_dog', 'lifetime_user', 'recurring_user'], true)): ?>
+                                <div class="mt-3">
+                                    <?php if ($serviceActive): ?>
+                                        <div class="alert alert-success small mb-0">This add-on is already active.</div>
+                                    <?php elseif ($serviceScope === 'dog' && !$activeDogId): ?>
+                                        <div class="alert alert-light border small mb-0">Pick an active dog first to buy this add-on.</div>
+                                    <?php elseif ($servicePriceId !== '' && gpStripeCheckoutConfigured()): ?>
+                                        <a class="btn btn-primary btn-sm mt-2" href="<?= e($serviceBuyUrl) ?>">Buy now</a>
+                                    <?php else: ?>
+                                        <div class="alert alert-light border small mb-0">Set a Stripe price ID in the admin catalog to enable checkout.</div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php elseif (($service['billing_model'] ?? '') === 'application_only'): ?>
+                                <div class="alert alert-light border small mt-3 mb-0">This item is application-only. Admin review required.</div>
                             <?php endif; ?>
                         </div>
                     </div>

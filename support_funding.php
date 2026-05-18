@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'line_items[0][price]' => $priceId,
         'line_items[0][quantity]' => '1',
         'metadata[support_type]' => $supportType,
+        'metadata[purchase_type]' => 'support',
         'metadata[app]' => appName(),
         'metadata[user_id]' => (string) ($_SESSION['user_id'] ?? ''),
     ];
