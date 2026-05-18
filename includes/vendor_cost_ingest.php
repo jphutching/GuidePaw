@@ -475,6 +475,7 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
         $rows = [];
         $currentDate = '';
         $invoiceTotalCents = null;
+        $amountCandidates = [];
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
             if ($line === '') {
@@ -487,12 +488,16 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
 
             if (preg_match('/^Total Charged\s+\$?([\d,]+\.\d{2})$/i', $line, $totalMatch)) {
                 $invoiceTotalCents = gpVendorParseMoneyCents($totalMatch[1]);
+                if ($invoiceTotalCents !== null) {
+                    $amountCandidates[] = $invoiceTotalCents;
+                }
                 continue;
             }
 
             if (preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+(SUCCESS|PENDING|FAILED)\s+\$?([\d,]+\.\d{2})$/i', $line, $rowMatch)) {
                 $amountCents = gpVendorParseMoneyCents($rowMatch[5]);
                 if ($amountCents !== null) {
+                    $amountCandidates[] = $amountCents;
                     $rowDate = $invoiceDate !== '' ? $invoiceDate : $currentDate;
                     $rows[] = [
                         'date' => $rowDate,
@@ -502,6 +507,20 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                     ];
                     continue;
                 }
+            }
+
+            if (preg_match('/(?:^|[^0-9])(?:\$|USD\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/i', $line, $moneyMatch)) {
+                $candidateCents = gpVendorParseMoneyCents((string) $moneyMatch[1]);
+                if ($candidateCents !== null) {
+                    $amountCandidates[] = $candidateCents;
+                }
+            }
+        }
+
+        if ($invoiceTotalCents === null) {
+            $positiveCandidates = array_values(array_filter($amountCandidates, static fn(int $value): bool => $value > 0));
+            if ($positiveCandidates !== []) {
+                $invoiceTotalCents = max($positiveCandidates);
             }
         }
 
