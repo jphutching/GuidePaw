@@ -476,6 +476,26 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
         $currentDate = '';
         $invoiceTotalCents = null;
         $amountCandidates = [];
+
+        $normalizedText = trim(preg_replace('/\s+/', ' ', $text) ?? '');
+        if ($normalizedText !== '') {
+            if (preg_match('/(?:invoice total|total charged|amount due|grand total)\s*\$?\s*([\d,]+\.\d{2})/i', $normalizedText, $summaryMatch)) {
+                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
+                if ($invoiceTotalCents !== null) {
+                    $amountCandidates[] = $invoiceTotalCents;
+                }
+            }
+
+            if ($invoiceTotalCents === null && preg_match_all('/(?:^|[^0-9])(?:\$|USD\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/i', $normalizedText, $moneyMatches)) {
+                foreach (($moneyMatches[1] ?? []) as $moneyValue) {
+                    $candidateCents = gpVendorParseMoneyCents((string) $moneyValue);
+                    if ($candidateCents !== null) {
+                        $amountCandidates[] = $candidateCents;
+                    }
+                }
+            }
+        }
+
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
             if ($line === '') {
