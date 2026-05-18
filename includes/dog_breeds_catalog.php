@@ -350,13 +350,13 @@ function getDogBreedsCatalog(): array
     // Breed is still saved as free text, so users can type custom mixes, rare breeds, or unknown lineage.
     $supplementalBreedGroups = [
         'Sporting' => [
-            "American Water Spaniel", "Barbet", "Boykin Spaniel", "Bracco Italiano", "Brittany",
+            "American Cocker Spaniel", "American Water Spaniel", "Barbet", "Boykin Spaniel", "Bracco Italiano", "Brittany",
             "Chesapeake Bay Retriever", "Clumber Spaniel", "Cocker Spaniel", "Curly-Coated Retriever",
             "English Cocker Spaniel", "English Setter", "English Springer Spaniel", "Field Spaniel",
             "Flat-Coated Retriever", "German Shorthaired Pointer", "German Wirehaired Pointer",
             "Golden Retriever", "Gordon Setter", "Irish Red and White Setter", "Irish Setter",
             "Irish Water Spaniel", "Labrador Retriever", "Lagotto Romagnolo",
-            "Nederlandse Kooikerhondje", "Nova Scotia Duck Tolling Retriever", "Pointer",
+            "King Charles Spaniel", "Nederlandse Kooikerhondje", "Nova Scotia Duck Tolling Retriever", "Pointer",
             "Portuguese Water Dog", "Spinone Italiano", "Sussex Spaniel", "Vizsla", "Weimaraner",
             "Welsh Springer Spaniel", "Wirehaired Pointing Griffon", "Wirehaired Vizsla"
         ],
@@ -752,8 +752,9 @@ function getDogBreedsCatalog(): array
         ],
         'Spaniel Family' => [
             'breeds' => [
-                "American Water Spaniel", "Boykin Spaniel", "Clumber Spaniel", "English Cocker Spaniel",
-                "Field Spaniel", "Irish Water Spaniel", "Sussex Spaniel", "Welsh Springer Spaniel",
+                "American Cocker Spaniel", "American Water Spaniel", "Boykin Spaniel", "Clumber Spaniel",
+                "Cocker Spaniel", "English Cocker Spaniel", "English Springer Spaniel", "Field Spaniel",
+                "King Charles Spaniel", "Irish Water Spaniel", "Sussex Spaniel", "Welsh Springer Spaniel",
                 "Nederlandse Kooikerhondje"
             ],
             'profile' => [

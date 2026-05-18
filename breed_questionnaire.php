@@ -547,6 +547,7 @@ uasort($familyScores, static function (array $a, array $b): int {
 });
 $topFamilies = array_slice($familyScores, 0, 6, true);
 $familyBrowseBreeds = [];
+$familyRelatedBreeds = [];
 if ($drillFamily !== 'any' && $drillFamily !== '') {
     $familyBrowseBreeds = array_values(array_filter($matches, static function (array $match) use ($drillFamily): bool {
         return strcasecmp((string) ($match['group'] ?? ''), $drillFamily) === 0;
@@ -555,6 +556,28 @@ if ($drillFamily !== 'any' && $drillFamily !== '') {
         return ($b['score'] <=> $a['score']) ?: strcmp($a['breed'], $b['breed']);
     });
     $familyBrowseBreeds = array_slice($familyBrowseBreeds, 0, 16);
+    $familyRelatedMap = [
+        'spaniel family' => ['Brittany', 'Cocker Spaniel', 'English Toy Spaniel', 'Cavalier King Charles Spaniel'],
+        'retriever family' => ['Brittany', 'English Springer Spaniel', 'Flat-Coated Retriever'],
+    ];
+    $familyRelatedKey = strtolower($drillFamily);
+    $familyRelatedSource = $familyRelatedMap[$familyRelatedKey] ?? [];
+    if ($familyRelatedSource === [] && str_contains($familyRelatedKey, 'spaniel')) {
+        $familyRelatedSource = ['Brittany', 'Cocker Spaniel', 'English Toy Spaniel', 'Cavalier King Charles Spaniel'];
+    }
+    foreach ($familyRelatedSource as $relatedBreed) {
+        if (!isset($allBreeds[$relatedBreed])) {
+            continue;
+        }
+        $breed = $allBreeds[$relatedBreed];
+        $familyRelatedBreeds[] = [
+            'breed' => $relatedBreed,
+            'group' => trim((string) ($breed['breed_family'] ?? $breed['group'] ?? 'Breed')),
+            'size' => trim((string) ($breed['size'] ?? '')),
+            'notes' => trim((string) ($breed['notes'] ?? '')),
+            'summary' => trim((string) ($breed['temperament'] ?? '')),
+        ];
+    }
 }
 
 $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
@@ -828,6 +851,21 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                         </div>
                     <?php else: ?>
                         <div class="question-note">No breeds matched that family with the current size and fit filters. Try <strong>Any size</strong> or a different advanced filter, or click <strong>Back to all families</strong>.</div>
+                    <?php endif; ?>
+                    <?php if ($familyRelatedBreeds): ?>
+                        <div class="mt-4">
+                            <h3 class="h6 mb-3">Related breeds to compare</h3>
+                            <div class="result-grid">
+                                <?php foreach ($familyRelatedBreeds as $match): ?>
+                                    <article class="family-card">
+                                        <div class="fw-bold"><?= e($match['breed']) ?></div>
+                                        <div class="subtle small mb-2"><?= e($match['group']) ?> · <?= e($match['size'] ?: 'Size not listed') ?></div>
+                                        <div class="small text-muted mb-2"><?= e($match['notes'] ?: $match['summary'] ?: 'No extra notes available.') ?></div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" data-pick-breed="<?= e($match['breed']) ?>">Research this breed</button>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     <?php endif; ?>
                 </div>
             </section>
