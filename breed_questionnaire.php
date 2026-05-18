@@ -534,6 +534,39 @@ foreach ($breedSuggestionData as $breedSuggestion) {
         }
     }
 }
+$commonBreedAliasSeeds = [
+    'lab' => 'Labrador Retriever',
+    'golden' => 'Golden Retriever',
+    'gsd' => 'German Shepherd Dog',
+    'german shepherd' => 'German Shepherd Dog',
+    'mini schnauzer' => 'Miniature Schnauzer',
+    'miniature schnauzer' => 'Miniature Schnauzer',
+    'mini pin' => 'Miniature Pinscher',
+    'min pin' => 'Miniature Pinscher',
+    'westie' => 'West Highland White Terrier',
+    'scottie' => 'Scottish Terrier',
+    'staffie' => 'Staffordshire Bull Terrier',
+    'toy manchester terrier' => 'Manchester Terrier (Toy)',
+    'poodle toy' => 'Toy Poodle',
+    'toy poodle' => 'Toy Poodle',
+    'poodle miniature' => 'Miniature Poodle',
+    'mini poodle' => 'Miniature Poodle',
+    'poodle standard' => 'Standard Poodle',
+    'standard poodle' => 'Standard Poodle',
+    'peke' => 'Pekingese',
+    'bichon' => 'Bichon Frise',
+    'yorkie' => 'Yorkshire Terrier',
+    'pom' => 'Pomeranian',
+    'chi' => 'Chihuahua',
+    'basset' => 'Basset Hound',
+    'greyhound' => 'Greyhound',
+    'whip' => 'Whippet',
+    'cavalier' => 'Cavalier King Charles Spaniel',
+    'king charles' => 'English Toy Spaniel',
+];
+foreach ($commonBreedAliasSeeds as $alias => $canonicalBreed) {
+    $breedAliasLookup[normalizeBreedQuery($alias)] = $canonicalBreed;
+}
 $familyOptions = [];
 foreach ($allBreeds as $breed) {
     $family = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
@@ -547,6 +580,8 @@ $drillFamily = qv($_POST, 'drill_family', 'any');
 $drillSize = qv($_POST, 'drill_size', 'any');
 $breedQuery = trim((string) ($_POST['breed_query'] ?? ''));
 $breedQueryNorm = normalizeBreedQuery($breedQuery);
+$breedQueryCanonical = $breedAliasLookup[$breedQueryNorm] ?? $breedQuery;
+$breedQueryCanonicalNorm = normalizeBreedQuery($breedQueryCanonical);
 $breedFocus = qv($_POST, 'breed_focus', 'all');
 $matches = [];
 
@@ -571,17 +606,17 @@ foreach ($allBreeds as $breedName => $breed) {
     $score = 0;
     $reasons = [];
 
-    if ($breedQueryNorm !== '') {
-        if ($breedNameNorm === $breedQueryNorm || in_array($breedQueryNorm, $breedAliases, true)) {
+    if ($breedQueryCanonicalNorm !== '') {
+        if ($breedNameNorm === $breedQueryCanonicalNorm || in_array($breedQueryCanonicalNorm, $breedAliases, true)) {
             $score += 120;
             $reasons[] = 'Exact breed or alias match.';
-        } elseif (str_contains($breedNameNorm, $breedQueryNorm) || str_contains($blob, $breedQueryNorm) || array_reduce($breedAliases, static function (bool $carry, string $alias) use ($breedQueryNorm): bool {
-            return $carry || str_contains($alias, $breedQueryNorm) || str_contains($breedQueryNorm, $alias);
+        } elseif (str_contains($breedNameNorm, $breedQueryCanonicalNorm) || str_contains($blob, $breedQueryCanonicalNorm) || array_reduce($breedAliases, static function (bool $carry, string $alias) use ($breedQueryCanonicalNorm): bool {
+            return $carry || str_contains($alias, $breedQueryCanonicalNorm) || str_contains($breedQueryCanonicalNorm, $alias);
         }, false)) {
             $score += 80;
             $reasons[] = 'Matches the breed name you typed.';
         } else {
-            $queryTokens = preg_split('/\s+/', $breedQueryNorm) ?: [];
+            $queryTokens = preg_split('/\s+/', $breedQueryCanonicalNorm) ?: [];
             $nameTokens = preg_split('/\s+/', $breedNameNorm) ?: [];
             $hits = 0;
             foreach ($queryTokens as $token) {

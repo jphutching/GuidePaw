@@ -1626,6 +1626,42 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreed = trim((string) ($breedQuestionnaireKingCharlesQueryMatch[1] ?? ''));
         $breedQuestionnaireKingCharlesQueryAlignmentSeen = strcasecmp($firstBreed, 'English Toy Spaniel') === 0;
     }
+    $breedQuestionnaireToyPoodleQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Toy Poodle',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireToyPoodleQueryBody = strtolower($breedQuestionnaireToyPoodleQueryPage['body']);
+    $breedQuestionnaireToyPoodleQuerySeen = gpQaPageLooksOk($breedQuestionnaireToyPoodleQueryPage)
+        && str_contains($breedQuestionnaireToyPoodleQueryBody, 'toy poodle');
+    $breedQuestionnaireToyPoodleQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireToyPoodleQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireToyPoodleQueryPage['body'], $breedQuestionnaireToyPoodleQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireToyPoodleQueryMatch[1] ?? ''));
+        $breedQuestionnaireToyPoodleQueryAlignmentSeen = strcasecmp($firstBreed, 'Toy Poodle') === 0;
+    }
+    $breedQuestionnaireWestieQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Westie',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireWestieQueryBody = strtolower($breedQuestionnaireWestieQueryPage['body']);
+    $breedQuestionnaireWestieQuerySeen = gpQaPageLooksOk($breedQuestionnaireWestieQueryPage)
+        && str_contains($breedQuestionnaireWestieQueryBody, 'west highland white terrier');
+    $breedQuestionnaireWestieQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireWestieQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireWestieQueryPage['body'], $breedQuestionnaireWestieQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireWestieQueryMatch[1] ?? ''));
+        $breedQuestionnaireWestieQueryAlignmentSeen = strcasecmp($firstBreed, 'West Highland White Terrier') === 0;
+    }
     $breedQuestionnaireFocusRankPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'breed_focus' => 'public',
@@ -2007,6 +2043,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_breed_query_alignment', $breedQuestionnaireBreedQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQueryAlignmentSeen ? ' Cavalier query aligned to Cavalier King Charles Spaniel' : ' Cavalier query did not pin the target breed'));
     gpQaResult($results, 'breed_questionnaire_king_charles_query', $breedQuestionnaireKingCharlesQuerySeen, 'HTTP ' . $breedQuestionnaireKingCharlesQueryPage['status'] . ($breedQuestionnaireKingCharlesQuerySeen ? ' King Charles query surfaced English Toy Spaniel' : ' King Charles query missing'));
     gpQaResult($results, 'breed_questionnaire_king_charles_alignment', $breedQuestionnaireKingCharlesQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireKingCharlesQueryPage['status'] . ($breedQuestionnaireKingCharlesQueryAlignmentSeen ? ' King Charles query aligned to English Toy Spaniel' : ' King Charles query did not pin the English Toy Spaniel'));
+    gpQaResult($results, 'breed_questionnaire_toy_poodle_alias', $breedQuestionnaireToyPoodleQuerySeen, 'HTTP ' . $breedQuestionnaireToyPoodleQueryPage['status'] . ($breedQuestionnaireToyPoodleQuerySeen ? ' toy poodle alias surfaced' : ' toy poodle alias missing'));
+    gpQaResult($results, 'breed_questionnaire_toy_poodle_alignment', $breedQuestionnaireToyPoodleQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPoodleQueryPage['status'] . ($breedQuestionnaireToyPoodleQueryAlignmentSeen ? ' toy poodle alias aligned to Toy Poodle' : ' toy poodle alias did not pin Toy Poodle'));
+    gpQaResult($results, 'breed_questionnaire_westie_alias', $breedQuestionnaireWestieQuerySeen, 'HTTP ' . $breedQuestionnaireWestieQueryPage['status'] . ($breedQuestionnaireWestieQuerySeen ? ' westie alias surfaced' : ' westie alias missing'));
+    gpQaResult($results, 'breed_questionnaire_westie_alignment', $breedQuestionnaireWestieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireWestieQueryPage['status'] . ($breedQuestionnaireWestieQueryAlignmentSeen ? ' westie alias aligned to West Highland White Terrier' : ' westie alias did not pin West Highland White Terrier'));
     gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));
     gpQaResult($results, 'breed_questionnaire_drilldown_alignment', $breedQuestionnaireDrilldownAlignmentSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownAlignmentSeen ? ' drill-down result stayed small/toy' : ' drill-down result drifted large'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
