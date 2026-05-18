@@ -302,6 +302,9 @@ if (!function_exists('gpVendorCostReadPdfText')) {
                 return ['ok' => false, 'error' => 'The PDF did not contain extractable text.'];
             }
             $text = gpVendorPdfExtractTextFromBinary($binary);
+            if ($text === '') {
+                $text = gpVendorPdfExtractPrintableTextFromBinary($binary);
+            }
         }
 
         if ($text === '') {
@@ -415,6 +418,30 @@ if (!function_exists('gpVendorPdfExtractTextFromBinary')) {
         }
 
         return trim(implode("\n", $textParts));
+    }
+}
+
+if (!function_exists('gpVendorPdfExtractPrintableTextFromBinary')) {
+    function gpVendorPdfExtractPrintableTextFromBinary(string $pdf): string
+    {
+        $chunks = [];
+        if (preg_match_all('/[ -~]{8,}/', $pdf, $matches)) {
+            foreach ($matches[0] as $match) {
+                $line = trim((string) $match);
+                if ($line === '') {
+                    continue;
+                }
+                if (preg_match('/^[\/%<>{}\[\]0-9A-Fa-f\s\-\.\(\),:$]+$/', $line) === 1) {
+                    continue;
+                }
+                $chunks[] = preg_replace('/\s+/', ' ', $line) ?? $line;
+            }
+        }
+        if ($chunks === []) {
+            return '';
+        }
+        $chunks = array_values(array_unique($chunks));
+        return trim(implode("\n", $chunks));
     }
 }
 
