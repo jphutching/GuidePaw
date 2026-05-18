@@ -216,6 +216,9 @@ foreach ($allBreeds as $breedName => $breed) {
     $targetSize = pickSizeRank($answers['size']);
     $breedSize = classifyBreedSize((string) ($breed['size'] ?? ''));
     if ($answers['size'] !== 'flexible') {
+        if (abs($breedSize - $targetSize) >= 2) {
+            continue;
+        }
         $score += scoreDistance($breedSize, $targetSize);
         if ($breedSize === $targetSize || abs($breedSize - $targetSize) === 1) {
             $reasons[] = 'Size fits the range you selected.';

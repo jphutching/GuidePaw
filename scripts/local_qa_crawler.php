@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../includes/dog_breeds.php';
+
 /**
  * Local GuidePaw QA crawler / smoke tester.
  *
@@ -98,6 +100,19 @@ function gpQaRequest(string $baseUrl, string $path, string $method = 'GET', arra
         return ['status' => 0, 'body' => '', 'headers' => '', 'url' => $finalUrl, 'error' => $err];
     }
     return ['status' => $status, 'headers' => substr($raw, 0, $headerSize), 'body' => substr($raw, $headerSize), 'url' => $finalUrl, 'error' => $err];
+}
+
+function gpQaBreedSizeRank(string $value): int
+{
+    $value = strtolower(trim($value));
+    return match (true) {
+        str_contains($value, 'toy') => 1,
+        str_contains($value, 'small') => 2,
+        str_contains($value, 'medium') => 3,
+        str_contains($value, 'large') => 4,
+        str_contains($value, 'giant') => 5,
+        default => 3,
+    };
 }
 
 function gpQaLogin(string $baseUrl, string $username, string $password, string &$cookieHeader, string $cookieFile, bool $insecureLocalSsl): bool
@@ -1452,6 +1467,26 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($breedQuestionnaireBody, 'ranked breed ideas')
         )
         && str_contains($breedQuestionnaireBody, 'no account needed');
+    $breedQuestionnaireToyPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'size' => 'toy',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireToyBody = strtolower($breedQuestionnaireToyPage['body']);
+    $breedQuestionnaireToyTopSeen = gpQaPageLooksOk($breedQuestionnaireToyPage)
+        && str_contains($breedQuestionnaireToyBody, 'top breed ideas')
+        && str_contains($breedQuestionnaireToyBody, 'toy size');
+    $breedQuestionnaireToyAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireToyPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireToyPage['body'], $breedQuestionnaireToyMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireToyMatch[1] ?? ''));
+        $catalog = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
+        $firstBreedSize = trim((string) ($catalog[$firstBreed]['size'] ?? ''));
+        $breedQuestionnaireToyAlignmentSeen = $firstBreed !== '' && gpQaBreedSizeRank($firstBreedSize) <= 2;
+    }
     $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
     $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
         && (
@@ -1782,6 +1817,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
     gpQaResult($results, 'training_suggestions_links', $trainingSuggestionsLinkSeen, 'HTTP ' . $trainingProgramPage['status'] . ($trainingSuggestionsLinkSeen ? ' training suggestions link found' : ' training suggestions link missing'));
     gpQaResult($results, 'alerts_module_links', $alertsModuleLinkSeen, 'HTTP ' . $alertsPage['status'] . ($alertsModuleLinkSeen ? ' alerts module link found' : ' alerts module link missing'));
