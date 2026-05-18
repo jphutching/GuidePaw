@@ -256,137 +256,221 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
             <?php endif; ?>
 
             <?php if ($activeAlerts): ?>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Smart Alerts</h3>
-                        <a href="alerts.php" class="btn btn-outline-danger btn-sm">View all</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Priority</div>
+                            <h3 class="h6 mb-1">Smart Alerts</h3>
+                            <div class="small text-muted"><?= count($activeAlerts) ?> alert<?= count($activeAlerts) === 1 ? '' : 's' ?> ready to review.</div>
+                        </div>
+                        <a href="alerts.php" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation();">View all</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="vstack gap-2">
+                            <?php foreach (array_slice($activeAlerts, 0, 3) as $alert): ?>
+                                <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
+                                    <div class="fw-semibold"><?= e($alert['title']) ?></div>
+                                    <div class="small text-muted"><?= e($alert['detail']) ?></div>
+                                    <?php $moduleLink = gpTrainingSuggestionLink(($alert['title'] ?? '') . ' ' . ($alert['detail'] ?? '')); if ($moduleLink): ?>
+                                        <a class="btn btn-outline-primary btn-sm mt-2" href="<?= e($moduleLink['url']) ?>"><?= e($moduleLink['label']) ?></a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                    <div class="vstack gap-2">
-                        <?php foreach (array_slice($activeAlerts, 0, 3) as $alert): ?>
-                            <div class="alert-card <?= e($alert['level']) ?> rounded-3 border bg-white p-3">
-                                <div class="fw-semibold"><?= e($alert['title']) ?></div>
-                                <div class="small text-muted"><?= e($alert['detail']) ?></div>
-                                <?php $moduleLink = gpTrainingSuggestionLink(($alert['title'] ?? '') . ' ' . ($alert['detail'] ?? '')); if ($moduleLink): ?>
-                                    <a class="btn btn-outline-primary btn-sm mt-2" href="<?= e($moduleLink['url']) ?>"><?= e($moduleLink['label']) ?></a>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
 
             <?php if ($upcomingReminders): ?>
-                <div>
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Vet Reminders</h3>
-                        <a href="appointments.php" class="btn btn-outline-warning btn-sm">Appointments</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Calendar</div>
+                            <h3 class="h6 mb-1">Vet Reminders</h3>
+                            <div class="small text-muted"><?= count($upcomingReminders) ?> appointment<?= count($upcomingReminders) === 1 ? '' : 's' ?> coming up.</div>
+                        </div>
+                        <a href="appointments.php" class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation();">Appointments</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($upcomingReminders as $item): ?>
+                                <div class="list-group-item px-0">
+                                    <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
+                                    <div class="small text-muted text-break"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($upcomingReminders as $item): ?>
-                            <div class="list-group-item px-0">
-                                <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
-                                <div class="small text-muted text-break"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
 
-            <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
+            <details class="fold-card mb-2">
+                <summary>
+                    <div>
+                        <div class="small text-uppercase text-muted fw-semibold">Scoring</div>
+                        <h3 class="h6 mb-1">Candidate Assessment</h3>
+                        <div class="small text-muted"><?= $latestCandidateAssessment ? 'Latest assessment ready to review.' : 'No active candidate assessment yet.' ?></div>
+                    </div>
+                    <div class="badge bg-secondary">Summary</div>
+                </summary>
+                <div class="card-body pt-0">
+                    <?php gpDashboardRenderCandidateAssessmentAlert($latestCandidateAssessment); ?>
+                </div>
+            </details>
             <?php if (featureEnabled($pdo, 'regression_engine_enabled')): ?>
-                <?php gpDashboardRenderRegressionAlerts($openRegressionEvents, $openRegressionCount); ?>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Regression</div>
+                            <h3 class="h6 mb-1">Regression Engine</h3>
+                            <div class="small text-muted"><?= (int) $openRegressionCount ?> open regression item<?= $openRegressionCount === 1 ? '' : 's' ?>.</div>
+                        </div>
+                        <div class="badge bg-secondary">Summary</div>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <?php gpDashboardRenderRegressionAlerts($openRegressionEvents, $openRegressionCount); ?>
+                    </div>
+                </details>
             <?php endif; ?>
             <?php if (featureEnabled($pdo, 'behavior_risk_scoring_enabled') && $behaviorRiskState): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Behavior Risk</h3>
-                        <a href="behavior_risk_scoring.php" class="btn btn-outline-danger btn-sm">Open scoring</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Risk</div>
+                            <h3 class="h6 mb-1">Behavior Risk</h3>
+                            <div class="small text-muted">Current score <?= (int) $behaviorRiskState['score'] ?>, <?= e(ucfirst((string) $behaviorRiskState['band'])) ?> risk.</div>
+                        </div>
+                        <a href="behavior_risk_scoring.php" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation();">Open scoring</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="attention-empty">
+                            Current score <?= (int) $behaviorRiskState['score'] ?>, <?= e(ucfirst((string) $behaviorRiskState['band'])) ?> risk.
+                            <?php if (!empty($behaviorRiskState['candidate']['dog_name'])): ?>
+                                Latest assessment: <?= e($behaviorRiskState['candidate']['dog_name']) ?>.
+                            <?php endif; ?>
+                        </div>
                     </div>
-                    <div class="attention-empty">
-                        Current score <?= (int) $behaviorRiskState['score'] ?>, <?= e(ucfirst((string) $behaviorRiskState['band'])) ?> risk.
-                        <?php if (!empty($behaviorRiskState['candidate']['dog_name'])): ?>
-                            Latest assessment: <?= e($behaviorRiskState['candidate']['dog_name']) ?>.
-                        <?php endif; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
             <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Wearable Sync</h3>
-                        <a href="wearable_integrations.php" class="btn btn-outline-dark btn-sm">Open sync hub</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Care</div>
+                            <h3 class="h6 mb-1">Wearable Sync</h3>
+                            <div class="small text-muted">
+                                <?php if ($latestWearableSync): ?>
+                                    Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?>.
+                                <?php else: ?>
+                                    No wearable snapshots recorded yet.
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <a href="wearable_integrations.php" class="btn btn-outline-dark btn-sm" onclick="event.stopPropagation();">Open sync hub</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="attention-empty">
+                            <?php if ($latestWearableSync): ?>
+                                Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?> from <?= e((string) ($latestWearableSync['source'] ?? 'manual')) ?>.
+                            <?php else: ?>
+                                No wearable snapshots recorded yet.
+                            <?php endif; ?>
+                        </div>
                     </div>
-                    <div class="attention-empty">
-                        <?php if ($latestWearableSync): ?>
-                            Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?> from <?= e((string) ($latestWearableSync['source'] ?? 'manual')) ?>.
-                        <?php else: ?>
-                            No wearable snapshots recorded yet.
-                        <?php endif; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
             <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Trainer Marketplace</h3>
-                        <a href="trainer_marketplace.php" class="btn btn-outline-primary btn-sm">Open directory</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Training</div>
+                            <h3 class="h6 mb-1">Trainer Marketplace</h3>
+                            <div class="small text-muted"><?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready.</div>
+                        </div>
+                        <a href="trainer_marketplace.php" class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation();">Open directory</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="attention-empty">
+                            <?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready in the directory.
+                        </div>
                     </div>
-                    <div class="attention-empty">
-                        <?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready in the directory.
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
             <?php if (featureEnabled($pdo, 'candidate_comparison_enabled') && count($dogs) > 1): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Candidate Comparison</h3>
-                        <a href="candidate_comparison.php" class="btn btn-outline-secondary btn-sm">Compare dogs</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Compare</div>
+                            <h3 class="h6 mb-1">Candidate Comparison</h3>
+                            <div class="small text-muted">Compare the active dog against other accessible dogs.</div>
+                        </div>
+                        <a href="candidate_comparison.php" class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation();">Compare dogs</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="attention-empty">Compare the active dog against other accessible dogs to see their latest candidate scores side by side.</div>
                     </div>
-                    <div class="attention-empty">Compare the active dog against other accessible dogs to see their latest candidate scores side by side.</div>
-                </div>
+                </details>
             <?php endif; ?>
             <?php if (featureEnabled($pdo, 'community_challenges_enabled') && $activeDog && $communityChallengeState): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Community Challenge</h3>
-                        <a href="community_challenges.php" class="btn btn-outline-success btn-sm">Open challenge</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Community</div>
+                            <h3 class="h6 mb-1">Community Challenge</h3>
+                            <div class="small text-muted"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?></div>
+                        </div>
+                        <a href="community_challenges.php" class="btn btn-outline-success btn-sm" onclick="event.stopPropagation();">Open challenge</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="attention-empty"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?> · <?= e((string) (($communityChallengeState['check_ins'] ?? 0))) ?> check-ins logged.</div>
                     </div>
-                    <div class="attention-empty"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?> · <?= e((string) (($communityChallengeState['check_ins'] ?? 0))) ?> check-ins logged.</div>
-                </div>
+                </details>
             <?php endif; ?>
 
             <?php if ($openCoachReviews): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Coach Review</h3>
-                        <a href="coach_review.php" class="btn btn-outline-primary btn-sm">Review queue</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Review</div>
+                            <h3 class="h6 mb-1">Coach Review</h3>
+                            <div class="small text-muted"><?= count($openCoachReviews) ?> coach review<?= count($openCoachReviews) === 1 ? '' : 's' ?> waiting.</div>
+                        </div>
+                        <a href="coach_review.php" class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation();">Review queue</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="vstack gap-2">
+                            <?php foreach (array_slice($openCoachReviews, 0, 3) as $review): ?>
+                                <div class="alert-card <?= e(($review['priority'] ?? 'normal') === 'high' ? 'danger' : 'warning') ?> rounded-3 border bg-white p-3">
+                                    <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['review_type'] ?? 'coach review') ?></div>
+                                    <div class="small text-muted text-break"><?= e($review['reason'] ?? 'Open coaching follow-up') ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                    <div class="vstack gap-2">
-                        <?php foreach (array_slice($openCoachReviews, 0, 3) as $review): ?>
-                            <div class="alert-card <?= e(($review['priority'] ?? 'normal') === 'high' ? 'danger' : 'warning') ?> rounded-3 border bg-white p-3">
-                                <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['review_type'] ?? 'coach review') ?></div>
-                                <div class="small text-muted text-break"><?= e($review['reason'] ?? 'Open coaching follow-up') ?></div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
 
             <?php if ($openVideoReviews): ?>
-                <div class="mt-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
-                        <h3 class="h6 mb-0">Video Review</h3>
-                        <a href="video_review.php" class="btn btn-outline-info btn-sm">Open videos</a>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Review</div>
+                            <h3 class="h6 mb-1">Video Review</h3>
+                            <div class="small text-muted"><?= count($openVideoReviews) ?> video review<?= count($openVideoReviews) === 1 ? '' : 's' ?> waiting.</div>
+                        </div>
+                        <a href="video_review.php" class="btn btn-outline-info btn-sm" onclick="event.stopPropagation();">Open videos</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="vstack gap-2">
+                            <?php foreach (array_slice($openVideoReviews, 0, 3) as $review): ?>
+                                <div class="alert-card info rounded-3 border bg-white p-3">
+                                    <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['location_name'] ?? 'Video checkpoint') ?></div>
+                                    <div class="small text-muted text-break"><?= e(date('M j, Y', strtotime((string) $review['log_date']))) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                    <div class="vstack gap-2">
-                        <?php foreach (array_slice($openVideoReviews, 0, 3) as $review): ?>
-                            <div class="alert-card info rounded-3 border bg-white p-3">
-                                <div class="fw-semibold"><?= e($review['dog_name']) ?> — <?= e($review['location_name'] ?? 'Video checkpoint') ?></div>
-                                <div class="small text-muted text-break"><?= e(date('M j, Y', strtotime((string) $review['log_date']))) ?></div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                </details>
             <?php endif; ?>
         </div>
     </details>
