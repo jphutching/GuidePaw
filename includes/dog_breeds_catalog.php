@@ -548,6 +548,12 @@ function getDogBreedsCatalog(): array
     $supplementalBreedAliases = [
         'American Cocker Spaniel' => ['American Cocker'],
         'Brittany' => ['Brittany Spaniel'],
+        'Australian Shepherd' => ['Aussie'],
+        'Shetland Sheepdog' => ['Sheltie'],
+        'Doberman Pinscher' => ['Dobie', 'Dobermann'],
+        'Rottweiler' => ['Rottie'],
+        'Miniature American Shepherd' => ['Mini Aussie', 'Mini Aussie Shepherd', 'Mini American Shepherd'],
+        'Parson Russell Terrier' => ['Jack Russell Terrier', 'Jack Russell', 'JRT'],
         'Boston Terrier' => ['Boston'],
         'Cocker Spaniel' => ['Cocker'],
         'Chinese Crested' => ['Crestie'],

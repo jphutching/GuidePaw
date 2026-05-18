@@ -1806,6 +1806,78 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreed = trim((string) ($breedQuestionnaireBostonQueryMatch[1] ?? ''));
         $breedQuestionnaireBostonQueryAlignmentSeen = strcasecmp($firstBreed, 'Boston Terrier') === 0;
     }
+    $breedQuestionnaireAussieQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Aussie',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireAussieQueryBody = strtolower($breedQuestionnaireAussieQueryPage['body']);
+    $breedQuestionnaireAussieQuerySeen = gpQaPageLooksOk($breedQuestionnaireAussieQueryPage)
+        && str_contains($breedQuestionnaireAussieQueryBody, 'australian shepherd');
+    $breedQuestionnaireAussieQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireAussieQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireAussieQueryPage['body'], $breedQuestionnaireAussieQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireAussieQueryMatch[1] ?? ''));
+        $breedQuestionnaireAussieQueryAlignmentSeen = strcasecmp($firstBreed, 'Australian Shepherd') === 0;
+    }
+    $breedQuestionnaireSheltieQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Sheltie',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireSheltieQueryBody = strtolower($breedQuestionnaireSheltieQueryPage['body']);
+    $breedQuestionnaireSheltieQuerySeen = gpQaPageLooksOk($breedQuestionnaireSheltieQueryPage)
+        && str_contains($breedQuestionnaireSheltieQueryBody, 'shetland sheepdog');
+    $breedQuestionnaireSheltieQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireSheltieQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireSheltieQueryPage['body'], $breedQuestionnaireSheltieQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireSheltieQueryMatch[1] ?? ''));
+        $breedQuestionnaireSheltieQueryAlignmentSeen = strcasecmp($firstBreed, 'Shetland Sheepdog') === 0;
+    }
+    $breedQuestionnaireDobieQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Dobie',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireDobieQueryBody = strtolower($breedQuestionnaireDobieQueryPage['body']);
+    $breedQuestionnaireDobieQuerySeen = gpQaPageLooksOk($breedQuestionnaireDobieQueryPage)
+        && str_contains($breedQuestionnaireDobieQueryBody, 'doberman pinscher');
+    $breedQuestionnaireDobieQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireDobieQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireDobieQueryPage['body'], $breedQuestionnaireDobieQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireDobieQueryMatch[1] ?? ''));
+        $breedQuestionnaireDobieQueryAlignmentSeen = strcasecmp($firstBreed, 'Doberman Pinscher') === 0;
+    }
+    $breedQuestionnaireRottieQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Rottie',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireRottieQueryBody = strtolower($breedQuestionnaireRottieQueryPage['body']);
+    $breedQuestionnaireRottieQuerySeen = gpQaPageLooksOk($breedQuestionnaireRottieQueryPage)
+        && str_contains($breedQuestionnaireRottieQueryBody, 'rottweiler');
+    $breedQuestionnaireRottieQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireRottieQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireRottieQueryPage['body'], $breedQuestionnaireRottieQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireRottieQueryMatch[1] ?? ''));
+        $breedQuestionnaireRottieQueryAlignmentSeen = strcasecmp($firstBreed, 'Rottweiler') === 0;
+    }
     $breedQuestionnaireFocusRankPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'breed_focus' => 'public',
@@ -2207,6 +2279,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_pembroke_corgi_alignment', $breedQuestionnairePembrokeCorgiQueryAlignmentSeen, 'HTTP ' . $breedQuestionnairePembrokeCorgiQueryPage['status'] . ($breedQuestionnairePembrokeCorgiQueryAlignmentSeen ? ' pembroke corgi alias aligned to Pembroke Welsh Corgi' : ' pembroke corgi alias did not pin Pembroke Welsh Corgi'));
     gpQaResult($results, 'breed_questionnaire_boston_alias', $breedQuestionnaireBostonQuerySeen, 'HTTP ' . $breedQuestionnaireBostonQueryPage['status'] . ($breedQuestionnaireBostonQuerySeen ? ' boston alias surfaced' : ' boston alias missing'));
     gpQaResult($results, 'breed_questionnaire_boston_alignment', $breedQuestionnaireBostonQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireBostonQueryPage['status'] . ($breedQuestionnaireBostonQueryAlignmentSeen ? ' boston alias aligned to Boston Terrier' : ' boston alias did not pin Boston Terrier'));
+    gpQaResult($results, 'breed_questionnaire_aussie_alias', $breedQuestionnaireAussieQuerySeen, 'HTTP ' . $breedQuestionnaireAussieQueryPage['status'] . ($breedQuestionnaireAussieQuerySeen ? ' aussie alias surfaced' : ' aussie alias missing'));
+    gpQaResult($results, 'breed_questionnaire_aussie_alignment', $breedQuestionnaireAussieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireAussieQueryPage['status'] . ($breedQuestionnaireAussieQueryAlignmentSeen ? ' aussie alias aligned to Australian Shepherd' : ' aussie alias did not pin Australian Shepherd'));
+    gpQaResult($results, 'breed_questionnaire_sheltie_alias', $breedQuestionnaireSheltieQuerySeen, 'HTTP ' . $breedQuestionnaireSheltieQueryPage['status'] . ($breedQuestionnaireSheltieQuerySeen ? ' sheltie alias surfaced' : ' sheltie alias missing'));
+    gpQaResult($results, 'breed_questionnaire_sheltie_alignment', $breedQuestionnaireSheltieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireSheltieQueryPage['status'] . ($breedQuestionnaireSheltieQueryAlignmentSeen ? ' sheltie alias aligned to Shetland Sheepdog' : ' sheltie alias did not pin Shetland Sheepdog'));
+    gpQaResult($results, 'breed_questionnaire_dobie_alias', $breedQuestionnaireDobieQuerySeen, 'HTTP ' . $breedQuestionnaireDobieQueryPage['status'] . ($breedQuestionnaireDobieQuerySeen ? ' dobie alias surfaced' : ' dobie alias missing'));
+    gpQaResult($results, 'breed_questionnaire_dobie_alignment', $breedQuestionnaireDobieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireDobieQueryPage['status'] . ($breedQuestionnaireDobieQueryAlignmentSeen ? ' dobie alias aligned to Doberman Pinscher' : ' dobie alias did not pin Doberman Pinscher'));
+    gpQaResult($results, 'breed_questionnaire_rottie_alias', $breedQuestionnaireRottieQuerySeen, 'HTTP ' . $breedQuestionnaireRottieQueryPage['status'] . ($breedQuestionnaireRottieQuerySeen ? ' rottie alias surfaced' : ' rottie alias missing'));
+    gpQaResult($results, 'breed_questionnaire_rottie_alignment', $breedQuestionnaireRottieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireRottieQueryPage['status'] . ($breedQuestionnaireRottieQueryAlignmentSeen ? ' rottie alias aligned to Rottweiler' : ' rottie alias did not pin Rottweiler'));
     gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));
     gpQaResult($results, 'breed_questionnaire_drilldown_alignment', $breedQuestionnaireDrilldownAlignmentSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownAlignmentSeen ? ' drill-down result stayed small/toy' : ' drill-down result drifted large'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
