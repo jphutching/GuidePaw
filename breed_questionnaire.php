@@ -134,6 +134,13 @@ function explainMatches(array $textChecks): string
     return implode(' · ', $textChecks);
 }
 
+function normalizeBreedQuery(string $value): string
+{
+    $value = strtolower(trim($value));
+    $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? $value;
+    return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+}
+
 $defaults = [
     'goal' => 'service_access',
     'size' => 'medium',
@@ -142,6 +149,7 @@ $defaults = [
     'public' => 'busy',
     'experience' => 'some',
     'sensitivity' => 'balanced',
+    'breed_query' => '',
 ];
 
 $answers = $defaults;
@@ -159,6 +167,14 @@ $goalLabel = [
     'retrieval' => 'Retrieval / task work',
     'companion' => 'Companion / family fit',
 ];
+$sizeLabel = [
+    'flexible' => 'Flexible',
+    'toy' => 'Toy · about 4-12 lbs',
+    'small' => 'Small · about 10-25 lbs',
+    'medium' => 'Medium · about 20-55 lbs',
+    'large' => 'Large · about 45-90 lbs',
+    'giant' => 'Giant · about 85+ lbs',
+];
 
 $allBreeds = getDogBreedsCatalog();
 $familyOptions = [];
@@ -172,10 +188,13 @@ $familyOptions = array_keys($familyOptions);
 sort($familyOptions, SORT_NATURAL | SORT_FLAG_CASE);
 $drillFamily = qv($_POST, 'drill_family', 'any');
 $drillSize = qv($_POST, 'drill_size', 'any');
+$breedQuery = trim((string) ($_POST['breed_query'] ?? ''));
+$breedQueryNorm = normalizeBreedQuery($breedQuery);
 $matches = [];
 
 foreach ($allBreeds as $breedName => $breed) {
     $groupText = strtolower((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
+    $breedNameNorm = normalizeBreedQuery((string) $breedName);
     $blob = strtolower(implode(' ', [
         $breedName,
         $breed['group'] ?? '',
@@ -191,6 +210,32 @@ foreach ($allBreeds as $breedName => $breed) {
     $breedFamily = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
     $score = 0;
     $reasons = [];
+
+    if ($breedQueryNorm !== '') {
+        if ($breedNameNorm === $breedQueryNorm) {
+            $score += 120;
+            $reasons[] = 'Exact breed name match.';
+        } elseif (str_contains($breedNameNorm, $breedQueryNorm) || str_contains($blob, $breedQueryNorm)) {
+            $score += 80;
+            $reasons[] = 'Matches the breed name you typed.';
+        } else {
+            $queryTokens = preg_split('/\s+/', $breedQueryNorm) ?: [];
+            $nameTokens = preg_split('/\s+/', $breedNameNorm) ?: [];
+            $hits = 0;
+            foreach ($queryTokens as $token) {
+                if (strlen($token) < 3) {
+                    continue;
+                }
+                if (in_array($token, $nameTokens, true) || str_contains($blob, $token)) {
+                    $hits++;
+                }
+            }
+            if ($hits > 0) {
+                $score += 12 * $hits;
+                $reasons[] = 'Shares words with the breed name you typed.';
+            }
+        }
+    }
 
     $goalBonuses = [
         'service_access' => [
@@ -454,16 +499,22 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             <option value="companion" <?= $answers['goal'] === 'companion' ? 'selected' : '' ?>>Companion / family fit</option>
                         </select>
                     </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">Breed name to research</label>
+                        <input class="form-control" name="breed_query" value="<?= e($breedQuery) ?>" placeholder="Example: Cavalier King Charles Spaniel">
+                        <div class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
+                    </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label fw-bold">Preferred size</label>
                         <select class="form-select" name="size">
-                            <option value="flexible" <?= $answers['size'] === 'flexible' ? 'selected' : '' ?>>Flexible</option>
-                            <option value="toy" <?= $answers['size'] === 'toy' ? 'selected' : '' ?>>Toy</option>
-                            <option value="small" <?= $answers['size'] === 'small' ? 'selected' : '' ?>>Small</option>
-                            <option value="medium" <?= $answers['size'] === 'medium' ? 'selected' : '' ?>>Medium</option>
-                            <option value="large" <?= $answers['size'] === 'large' ? 'selected' : '' ?>>Large</option>
-                            <option value="giant" <?= $answers['size'] === 'giant' ? 'selected' : '' ?>>Giant</option>
+                            <option value="flexible" <?= $answers['size'] === 'flexible' ? 'selected' : '' ?>><?= e($sizeLabel['flexible']) ?></option>
+                            <option value="toy" <?= $answers['size'] === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
+                            <option value="small" <?= $answers['size'] === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
+                            <option value="medium" <?= $answers['size'] === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
+                            <option value="large" <?= $answers['size'] === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
+                            <option value="giant" <?= $answers['size'] === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
                         </select>
+                        <div class="form-text">These are approximate adult weight ranges, not exact limits.</div>
                     </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label fw-bold">Exercise you can support</label>
@@ -524,11 +575,11 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                                     <label class="form-label fw-bold">Drill size</label>
                                     <select class="form-select" name="drill_size">
                                         <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
-                                        <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>>Toy</option>
-                                        <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>>Small</option>
-                                        <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>>Medium</option>
-                                        <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>>Large</option>
-                                        <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>>Giant</option>
+                                        <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
+                                        <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
+                                        <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
+                                        <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
+                                        <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
                                     </select>
                                 </div>
                                 <div class="col-12">
@@ -553,7 +604,10 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                 </div>
                 <div class="badge-line">
                     <span class="pill"><?= e($goalLabel[$answers['goal']] ?? 'Research mode') ?></span>
-                    <span class="pill"><?= e(ucfirst(str_replace('_', ' ', $answers['size']))) ?> size</span>
+                    <?php if ($breedQuery !== ''): ?>
+                        <span class="pill"><?= e($breedQuery) ?></span>
+                    <?php endif; ?>
+                    <span class="pill"><?= e($sizeLabel[$answers['size']] ?? ucfirst(str_replace('_', ' ', $answers['size']))) ?></span>
                     <span class="pill"><?= e(ucfirst(str_replace('_', ' ', $answers['energy']))) ?> energy</span>
                     <span class="pill"><?= e(ucfirst($answers['grooming'])) ?> grooming</span>
                 </div>

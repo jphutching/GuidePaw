@@ -1467,8 +1467,15 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($breedQuestionnaireBody, 'ranked breed ideas')
         )
         && str_contains($breedQuestionnaireBody, 'no account needed');
+    $breedQuestionnaireSizeLabelsSeen = gpQaPageLooksOk($breedQuestionnairePage)
+        && str_contains($breedQuestionnaireBody, 'toy · about 4-12 lbs')
+        && str_contains($breedQuestionnaireBody, 'small · about 10-25 lbs')
+        && str_contains($breedQuestionnaireBody, 'medium · about 20-55 lbs')
+        && str_contains($breedQuestionnaireBody, 'large · about 45-90 lbs')
+        && str_contains($breedQuestionnaireBody, 'giant · about 85+ lbs');
     $breedQuestionnaireToyPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
+        'breed_query' => '',
         'size' => 'toy',
         'energy' => 'moderate',
         'grooming' => 'moderate',
@@ -1486,6 +1493,24 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $catalog = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
         $firstBreedSize = trim((string) ($catalog[$firstBreed]['size'] ?? ''));
         $breedQuestionnaireToyAlignmentSeen = $firstBreed !== '' && gpQaBreedSizeRank($firstBreedSize) <= 2;
+    }
+    $breedQuestionnaireBreedQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Cavalier King Charles',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireBreedQueryBody = strtolower($breedQuestionnaireBreedQueryPage['body']);
+    $breedQuestionnaireBreedQuerySeen = gpQaPageLooksOk($breedQuestionnaireBreedQueryPage)
+        && str_contains($breedQuestionnaireBreedQueryBody, 'cavalier king charles');
+    $breedQuestionnaireBreedQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireBreedQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireBreedQueryPage['body'], $breedQuestionnaireBreedQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireBreedQueryMatch[1] ?? ''));
+        $breedQuestionnaireBreedQueryAlignmentSeen = strcasecmp($firstBreed, 'Cavalier King Charles Spaniel') === 0;
     }
     $breedQuestionnaireDrilldownPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
@@ -1839,7 +1864,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
+    gpQaResult($results, 'breed_questionnaire_breed_query', $breedQuestionnaireBreedQuerySeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQuerySeen ? ' breed query surfaced the target breed' : ' breed query missing'));
+    gpQaResult($results, 'breed_questionnaire_breed_query_alignment', $breedQuestionnaireBreedQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQueryAlignmentSeen ? ' Cavalier query aligned to Cavalier King Charles Spaniel' : ' Cavalier query did not pin the target breed'));
     gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));
     gpQaResult($results, 'breed_questionnaire_drilldown_alignment', $breedQuestionnaireDrilldownAlignmentSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownAlignmentSeen ? ' drill-down result stayed small/toy' : ' drill-down result drifted large'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
