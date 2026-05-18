@@ -474,7 +474,6 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
         $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
         $invoiceTotalCents = null;
-        $moneyCandidates = [];
 
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
@@ -482,34 +481,27 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                 continue;
             }
 
-            if (preg_match('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatch)) {
-                $candidateCents = gpVendorParseMoneyCents((string) $moneyMatch[1]);
-                if ($candidateCents !== null && $candidateCents > 0) {
-                    $moneyCandidates[] = $candidateCents;
+            if ($invoiceTotalCents === null && preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $line, $summaryMatch)) {
+                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
+                if ($invoiceTotalCents !== null) {
+                    continue;
                 }
             }
 
-            if ($invoiceTotalCents === null && preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $line, $summaryMatch)) {
-                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
-            }
-
-            if (stripos($line, 'SUCCESS') !== false && preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+(SUCCESS|PENDING|FAILED)\b/i', $line, $rowMatch)) {
-                if (preg_match('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatch)) {
-                    $amountCents = gpVendorParseMoneyCents((string) $moneyMatch[1]);
-                    if ($amountCents !== null && $amountCents > 0) {
-                        $rows[] = [
-                            'date' => $invoiceDate,
-                            'amount_cents' => $amountCents,
-                            'order_ref' => $invoiceNumber,
-                            'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
-                        ];
+            if (preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+SUCCESS\s+(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})$/i', $line, $rowMatch)) {
+                $amountCents = gpVendorParseMoneyCents((string) $rowMatch[4]);
+                if ($amountCents !== null && $amountCents > 0) {
+                    $rows[] = [
+                        'date' => $invoiceDate,
+                        'amount_cents' => $amountCents,
+                        'order_ref' => $invoiceNumber,
+                        'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
+                    ];
+                    if ($invoiceTotalCents === null) {
+                        $invoiceTotalCents = $amountCents;
                     }
                 }
             }
-        }
-
-        if ($invoiceTotalCents === null && $moneyCandidates !== []) {
-            $invoiceTotalCents = max($moneyCandidates);
         }
 
         if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
