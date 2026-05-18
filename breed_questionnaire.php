@@ -177,6 +177,8 @@ $sizeLabel = [
 ];
 
 $allBreeds = getDogBreedsCatalog();
+$breedSuggestions = array_keys($allBreeds);
+sort($breedSuggestions, SORT_NATURAL | SORT_FLAG_CASE);
 $familyOptions = [];
 foreach ($allBreeds as $breed) {
     $family = trim((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
@@ -501,8 +503,13 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold">Breed name to research</label>
-                        <input class="form-control" name="breed_query" value="<?= e($breedQuery) ?>" placeholder="Example: Cavalier King Charles Spaniel">
-                        <div class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
+                        <input class="form-control" name="breed_query" list="breed-query-options" value="<?= e($breedQuery) ?>" placeholder="Example: Cavalier King Charles Spaniel" autocomplete="off">
+                        <datalist id="breed-query-options">
+                            <?php foreach ($breedSuggestions as $breedName): ?>
+                                <option value="<?= e($breedName) ?>">
+                            <?php endforeach; ?>
+                        </datalist>
+                        <div id="breed-query-hint" class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
                     </div>
                     <div class="col-12 col-md-6">
                         <label class="form-label fw-bold">Preferred size</label>
@@ -671,5 +678,72 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         </section>
     <?php endif; ?>
 </main>
+<script>
+(() => {
+    const input = document.querySelector('input[name="breed_query"]');
+    const hint = document.getElementById('breed-query-hint');
+    if (!input || !hint) return;
+
+    const breedNames = <?= json_encode($breedSuggestions, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const aliases = {
+        'cavalier': 'Cavalier King Charles Spaniel',
+        'king charles': 'Cavalier King Charles Spaniel',
+        'cavalier king charles': 'Cavalier King Charles Spaniel',
+        'cavalier king charles spaniel': 'Cavalier King Charles Spaniel',
+        'cavalier spaniel': 'Cavalier King Charles Spaniel',
+    };
+
+    const normalize = (value) => String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const render = () => {
+        const raw = input.value.trim();
+        const query = normalize(raw);
+        if (!query) {
+            hint.textContent = 'Optional. If you already have a breed in mind, type it here and the results will prioritize it.';
+            return;
+        }
+
+        const canonical = aliases[query] || null;
+        const ranked = breedNames
+            .map((name) => ({ name, norm: normalize(name) }))
+            .filter((entry) => entry.norm.includes(query) || (canonical && entry.name === canonical))
+            .sort((a, b) => {
+                if (a.name === canonical) return -1;
+                if (b.name === canonical) return 1;
+                const aExact = a.norm === query ? 0 : 1;
+                const bExact = b.norm === query ? 0 : 1;
+                if (aExact !== bExact) return aExact - bExact;
+                return a.name.localeCompare(b.name);
+            })
+            .slice(0, 4)
+            .map((entry) => entry.name);
+
+        if (!ranked.length && canonical) {
+            hint.textContent = `Matched: ${canonical}`;
+            return;
+        }
+
+        if (!ranked.length) {
+            hint.textContent = 'No close breed matches yet. Try a longer breed name or the breed family.';
+            return;
+        }
+
+        if (ranked[0] && normalize(ranked[0]) === query) {
+            hint.textContent = `Matched: ${ranked[0]}`;
+            return;
+        }
+
+        hint.textContent = `Suggestions: ${ranked.join(' · ')}`;
+    };
+
+    input.addEventListener('input', render);
+    input.addEventListener('change', render);
+    render();
+})();
+</script>
 </body>
 </html>

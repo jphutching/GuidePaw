@@ -1467,6 +1467,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($breedQuestionnaireBody, 'ranked breed ideas')
         )
         && str_contains($breedQuestionnaireBody, 'no account needed');
+    $breedQuestionnaireLiveSuggestionsSeen = gpQaPageLooksOk($breedQuestionnairePage)
+        && str_contains($breedQuestionnaireBody, 'breed name to research')
+        && str_contains($breedQuestionnaireBody, 'breed-query-options')
+        && str_contains($breedQuestionnaireBody, 'optional. if you already have a breed in mind');
     $breedQuestionnaireSizeLabelsSeen = gpQaPageLooksOk($breedQuestionnairePage)
         && str_contains($breedQuestionnaireBody, 'toy · about 4-12 lbs')
         && str_contains($breedQuestionnaireBody, 'small · about 10-25 lbs')
@@ -1864,6 +1868,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'ada_wallet_card_redirect', $adaWalletCardSeen, 'HTTP ' . $adaWalletCardPage['status'] . ($adaWalletCardSeen ? ' ada wallet redirect found' : ' ada wallet redirect missing'));
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
+    gpQaResult($results, 'breed_questionnaire_live_suggestions', $breedQuestionnaireLiveSuggestionsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveSuggestionsSeen ? ' breed query suggestions visible' : ' breed query suggestions missing'));
     gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
     gpQaResult($results, 'breed_questionnaire_breed_query', $breedQuestionnaireBreedQuerySeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQuerySeen ? ' breed query surfaced the target breed' : ' breed query missing'));
