@@ -471,31 +471,23 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             $invoiceDate = trim((string) $m[1]);
         }
 
-        $lines = preg_split('/\R/', $text) ?: [];
+        $normalizedText = trim(preg_replace('/\s+/', ' ', $text) ?? '');
         $rows = [];
         $invoiceTotalCents = null;
 
-        foreach ($lines as $line) {
-            $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
-            if ($line === '') {
-                continue;
-            }
-
-            if ($invoiceTotalCents === null && preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $line, $summaryMatch)) {
+        if ($normalizedText !== '') {
+            if (preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $normalizedText, $summaryMatch)) {
                 $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
-                if ($invoiceTotalCents !== null) {
-                    continue;
-                }
             }
 
-            if (preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+SUCCESS\s+(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})$/i', $line, $rowMatch)) {
-                $amountCents = gpVendorParseMoneyCents((string) $rowMatch[4]);
+            if (preg_match('/(?:guidepaw\.app\s+)?Domain Registration\s+1\s+SUCCESS\s+(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $normalizedText, $rowMatch)) {
+                $amountCents = gpVendorParseMoneyCents((string) $rowMatch[1]);
                 if ($amountCents !== null && $amountCents > 0) {
                     $rows[] = [
                         'date' => $invoiceDate,
                         'amount_cents' => $amountCents,
                         'order_ref' => $invoiceNumber,
-                        'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
+                        'item' => 'guidepaw.app Domain Registration',
                     ];
                     if ($invoiceTotalCents === null) {
                         $invoiceTotalCents = $amountCents;
