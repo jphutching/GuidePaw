@@ -251,7 +251,6 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
             </div>
         </summary>
         <div class="card-body">
-
             <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && !$openVideoReviews && $unreadNotifications === 0): ?>
                 <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, video reviews, or upcoming vet reminders right now.</div>
             <?php endif; ?>

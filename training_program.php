@@ -274,7 +274,7 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
 
 
     <?php if (!empty($commandCueGroups)): ?>
-        <details class="card shadow-sm mb-3" id="command-words" open>
+        <details class="card shadow-sm mb-3" id="command-words">
             <summary class="card-body d-flex justify-content-between align-items-start gap-2 flex-wrap" style="list-style:none;cursor:pointer;">
                 <div>
                     <h2 class="h5 mb-1">Suggested command words</h2>

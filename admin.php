@@ -66,20 +66,31 @@ $csrf = generateCsrfToken();
 
     <div class="card">
         <div class="label">Admin Control Panel</div>
-        <div class="desc">Admin-only tools appear first here after sign-in.</div>
+        <div class="desc">Core admin jobs stay up front. Less-used tools move under the folded section below.</div>
         <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
             <a class="btn" href="admin_users.php">User Management</a>
             <a class="btn" href="admin_feedback.php">Feedback Reports</a>
+            <a class="btn" href="admin_funding_settings.php">Funding Settings</a>
+            <a class="btn" href="admin_business_costs.php">Business Costs</a>
+            <a class="btn" href="admin_found_dog_reports.php">Found Dog Reports</a>
+        </div>
+    </div>
+
+    <details class="card">
+        <summary class="label" style="cursor:pointer; list-style:none;">More admin tools</summary>
+        <div class="desc">Beta, roadmap, backup, audit, notifications, and health checks stay here unless you need them.</div>
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
             <a class="btn" href="admin_beta_requests.php">Beta Requests</a>
             <a class="btn" href="admin_tactical_requests.php">Tactical Requests</a>
             <a class="btn" href="admin_feature_roadmap.php">Feature Roadmap</a>
             <a class="btn" href="admin_paywall_catalog.php">Paywall Catalog</a>
-            <a class="btn" href="admin_funding_settings.php">Funding Settings</a>
-            <a class="btn" href="admin_business_costs.php">Business Costs</a>
             <a class="btn" href="db_status.php">System Health</a>
-            <a class="btn" href="admin_found_dog_reports.php">Found Dog Reports</a>
+            <a class="btn" href="admin_notification_test.php">Notifications</a>
+            <a class="btn" href="export_backup.php?format=package">Backup Snapshot</a>
+            <a class="btn" href="backup.php">Backup Tools</a>
+            <a class="btn" href="admin_audit_log.php">Audit Log</a>
         </div>
-    </div>
+    </details>
 
     <?php if ($message): ?>
         <div class="msg"><?= e($message) ?></div>
@@ -93,77 +104,27 @@ $csrf = generateCsrfToken();
         </div>
     </div>
 
-    <div class="card">
-        <div class="label">Notifications</div>
-        <div class="desc">Send test beta request notifications through email and Telegram.</div>
-        <div style="margin-top:12px;">
-            <a class="btn" href="admin_notification_test.php">Open Notification Test</a>
-        </div>
-    </div>
+    <details class="card">
+        <summary class="label" style="cursor:pointer; list-style:none;">Feature Flags</summary>
+        <div class="desc"><?= count(array_filter($flags, fn($f) => (int)$f['is_enabled'] === 1)) ?> enabled / <?= count($flags) ?> total feature flags. Toggle saves immediately.</div>
+        <form method="post" style="margin-top:12px;">
+            <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
 
-    <div class="card">
-        <div class="label">Backup Snapshot</div>
-        <div class="desc">Download a current GuidePaw backup package or manage backup imports.</div>
-        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-            <a class="btn" href="export_backup.php?format=package">Download Full Snapshot</a>
-            <a class="btn" href="backup.php">Backup Tools</a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="label">Feature Roadmap</div>
-        <div class="desc">Review feature lifecycle, owners, milestones, and release status.</div>
-        <div style="margin-top:12px;">
-            <a class="btn" href="admin_feature_roadmap.php">Open Roadmap</a>
-        </div>
-    </div>
-
-
-    <div class="card">
-        <div class="label">Audit Log</div>
-        <div class="desc">Review sensitive admin, backup, archive, and restore actions.</div>
-        <div style="margin-top:12px;">
-            <a class="btn" href="admin_audit_log.php">Open Audit Log</a>
-        </div>
-    </div>
-
-
-    <div class="card">
-        <div class="label">System Health</div>
-        <div class="desc">Check database, PHP Zip support, writable folders, table counts, and recent audit events.</div>
-        <div style="margin-top:12px;">
-            <a class="btn" href="db_status.php">Open System Health</a>
-        </div>
-    </div>
-
-
-    <div class="card">
-        <div class="label">Feedback Reports</div>
-        <div class="desc">Review bug reports, feature requests, screenshots, logs, and uploaded attachments.</div>
-        <div style="margin-top:12px;">
-            <a class="btn" href="admin_feedback.php">Open Feedback</a>
-        </div>
-    </div>
-
-    <form method="post">
-        <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>">
-
-        <?php foreach ($flags as $flag): ?>
-            <div class="card">
-                <div class="row">
-                    <div>
-                        <div class="label"><?= e($flag['label']) ?></div>
-                        <div class="desc"><?= e($flag['description'] ?? '') ?></div>
+            <?php foreach ($flags as $flag): ?>
+                <div class="card">
+                    <div class="row">
+                        <div>
+                            <div class="label"><?= e($flag['label']) ?></div>
+                            <div class="desc"><?= e($flag['description'] ?? '') ?></div>
+                        </div>
+                        <label>
+                            <input type="checkbox" name="enabled[<?= e($flag['flag_key']) ?>]" value="1" <?= ((int)$flag['is_enabled'] === 1) ? 'checked' : '' ?> onchange="this.form.submit()">
+                        </label>
                     </div>
-                    <label>
-                        <input type="checkbox" name="enabled[<?= e($flag['flag_key']) ?>]" value="1" <?= ((int)$flag['is_enabled'] === 1) ? 'checked' : '' ?> onchange="this.form.submit()">
-                    </label>
                 </div>
-            </div>
-        <?php endforeach; ?>
-
-        <button type="submit">Save Feature Flags</button>
-    </form>
+            <?php endforeach; ?>
+        </form>
+    </details>
 </div>
 <?php guidepawFormUx(); ?>
 </body>

@@ -128,8 +128,8 @@ if (($_GET['msg'] ?? '') === 'updated') {
         </div>
     </div>
 
-    <div class="panel mb-3">
-        <h2 class="h5 mb-2">Live provider snapshot</h2>
+    <details class="panel mb-3">
+        <summary class="h5 mb-2" style="cursor:pointer; list-style:none;">Live provider snapshot</summary>
         <div class="mini mb-3">This section pulls live provider data where the API exposes it. The editable ledger below remains the place for costs that are not exposed cleanly by a provider API.</div>
         <div class="row g-3">
             <div class="col-md-4">
@@ -204,10 +204,10 @@ if (($_GET['msg'] ?? '') === 'updated') {
                 </div>
             </div>
         </div>
-    </div>
+    </details>
 
-    <div class="panel mb-3">
-        <h2 class="h5 mb-2">Edit cost items</h2>
+    <details class="panel mb-3">
+        <summary class="h5 mb-2" style="cursor:pointer; list-style:none;">Edit cost items</summary>
         <div class="mini mb-3">Enter the real monthly, annual, one-time, or usage-based costs. These numbers are editable in-app and update the tally immediately.</div>
         <form method="post" class="row g-2 mb-3">
             <input type="hidden" name="csrf_token" value="<?= abcEsc($csrf) ?>">
@@ -225,12 +225,12 @@ if (($_GET['msg'] ?? '') === 'updated') {
             <div class="col-12"><label class="form-label small">Notes</label><textarea class="form-control" name="notes" rows="2"></textarea></div>
             <div class="col-12"><button class="btn btn-primary">Save cost item</button></div>
         </form>
-    </div>
+    </details>
 
     <div class="row g-3">
         <div class="col-lg-6">
-            <div class="panel">
-                <h2 class="h5 mb-3">Current operating costs</h2>
+            <details class="panel">
+                <summary class="h5 mb-3" style="cursor:pointer; list-style:none;">Current operating costs (<?= count($currentCostRows) ?>)</summary>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead><tr><th>Item</th><th>Cycle</th><th>Estimate</th><th>Notes</th></tr></thead>
@@ -266,11 +266,11 @@ if (($_GET['msg'] ?? '') === 'updated') {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </details>
         </div>
         <div class="col-lg-6">
-            <div class="panel">
-                <h2 class="h5 mb-3">Future expansion estimates</h2>
+            <details class="panel">
+                <summary class="h5 mb-3" style="cursor:pointer; list-style:none;">Future expansion estimates (<?= count($futureCostRows) ?>)</summary>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead><tr><th>Item</th><th>Cycle</th><th>Estimate</th><th>Notes</th></tr></thead>
@@ -286,7 +286,7 @@ if (($_GET['msg'] ?? '') === 'updated') {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </details>
         </div>
     </div>
 </main>
