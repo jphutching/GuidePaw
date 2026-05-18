@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $weight = ($_POST['weight_lbs'] ?? '') !== '' ? round((float) $_POST['weight_lbs'], 2) : null;
         $dob = cleanDateValue($_POST['date_of_birth'] ?? '');
         $birthApprox = !empty($_POST['birth_is_approximate']) ? 1 : 0;
-        $approxAge = ($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null;
+        $approxAge = $dob !== '' ? gpApproxAgeYearsFromBirthDate($dob) : (($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null);
         $notes = cleanTextarea($_POST['notes'] ?? '', 2000);
 
         if ($name === '') {
@@ -283,8 +283,9 @@ $csrf = generateCsrfToken();
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6"><label class="form-label">Birthday</label><input type="date" name="date_of_birth" class="form-control"></div>
-                        <div class="col-6"><label class="form-label">Approx Age</label><input type="number" step="0.1" name="approx_age_years" class="form-control" placeholder="Years"></div>
+                        <div class="col-6"><label class="form-label" for="dogDateOfBirth">Birthday</label><input type="date" name="date_of_birth" id="dogDateOfBirth" class="form-control" autocomplete="bday"></div>
+                        <div class="col-6"><label class="form-label" for="dogApproxAgeYears">Approx Age</label><input type="number" step="0.1" name="approx_age_years" id="dogApproxAgeYears" class="form-control" placeholder="Years" aria-describedby="dogAgeHelp"></div>
+                        <div class="col-12"><div class="form-text" id="dogAgeHelp">If you set a birthday, GuidePaw fills this age automatically. Leave the birthday blank to enter an approximate age manually.</div></div>
                         <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="birth_is_approximate" id="birth_is_approximate"><label class="form-check-label" for="birth_is_approximate">Birthday is approximate</label></div>
                         <div class="col-12"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="3"></textarea></div>
                         <div class="col-12"><button class="btn btn-primary w-100">Save Dog</button></div>
@@ -296,6 +297,8 @@ $csrf = generateCsrfToken();
 </div>
 <script>
 const breedCatalog = <?= json_encode($breedCatalog, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+const dogDateOfBirth = document.getElementById('dogDateOfBirth');
+const dogApproxAgeYears = document.getElementById('dogApproxAgeYears');
 
 // GUIDEPAW_BREED_SEARCH_V1
 const guidepawBreedNames = Object.keys(breedCatalog).sort((a, b) =>
@@ -349,6 +352,16 @@ function guidepawBreedMatches(query) {
   }
 
   return [...starts, ...wordStarts, ...contains];
+}
+
+function guidepawDogAgeFromBirthday(dateValue) {
+  if (!dateValue) return '';
+  const birth = new Date(dateValue + 'T00:00:00');
+  if (Number.isNaN(birth.getTime())) return '';
+  const now = new Date();
+  if (birth > now) return '';
+  const years = (now - birth) / (365.2425 * 24 * 60 * 60 * 1000);
+  return Math.max(0, Math.round(years * 10) / 10).toFixed(1);
 }
 
 function initGuidepawBreedSearch(scope = document) {
@@ -692,6 +705,31 @@ function wireChipLinks(scope){
 }
 
 wireChipLinks(document);
+
+function wireDogAgeFields() {
+  if (!dogDateOfBirth || !dogApproxAgeYears) return;
+  const refreshAge = function () {
+    const birthday = dogDateOfBirth.value.trim();
+    if (birthday) {
+      dogApproxAgeYears.value = guidepawDogAgeFromBirthday(birthday);
+      dogApproxAgeYears.dataset.autoFilled = '1';
+      dogApproxAgeYears.readOnly = true;
+      dogApproxAgeYears.classList.add('bg-light');
+    } else {
+      if (dogApproxAgeYears.dataset.autoFilled === '1') {
+        dogApproxAgeYears.value = '';
+      }
+      dogApproxAgeYears.dataset.autoFilled = '0';
+      dogApproxAgeYears.readOnly = false;
+      dogApproxAgeYears.classList.remove('bg-light');
+    }
+  };
+  dogDateOfBirth.addEventListener('change', refreshAge);
+  dogDateOfBirth.addEventListener('input', refreshAge);
+  refreshAge();
+}
+
+wireDogAgeFields();
 </script>
 <?php guidepawFormUx(); ?>
 </body>

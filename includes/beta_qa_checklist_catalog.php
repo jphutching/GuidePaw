@@ -75,6 +75,8 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'dog_profile_loads', 'text' => 'Dog Profile page loads for active dog.', 'expected' => 'No application error.'],
                 ['id' => 'dog_profile_address_fields', 'text' => 'Dog Profile handler address uses separate street, apt, city, state, and ZIP fields.', 'expected' => 'The dog profile handler override shows split address inputs instead of one freeform line.'],
+                ['id' => 'dog_profile_age_auto_fill', 'text' => 'Dog Profile auto-fills approximate age when birthday is set and allows manual age when birthday is blank.', 'expected' => 'The age field explains the rule and becomes read-only when a birthday is present.'],
+                ['id' => 'dog_add_age_auto_fill', 'text' => 'Add Dog form auto-fills approximate age when birthday is set and allows manual age when birthday is blank.', 'expected' => 'The add-dog form explains the rule and keeps the age field manual only when no birthday is entered.'],
                 ['id' => 'qr_profile_loads', 'text' => 'Public QR profile opens with valid dog/token link.', 'expected' => 'Public page shows dog identity and inherited handler contact defaults.'],
                 ['id' => 'qr_tracking_loads', 'text' => 'QR Tracking page loads for the active dog or shows the add-on notice when that dog is not covered yet.', 'expected' => 'Tracking page shows QR opens and recent scan activity, or the per-dog add-on notice.'],
                 ['id' => 'qr_invalid_token', 'text' => 'Invalid or missing QR token is rejected.', 'expected' => 'Public page returns a not-found style response, not private data.'],

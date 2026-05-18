@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canEdit) {
     $weight = ($_POST['weight_lbs'] ?? '') !== '' ? round((float) $_POST['weight_lbs'], 2) : null;
     $dob = cleanDateValue($_POST['date_of_birth'] ?? '');
     $birthApprox = !empty($_POST['birth_is_approximate']) ? 1 : 0;
-    $approxAge = ($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null;
+    $approxAge = $dob !== '' ? gpApproxAgeYearsFromBirthDate($dob) : (($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null);
     $notes = cleanTextarea($_POST['notes'] ?? '', 2000);
     $handlerName = cleanText($_POST['handler_name'] ?? '', 120);
     $handlerStreet = cleanText($_POST['handler_street'] ?? '', 120);
@@ -252,6 +252,10 @@ $handlerEmailSourceLabel = gpDogProfileSourceLabel((string) ($publicContact['han
 $handlerPhoneSourceLabel = gpDogProfileSourceLabel((string) ($publicContact['handler_phone_source'] ?? 'missing'));
 $adminNotifyEmail = trim((string) gpEnv('ADMIN_NOTIFY_EMAIL', gpEnv('ADMIN_EMAIL', 'admin@guidepaw.app')));
 $telegramEnabled = in_array(strtolower(trim((string) gpEnv('FOUND_DOG_NOTIFY_TELEGRAM_ENABLED', gpEnv('BETA_NOTIFY_TELEGRAM_ENABLED', 'false')))), ['1', 'true', 'yes', 'on'], true);
+$approxAgeValue = !empty($dog['date_of_birth'])
+    ? gpApproxAgeYearsFromBirthDate((string) $dog['date_of_birth'])
+    : (($dog['approx_age_years'] ?? '') !== '' ? round((float) $dog['approx_age_years'], 1) : null);
+$approxAgeReadonly = !empty($dog['date_of_birth']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -337,7 +341,7 @@ $telegramEnabled = in_array(strtolower(trim((string) gpEnv('FOUND_DOG_NOTIFY_TEL
                     </div>
                 </div>
             </details>
-            <div class="col-md-6"><label class="form-label">Birthday</label><input type="date" name="date_of_birth" class="form-control" value="<?= e((string) $dog['date_of_birth']) ?>" <?= $canEdit ? '' : 'disabled' ?>></div><div class="col-md-6"><label class="form-label">Approx Age (years)</label><input type="number" step="0.1" name="approx_age_years" class="form-control" value="<?= e((string) $dog['approx_age_years']) ?>" <?= $canEdit ? '' : 'disabled' ?>></div><div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="birth_is_approximate" id="birth_is_approximate" <?= !empty($dog['birth_is_approximate']) ? 'checked' : '' ?> <?= $canEdit ? '' : 'disabled' ?>><label class="form-check-label" for="birth_is_approximate">Birthday is approximate</label></div><div class="col-12"><label class="form-label">Private Notes</label><textarea name="notes" class="form-control" rows="3" <?= $canEdit ? '' : 'disabled' ?>><?= e($dog['notes']) ?></textarea><div class="form-text">Private app notes. These do not show on the public QR profile.</div></div>
+            <div class="col-md-6"><label class="form-label" for="dogBirthday">Birthday</label><input type="date" name="date_of_birth" id="dogBirthday" class="form-control" value="<?= e((string) $dog['date_of_birth']) ?>" autocomplete="bday" <?= $canEdit ? '' : 'disabled' ?>></div><div class="col-md-6"><label class="form-label" for="dogApproxAge">Approx Age (years)</label><input type="number" step="0.1" name="approx_age_years" id="dogApproxAge" class="form-control" value="<?= e($approxAgeValue !== null ? (string) $approxAgeValue : '') ?>" <?= $canEdit ? '' : 'disabled' ?><?= $approxAgeReadonly && $canEdit ? ' readonly aria-readonly="true"' : '' ?> aria-describedby="dogAgeHelp"></div><div class="col-12"><div class="form-text" id="dogAgeHelp">If a birthday is set, GuidePaw fills the approximate age automatically. Leave the birthday blank to enter age manually.</div></div><div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="birth_is_approximate" id="birth_is_approximate" <?= !empty($dog['birth_is_approximate']) ? 'checked' : '' ?> <?= $canEdit ? '' : 'disabled' ?>><label class="form-check-label" for="birth_is_approximate">Birthday is approximate</label></div><div class="col-12"><label class="form-label">Private Notes</label><textarea name="notes" class="form-control" rows="3" <?= $canEdit ? '' : 'disabled' ?>><?= e($dog['notes']) ?></textarea><div class="form-text">Private app notes. These do not show on the public QR profile.</div></div>
             <details class="col-12 card shadow-sm mb-0" id="public-qr-details">
                 <summary class="card-body section-heading" style="cursor:pointer; list-style:none;">
                     <div>
@@ -396,6 +400,40 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function wireChipLinks(){const input=document.querySelector('.chip-input'),card=document.querySelector('.chip-links-card');if(!input||!card)return;const links=card.querySelectorAll('.chip-link'),help=card.querySelector('.chip-links-help');function render(){const chip=input.value.trim().replace(/\s+/g,'');if(chip){help.textContent='Quick jump to register or verify chip '+chip+'.';links.forEach(link=>{const base=link.getAttribute('data-base-url');link.href=base+(base.includes('?')?'&':'?')+'chip='+encodeURIComponent(chip);});}else{help.textContent='Enter a chip number to show quick registration and lookup links.';links.forEach(link=>link.href=link.getAttribute('data-base-url'));}}input.addEventListener('input',render);render();}
 function setupBreedPreview(){const input=document.querySelector('.breed-input'),card=document.querySelector('.breed-card-live');if(!input||!card)return;const title=card.querySelector('.breed-title'),group=card.querySelector('.breed-group'),temp=card.querySelector('.breed-temperament'),traits=card.querySelector('.breed-traits'),notes=card.querySelector('.breed-notes');function render(){const v=input.value.trim(),info=breedCatalog[v];if(info){title.textContent=v;group.textContent='Group: '+(info.group||'Not listed');temp.textContent=info.temperament||'—';traits.textContent=info.traits||'—';notes.textContent=info.notes||'—';}else if(v){title.textContent=v;group.textContent='Custom breed entry';temp.textContent='No built-in reference for this exact name yet.';traits.textContent='You can still save this breed exactly as typed.';notes.textContent='Use private notes to capture individual observations.';}else{title.textContent='Pick a breed to preview notes';group.textContent='Breed group will show here.';temp.textContent='Common temperament notes will appear here.';traits.textContent='Trainability, size, energy, and other typical traits.';notes.textContent='Use these as a starting point, then rely on the individual dog in front of you.';}}input.addEventListener('input',render);render();}
 setupBreedSearch();wireChipLinks();setupBreedPreview();
+(function () {
+    var birthday = document.getElementById('dogBirthday');
+    var approxAge = document.getElementById('dogApproxAge');
+    if (!birthday || !approxAge) return;
+    function calcAge(value) {
+        if (!value) return '';
+        var birth = new Date(value + 'T00:00:00');
+        if (isNaN(birth.getTime())) return '';
+        var now = new Date();
+        if (birth > now) return '';
+        var years = (now - birth) / (365.2425 * 24 * 60 * 60 * 1000);
+        return Math.max(0, Math.round(years * 10) / 10).toFixed(1);
+    }
+    function syncAge() {
+        if (birthday.value.trim()) {
+            approxAge.value = calcAge(birthday.value);
+            approxAge.dataset.autoFilled = '1';
+            approxAge.readOnly = true;
+            approxAge.classList.add('bg-light');
+            approxAge.setAttribute('aria-readonly', 'true');
+        } else {
+            if (approxAge.dataset.autoFilled === '1') {
+                approxAge.value = '';
+            }
+            approxAge.dataset.autoFilled = '0';
+            approxAge.readOnly = false;
+            approxAge.classList.remove('bg-light');
+            approxAge.removeAttribute('aria-readonly');
+        }
+    }
+    birthday.addEventListener('input', syncAge);
+    birthday.addEventListener('change', syncAge);
+    syncAge();
+})();
 </script>
 <?= gpProfileCropperScript() ?>
 <?php guidepawFormUx(); ?>

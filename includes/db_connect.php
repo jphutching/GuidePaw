@@ -6,6 +6,7 @@ require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/paywalls.php';
 require_once __DIR__ . '/training_data.php';
+require_once __DIR__ . '/dog_age_helpers.php';
 require_once __DIR__ . '/db_core.php';
 require_once __DIR__ . '/address_helpers.php';
 require_once __DIR__ . '/handler_profile_helpers.php';

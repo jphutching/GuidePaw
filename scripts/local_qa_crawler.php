@@ -1380,6 +1380,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             || str_contains($dashboardBody, 'saved today')
         );
     $dogsArchiveSplitSeen = str_contains($dogsPageBody, 'archived dogs') || str_contains($dogsPageBody, 'no archived dogs yet') || str_contains($dogsPageBody, 'active dogs stay in the working list');
+    $dogsAgeRuleSeen = gpQaPageLooksOk($dogsPage)
+        && str_contains($dogsPageBody, 'guidepaw fills this age automatically')
+        && str_contains($dogsPageBody, 'leave the birthday blank to enter an approximate age manually');
     $notificationPrefsSeen = str_contains($notificationsPageBody, 'notification preferences') && str_contains($notificationsPageBody, 'delete selected') && str_contains($notificationsPageBody, 'bulk delete');
     $notificationBadgeSeen = str_contains($dashboardBody, 'gp-nav-badge') || str_contains($notificationsPageBody, 'gp-nav-badge');
     $candidateHookSeen = str_contains($dashboardBody, 'candidate scoring') || str_contains($dashboardBody, 'candidate assessment');
@@ -1816,6 +1819,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'forum_thread_delete', $forumThreadDeleteSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadDeleteSeen ? ' thread delete handled' : ' thread delete missing'));
     gpQaResult($results, 'forum_thread_search', $forumThreadSearchSeen, 'HTTP ' . $forumPage['status'] . ($forumThreadSearchSeen ? ' search and clear controls found' : ' search controls missing'));
     gpQaResult($results, 'dogs_archive_split', gpQaPageLooksOk($dogsPage) && $dogsArchiveSplitSeen, 'HTTP ' . $dogsPage['status'] . ($dogsArchiveSplitSeen ? ' archive split and add-dog toggle found' : ' archive split or add-dog toggle missing'));
+    gpQaResult($results, 'dogs_age_auto_fill', $dogsAgeRuleSeen, 'HTTP ' . $dogsPage['status'] . ($dogsAgeRuleSeen ? ' age auto-fill rule found' : ' age auto-fill rule missing'));
 
     $publicProfileQuestionnaireSeen = false;
     $publicProfileAirTravelSeen = false;
@@ -1855,6 +1859,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($dogProfileBody, 'bronze supporter')
             );
         gpQaResult($results, 'dog_profile_support_badge_visible', $dogProfileSupportBadgeSeen, 'HTTP ' . $dogProfile['status'] . ($dogProfileSupportBadgeSeen ? ' support badge found' : ' support badge missing'));
+        $dogProfileAgeRuleSeen = gpQaPageLooksOk($dogProfile)
+            && str_contains($dogProfileBody, 'guidepaw fills the approximate age automatically')
+            && str_contains($dogProfileBody, 'leave the birthday blank to enter age manually');
+        gpQaResult($results, 'dog_profile_age_auto_fill', $dogProfileAgeRuleSeen, 'HTTP ' . $dogProfile['status'] . ($dogProfileAgeRuleSeen ? ' age auto-fill rule found' : ' age auto-fill rule missing'));
         $qrTrackingPageSeen = false;
         if (preg_match('/href="([^"]*public_dog_profile\.php\?dog=\d+&token=[^"]+)"/i', $dogProfileHtml, $pm)) {
             $publicProfileUrl = $pm[1];
