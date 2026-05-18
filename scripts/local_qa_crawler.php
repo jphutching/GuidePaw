@@ -1532,6 +1532,42 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($breedQuestionnaireSpanielBrowseBody, 'american cocker spaniel')
         && str_contains($breedQuestionnaireSpanielBrowseBody, 'king charles spaniel')
         && str_contains($breedQuestionnaireSpanielBrowseBody, 'research this breed');
+    $breedQuestionnaireRetrieverBrowsePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'breed_query' => '',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+        'drill_family' => 'Retriever Family',
+        'drill_size' => 'any',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireRetrieverBrowseBody = strtolower($breedQuestionnaireRetrieverBrowsePage['body']);
+    $breedQuestionnaireRetrieverBrowseSeen = gpQaPageLooksOk($breedQuestionnaireRetrieverBrowsePage)
+        && str_contains($breedQuestionnaireRetrieverBrowseBody, 'breeds in retriever family')
+        && str_contains($breedQuestionnaireRetrieverBrowseBody, 'golden retriever')
+        && str_contains($breedQuestionnaireRetrieverBrowseBody, 'labrador retriever')
+        && str_contains($breedQuestionnaireRetrieverBrowseBody, 'research this breed');
+    $breedQuestionnaireHerdingBrowsePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'service_access',
+        'breed_query' => '',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'busy',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+        'drill_family' => 'Herding / Shepherd Family',
+        'drill_size' => 'any',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireHerdingBrowseBody = strtolower($breedQuestionnaireHerdingBrowsePage['body']);
+    $breedQuestionnaireHerdingBrowseSeen = gpQaPageLooksOk($breedQuestionnaireHerdingBrowsePage)
+        && str_contains($breedQuestionnaireHerdingBrowseBody, 'breeds in herding / shepherd family')
+        && str_contains($breedQuestionnaireHerdingBrowseBody, 'border collie')
+        && str_contains($breedQuestionnaireHerdingBrowseBody, 'pembroke welsh corgi')
+        && str_contains($breedQuestionnaireHerdingBrowseBody, 'research this breed');
     $breedQuestionnaireToyPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'breed_query' => '',
@@ -1942,6 +1978,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_advanced_section', $breedQuestionnaireAdvancedSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireAdvancedSeen ? ' advanced section visible with secondary filters' : ' advanced section missing or incomplete'));
     gpQaResult($results, 'breed_questionnaire_family_browse', $breedQuestionnaireFamilyBrowseSeen, 'HTTP ' . $breedQuestionnaireFamilyBrowsePage['status'] . ($breedQuestionnaireFamilyBrowseSeen ? ' family browse section found' : ' family browse section missing'));
     gpQaResult($results, 'breed_questionnaire_spaniel_browse', $breedQuestionnaireSpanielBrowseSeen, 'HTTP ' . $breedQuestionnaireSpanielBrowsePage['status'] . ($breedQuestionnaireSpanielBrowseSeen ? ' spaniel family browse includes compare breeds' : ' spaniel family browse missing compare breeds'));
+    gpQaResult($results, 'breed_questionnaire_retriever_browse', $breedQuestionnaireRetrieverBrowseSeen, 'HTTP ' . $breedQuestionnaireRetrieverBrowsePage['status'] . ($breedQuestionnaireRetrieverBrowseSeen ? ' retriever family browse includes core retrievers' : ' retriever family browse missing core retrievers'));
+    gpQaResult($results, 'breed_questionnaire_herding_browse', $breedQuestionnaireHerdingBrowseSeen, 'HTTP ' . $breedQuestionnaireHerdingBrowsePage['status'] . ($breedQuestionnaireHerdingBrowseSeen ? ' herding family browse includes core herding breeds' : ' herding family browse missing core herding breeds'));
     gpQaResult($results, 'breed_questionnaire_focus_ranking', $breedQuestionnaireFocusRankSeen, 'HTTP ' . $breedQuestionnaireFocusRankPage['status'] . ($breedQuestionnaireFocusRankSeen ? ' focus selection biases ranked results' : ' focus selection did not bias ranked results'));
     gpQaResult($results, 'breed_questionnaire_live_best_for', $breedQuestionnaireLiveBestForSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveBestForSeen ? ' live suggestions include best-for tags' : ' best-for tags missing'));
     gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));

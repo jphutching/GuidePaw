@@ -205,6 +205,262 @@ function breedSuggestionFocus(array $breed): string
     return 'broader';
 }
 
+function familyBrowseKeywords(string $family): array
+{
+    $familyKey = normalizeBreedQuery($family);
+    $keywords = [];
+    foreach (preg_split('/\s+/', $familyKey) ?: [] as $token) {
+        if ($token !== '' && $token !== 'family' && strlen($token) >= 3) {
+            $keywords[] = $token;
+        }
+    }
+
+    $familyExtras = [
+        'retriever family' => [
+            'retriever',
+            'chesapeake bay retriever',
+            'curly-coated retriever',
+            'flat-coated retriever',
+            'golden retriever',
+            'labrador retriever',
+            'nova scotia duck tolling retriever',
+        ],
+        'spaniel family' => [
+            'spaniel',
+            'american cocker spaniel',
+            'american water spaniel',
+            'boykin spaniel',
+            'cocker spaniel',
+            'english cocker spaniel',
+            'english springer spaniel',
+            'field spaniel',
+            'irish water spaniel',
+            'king charles spaniel',
+            'sussex spaniel',
+            'welsh springer spaniel',
+        ],
+        'pointer setter family' => [
+            'pointer',
+            'setter',
+            'bracco',
+            'braque',
+            'spinone',
+            'vizsla',
+            'griffon',
+            'german shorthaired pointer',
+            'german wirehaired pointer',
+            'english setter',
+            'gordon setter',
+            'irish setter',
+        ],
+        'herding shepherd family' => [
+            'shepherd',
+            'collie',
+            'corgi',
+            'heeler',
+            'sheepdog',
+            'herder',
+            'bouvier',
+            'picard',
+            'puli',
+            'pumi',
+            'lapphund',
+            'buhund',
+            'beauceron',
+            'bergamasco',
+            'mudi',
+            'canaan',
+            'kelpie',
+            'stumpy tail',
+        ],
+        'toy companion family' => [
+            'toy',
+            'affenpinscher',
+            'biewer',
+            'bolonese',
+            'brussels griffon',
+            'chinese crested',
+            'japanese chin',
+            'maltese',
+            'miniature pinscher',
+            'papillon',
+            'pekingese',
+            'pomeranian',
+            'russian toy',
+            'russian tsvetnaya bolonka',
+            'silky terrier',
+            'toy fox terrier',
+            'cavalier king charles spaniel',
+        ],
+        'terrier family' => [
+            'terrier',
+            'schnauzer',
+        ],
+        'northern spitz family' => [
+            'spitz',
+            'akita',
+            'samoyed',
+            'shiba',
+            'jindo',
+            'laika',
+            'keeshond',
+            'elkhound',
+            'kishu',
+            'kai ken',
+            'hokkaido',
+            'eurasier',
+        ],
+        'scent hound family' => [
+            'hound',
+            'foxhound',
+            'coonhound',
+            'basset',
+            'bloodhound',
+            'harrier',
+            'otterhound',
+            'dachshund',
+            'plott',
+            'scent hound',
+        ],
+        'sighthound family' => [
+            'afghan hound',
+            'azawakh',
+            'basenji',
+            'borzoi',
+            'cirneco',
+            'ibizan hound',
+            'irish wolfhound',
+            'italian greyhound',
+            'pharaoh hound',
+            'saluki',
+            'scottish deerhound',
+            'sloughi',
+            'greyhound',
+            'whippet',
+        ],
+        'large giant working family' => [
+            'mastiff',
+            'boerboel',
+            'corso',
+            'dogo',
+            'dogue',
+            'giant schnauzer',
+            'greater swiss',
+            'leonberger',
+            'neapolitan mastiff',
+            'tibetan mastiff',
+            'broholmer',
+            'pyrenean mastiff',
+            'great pyrenees',
+            'kuvasz',
+            'newfoundland',
+        ],
+        'bully power breed family' => [
+            'staffordshire',
+            'bull terrier',
+            'bully',
+            'presa canario',
+            'american bully',
+            'pit bull',
+        ],
+        'short nosed heat sensitive companion family' => [
+            'bulldog',
+            'french bulldog',
+            'pug',
+            'boston terrier',
+            'lhasa apso',
+            'tibetan spaniel',
+            'shar pei',
+            'chow chow',
+        ],
+        'large designer working cross family' => [
+            'doodle',
+            'poo',
+            'shepsky',
+            'bernedoodle',
+            'labradoodle',
+            'goldendoodle',
+            'cavapoo',
+            'cockapoo',
+            'springerdoodle',
+            'weimardoodle',
+            'vizsladoodle',
+            'newfypoo',
+        ],
+        'small companion designer cross family' => [
+            'alier',
+            'chon',
+            'chiweenie',
+            'chorkie',
+            'morkie',
+            'peekapoo',
+            'pomapoo',
+            'puggle',
+            'shorkie',
+            'yorkipoo',
+        ],
+    ];
+
+    foreach ($familyExtras[$familyKey] ?? [] as $extraKeyword) {
+        $extraKeyword = normalizeBreedQuery($extraKeyword);
+        if ($extraKeyword !== '') {
+            $keywords[] = $extraKeyword;
+        }
+    }
+
+    return array_values(array_unique(array_filter($keywords)));
+}
+
+function familyRelatedBreeds(string $family): array
+{
+    $familyKey = normalizeBreedQuery($family);
+    $familyRelatedMap = [
+        'retriever family' => ['Golden Retriever', 'Labrador Retriever', 'Flat-Coated Retriever', 'Chesapeake Bay Retriever'],
+        'spaniel family' => ['Brittany', 'Cocker Spaniel', 'English Toy Spaniel', 'Cavalier King Charles Spaniel'],
+        'pointer setter family' => ['Brittany', 'Vizsla', 'German Shorthaired Pointer', 'English Setter'],
+        'herding shepherd family' => ['Border Collie', 'Australian Cattle Dog', 'Pembroke Welsh Corgi', 'Bouvier des Flandres'],
+        'toy companion family' => ['Papillon', 'Pekingese', 'Maltese', 'Cavalier King Charles Spaniel'],
+        'terrier family' => ['Border Terrier', 'West Highland White Terrier', 'Miniature Schnauzer', 'Scottish Terrier'],
+        'northern spitz family' => ['Shiba Inu', 'Samoyed', 'Keeshond', 'American Eskimo Dog'],
+        'scent hound family' => ['Bloodhound', 'Basset Fauve de Bretagne', 'Harrier', 'Dachshund'],
+        'sighthound family' => ['Whippet', 'Italian Greyhound', 'Borzoi', 'Saluki'],
+        'large giant working family' => ['Great Pyrenees', 'Cane Corso', 'Giant Schnauzer', 'Leonberger'],
+        'bully power breed family' => ['American Staffordshire Terrier', 'Staffordshire Bull Terrier', 'Bull Terrier', 'Perro de Presa Canario'],
+        'short nosed heat sensitive companion family' => ['French Bulldog', 'Pug', 'Boston Terrier', 'Tibetan Spaniel'],
+        'large designer working cross family' => ['Labradoodle', 'Goldendoodle', 'Bernedoodle', 'Springerdoodle'],
+        'small companion designer cross family' => ['Cavachon', 'Morkie', 'Pomapoo', 'Shorkie'],
+        'rare international breed family' => ['Carolina Dog', 'Catahoula Leopard Dog', 'Xoloitzcuintli', 'Kromfohrlander'],
+        'mixed unknown breed family' => ['Mixed Breed', 'Unknown Breed', 'Other / Not Listed'],
+    ];
+
+    return $familyRelatedMap[$familyKey] ?? [];
+}
+
+function familyBrowseCandidateNames(array $allBreeds, string $family): array
+{
+    $familyKey = normalizeBreedQuery($family);
+    $keywords = familyBrowseKeywords($family);
+    $candidateNames = [];
+    foreach ($allBreeds as $breedName => $breed) {
+        $breedFamily = normalizeBreedQuery((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
+        $breedNameNorm = normalizeBreedQuery((string) $breedName);
+        if ($breedFamily !== '' && $breedFamily === $familyKey) {
+            $candidateNames[] = $breedName;
+            continue;
+        }
+        foreach ($keywords as $keyword) {
+            if ($keyword !== '' && str_contains($breedNameNorm, $keyword)) {
+                $candidateNames[] = $breedName;
+                break;
+            }
+        }
+    }
+
+    $candidateNames = array_values(array_unique($candidateNames));
+    sort($candidateNames, SORT_NATURAL | SORT_FLAG_CASE);
+    return $candidateNames;
+}
+
 $defaults = [
     'goal' => 'service_access',
     'size' => 'medium',
@@ -548,23 +804,32 @@ uasort($familyScores, static function (array $a, array $b): int {
 $topFamilies = array_slice($familyScores, 0, 6, true);
 $familyBrowseBreeds = [];
 $familyRelatedBreeds = [];
+$matchIndex = [];
+foreach ($matches as $match) {
+    $matchIndex[$match['breed']] = $match;
+}
 if ($drillFamily !== 'any' && $drillFamily !== '') {
-    $familyBrowseBreeds = array_values(array_filter($matches, static function (array $match) use ($drillFamily): bool {
-        return strcasecmp((string) ($match['group'] ?? ''), $drillFamily) === 0;
-    }));
+    $familyCandidateNames = familyBrowseCandidateNames($allBreeds, $drillFamily);
+    foreach ($familyCandidateNames as $familyBreedName) {
+        $breed = $allBreeds[$familyBreedName] ?? [];
+        if ($breed === []) {
+            continue;
+        }
+        $match = $matchIndex[$familyBreedName] ?? null;
+        $familyBrowseBreeds[] = [
+            'breed' => $familyBreedName,
+            'score' => (int) ($match['score'] ?? 0),
+            'group' => trim((string) ($breed['breed_family'] ?? $breed['group'] ?? 'Breed')),
+            'size' => trim((string) ($breed['size'] ?? '')),
+            'notes' => trim((string) ($breed['notes'] ?? '')),
+            'summary' => trim((string) ($breed['temperament'] ?? '')),
+            'reasons' => $match['reasons'] ?? ['Shown because it belongs to this family.'],
+        ];
+    }
     usort($familyBrowseBreeds, static function (array $a, array $b): int {
         return ($b['score'] <=> $a['score']) ?: strcmp($a['breed'], $b['breed']);
     });
-    $familyBrowseBreeds = array_slice($familyBrowseBreeds, 0, 16);
-    $familyRelatedMap = [
-        'spaniel family' => ['Brittany', 'Cocker Spaniel', 'English Toy Spaniel', 'Cavalier King Charles Spaniel'],
-        'retriever family' => ['Brittany', 'English Springer Spaniel', 'Flat-Coated Retriever'],
-    ];
-    $familyRelatedKey = strtolower($drillFamily);
-    $familyRelatedSource = $familyRelatedMap[$familyRelatedKey] ?? [];
-    if ($familyRelatedSource === [] && str_contains($familyRelatedKey, 'spaniel')) {
-        $familyRelatedSource = ['Brittany', 'Cocker Spaniel', 'English Toy Spaniel', 'Cavalier King Charles Spaniel'];
-    }
+    $familyRelatedSource = familyRelatedBreeds($drillFamily);
     foreach ($familyRelatedSource as $relatedBreed) {
         if (!isset($allBreeds[$relatedBreed])) {
             continue;
