@@ -545,6 +545,33 @@ function getDogBreedsCatalog(): array
         }
     }
 
+    $supplementalBreedAliases = [
+        'Manchester Terrier (Toy)' => ['Toy Manchester Terrier', 'Manchester Toy'],
+        'Miniature Pinscher' => ['Min Pin', 'Mini Pin'],
+        'Russian Toy' => ['Russian Toy Terrier', 'Russkiy Toy'],
+        'Russian Tsvetnaya Bolonka' => ['Bolonka', 'Tsvetnaya Bolonka'],
+        'Silky Terrier' => ['Silky', 'Silky Yorkie'],
+        'Toy Fox Terrier' => ['Toy Fox'],
+        'Pekingese' => ['Peke'],
+        'Pug' => ['Pug Dog'],
+        'Basset Hound' => ['Basset'],
+        'Whippet' => ['Whip'],
+        'Greyhound' => ['English Greyhound'],
+        'Beagle' => ['Beag'],
+        'Chihuahua' => ['Chi'],
+        'Pomeranian' => ['Pom'],
+    ];
+
+    foreach ($supplementalBreedAliases as $breedName => $aliases) {
+        if (!isset($catalog[$breedName])) {
+            continue;
+        }
+        $catalog[$breedName]['aliases'] = array_values(array_unique(array_merge(
+            (array) ($catalog[$breedName]['aliases'] ?? []),
+            $aliases
+        )));
+    }
+
 
     // GUIDEPAW_DESIGNER_SERVICE_WORK_DETAILS_V1
     // Designer/crossbreed guidance is intentionally practical, not a guarantee.
