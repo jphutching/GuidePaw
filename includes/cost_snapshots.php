@@ -76,6 +76,20 @@ if (!function_exists('gpCostMonthRange')) {
     }
 }
 
+if (!function_exists('gpStripeSecretKey')) {
+    function gpStripeSecretKey(): string
+    {
+        return trim((string) gpEnv('GUIDEPAW_STRIPE_SECRET_KEY', ''));
+    }
+}
+
+if (!function_exists('gpStripeApiVersion')) {
+    function gpStripeApiVersion(): string
+    {
+        return trim((string) gpEnv('GUIDEPAW_STRIPE_API_VERSION', '2026-02-25.clover')) ?: '2026-02-25.clover';
+    }
+}
+
 if (!function_exists('gpTwilioUsageSnapshot')) {
     function gpTwilioUsageSnapshot(): array
     {
@@ -166,6 +180,56 @@ if (!function_exists('gpRenderCostPlanLabel')) {
     }
 }
 
+if (!function_exists('gpRenderCostEstimateCents')) {
+    function gpRenderCostEstimateCents(string $plan, ?int $storageGb = null): array
+    {
+        $plan = strtolower(trim($plan));
+        $base = null;
+        $storage = 0;
+        $note = '';
+
+        switch ($plan) {
+            case 'starter':
+            case 'basic-256mb':
+                $base = 700;
+                $note = 'Starter-sized compute';
+                break;
+            case 'standard':
+            case 'basic-1gb':
+                $base = 2500;
+                $note = 'Standard-sized compute';
+                break;
+            case 'pro':
+            case 'basic-4gb':
+                $base = 9500;
+                $note = 'Pro-sized compute';
+                break;
+            case 'pro plus':
+                $base = 18500;
+                $note = 'Pro Plus-sized compute';
+                break;
+            case 'free':
+                $base = 0;
+                $note = 'Free tier';
+                break;
+            default:
+                $note = $plan !== '' ? $plan : 'Unknown plan';
+                break;
+        }
+
+        if ($storageGb !== null && $storageGb > 0 && !in_array($plan, ['starter', 'standard', 'pro', 'pro plus', 'free'], true)) {
+            $storage = (int) round($storageGb * 30);
+        }
+
+        return [
+            'base_cents' => $base,
+            'storage_cents' => $storage,
+            'total_cents' => ($base ?? 0) + $storage,
+            'note' => $note,
+        ];
+    }
+}
+
 if (!function_exists('gpRenderSnapshot')) {
     function gpRenderSnapshot(): array
     {
@@ -220,26 +284,46 @@ if (!function_exists('gpRenderSnapshot')) {
         }
 
         $serviceSummaries = [];
+        $serviceMonthlyCents = 0;
         foreach ($services as $service) {
             if (!is_array($service)) {
                 continue;
             }
+            $plan = gpRenderCostPlanLabel($service);
+            $estimate = gpRenderCostEstimateCents($plan, null);
+            if ($estimate['base_cents'] !== null) {
+                $serviceMonthlyCents += (int) $estimate['base_cents'];
+            }
             $serviceSummaries[] = [
                 'name' => trim((string) ($service['name'] ?? $service['service']['name'] ?? 'service')),
-                'plan' => gpRenderCostPlanLabel($service),
+                'plan' => $plan,
+                'monthly_cents' => $estimate['base_cents'],
+                'pricing_note' => $estimate['note'],
                 'type' => strtolower(trim((string) ($service['type'] ?? $service['serviceType'] ?? $service['service_details']['type'] ?? 'service'))),
             ];
         }
 
         $postgresSummaries = [];
+        $postgresMonthlyCents = 0;
+        $postgresStorageMonthlyCents = 0;
         foreach ($postgres as $db) {
             if (!is_array($db)) {
                 continue;
             }
+            $plan = gpRenderCostPlanLabel($db);
+            $storageGb = (int) ($db['diskSizeGB'] ?? $db['disk_size_gb'] ?? $db['storageGB'] ?? $db['storage_gb'] ?? 0);
+            $estimate = gpRenderCostEstimateCents($plan, $storageGb > 0 ? $storageGb : null);
+            if ($estimate['base_cents'] !== null) {
+                $postgresMonthlyCents += (int) $estimate['base_cents'];
+            }
+            $postgresStorageMonthlyCents += (int) ($estimate['storage_cents'] ?? 0);
             $postgresSummaries[] = [
                 'name' => trim((string) ($db['name'] ?? $db['databaseName'] ?? 'database')),
-                'plan' => gpRenderCostPlanLabel($db),
-                'storage_gb' => (int) ($db['diskSizeGB'] ?? $db['disk_size_gb'] ?? $db['storageGB'] ?? $db['storage_gb'] ?? 0),
+                'plan' => $plan,
+                'storage_gb' => $storageGb,
+                'monthly_cents' => $estimate['base_cents'],
+                'storage_monthly_cents' => $estimate['storage_cents'],
+                'pricing_note' => $estimate['note'],
             ];
         }
 
@@ -249,8 +333,13 @@ if (!function_exists('gpRenderSnapshot')) {
             'status' => 'connected',
             'service_count' => count($serviceSummaries),
             'postgres_count' => count($postgresSummaries),
+            'monthly_cents' => $serviceMonthlyCents + $postgresMonthlyCents + $postgresStorageMonthlyCents,
+            'service_monthly_cents' => $serviceMonthlyCents,
+            'postgres_monthly_cents' => $postgresMonthlyCents,
+            'postgres_storage_monthly_cents' => $postgresStorageMonthlyCents,
             'services' => $serviceSummaries,
             'postgres' => $postgresSummaries,
+            'pricing_note' => 'Render service plans are estimated from the live plan labels; Postgres storage is billed separately at $0.30/GB/mo on flexible plans.',
         ];
     }
 }
@@ -303,11 +392,81 @@ if (!function_exists('gpZeptoMailSnapshot')) {
     }
 }
 
+if (!function_exists('gpStripeProcessingSnapshot')) {
+    function gpStripeProcessingSnapshot(): array
+    {
+        $secret = gpStripeSecretKey();
+        if ($secret === '') {
+            return ['connected' => false, 'label' => 'Stripe fees', 'status' => 'missing secret key'];
+        }
+
+        [$start, $end] = gpCostMonthRange();
+        $createdGte = $start->getTimestamp();
+        $createdLt = $end->add(new DateInterval('P1D'))->getTimestamp();
+        $endpoint = 'https://api.stripe.com/v1/balance_transactions?limit=100&created[gte]=' . $createdGte . '&created[lt]=' . $createdLt;
+        $totalFees = 0;
+        $transactionCount = 0;
+        $currency = 'usd';
+        $seen = 0;
+        $startingAfter = '';
+
+        do {
+            $url = $endpoint . ($startingAfter !== '' ? '&starting_after=' . rawurlencode($startingAfter) : '');
+            $res = gpCostHttpJson($url, [
+                'headers' => [
+                    'Authorization: Bearer ' . $secret,
+                    'Stripe-Version: ' . gpStripeApiVersion(),
+                ],
+                'timeout' => 20,
+            ]);
+            if (empty($res['ok'])) {
+                return [
+                    'connected' => true,
+                    'label' => 'Stripe fees',
+                    'status' => 'fetch failed',
+                    'error' => (string) ($res['error'] ?? 'Unknown Stripe error.'),
+                ];
+            }
+
+            $json = $res['json'] ?? [];
+            $data = (array) ($json['data'] ?? []);
+            foreach ($data as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $transactionCount++;
+                $totalFees += (int) ($row['fee'] ?? 0);
+                $currency = strtolower(trim((string) ($row['currency'] ?? $currency))) ?: $currency;
+            }
+            $seen += count($data);
+            $startingAfter = '';
+            if (!empty($json['has_more']) && !empty($data)) {
+                $last = end($data);
+                if (is_array($last) && !empty($last['id'])) {
+                    $startingAfter = (string) $last['id'];
+                }
+            }
+        } while ($startingAfter !== '' && $seen < 500);
+
+        return [
+            'connected' => true,
+            'label' => 'Stripe fees',
+            'status' => 'connected',
+            'monthly_cents' => $totalFees,
+            'transaction_count' => $transactionCount,
+            'currency' => $currency,
+            'range_start' => $start->format('Y-m-d'),
+            'range_end' => $end->format('Y-m-d'),
+        ];
+    }
+}
+
 if (!function_exists('gpBusinessProviderSnapshots')) {
     function gpBusinessProviderSnapshots(): array
     {
         return [
             'twilio' => gpTwilioUsageSnapshot(),
+            'stripe' => gpStripeProcessingSnapshot(),
             'render' => gpRenderSnapshot(),
             'zeptomail' => gpZeptoMailSnapshot(),
         ];
