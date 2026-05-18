@@ -289,11 +289,24 @@ if (($_GET['msg'] ?? '') === 'porkbun_imported') {
                         </div>
                         <a class="btn btn-sm btn-outline-primary" href="https://kb.porkbun.com/article/122-how-to-view-your-invoices" target="_blank" rel="noreferrer">Porkbun export help</a>
                     </div>
+                    <div class="mini mb-2">
+                        Export your Porkbun order history, then paste the CSV here. The importer only needs a date column and a total/amount column. Optional columns like order ID and item name are captured when present.
+                    </div>
+                    <details class="mb-2">
+                        <summary class="mini">Expected CSV shape</summary>
+                        <div class="mini mt-2">
+                            Accepted headers include <code>date</code>, <code>order date</code>, <code>total</code>, <code>amount</code>, <code>price</code>, <code>order id</code>, and <code>item</code>.
+                            <pre class="mt-2 mb-0 p-2 bg-light border rounded small">date,order id,item,total
+2026-05-01,12345,guidepaw.app domain renewal,$15.98
+2026-05-01,12346,guidepaw.app privacy protection,$9.95</pre>
+                        </div>
+                    </details>
                     <form method="post" class="d-grid gap-2">
                         <input type="hidden" name="csrf_token" value="<?= abcEsc($csrf) ?>">
                         <input type="hidden" name="action" value="import_porkbun_csv">
                         <label class="small">Calendar year for this export<input class="form-control form-control-sm" type="number" name="porkbun_year" value="<?= (int) gmdate('Y') ?>" min="2000" max="2100"></label>
-                        <label class="small">Paste Porkbun order history CSV<textarea class="form-control form-control-sm" name="porkbun_csv" rows="6" placeholder="Paste the CSV export from Porkbun's View Orders page here."></textarea></label>
+                        <label class="small">Paste Porkbun order history CSV<textarea class="form-control form-control-sm" name="porkbun_csv" rows="6" placeholder="date,order id,item,total
+2026-05-01,12345,guidepaw.app domain renewal,$15.98"></textarea></label>
                         <button class="btn btn-sm btn-primary">Import Porkbun CSV</button>
                     </form>
                     <?php if ($vendorImports): ?>
