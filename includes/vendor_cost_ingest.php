@@ -516,14 +516,8 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             }
 
             $amount = null;
-            if (preg_match_all('/(?:^|[^0-9])((?:\(?-?\$?\d[\d,]*(?:\.\d{2})?\)?))/',$line,$amountMatches) && !empty($amountMatches[1])) {
-                $candidates = array_reverse($amountMatches[1]);
-                foreach ($candidates as $candidate) {
-                    $amount = gpVendorParseMoneyCents((string) $candidate);
-                    if ($amount !== null) {
-                        break;
-                    }
-                }
+            if (preg_match('/(?:^|[^0-9])(?:\$\s*)?([0-9][0-9,]*\.[0-9]{2})(?!\d)/', $line, $amountMatch)) {
+                $amount = gpVendorParseMoneyCents((string) $amountMatch[1]);
             }
             if ($amount === null) {
                 continue;
