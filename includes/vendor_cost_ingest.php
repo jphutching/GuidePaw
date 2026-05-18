@@ -474,20 +474,60 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
         $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
         $invoiceTotalCents = null;
+        $pendingTotalLine = false;
+        $pendingDomainRow = false;
+        $pendingDomainRowLabel = '';
+        $pendingDomainRowDate = $invoiceDate;
+
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
             if ($line === '') {
                 continue;
             }
 
+            if ($invoiceTotalCents === null && $pendingTotalLine) {
+                if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
+                    $invoiceTotalCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
+                    $pendingTotalLine = false;
+                    continue;
+                }
+            }
+
+            if ($pendingDomainRow) {
+                if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
+                    $amountCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
+                    if ($amountCents !== null && $amountCents > 0) {
+                        $rows[] = [
+                            'date' => $pendingDomainRowDate,
+                            'amount_cents' => $amountCents,
+                            'order_ref' => $invoiceNumber,
+                            'item' => $pendingDomainRowLabel !== '' ? $pendingDomainRowLabel : 'guidepaw.app Domain Registration',
+                        ];
+                        if ($invoiceTotalCents === null) {
+                            $invoiceTotalCents = $amountCents;
+                        }
+                    }
+                }
+                $pendingDomainRow = false;
+                $pendingDomainRowLabel = '';
+                continue;
+            }
+
             if ($invoiceTotalCents === null && (stripos($line, 'Total Charged') !== false || stripos($line, 'Invoice Total') !== false || stripos($line, 'Amount Due') !== false || stripos($line, 'Grand Total') !== false)) {
                 if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
                     $invoiceTotalCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
+                    if ($invoiceTotalCents !== null) {
+                        continue;
+                    }
                 }
+                $pendingTotalLine = true;
                 continue;
             }
 
             if (stripos($line, 'guidepaw.app') !== false && stripos($line, 'SUCCESS') !== false && stripos($line, 'Domain Registration') !== false) {
+                $pendingDomainRow = true;
+                $pendingDomainRowLabel = 'guidepaw.app Domain Registration';
+                $pendingDomainRowDate = $invoiceDate;
                 if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
                     $amountCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
                     if ($amountCents !== null && $amountCents > 0) {
@@ -500,6 +540,8 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
                         if ($invoiceTotalCents === null) {
                             $invoiceTotalCents = $amountCents;
                         }
+                        $pendingDomainRow = false;
+                        $pendingDomainRowLabel = '';
                     }
                 }
             }
