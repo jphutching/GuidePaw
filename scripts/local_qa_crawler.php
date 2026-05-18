@@ -1968,6 +1968,96 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreed = trim((string) ($breedQuestionnaireGoldieQueryMatch[1] ?? ''));
         $breedQuestionnaireGoldieQueryAlignmentSeen = strcasecmp($firstBreed, 'Golden Retriever') === 0;
     }
+    $breedQuestionnaireLabQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Lab',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireLabQueryBody = strtolower($breedQuestionnaireLabQueryPage['body']);
+    $breedQuestionnaireLabQuerySeen = gpQaPageLooksOk($breedQuestionnaireLabQueryPage)
+        && str_contains($breedQuestionnaireLabQueryBody, 'labrador retriever');
+    $breedQuestionnaireLabQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireLabQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireLabQueryPage['body'], $breedQuestionnaireLabQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireLabQueryMatch[1] ?? ''));
+        $breedQuestionnaireLabQueryAlignmentSeen = strcasecmp($firstBreed, 'Labrador Retriever') === 0;
+    }
+    $breedQuestionnaireGspQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'GSP',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireGspQueryBody = strtolower($breedQuestionnaireGspQueryPage['body']);
+    $breedQuestionnaireGspQuerySeen = gpQaPageLooksOk($breedQuestionnaireGspQueryPage)
+        && str_contains($breedQuestionnaireGspQueryBody, 'german shorthaired pointer');
+    $breedQuestionnaireGspQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireGspQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireGspQueryPage['body'], $breedQuestionnaireGspQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireGspQueryMatch[1] ?? ''));
+        $breedQuestionnaireGspQueryAlignmentSeen = strcasecmp($firstBreed, 'German Shorthaired Pointer') === 0;
+    }
+    $breedQuestionnaireMalQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Mal',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireMalQueryBody = strtolower($breedQuestionnaireMalQueryPage['body']);
+    $breedQuestionnaireMalQuerySeen = gpQaPageLooksOk($breedQuestionnaireMalQueryPage)
+        && str_contains($breedQuestionnaireMalQueryBody, 'belgian malinois');
+    $breedQuestionnaireMalQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireMalQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireMalQueryPage['body'], $breedQuestionnaireMalQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireMalQueryMatch[1] ?? ''));
+        $breedQuestionnaireMalQueryAlignmentSeen = strcasecmp($firstBreed, 'Belgian Malinois') === 0;
+    }
+    $breedQuestionnaireVizQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Viz',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireVizQueryBody = strtolower($breedQuestionnaireVizQueryPage['body']);
+    $breedQuestionnaireVizQuerySeen = gpQaPageLooksOk($breedQuestionnaireVizQueryPage)
+        && str_contains($breedQuestionnaireVizQueryBody, 'vizsla');
+    $breedQuestionnaireVizQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireVizQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireVizQueryPage['body'], $breedQuestionnaireVizQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireVizQueryMatch[1] ?? ''));
+        $breedQuestionnaireVizQueryAlignmentSeen = strcasecmp($firstBreed, 'Vizsla') === 0;
+    }
+    $breedQuestionnaireHeelerQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'Heeler',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireHeelerQueryBody = strtolower($breedQuestionnaireHeelerQueryPage['body']);
+    $breedQuestionnaireHeelerQuerySeen = gpQaPageLooksOk($breedQuestionnaireHeelerQueryPage)
+        && str_contains($breedQuestionnaireHeelerQueryBody, 'australian cattle dog');
+    $breedQuestionnaireHeelerQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireHeelerQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireHeelerQueryPage['body'], $breedQuestionnaireHeelerQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireHeelerQueryMatch[1] ?? ''));
+        $breedQuestionnaireHeelerQueryAlignmentSeen = strcasecmp($firstBreed, 'Australian Cattle Dog') === 0;
+    }
     $breedQuestionnaireGreatPyrQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'companion',
         'breed_query' => 'Great Pyr',
@@ -2405,6 +2495,16 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_newfie_alignment', $breedQuestionnaireNewfieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireNewfieQueryPage['status'] . ($breedQuestionnaireNewfieQueryAlignmentSeen ? ' newfie alias aligned to Newfoundland' : ' newfie alias did not pin Newfoundland'));
     gpQaResult($results, 'breed_questionnaire_goldie_alias', $breedQuestionnaireGoldieQuerySeen, 'HTTP ' . $breedQuestionnaireGoldieQueryPage['status'] . ($breedQuestionnaireGoldieQuerySeen ? ' goldie alias surfaced' : ' goldie alias missing'));
     gpQaResult($results, 'breed_questionnaire_goldie_alignment', $breedQuestionnaireGoldieQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireGoldieQueryPage['status'] . ($breedQuestionnaireGoldieQueryAlignmentSeen ? ' goldie alias aligned to Golden Retriever' : ' goldie alias did not pin Golden Retriever'));
+    gpQaResult($results, 'breed_questionnaire_lab_alias', $breedQuestionnaireLabQuerySeen, 'HTTP ' . $breedQuestionnaireLabQueryPage['status'] . ($breedQuestionnaireLabQuerySeen ? ' lab alias surfaced' : ' lab alias missing'));
+    gpQaResult($results, 'breed_questionnaire_lab_alignment', $breedQuestionnaireLabQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireLabQueryPage['status'] . ($breedQuestionnaireLabQueryAlignmentSeen ? ' lab alias aligned to Labrador Retriever' : ' lab alias did not pin Labrador Retriever'));
+    gpQaResult($results, 'breed_questionnaire_gsp_alias', $breedQuestionnaireGspQuerySeen, 'HTTP ' . $breedQuestionnaireGspQueryPage['status'] . ($breedQuestionnaireGspQuerySeen ? ' gsp alias surfaced' : ' gsp alias missing'));
+    gpQaResult($results, 'breed_questionnaire_gsp_alignment', $breedQuestionnaireGspQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireGspQueryPage['status'] . ($breedQuestionnaireGspQueryAlignmentSeen ? ' gsp alias aligned to German Shorthaired Pointer' : ' gsp alias did not pin German Shorthaired Pointer'));
+    gpQaResult($results, 'breed_questionnaire_mal_alias', $breedQuestionnaireMalQuerySeen, 'HTTP ' . $breedQuestionnaireMalQueryPage['status'] . ($breedQuestionnaireMalQuerySeen ? ' mal alias surfaced' : ' mal alias missing'));
+    gpQaResult($results, 'breed_questionnaire_mal_alignment', $breedQuestionnaireMalQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireMalQueryPage['status'] . ($breedQuestionnaireMalQueryAlignmentSeen ? ' mal alias aligned to Belgian Malinois' : ' mal alias did not pin Belgian Malinois'));
+    gpQaResult($results, 'breed_questionnaire_viz_alias', $breedQuestionnaireVizQuerySeen, 'HTTP ' . $breedQuestionnaireVizQueryPage['status'] . ($breedQuestionnaireVizQuerySeen ? ' viz alias surfaced' : ' viz alias missing'));
+    gpQaResult($results, 'breed_questionnaire_viz_alignment', $breedQuestionnaireVizQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireVizQueryPage['status'] . ($breedQuestionnaireVizQueryAlignmentSeen ? ' viz alias aligned to Vizsla' : ' viz alias did not pin Vizsla'));
+    gpQaResult($results, 'breed_questionnaire_heeler_alias', $breedQuestionnaireHeelerQuerySeen, 'HTTP ' . $breedQuestionnaireHeelerQueryPage['status'] . ($breedQuestionnaireHeelerQuerySeen ? ' heeler alias surfaced' : ' heeler alias missing'));
+    gpQaResult($results, 'breed_questionnaire_heeler_alignment', $breedQuestionnaireHeelerQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireHeelerQueryPage['status'] . ($breedQuestionnaireHeelerQueryAlignmentSeen ? ' heeler alias aligned to Australian Cattle Dog' : ' heeler alias did not pin Australian Cattle Dog'));
     gpQaResult($results, 'breed_questionnaire_great_pyr_alias', $breedQuestionnaireGreatPyrQuerySeen, 'HTTP ' . $breedQuestionnaireGreatPyrQueryPage['status'] . ($breedQuestionnaireGreatPyrQuerySeen ? ' great pyr alias surfaced' : ' great pyr alias missing'));
     gpQaResult($results, 'breed_questionnaire_great_pyr_alignment', $breedQuestionnaireGreatPyrQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireGreatPyrQueryPage['status'] . ($breedQuestionnaireGreatPyrQueryAlignmentSeen ? ' great pyr alias aligned to Great Pyrenees' : ' great pyr alias did not pin Great Pyrenees'));
     gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));

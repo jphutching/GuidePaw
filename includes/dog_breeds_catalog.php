@@ -8,6 +8,7 @@ function getDogBreedsCatalog(): array
             'temperament' => 'Friendly, steady, eager to please',
             'traits' => 'Highly trainable, food motivated, social, adaptable to public work',
             'notes' => 'Often strong service-dog candidates. Can be energetic when young and need regular exercise to stay settled.',
+            'aliases' => ['Lab', 'Labrador'],
         ],
         'Golden Retriever' => [
             'group' => 'Sporting',
@@ -100,6 +101,7 @@ function getDogBreedsCatalog(): array
             'temperament' => 'Driven, intense, highly alert',
             'traits' => 'Exceptionally trainable, fast, high work ethic, environmentally sharp',
             'notes' => 'Usually too much dog for most service work homes unless the handler is very experienced and the dog is an unusually stable candidate.',
+            'aliases' => ['Mal', 'Mali'],
         ],
         'Great Pyrenees' => [
             'group' => 'Working',
@@ -136,6 +138,7 @@ function getDogBreedsCatalog(): array
             'temperament' => 'Eager, energetic, intelligent',
             'traits' => 'Trainable, athletic, responsive, high exercise needs',
             'notes' => 'Can work well for active handlers, but exercise needs are significant.',
+            'aliases' => ['GSP'],
         ],
         'English Springer Spaniel' => [
             'group' => 'Sporting',
@@ -160,6 +163,7 @@ function getDogBreedsCatalog(): array
             'temperament' => 'Velcro, sensitive, eager',
             'traits' => 'Highly bonded, athletic, responsive, affectionate',
             'notes' => 'Can be wonderful for close-working teams, though some are too soft for heavy public stress.',
+            'aliases' => ['Viz'],
         ],
         'Weimaraner' => [
             'group' => 'Sporting',

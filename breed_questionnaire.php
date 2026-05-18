@@ -536,9 +536,14 @@ foreach ($breedSuggestionData as $breedSuggestion) {
 }
 $commonBreedAliasSeeds = [
     'lab' => 'Labrador Retriever',
+    'labrador' => 'Labrador Retriever',
     'golden' => 'Golden Retriever',
     'gsd' => 'German Shepherd Dog',
     'german shepherd' => 'German Shepherd Dog',
+    'gsp' => 'German Shorthaired Pointer',
+    'mal' => 'Belgian Malinois',
+    'mali' => 'Belgian Malinois',
+    'viz' => 'Vizsla',
     'mini schnauzer' => 'Miniature Schnauzer',
     'miniature schnauzer' => 'Miniature Schnauzer',
     'mini pin' => 'Miniature Pinscher',
@@ -567,6 +572,7 @@ $commonBreedAliasSeeds = [
     'red heeler' => 'Australian Cattle Dog',
     'queensland heeler' => 'Australian Cattle Dog',
     'acd' => 'Australian Cattle Dog',
+    'heeler' => 'Australian Cattle Dog',
     'frenchie' => 'French Bulldog',
     'mini aussie' => 'Miniature American Shepherd',
     'mini american shepherd' => 'Miniature American Shepherd',
