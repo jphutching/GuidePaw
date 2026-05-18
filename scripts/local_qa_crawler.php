@@ -1472,6 +1472,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($breedQuestionnaireBody, 'breed-query-options')
         && str_contains($breedQuestionnaireBody, 'breed-query-live')
         && str_contains($breedQuestionnaireBody, 'optional. if you already have a breed in mind');
+    $breedQuestionnaireFocusFiltersSeen = gpQaPageLooksOk($breedQuestionnairePage)
+        && str_contains($breedQuestionnaireBody, 'breed focus filter')
+        && str_contains($breedQuestionnaireBody, 'public access')
+        && str_contains($breedQuestionnaireBody, 'companion')
+        && str_contains($breedQuestionnaireBody, 'task work');
     $breedQuestionnaireLiveBestForSeen = gpQaPageLooksOk($breedQuestionnairePage)
         && str_contains($breedQuestionnaireBody, 'breed-live-best')
         && str_contains($breedQuestionnaireBody, 'best for public access')
@@ -1874,6 +1879,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'service_dog_rights_page_loads', $serviceDogRightsSeen, 'HTTP ' . $serviceDogRightsPage['status'] . ($serviceDogRightsSeen ? ' ada notes found' : ' ada notes missing'));
     gpQaResult($results, 'breed_questionnaire_page_loads', $breedQuestionnaireSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSeen ? ' breed questionnaire found' : ' breed questionnaire missing'));
     gpQaResult($results, 'breed_questionnaire_live_suggestions', $breedQuestionnaireLiveSuggestionsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveSuggestionsSeen ? ' breed query suggestions visible' : ' breed query suggestions missing'));
+    gpQaResult($results, 'breed_questionnaire_focus_filters', $breedQuestionnaireFocusFiltersSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireFocusFiltersSeen ? ' focus filters visible' : ' focus filters missing'));
     gpQaResult($results, 'breed_questionnaire_live_best_for', $breedQuestionnaireLiveBestForSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireLiveBestForSeen ? ' live suggestions include best-for tags' : ' best-for tags missing'));
     gpQaResult($results, 'breed_questionnaire_size_labels', $breedQuestionnaireSizeLabelsSeen, 'HTTP ' . $breedQuestionnairePage['status'] . ($breedQuestionnaireSizeLabelsSeen ? ' size labels with weight descriptions found' : ' size labels missing weight descriptions'));
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));

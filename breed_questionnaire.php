@@ -173,6 +173,38 @@ function breedSuggestionBestFor(array $breed): string
     return 'Best for broader research';
 }
 
+function breedSuggestionFocus(array $breed): string
+{
+    $blob = strtolower(implode(' ', [
+        $breed['breed_family'] ?? '',
+        $breed['group'] ?? '',
+        $breed['temperament'] ?? '',
+        $breed['traits'] ?? '',
+        $breed['notes'] ?? '',
+        $breed['size'] ?? '',
+    ]));
+
+    if (str_contains($blob, 'retrieval') || str_contains($blob, 'retrieving') || str_contains($blob, 'item delivery')) {
+        return 'task';
+    }
+    if (str_contains($blob, 'public access') || str_contains($blob, 'service')) {
+        return 'public';
+    }
+    if (str_contains($blob, 'alert') || str_contains($blob, 'response')) {
+        return 'task';
+    }
+    if (str_contains($blob, 'grounding') || str_contains($blob, 'affectionate') || str_contains($blob, 'people-oriented')) {
+        return 'companion';
+    }
+    if (str_contains($blob, 'calm') || str_contains($blob, 'steady')) {
+        return 'companion';
+    }
+    if (str_contains($blob, 'athletic') || str_contains($blob, 'high drive')) {
+        return 'task';
+    }
+    return 'broader';
+}
+
 $defaults = [
     'goal' => 'service_access',
     'size' => 'medium',
@@ -221,6 +253,7 @@ foreach ($breedSuggestions as $breedName) {
         'traits' => trim((string) ($breed['traits'] ?? '')),
         'size' => trim((string) ($breed['size'] ?? '')),
         'best_for' => breedSuggestionBestFor($breed),
+        'focus' => breedSuggestionFocus($breed),
     ];
 }
 $familyOptions = [];
@@ -507,7 +540,7 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 <link href="styles.css" rel="stylesheet">
 <style>
 body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.question-grid{display:grid;gap:1rem}@media(min-width:960px){.question-grid{grid-template-columns:1.1fr .9fr}}.form-select,.form-control{border-radius:14px}.result-grid{display:grid;gap:1rem}@media(min-width:900px){.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.result-item{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.rank{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:900;margin-right:.65rem;flex:0 0 auto}.subtle{color:#64748b}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:900;background:#eef2ff;color:#4338ca}.family-card{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.list-tight{margin-bottom:0;padding-left:1.1rem}.question-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.badge-line{display:flex;flex-wrap:wrap;gap:.35rem}
-.breed-live{display:grid;gap:.5rem}.breed-live-item{display:block;width:100%;text-align:left;border:1px solid rgba(15,23,42,.08);background:#fff;border-radius:14px;padding:.75rem .85rem;box-shadow:0 4px 10px rgba(15,23,42,.04)}.breed-live-item:hover,.breed-live-item:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12);outline:0}.breed-live-name{font-weight:800;color:#0f172a}.breed-live-meta{font-size:.8rem;color:#64748b;margin-top:.1rem}.breed-live-best{font-size:.8rem;color:#0f766e;font-weight:800;margin-top:.1rem}.breed-live-note{font-size:.85rem;color:#334155;margin-top:.2rem;line-height:1.25}
+.breed-live{display:grid;gap:.5rem}.breed-live-item{display:block;width:100%;text-align:left;border:1px solid rgba(15,23,42,.08);background:#fff;border-radius:14px;padding:.75rem .85rem;box-shadow:0 4px 10px rgba(15,23,42,.04)}.breed-live-item:hover,.breed-live-item:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12);outline:0}.breed-live-name{font-weight:800;color:#0f172a}.breed-live-meta{font-size:.8rem;color:#64748b;margin-top:.1rem}.breed-live-best{font-size:.8rem;color:#0f766e;font-weight:800;margin-top:.1rem}.breed-live-note{font-size:.85rem;color:#334155;margin-top:.2rem;line-height:1.25}.breed-focus-count{font-size:.75rem;font-weight:700;color:#64748b;margin-left:.25rem}
 </style>
 </head>
 <body>
@@ -555,6 +588,12 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             <?php endforeach; ?>
                         </datalist>
                         <div id="breed-query-hint" class="form-text">Optional. If you already have a breed in mind, type it here and the results will prioritize it.</div>
+                        <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Breed focus filter">
+                            <button type="button" class="btn btn-outline-primary active" data-focus="all">Any</button>
+                            <button type="button" class="btn btn-outline-primary" data-focus="public">Public access</button>
+                            <button type="button" class="btn btn-outline-primary" data-focus="companion">Companion</button>
+                            <button type="button" class="btn btn-outline-primary" data-focus="task">Task work</button>
+                        </div>
                         <div id="breed-query-live" class="breed-live mt-2"></div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -729,9 +768,11 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
     const input = document.querySelector('input[name="breed_query"]');
     const hint = document.getElementById('breed-query-hint');
     const live = document.getElementById('breed-query-live');
-    if (!input || !hint || !live) return;
+    const focusButtons = Array.from(document.querySelectorAll('[data-focus]'));
+    if (!input || !hint || !live || !focusButtons.length) return;
 
     const breedItems = <?= json_encode($breedSuggestionData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    let activeFocus = 'all';
     const aliases = {
         'cavalier': 'Cavalier King Charles Spaniel',
         'king charles': 'Cavalier King Charles Spaniel',
@@ -746,6 +787,21 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         .replace(/\s+/g, ' ')
         .trim();
 
+    const setActiveFocus = (focus) => {
+        activeFocus = focus;
+        focusButtons.forEach((btn) => {
+            const isActive = btn.getAttribute('data-focus') === focus;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+        render();
+    };
+
+    focusButtons.forEach((btn) => {
+        btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
+        btn.addEventListener('click', () => setActiveFocus(btn.getAttribute('data-focus') || 'all'));
+    });
+
     const render = () => {
         const raw = input.value.trim();
         const query = normalize(raw);
@@ -759,6 +815,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         const ranked = breedItems
             .map((item) => ({ ...item, norm: normalize(item.name) }))
             .filter((entry) => entry.norm.includes(query) || (canonical && entry.name === canonical))
+            .filter((entry) => activeFocus === 'all' || entry.focus === activeFocus)
             .sort((a, b) => {
                 if (a.name === canonical) return -1;
                 if (b.name === canonical) return 1;
@@ -777,7 +834,9 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         }
 
         if (!ranked.length) {
-            hint.textContent = 'No close breed matches yet. Try a longer breed name or the breed family.';
+            hint.textContent = activeFocus === 'all'
+                ? 'No close breed matches yet. Try a longer breed name or the breed family.'
+                : 'No close breed matches for that filter yet. Try Any or a different filter.';
             live.innerHTML = '';
             return;
         }
