@@ -67,13 +67,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'import_porkbun_csv') {
-            $csv = trim((string) ($_POST['porkbun_csv'] ?? ''));
             $year = (int) ($_POST['porkbun_year'] ?? (int) gmdate('Y'));
-            $result = gpVendorCostImportPorkbunCsv($pdo, $csv, $year > 0 ? $year : 0);
-            if (empty($result['ok'])) {
-                throw new RuntimeException((string) ($result['error'] ?? 'Unable to import Porkbun CSV.'));
+            $result = ['ok' => false, 'error' => 'No Porkbun file or CSV was provided.'];
+
+            $tmpPath = '';
+            $mimeType = '';
+            if (!empty($_FILES['porkbun_file']['name']) && is_uploaded_file((string) ($_FILES['porkbun_file']['tmp_name'] ?? ''))) {
+                $tmpPath = (string) $_FILES['porkbun_file']['tmp_name'];
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = (string) $finfo->file($tmpPath);
             }
-            writeAuditLog($pdo, 'vendor_cost_imported', 'vendor_cost_imports', null, 'Imported Porkbun order history CSV for ' . ($result['period_label'] ?? 'the selected period') . '.');
+
+            if ($tmpPath !== '' && ($mimeType === 'application/pdf' || str_ends_with(strtolower((string) ($_FILES['porkbun_file']['name'] ?? '')), '.pdf'))) {
+                $result = gpVendorCostImportPorkbunPdf($pdo, $tmpPath, $year > 0 ? $year : 0);
+            } else {
+                $csv = trim((string) ($_POST['porkbun_csv'] ?? ''));
+                if ($csv !== '') {
+                    $result = gpVendorCostImportPorkbunCsv($pdo, $csv, $year > 0 ? $year : 0);
+                }
+            }
+
+            if (empty($result['ok'])) {
+                throw new RuntimeException((string) ($result['error'] ?? 'Unable to import Porkbun file.'));
+            }
+            writeAuditLog($pdo, 'vendor_cost_imported', 'vendor_cost_imports', null, 'Imported Porkbun ' . ((string) ($result['source_label'] ?? 'file')) . ' for ' . ($result['period_label'] ?? 'the selected period') . '.');
             header('Location: admin_business_costs.php?msg=porkbun_imported');
             exit;
         }
@@ -301,13 +318,14 @@ if (($_GET['msg'] ?? '') === 'porkbun_imported') {
 2026-05-01,12346,guidepaw.app privacy protection,$9.95</pre>
                         </div>
                     </details>
-                    <form method="post" class="d-grid gap-2">
+                    <form method="post" enctype="multipart/form-data" class="d-grid gap-2">
                         <input type="hidden" name="csrf_token" value="<?= abcEsc($csrf) ?>">
                         <input type="hidden" name="action" value="import_porkbun_csv">
                         <label class="small">Calendar year for this export<input class="form-control form-control-sm" type="number" name="porkbun_year" value="<?= (int) gmdate('Y') ?>" min="2000" max="2100"></label>
+                        <label class="small">Upload Porkbun PDF or paste CSV<input class="form-control form-control-sm" type="file" name="porkbun_file" accept="application/pdf,.pdf,text/csv,.csv"></label>
                         <label class="small">Paste Porkbun order history CSV<textarea class="form-control form-control-sm" name="porkbun_csv" rows="6" placeholder="date,order id,item,total
 2026-05-01,12345,guidepaw.app domain renewal,$15.98"></textarea></label>
-                        <button class="btn btn-sm btn-primary">Import Porkbun CSV</button>
+                        <button class="btn btn-sm btn-primary">Import Porkbun file</button>
                     </form>
                     <?php if ($vendorImports): ?>
                         <div class="table-responsive mt-3">

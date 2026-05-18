@@ -276,3 +276,196 @@ if (!function_exists('gpVendorCostImportPorkbunCsv')) {
         ];
     }
 }
+
+if (!function_exists('gpVendorCostReadPdfText')) {
+    function gpVendorCostReadPdfText(string $path): array
+    {
+        $path = trim($path);
+        if ($path === '' || !is_file($path) || !is_readable($path)) {
+            return ['ok' => false, 'error' => 'The uploaded PDF could not be read.'];
+        }
+
+        $command = 'pdftotext -layout -nopgbrk -q ' . escapeshellarg($path) . ' -';
+        $output = [];
+        $exitCode = 0;
+        @exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            return ['ok' => false, 'error' => 'Could not extract text from the PDF.'];
+        }
+
+        $text = trim(implode("\n", $output));
+        if ($text === '') {
+            return ['ok' => false, 'error' => 'The PDF did not contain extractable text.'];
+        }
+
+        return ['ok' => true, 'text' => $text];
+    }
+}
+
+if (!function_exists('gpVendorCostImportPorkbunPdf')) {
+    function gpVendorCostImportPorkbunPdf(PDO $pdo, string $path, int $calendarYear = 0): array
+    {
+        gpVendorCostEnsureSchema($pdo);
+
+        $pdfText = gpVendorCostReadPdfText($path);
+        if (empty($pdfText['ok'])) {
+            return $pdfText;
+        }
+
+        $text = trim((string) ($pdfText['text'] ?? ''));
+        if ($text === '') {
+            return ['ok' => false, 'error' => 'The PDF text was empty after extraction.'];
+        }
+
+        $lines = preg_split('/\R/', $text) ?: [];
+        $rows = [];
+        $fallbackRows = [];
+        $currentDate = '';
+        foreach ($lines as $line) {
+            $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
+            if ($line === '') {
+                continue;
+            }
+
+            $dateText = '';
+            if (preg_match('/\b((?:\d{1,2}[\/\-]\d{1,2}[\/\-](?:\d{2}|\d{4}))|(?:\d{4}-\d{2}-\d{2})|(?:[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}))\b/', $line, $dateMatch)) {
+                $dateText = trim((string) $dateMatch[1]);
+                $parsedYear = gpVendorParseDateYear($dateText);
+                if ($calendarYear > 0 && $parsedYear !== null && $parsedYear !== $calendarYear) {
+                    continue;
+                }
+                $currentDate = $dateText;
+            }
+
+            $amount = null;
+            if (preg_match_all('/(?:^|[^0-9])((?:\(?-?\$?\d[\d,]*(?:\.\d{2})?\)?))/',$line,$amountMatches) && !empty($amountMatches[1])) {
+                $candidates = array_reverse($amountMatches[1]);
+                foreach ($candidates as $candidate) {
+                    $amount = gpVendorParseMoneyCents((string) $candidate);
+                    if ($amount !== null) {
+                        break;
+                    }
+                }
+            }
+            if ($amount === null) {
+                continue;
+            }
+
+            $lineLower = strtolower($line);
+            $looksLikeDetail = $dateText !== '' || preg_match('/\b(renewal|order|invoice|charge|purchase|payment|domain|privacy|registration|ssl|dns|host|protection|service|fee|total)\b/i', $line) === 1;
+            if ($looksLikeDetail) {
+                $rows[] = [
+                    'date' => $currentDate !== '' ? $currentDate : $dateText,
+                    'amount_cents' => $amount,
+                    'order_ref' => '',
+                    'item' => $line,
+                ];
+            } else {
+                $fallbackRows[] = [
+                    'date' => $currentDate !== '' ? $currentDate : $dateText,
+                    'amount_cents' => $amount,
+                    'order_ref' => '',
+                    'item' => $line,
+                ];
+            }
+        }
+
+        $matchedOrders = $rows !== [] ? $rows : $fallbackRows;
+        if ($matchedOrders === []) {
+            return ['ok' => false, 'error' => 'No importable rows were found in the PDF.'];
+        }
+
+        $importedTotalCents = 0;
+        $rowCount = 0;
+        $firstDate = '';
+        $lastDate = '';
+        foreach ($matchedOrders as $row) {
+            $amountCents = (int) ($row['amount_cents'] ?? 0);
+            $importedTotalCents += $amountCents;
+            $rowCount++;
+            $dateText = trim((string) ($row['date'] ?? ''));
+            if ($dateText !== '') {
+                $dateKey = '';
+                $parsedTimestamp = strtotime($dateText);
+                if ($parsedTimestamp !== false) {
+                    $dateKey = gmdate('Y-m-d', $parsedTimestamp);
+                } else {
+                    $dateKey = $dateText;
+                }
+                if ($dateKey !== '') {
+                    if ($firstDate === '' || strcmp($dateKey, $firstDate) < 0) {
+                        $firstDate = $dateKey;
+                    }
+                    if ($lastDate === '' || strcmp($dateKey, $lastDate) > 0) {
+                        $lastDate = $dateKey;
+                    }
+                    $row['date'] = $dateKey;
+                }
+            }
+            $matchedOrders[$rowCount - 1] = $row;
+        }
+
+        $periodLabel = $calendarYear > 0 ? (string) $calendarYear : trim($firstDate . ($firstDate !== '' && $lastDate !== '' && $firstDate !== $lastDate ? ' to ' . $lastDate : ''));
+        $sourceRef = $calendarYear > 0 ? 'porkbun-pdf-' . $calendarYear : 'porkbun-pdf';
+        $stmt = $pdo->prepare("
+            INSERT INTO vendor_cost_imports (
+                vendor_slug,
+                source_label,
+                source_ref,
+                period_label,
+                imported_total_cents,
+                row_count,
+                currency,
+                raw_payload
+            ) VALUES (
+                :vendor_slug,
+                :source_label,
+                :source_ref,
+                :period_label,
+                :imported_total_cents,
+                :row_count,
+                :currency,
+                :raw_payload::jsonb
+            )
+        ");
+        $stmt->execute([
+            ':vendor_slug' => 'porkbun',
+            ':source_label' => 'Porkbun PDF export',
+            ':source_ref' => $sourceRef,
+            ':period_label' => $periodLabel,
+            ':imported_total_cents' => $importedTotalCents,
+            ':row_count' => $rowCount,
+            ':currency' => 'USD',
+            ':raw_payload' => json_encode([
+                'source' => 'pdf',
+                'matched_orders' => $matchedOrders,
+                'extracted_text_preview' => mb_substr($text, 0, 3000),
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]);
+
+        gpBusinessCostUpsert($pdo, [
+            'slug' => 'domain_dns',
+            'category' => 'current',
+            'label' => 'Domain / DNS',
+            'summary' => 'Porkbun domain renewals imported from PDF export',
+            'billing_cycle' => 'annual',
+            'unit_cost_cents' => max(0, $importedTotalCents),
+            'quantity' => 1,
+            'currency' => 'USD',
+            'sort_order' => 60,
+            'is_active' => true,
+            'notes' => 'Imported from Porkbun PDF export for ' . ($periodLabel !== '' ? $periodLabel : 'the selected period') . '.',
+        ]);
+
+        return [
+            'ok' => true,
+            'vendor_slug' => 'porkbun',
+            'source_label' => 'Porkbun PDF export',
+            'period_label' => $periodLabel,
+            'row_count' => $rowCount,
+            'total_cents' => $importedTotalCents,
+            'first_date' => $firstDate,
+            'last_date' => $lastDate,
+        ];
+    }
+}
