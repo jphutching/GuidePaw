@@ -439,7 +439,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaLogin($baseUrl, $adminUser, $adminPass, $logoutCookieHeader, $logoutCookie, $insecureLocalSsl);
         }
         $logoutPage = gpQaRequest($baseUrl, 'logout.php', 'GET', [], $logoutCookie ?: $adminCookie, $insecureLocalSsl);
-        $loginSeen = gpQaPageLooksOk($loginPage) && (str_contains(strtolower($loginPage['body']), 'handler login') || str_contains(strtolower($loginPage['body']), 'remember me on this device'));
+        $loginPageBody = strtolower($loginPage['body']);
+        $loginSeen = gpQaPageLooksOk($loginPage) && (str_contains($loginPageBody, 'handler login') || str_contains($loginPageBody, 'remember me on this device'));
+        $loginBreedQuestionnaireSeen = gpQaPageLooksOk($loginPage)
+            && str_contains($loginPageBody, 'research a breed first')
+            && str_contains($loginPageBody, 'open breed questionnaire')
+            && str_contains($loginPageBody, 'without an account');
         $logoutSeen = gpQaPageLooksOk($logoutPage) && (str_contains(strtolower($logoutPage['url']), 'login.php') || str_contains(strtolower($logoutPage['body']), 'handler login'));
         $healthzSeen = gpQaPageLooksOk($healthzPage) && (str_contains(strtolower($healthzPage['body']), '"status":"ok"') || str_contains(strtolower($healthzPage['body']), '"database":"ok"'));
         $csrfTokenSeen = gpQaPageLooksOk($csrfTokenPage) && (str_contains(strtolower($csrfTokenPage['body']), '"success":true') || str_contains(strtolower($csrfTokenPage['body']), 'csrf_token'));
@@ -541,6 +546,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             exit(1);
         }
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
+        gpQaResult($results, 'login_breed_questionnaire_cta', $loginBreedQuestionnaireSeen, 'HTTP ' . $loginPage['status'] . ($loginBreedQuestionnaireSeen ? ' breed questionnaire CTA found' : ' breed questionnaire CTA missing'));
         gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));
         gpQaResult($results, 'healthz_page_loads', $healthzSeen, 'HTTP ' . $healthzPage['status'] . ($healthzSeen ? ' healthz ok found' : ' healthz ok missing'));
         gpQaResult($results, 'csrf_token_page_loads', $csrfTokenSeen, 'HTTP ' . $csrfTokenPage['status'] . ($csrfTokenSeen ? ' csrf token found' : ' csrf token missing'));
@@ -1315,7 +1321,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adaAccessCardPage = gpQaRequest($baseUrl, 'ada_access_card.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $adaWalletCardPage = gpQaRequest($baseUrl, 'ada_wallet_card.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $serviceDogRightsPage = gpQaRequest($baseUrl, 'service_dog_rights.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-    $breedQuestionnairePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
+    $breedQuestionnairePage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'GET', [], '', $insecureLocalSsl, '', false);
     $paywallsPage = gpQaRequest($baseUrl, 'paywalls.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $appointmentNotificationsPage = gpQaRequest($baseUrl, 'appointment_notifications.php?hours=24', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
     $betaChecklistStatePage = gpQaRequest($baseUrl, 'beta_qa_checklist_state.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -1437,7 +1443,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     $adaAccessCardSeen = gpQaPageLooksOk($adaAccessCardPage) && (str_contains($adaAccessCardBody, 'ada access card') || str_contains($adaAccessCardBody, 'lockscreen display') || str_contains($adaAccessCardBody, 'service dog')) && (str_contains($adaAccessCardBody, 'current source') || str_contains($adaAccessCardBody, 'handler home state') || str_contains($adaAccessCardBody, 'last ping'));
     $adaWalletCardSeen = $adaWalletCardPage['status'] === 302 || str_contains(strtolower($adaWalletCardPage['url']), 'ada_access_card.php');
     $serviceDogRightsSeen = gpQaPageLooksOk($serviceDogRightsPage) && (str_contains($serviceDogRightsBody, 'detailed ada notes') || str_contains($serviceDogRightsBody, 'ada service dog rights'));
-    $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage) && (str_contains($breedQuestionnaireBody, 'breed questionnaire') || str_contains($breedQuestionnaireBody, 'ranked breed ideas'));
+    $breedQuestionnaireSeen = gpQaPageLooksOk($breedQuestionnairePage)
+        && (
+            str_contains($breedQuestionnaireBody, 'breed questionnaire')
+            || str_contains($breedQuestionnaireBody, 'ranked breed ideas')
+        )
+        && str_contains($breedQuestionnaireBody, 'no account needed');
     $settingsHasNoHandlerProfileLink = gpQaPageLooksOk($settingsPage) && (str_contains($settingsPageBody, 'change password') || str_contains($settingsPageBody, '2-factor') || str_contains($settingsPageBody, 'logout'));
     $trainingSuggestionsLinkSeen = gpQaPageLooksOk($trainingProgramPage)
         && (

@@ -401,6 +401,10 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                 <div class="small opacity-75">GuidePaw public tool</div>
                 <h1 class="mb-2">Breed Questionnaire</h1>
                 <p class="mb-0 opacity-75">Answer a few questions and get breed ideas to research, not a guarantee or a substitute for individual assessment.</p>
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                    <span class="pill">No account needed</span>
+                    <span class="pill">Use before signing up</span>
+                </div>
             </div>
             <a class="btn btn-light btn-sm" href="login.php">Handler login</a>
         </div>
@@ -487,7 +491,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
         <section class="card card-soft">
             <div class="card-body">
                 <h2 class="h5 mb-3">How to use this</h2>
-                <p class="text-muted mb-3">These are research suggestions only. Breed name alone does not decide suitability. Individual temperament, health, recovery, public neutrality, and task aptitude matter more than the label.</p>
+                <p class="text-muted mb-3">These are research suggestions only. Breed name alone does not decide suitability. Individual temperament, health, recovery, public neutrality, and task aptitude matter more than the label. You can use this tool with or without a GuidePaw account.</p>
                 <div class="question-note mb-3">
                     <strong>Best use:</strong> narrow the list before you start looking at breeder, rescue, or program-specific dogs.
                 </div>

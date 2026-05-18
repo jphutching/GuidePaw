@@ -23,6 +23,7 @@ function gpBetaQaChecklistItems(): array
             'description' => 'Validate the required handler profile gate and contact defaults.',
             'items' => [
                 ['id' => 'login_page', 'text' => 'Login page loads.', 'expected' => 'login.php opens with the handler login form.'],
+                ['id' => 'login_breed_questionnaire_cta', 'text' => 'Login page surfaces the public breed questionnaire CTA.', 'expected' => 'The login page invites visitors to open the Breed Questionnaire without an account.'],
                 ['id' => 'login_admin', 'text' => 'Admin account can log in.', 'expected' => 'Admin lands on dashboard or required Handler Profile page if missing required fields.'],
                 ['id' => 'login_test_acct', 'text' => 'Test account can log in.', 'expected' => 'Test account can proceed after required fields are present.'],
                 ['id' => 'required_profile_gate', 'text' => 'Incomplete account is redirected to Handler Profile before continuing.', 'expected' => 'Display name, Home street, Home city, Home state, Home ZIP, Public phone, and Public email are blocking fields.'],
@@ -242,7 +243,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'admin_zeptomail_audit', 'text' => 'Admin ZeptoMail Audit page loads.', 'expected' => 'admin_zeptomail_audit.php reports env and API connectivity.'],
                 ['id' => 'feedback_auto_context', 'text' => 'Feedback/Bug Report page captures relevant troubleshooting context.', 'expected' => 'Report includes page/error/account context where available.'],
                 ['id' => 'feedback_category_picker', 'text' => 'Feedback/Bug Report category picker clearly offers Bug, Feature request, and Enhancement.', 'expected' => 'Category choice is visible as a segmented control before the details field.'],
-                ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches and family guidance.'],
+                ['id' => 'breed_questionnaire', 'text' => 'Breed Questionnaire page loads publicly and returns ranked breed ideas.', 'expected' => 'Public questionnaire shows top matches, family guidance, and a no-account-needed path.'],
                 ['id' => 'ai_training_assistant', 'text' => 'AI Training Assistant page loads for Pro users and free users see the Pro paywall.', 'expected' => 'Pro users get safety-aware troubleshooting while free users see the upgrade notice.'],
                 ['id' => 'paywall_catalog_admin', 'text' => 'Admin paywall catalog page loads and can edit plan or service rows.', 'expected' => 'Admin can edit plan labels, gates, add-on services, and notes from inside the app, with inline row edits kept collapsed by default.'],
                 ['id' => 'paywall_purchase_events_admin', 'text' => 'Admin paywall catalog shows recent Stripe purchase events.', 'expected' => 'Admin can review recent service purchases with service, user, dog, and amount details.'],

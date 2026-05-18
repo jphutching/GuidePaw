@@ -111,6 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="reset_password.php" class="text-decoration-none small text-muted">Forgot Password?</a>
             <a href="register.php" class="text-decoration-none small">New Account</a>
         </div>
+        <div class="mt-3 p-3 bg-light border rounded small">
+            <div class="fw-semibold mb-1">Research a breed first?</div>
+            <div class="text-muted mb-2">Use the public questionnaire with or without an account to narrow down breed ideas before you sign in.</div>
+            <a href="breed_questionnaire.php" class="btn btn-outline-primary btn-sm">Open Breed Questionnaire</a>
+        </div>
     </form>
     <script>
     (function () {
