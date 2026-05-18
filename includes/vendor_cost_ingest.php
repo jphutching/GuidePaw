@@ -505,12 +505,11 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             }
         }
 
-        if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
-            return ['ok' => false, 'error' => 'Could not identify a valid invoice total from the PDF.'];
-        }
-
         $matchedOrders = $rows;
         if ($matchedOrders === []) {
+            if ($invoiceTotalCents === null || $invoiceTotalCents < 50 || $invoiceTotalCents > 1000000) {
+                return ['ok' => false, 'error' => 'Could not identify a valid invoice total from the PDF.'];
+            }
             $matchedOrders[] = [
                 'date' => $invoiceDate !== '' ? $invoiceDate : $currentDate,
                 'amount_cents' => $invoiceTotalCents,
@@ -548,7 +547,15 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             }
             $matchedOrders[$rowCount - 1] = $row;
         }
-        $importedTotalCents = $invoiceTotalCents;
+        $rowSumCents = 0;
+        foreach ($matchedOrders as $row) {
+            $rowSumCents += max(0, (int) ($row['amount_cents'] ?? 0));
+        }
+        if ($invoiceTotalCents !== null && $invoiceTotalCents >= 50 && $invoiceTotalCents <= 1000000) {
+            $importedTotalCents = $invoiceTotalCents;
+        } else {
+            $importedTotalCents = $rowSumCents;
+        }
 
         $periodLabel = $calendarYear > 0 ? (string) $calendarYear : trim($firstDate . ($firstDate !== '' && $lastDate !== '' && $firstDate !== $lastDate ? ' to ' . $lastDate : ''));
         $sourceRef = $calendarYear > 0 ? 'porkbun-pdf-' . $calendarYear : 'porkbun-pdf';
