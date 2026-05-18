@@ -560,6 +560,7 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 <style>
 body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.question-grid{display:grid;gap:1rem}@media(min-width:960px){.question-grid{grid-template-columns:1.1fr .9fr}}.form-select,.form-control{border-radius:14px}.result-grid{display:grid;gap:1rem}@media(min-width:900px){.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.result-item{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.rank{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:900;margin-right:.65rem;flex:0 0 auto}.subtle{color:#64748b}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:900;background:#eef2ff;color:#4338ca}.family-card{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.list-tight{margin-bottom:0;padding-left:1.1rem}.question-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.badge-line{display:flex;flex-wrap:wrap;gap:.35rem}
 .breed-live{display:grid;gap:.5rem}.breed-live-item{display:block;width:100%;text-align:left;border:1px solid rgba(15,23,42,.08);background:#fff;border-radius:14px;padding:.75rem .85rem;box-shadow:0 4px 10px rgba(15,23,42,.04)}.breed-live-item:hover,.breed-live-item:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12);outline:0}.breed-live-name{font-weight:800;color:#0f172a}.breed-live-meta{font-size:.8rem;color:#64748b;margin-top:.1rem}.breed-live-best{font-size:.8rem;color:#0f766e;font-weight:800;margin-top:.1rem}.breed-live-note{font-size:.85rem;color:#334155;margin-top:.2rem;line-height:1.25}.breed-focus-group{display:inline-flex;flex-wrap:wrap;gap:.35rem;padding:.35rem;background:#eef6ff;border:1px solid rgba(13,110,253,.16);border-radius:999px}.breed-focus-btn{border-radius:999px !important;min-width:0;padding:.4rem .75rem;line-height:1}.breed-focus-btn.active{background:#0d6efd !important;border-color:#0d6efd !important;color:#fff !important;box-shadow:0 4px 10px rgba(13,110,253,.16)}.breed-focus-btn:not(.active){background:#fff;color:#0d6efd;border-color:rgba(13,110,253,.2)}.breed-focus-count{font-size:.75rem;font-weight:700;color:#64748b;margin-left:.25rem}
+.breed-advanced{border:1px solid rgba(15,23,42,.1);border-radius:16px;background:#f8fafc;padding:1rem}.breed-advanced summary{cursor:pointer;list-style:none}.breed-advanced summary::-webkit-details-marker{display:none}.breed-advanced summary::after{content:"";display:inline-block;width:.55rem;height:.55rem;margin-left:.5rem;border-right:2px solid #475569;border-bottom:2px solid #475569;transform:rotate(45deg) translateY(-1px);transition:transform .15s ease}.breed-advanced[open] summary::after{transform:rotate(-135deg) translateY(1px)}.breed-advanced-note{color:#64748b;font-size:.9rem;margin-top:.35rem}
 </style>
 </head>
 <body>
@@ -628,75 +629,83 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                         </select>
                         <div class="form-text">These are approximate adult weight ranges, not exact limits.</div>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Exercise you can support</label>
-                        <select class="form-select" name="energy">
-                            <option value="low" <?= $answers['energy'] === 'low' ? 'selected' : '' ?>>Low</option>
-                            <option value="moderate" <?= $answers['energy'] === 'moderate' ? 'selected' : '' ?>>Moderate</option>
-                            <option value="high" <?= $answers['energy'] === 'high' ? 'selected' : '' ?>>High</option>
-                            <option value="very_high" <?= $answers['energy'] === 'very_high' ? 'selected' : '' ?>>Very high</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Grooming tolerance</label>
-                        <select class="form-select" name="grooming">
-                            <option value="low" <?= $answers['grooming'] === 'low' ? 'selected' : '' ?>>Low</option>
-                            <option value="moderate" <?= $answers['grooming'] === 'moderate' ? 'selected' : '' ?>>Moderate</option>
-                            <option value="high" <?= $answers['grooming'] === 'high' ? 'selected' : '' ?>>High</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Public exposure</label>
-                        <select class="form-select" name="public">
-                            <option value="quiet" <?= $answers['public'] === 'quiet' ? 'selected' : '' ?>>Mostly quiet settings</option>
-                            <option value="some" <?= $answers['public'] === 'some' ? 'selected' : '' ?>>Some errands</option>
-                            <option value="busy" <?= $answers['public'] === 'busy' ? 'selected' : '' ?>>Busy daily public work</option>
-                            <option value="always" <?= $answers['public'] === 'always' ? 'selected' : '' ?>>Constant public access</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Your training experience</label>
-                        <select class="form-select" name="experience">
-                            <option value="new" <?= $answers['experience'] === 'new' ? 'selected' : '' ?>>New to dog training</option>
-                            <option value="some" <?= $answers['experience'] === 'some' ? 'selected' : '' ?>>Some experience</option>
-                            <option value="experienced" <?= $answers['experience'] === 'experienced' ? 'selected' : '' ?>>Experienced</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label fw-bold">Sensitivity / drive tolerance</label>
-                        <select class="form-select" name="sensitivity">
-                            <option value="soft" <?= $answers['sensitivity'] === 'soft' ? 'selected' : '' ?>>Soft / sensitive</option>
-                            <option value="balanced" <?= $answers['sensitivity'] === 'balanced' ? 'selected' : '' ?>>Balanced</option>
-                            <option value="drive_ok" <?= $answers['sensitivity'] === 'drive_ok' ? 'selected' : '' ?>>Drive is okay</option>
-                        </select>
-                    </div>
-                    <div class="col-12 border rounded-4 p-3 bg-white">
-                <div class="fw-bold mb-2">Drill-down mode</div>
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <label class="form-label fw-bold">Breed family</label>
-                                <select class="form-select" name="drill_family">
-                                    <option value="any" <?= $drillFamily === 'any' ? 'selected' : '' ?>>Any family</option>
-                                    <?php foreach ($familyOptions as $family): ?>
-                                        <option value="<?= e($family) ?>" <?= $drillFamily === $family ? 'selected' : '' ?>><?= e($family) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                    <div class="col-12">
+                        <details class="breed-advanced">
+                            <summary class="fw-bold">Advanced</summary>
+                            <div class="breed-advanced-note">Optional filters for handlers who already know what they want to narrow out.</div>
+                            <div class="row g-3 mt-1">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Exercise you can support</label>
+                                    <select class="form-select" name="energy">
+                                        <option value="low" <?= $answers['energy'] === 'low' ? 'selected' : '' ?>>Low</option>
+                                        <option value="moderate" <?= $answers['energy'] === 'moderate' ? 'selected' : '' ?>>Moderate</option>
+                                        <option value="high" <?= $answers['energy'] === 'high' ? 'selected' : '' ?>>High</option>
+                                        <option value="very_high" <?= $answers['energy'] === 'very_high' ? 'selected' : '' ?>>Very high</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Grooming tolerance</label>
+                                    <select class="form-select" name="grooming">
+                                        <option value="low" <?= $answers['grooming'] === 'low' ? 'selected' : '' ?>>Low</option>
+                                        <option value="moderate" <?= $answers['grooming'] === 'moderate' ? 'selected' : '' ?>>Moderate</option>
+                                        <option value="high" <?= $answers['grooming'] === 'high' ? 'selected' : '' ?>>High</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Public exposure</label>
+                                    <select class="form-select" name="public">
+                                        <option value="quiet" <?= $answers['public'] === 'quiet' ? 'selected' : '' ?>>Mostly quiet settings</option>
+                                        <option value="some" <?= $answers['public'] === 'some' ? 'selected' : '' ?>>Some errands</option>
+                                        <option value="busy" <?= $answers['public'] === 'busy' ? 'selected' : '' ?>>Busy daily public work</option>
+                                        <option value="always" <?= $answers['public'] === 'always' ? 'selected' : '' ?>>Constant public access</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Your training experience</label>
+                                    <select class="form-select" name="experience">
+                                        <option value="new" <?= $answers['experience'] === 'new' ? 'selected' : '' ?>>New to dog training</option>
+                                        <option value="some" <?= $answers['experience'] === 'some' ? 'selected' : '' ?>>Some experience</option>
+                                        <option value="experienced" <?= $answers['experience'] === 'experienced' ? 'selected' : '' ?>>Experienced</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold">Sensitivity / drive tolerance</label>
+                                    <select class="form-select" name="sensitivity">
+                                        <option value="soft" <?= $answers['sensitivity'] === 'soft' ? 'selected' : '' ?>>Soft / sensitive</option>
+                                        <option value="balanced" <?= $answers['sensitivity'] === 'balanced' ? 'selected' : '' ?>>Balanced</option>
+                                        <option value="drive_ok" <?= $answers['sensitivity'] === 'drive_ok' ? 'selected' : '' ?>>Drive is okay</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 border rounded-4 p-3 bg-white">
+                                    <div class="fw-bold mb-2">Drill-down mode</div>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-bold">Breed family</label>
+                                            <select class="form-select" name="drill_family">
+                                                <option value="any" <?= $drillFamily === 'any' ? 'selected' : '' ?>>Any family</option>
+                                                <?php foreach ($familyOptions as $family): ?>
+                                                    <option value="<?= e($family) ?>" <?= $drillFamily === $family ? 'selected' : '' ?>><?= e($family) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fw-bold">Drill size</label>
+                                            <select class="form-select" name="drill_size">
+                                                <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
+                                                <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
+                                                <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
+                                                <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
+                                                <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
+                                                <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-text">Use this when you already have a broad fit and want to narrow the list to a family or working size.</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <label class="form-label fw-bold">Drill size</label>
-                                <select class="form-select" name="drill_size">
-                                    <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
-                                    <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
-                                    <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
-                                    <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
-                                    <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
-                                    <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-text">Use this when you already have a broad fit and want to narrow the list to a family or working size.</div>
-                            </div>
-                        </div>
+                        </details>
                     </div>
                     <div class="col-12">
                         <button class="btn btn-primary w-100" type="submit">Show breed ideas</button>
