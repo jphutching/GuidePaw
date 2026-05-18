@@ -5,6 +5,8 @@ require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/stripe_webhook.php';
 require_once __DIR__ . '/includes/business_costs.php';
 require_once __DIR__ . '/includes/cost_snapshots.php';
+require_once __DIR__ . '/includes/vendor_cost_ingest.php';
+require_once __DIR__ . '/includes/paywall_catalog.php';
 require_once __DIR__ . '/includes/audit_log.php';
 
 checkLogin();
@@ -21,6 +23,7 @@ function abcMoney(int $cents): string
 }
 
 gpBusinessCostEnsureSchema($pdo);
+gpVendorCostEnsureSchema($pdo);
 $supportRevenue = gpStripeSupportRevenueSummary($pdo);
 $costSummary = gpBusinessCostSummary($pdo);
 $providerSnapshots = gpBusinessProviderSnapshots();
@@ -34,6 +37,8 @@ $providerLiveBurnCents = (int) ($twilioSnapshot['monthly_cents'] ?? 0)
 $allCostRows = gpBusinessCostRows($pdo);
 $currentCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'current'));
 $futureCostRows = array_values(array_filter($allCostRows, static fn(array $row): bool => !empty($row['is_active']) && ($row['category'] ?? '') === 'future'));
+$servicePricingRows = gpPaywallCatalogRows($pdo, 'service');
+$vendorImports = gpVendorCostLatestImports($pdo, 10);
 $csrf = generateCsrfToken();
 $message = '';
 $error = '';
@@ -42,25 +47,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     $action = (string) ($_POST['action'] ?? '');
     try {
-        if ($action !== 'save_item') {
-            throw new RuntimeException('Unknown action.');
+        if ($action === 'save_item') {
+            gpBusinessCostUpsert($pdo, [
+                'slug' => (string) ($_POST['slug'] ?? ''),
+                'category' => (string) ($_POST['category'] ?? 'current'),
+                'label' => (string) ($_POST['label'] ?? ''),
+                'summary' => (string) ($_POST['summary'] ?? ''),
+                'billing_cycle' => (string) ($_POST['billing_cycle'] ?? 'monthly'),
+                'unit_cost_cents' => (int) ($_POST['unit_cost_cents'] ?? 0),
+                'quantity' => (float) ($_POST['quantity'] ?? 1),
+                'currency' => (string) ($_POST['currency'] ?? 'USD'),
+                'sort_order' => (int) ($_POST['sort_order'] ?? 0),
+                'is_active' => !empty($_POST['is_active']),
+                'notes' => (string) ($_POST['notes'] ?? ''),
+            ]);
+            writeAuditLog($pdo, 'business_cost_item_saved', 'business_cost_items', null, 'Admin saved business cost item ' . strtolower(trim((string) ($_POST['slug'] ?? ''))));
+            header('Location: admin_business_costs.php?msg=updated');
+            exit;
         }
-        gpBusinessCostUpsert($pdo, [
-            'slug' => (string) ($_POST['slug'] ?? ''),
-            'category' => (string) ($_POST['category'] ?? 'current'),
-            'label' => (string) ($_POST['label'] ?? ''),
-            'summary' => (string) ($_POST['summary'] ?? ''),
-            'billing_cycle' => (string) ($_POST['billing_cycle'] ?? 'monthly'),
-            'unit_cost_cents' => (int) ($_POST['unit_cost_cents'] ?? 0),
-            'quantity' => (float) ($_POST['quantity'] ?? 1),
-            'currency' => (string) ($_POST['currency'] ?? 'USD'),
-            'sort_order' => (int) ($_POST['sort_order'] ?? 0),
-            'is_active' => !empty($_POST['is_active']),
-            'notes' => (string) ($_POST['notes'] ?? ''),
-        ]);
-        writeAuditLog($pdo, 'business_cost_item_saved', 'business_cost_items', null, 'Admin saved business cost item ' . strtolower(trim((string) ($_POST['slug'] ?? ''))));
-        header('Location: admin_business_costs.php?msg=updated');
-        exit;
+
+        if ($action === 'import_porkbun_csv') {
+            $csv = trim((string) ($_POST['porkbun_csv'] ?? ''));
+            $year = (int) ($_POST['porkbun_year'] ?? (int) gmdate('Y'));
+            $result = gpVendorCostImportPorkbunCsv($pdo, $csv, $year > 0 ? $year : 0);
+            if (empty($result['ok'])) {
+                throw new RuntimeException((string) ($result['error'] ?? 'Unable to import Porkbun CSV.'));
+            }
+            writeAuditLog($pdo, 'vendor_cost_imported', 'vendor_cost_imports', null, 'Imported Porkbun order history CSV for ' . ($result['period_label'] ?? 'the selected period') . '.');
+            header('Location: admin_business_costs.php?msg=porkbun_imported');
+            exit;
+        }
+
+        throw new RuntimeException('Unknown action.');
     } catch (Throwable $e) {
         $error = $e->getMessage();
     }
@@ -68,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (($_GET['msg'] ?? '') === 'updated') {
     $message = 'Business cost item saved.';
+}
+if (($_GET['msg'] ?? '') === 'porkbun_imported') {
+    $message = 'Porkbun order history imported and applied to Domain / DNS.';
 }
 ?>
 <!doctype html>
@@ -150,14 +171,14 @@ if (($_GET['msg'] ?? '') === 'updated') {
             <div class="col-md-4">
                 <div class="mini">Coverage gaps</div>
                 <strong>ZeptoMail, Porkbun</strong>
-                <div class="mini">ZeptoMail shows usage, not a direct bill; Porkbun still relies on manual export or ledger entry.</div>
+                <div class="mini">ZeptoMail shows usage, not a direct bill; Porkbun can be imported from order history CSV when you export it.</div>
             </div>
         </div>
     </div>
 
     <details class="panel mb-3">
         <summary class="h5 mb-2" style="cursor:pointer; list-style:none;">Live provider snapshot</summary>
-        <div class="mini mb-3">This section pulls live provider data where the API exposes it. Render and Stripe are estimated from live API data. Twilio is actual spend if credentials are present. ZeptoMail exposes usage counts, not a direct billing total. Porkbun remains manual until a clean API or import is wired.</div>
+        <div class="mini mb-3">This section pulls live provider data where the API exposes it. Render and Stripe are estimated from live API data. Twilio is actual spend if credentials are present. ZeptoMail exposes usage counts, not a direct billing total. Porkbun can be ingested from a CSV export or left in the editable ledger.</div>
         <div class="row g-3">
             <div class="col-md-4">
                 <div class="border rounded-3 p-3 h-100">
@@ -250,6 +271,75 @@ if (($_GET['msg'] ?? '') === 'updated') {
                     </div>
                     <div class="mini mt-2">Actual Stripe balance transaction fees for the current month.</div>
                     <?php if (!empty($stripeSnapshot['error'])): ?><div class="mini mt-2 text-danger"><?= abcEsc((string) $stripeSnapshot['error']) ?></div><?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details class="panel mb-3">
+        <summary class="h5 mb-2" style="cursor:pointer; list-style:none;">Vendor imports and pricing</summary>
+        <div class="mini mb-3">Use this to ingest Porkbun order history and review the current a la carte service catalog alongside business costs.</div>
+        <div class="row g-3 mb-3">
+            <div class="col-lg-6">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <div>
+                            <div class="mini">Porkbun import</div>
+                            <strong>Order history CSV</strong>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary" href="https://kb.porkbun.com/article/122-how-to-view-your-invoices" target="_blank" rel="noreferrer">Porkbun export help</a>
+                    </div>
+                    <form method="post" class="d-grid gap-2">
+                        <input type="hidden" name="csrf_token" value="<?= abcEsc($csrf) ?>">
+                        <input type="hidden" name="action" value="import_porkbun_csv">
+                        <label class="small">Calendar year for this export<input class="form-control form-control-sm" type="number" name="porkbun_year" value="<?= (int) gmdate('Y') ?>" min="2000" max="2100"></label>
+                        <label class="small">Paste Porkbun order history CSV<textarea class="form-control form-control-sm" name="porkbun_csv" rows="6" placeholder="Paste the CSV export from Porkbun's View Orders page here."></textarea></label>
+                        <button class="btn btn-sm btn-primary">Import Porkbun CSV</button>
+                    </form>
+                    <?php if ($vendorImports): ?>
+                        <div class="table-responsive mt-3">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead><tr><th>Vendor</th><th>Period</th><th>Total</th><th>Rows</th></tr></thead>
+                                <tbody>
+                                    <?php foreach ($vendorImports as $import): ?>
+                                        <tr>
+                                            <td><?= abcEsc((string) ($import['vendor_slug'] ?? '')) ?></td>
+                                            <td><?= abcEsc((string) ($import['period_label'] ?? '')) ?></td>
+                                            <td><?= abcMoney((int) ($import['imported_total_cents'] ?? 0)) ?></td>
+                                            <td><?= (int) ($import['row_count'] ?? 0) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                        <div>
+                            <div class="mini">Pricing and services</div>
+                            <strong>A la carte catalog summary</strong>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary" href="admin_paywall_catalog.php">Edit catalog</a>
+                    </div>
+                    <div class="mini mb-3">Keep the free handler + first dog clear, while pricing extra dog slots, QR tracking, and other services in one place.</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>Service</th><th>Billing</th><th>Price</th><th>Stripe</th></tr></thead>
+                            <tbody>
+                                <?php foreach ($servicePricingRows as $service): ?>
+                                    <tr>
+                                        <td><strong><?= abcEsc((string) ($service['label'] ?? $service['slug'] ?? 'service')) ?></strong><div class="mini"><?= abcEsc((string) ($service['summary'] ?? '')) ?></div></td>
+                                        <td><?= abcEsc((string) ($service['billing_model'] ?? 'plan')) ?></td>
+                                        <td><?= abcMoney((int) ($service['price_cents'] ?? 0)) ?></td>
+                                        <td><?= abcEsc((string) ($service['stripe_price_id'] ?? '')) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

@@ -799,6 +799,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             ? (
                 str_contains($body, 'business costs')
                 && str_contains($body, 'live provider snapshot')
+                && str_contains($body, 'vendor imports and pricing')
+                && str_contains($body, 'porkbun import')
+                && str_contains($body, 'a la carte catalog summary')
                 && (str_contains($body, 'current monthly cost') || str_contains($body, 'future monthly expansion'))
             )
             : true;
