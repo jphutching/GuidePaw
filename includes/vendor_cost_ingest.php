@@ -317,14 +317,49 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             return ['ok' => false, 'error' => 'The PDF text was empty after extraction.'];
         }
 
+        $invoiceNumber = '';
+        $invoiceDate = '';
+        if (preg_match('/Invoice #:\s*([A-Za-z0-9\-]+)/i', $text, $m)) {
+            $invoiceNumber = trim((string) $m[1]);
+        }
+        if (preg_match('/Date:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/i', $text, $m)) {
+            $invoiceDate = trim((string) $m[1]);
+        } elseif (preg_match('/Date:\s*([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})/i', $text, $m)) {
+            $invoiceDate = trim((string) $m[1]);
+        }
+
         $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
         $fallbackRows = [];
         $currentDate = '';
+        $invoiceTotalCents = null;
         foreach ($lines as $line) {
             $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
             if ($line === '') {
                 continue;
+            }
+
+            if ($invoiceDate !== '' && $currentDate === '') {
+                $currentDate = $invoiceDate;
+            }
+
+            if (preg_match('/^Total Charged\s+\$?([\d,]+\.\d{2})$/i', $line, $totalMatch)) {
+                $invoiceTotalCents = gpVendorParseMoneyCents($totalMatch[1]);
+                continue;
+            }
+
+            if (preg_match('/^([A-Za-z0-9.\-]+)\s+(.+?)\s+(\d+)\s+(SUCCESS|PENDING|FAILED)\s+\$?([\d,]+\.\d{2})$/i', $line, $rowMatch)) {
+                $amountCents = gpVendorParseMoneyCents($rowMatch[5]);
+                if ($amountCents !== null) {
+                    $rowDate = $invoiceDate !== '' ? $invoiceDate : $currentDate;
+                    $rows[] = [
+                        'date' => $rowDate,
+                        'amount_cents' => $amountCents,
+                        'order_ref' => $invoiceNumber,
+                        'item' => trim((string) $rowMatch[2]) . ' ' . trim((string) $rowMatch[1]),
+                    ];
+                    continue;
+                }
             }
 
             $dateText = '';
@@ -371,6 +406,14 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
         }
 
         $matchedOrders = $rows !== [] ? $rows : $fallbackRows;
+        if ($matchedOrders === [] && $invoiceTotalCents !== null) {
+            $matchedOrders[] = [
+                'date' => $invoiceDate !== '' ? $invoiceDate : $currentDate,
+                'amount_cents' => $invoiceTotalCents,
+                'order_ref' => $invoiceNumber,
+                'item' => 'Porkbun invoice total',
+            ];
+        }
         if ($matchedOrders === []) {
             return ['ok' => false, 'error' => 'No importable rows were found in the PDF.'];
         }
@@ -438,6 +481,8 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             ':currency' => 'USD',
             ':raw_payload' => json_encode([
                 'source' => 'pdf',
+                'invoice_number' => $invoiceNumber,
+                'invoice_date' => $invoiceDate,
                 'matched_orders' => $matchedOrders,
                 'extracted_text_preview' => mb_substr($text, 0, 3000),
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
@@ -466,6 +511,8 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             'total_cents' => $importedTotalCents,
             'first_date' => $firstDate,
             'last_date' => $lastDate,
+            'invoice_number' => $invoiceNumber,
+            'invoice_date' => $invoiceDate,
         ];
     }
 }
