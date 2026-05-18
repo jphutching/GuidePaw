@@ -444,6 +444,7 @@ function familyBrowseCandidateNames(array $allBreeds, string $family): array
     foreach ($allBreeds as $breedName => $breed) {
         $breedFamily = normalizeBreedQuery((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
         $breedNameNorm = normalizeBreedQuery((string) $breedName);
+        $breedAliases = array_values(array_filter(array_map('normalizeBreedQuery', array_map('trim', (array) ($breed['aliases'] ?? [])))));
         if ($breedFamily !== '' && $breedFamily === $familyKey) {
             $candidateNames[] = $breedName;
             continue;
@@ -452,6 +453,12 @@ function familyBrowseCandidateNames(array $allBreeds, string $family): array
             if ($keyword !== '' && str_contains($breedNameNorm, $keyword)) {
                 $candidateNames[] = $breedName;
                 break;
+            }
+            foreach ($breedAliases as $alias) {
+                if ($alias !== '' && (str_contains($alias, $keyword) || str_contains($keyword, $alias))) {
+                    $candidateNames[] = $breedName;
+                    break 2;
+                }
             }
         }
     }
@@ -505,6 +512,7 @@ foreach ($breedSuggestions as $breedName) {
     $breed = $allBreeds[$breedName] ?? [];
     $breedSuggestionData[] = [
         'name' => $breedName,
+        'aliases' => array_values(array_filter(array_map('trim', (array) ($breed['aliases'] ?? [])))),
         'group' => trim((string) ($breed['breed_family'] ?? $breed['group'] ?? '')),
         'notes' => trim((string) ($breed['notes'] ?? '')),
         'traits' => trim((string) ($breed['traits'] ?? '')),
@@ -512,6 +520,19 @@ foreach ($breedSuggestions as $breedName) {
         'best_for' => breedSuggestionBestFor($breed),
         'focus' => breedSuggestionFocus($breed),
     ];
+}
+$breedAliasLookup = [];
+foreach ($breedSuggestionData as $breedSuggestion) {
+    $canonical = normalizeBreedQuery($breedSuggestion['name']);
+    if ($canonical !== '') {
+        $breedAliasLookup[$canonical] = $breedSuggestion['name'];
+    }
+    foreach ($breedSuggestion['aliases'] as $alias) {
+        $normalizedAlias = normalizeBreedQuery((string) $alias);
+        if ($normalizedAlias !== '') {
+            $breedAliasLookup[$normalizedAlias] = $breedSuggestion['name'];
+        }
+    }
 }
 $familyOptions = [];
 foreach ($allBreeds as $breed) {
@@ -532,10 +553,12 @@ $matches = [];
 foreach ($allBreeds as $breedName => $breed) {
     $groupText = strtolower((string) ($breed['breed_family'] ?? $breed['group'] ?? ''));
     $breedNameNorm = normalizeBreedQuery((string) $breedName);
+    $breedAliases = array_values(array_filter(array_map('normalizeBreedQuery', array_map('trim', (array) ($breed['aliases'] ?? [])))));
     $blob = strtolower(implode(' ', [
         $breedName,
         $breed['group'] ?? '',
         $breed['breed_family'] ?? '',
+        implode(' ', (array) ($breed['aliases'] ?? [])),
         $breed['temperament'] ?? '',
         $breed['traits'] ?? '',
         $breed['notes'] ?? '',
@@ -549,10 +572,12 @@ foreach ($allBreeds as $breedName => $breed) {
     $reasons = [];
 
     if ($breedQueryNorm !== '') {
-        if ($breedNameNorm === $breedQueryNorm) {
+        if ($breedNameNorm === $breedQueryNorm || in_array($breedQueryNorm, $breedAliases, true)) {
             $score += 120;
-            $reasons[] = 'Exact breed name match.';
-        } elseif (str_contains($breedNameNorm, $breedQueryNorm) || str_contains($blob, $breedQueryNorm)) {
+            $reasons[] = 'Exact breed or alias match.';
+        } elseif (str_contains($breedNameNorm, $breedQueryNorm) || str_contains($blob, $breedQueryNorm) || array_reduce($breedAliases, static function (bool $carry, string $alias) use ($breedQueryNorm): bool {
+            return $carry || str_contains($alias, $breedQueryNorm) || str_contains($breedQueryNorm, $alias);
+        }, false)) {
             $score += 80;
             $reasons[] = 'Matches the breed name you typed.';
         } else {
@@ -1152,14 +1177,8 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
     if (!input || !form || !drillFamilySelect || !focusInput || !hint || !live || !focusButtons.length) return;
 
     const breedItems = <?= json_encode($breedSuggestionData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const aliasLookup = <?= json_encode($breedAliasLookup, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     let activeFocus = 'all';
-    const aliases = {
-        'cavalier': 'Cavalier King Charles Spaniel',
-        'king charles': 'Cavalier King Charles Spaniel',
-        'cavalier king charles': 'Cavalier King Charles Spaniel',
-        'cavalier king charles spaniel': 'Cavalier King Charles Spaniel',
-        'cavalier spaniel': 'Cavalier King Charles Spaniel',
-    };
 
     const normalize = (value) => String(value || '')
         .toLowerCase()
@@ -1215,7 +1234,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
             return;
         }
 
-        const canonical = aliases[query] || null;
+        const canonical = aliasLookup[query] || null;
         const ranked = breedItems
             .map((item) => ({ ...item, norm: normalize(item.name) }))
             .filter((entry) => entry.norm.includes(query) || (canonical && entry.name === canonical))

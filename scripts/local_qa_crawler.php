@@ -1607,6 +1607,25 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $firstBreed = trim((string) ($breedQuestionnaireBreedQueryMatch[1] ?? ''));
         $breedQuestionnaireBreedQueryAlignmentSeen = strcasecmp($firstBreed, 'Cavalier King Charles Spaniel') === 0;
     }
+    $breedQuestionnaireKingCharlesQueryPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
+        'goal' => 'companion',
+        'breed_query' => 'King Charles',
+        'size' => 'flexible',
+        'energy' => 'moderate',
+        'grooming' => 'moderate',
+        'public' => 'some',
+        'experience' => 'some',
+        'sensitivity' => 'balanced',
+    ], '', $insecureLocalSsl, '', false);
+    $breedQuestionnaireKingCharlesQueryBody = strtolower($breedQuestionnaireKingCharlesQueryPage['body']);
+    $breedQuestionnaireKingCharlesQuerySeen = gpQaPageLooksOk($breedQuestionnaireKingCharlesQueryPage)
+        && str_contains($breedQuestionnaireKingCharlesQueryBody, 'english toy spaniel')
+        && str_contains($breedQuestionnaireKingCharlesQueryBody, 'king charles spaniel');
+    $breedQuestionnaireKingCharlesQueryAlignmentSeen = false;
+    if (gpQaPageLooksOk($breedQuestionnaireKingCharlesQueryPage) && preg_match('/<h2 class="h5 mb-3">Top breed ideas<\/h2>.*?<div class="fw-bold">([^<]+)<\/div>/is', $breedQuestionnaireKingCharlesQueryPage['body'], $breedQuestionnaireKingCharlesQueryMatch)) {
+        $firstBreed = trim((string) ($breedQuestionnaireKingCharlesQueryMatch[1] ?? ''));
+        $breedQuestionnaireKingCharlesQueryAlignmentSeen = strcasecmp($firstBreed, 'English Toy Spaniel') === 0;
+    }
     $breedQuestionnaireFocusRankPage = gpQaRequest($baseUrl, 'breed_questionnaire.php', 'POST', [
         'goal' => 'service_access',
         'breed_focus' => 'public',
@@ -1986,6 +2005,8 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'breed_questionnaire_toy_alignment', $breedQuestionnaireToyAlignmentSeen, 'HTTP ' . $breedQuestionnaireToyPage['status'] . ($breedQuestionnaireToyAlignmentSeen ? ' toy size aligned with small/toy result' : ' toy size still prefers a larger result'));
     gpQaResult($results, 'breed_questionnaire_breed_query', $breedQuestionnaireBreedQuerySeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQuerySeen ? ' breed query surfaced the target breed' : ' breed query missing'));
     gpQaResult($results, 'breed_questionnaire_breed_query_alignment', $breedQuestionnaireBreedQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireBreedQueryPage['status'] . ($breedQuestionnaireBreedQueryAlignmentSeen ? ' Cavalier query aligned to Cavalier King Charles Spaniel' : ' Cavalier query did not pin the target breed'));
+    gpQaResult($results, 'breed_questionnaire_king_charles_query', $breedQuestionnaireKingCharlesQuerySeen, 'HTTP ' . $breedQuestionnaireKingCharlesQueryPage['status'] . ($breedQuestionnaireKingCharlesQuerySeen ? ' King Charles query surfaced English Toy Spaniel' : ' King Charles query missing'));
+    gpQaResult($results, 'breed_questionnaire_king_charles_alignment', $breedQuestionnaireKingCharlesQueryAlignmentSeen, 'HTTP ' . $breedQuestionnaireKingCharlesQueryPage['status'] . ($breedQuestionnaireKingCharlesQueryAlignmentSeen ? ' King Charles query aligned to English Toy Spaniel' : ' King Charles query did not pin the English Toy Spaniel'));
     gpQaResult($results, 'breed_questionnaire_drilldown_mode', $breedQuestionnaireDrilldownSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownSeen ? ' drill-down mode found' : ' drill-down mode missing'));
     gpQaResult($results, 'breed_questionnaire_drilldown_alignment', $breedQuestionnaireDrilldownAlignmentSeen, 'HTTP ' . $breedQuestionnaireDrilldownPage['status'] . ($breedQuestionnaireDrilldownAlignmentSeen ? ' drill-down result stayed small/toy' : ' drill-down result drifted large'));
     gpQaResult($results, 'settings_page_no_handler_profile_link', $settingsHasNoHandlerProfileLink, 'HTTP ' . $settingsPage['status'] . ($settingsHasNoHandlerProfileLink ? ' redundant handler profile shortcut removed' : ' handler profile shortcut still present'));
