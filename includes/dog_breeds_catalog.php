@@ -546,6 +546,15 @@ function getDogBreedsCatalog(): array
     }
 
     $supplementalBreedAliases = [
+        'American Cocker Spaniel' => ['American Cocker'],
+        'Brittany' => ['Brittany Spaniel'],
+        'Boston Terrier' => ['Boston'],
+        'Cocker Spaniel' => ['Cocker'],
+        'Chinese Crested' => ['Crestie'],
+        'Corgi' => ['Welsh Corgi', 'Corgi Dog'],
+        'Dachshund' => ['Doxie', 'Wiener Dog', 'Weiner Dog', 'Sausage Dog'],
+        'Pembroke Welsh Corgi' => ['Pembroke Corgi', 'Pem Corgi'],
+        'Cardigan Welsh Corgi' => ['Cardigan Corgi', 'Cardi'],
         'Manchester Terrier (Toy)' => ['Toy Manchester Terrier', 'Manchester Toy'],
         'Miniature Pinscher' => ['Min Pin', 'Mini Pin'],
         'Russian Toy' => ['Russian Toy Terrier', 'Russkiy Toy'],
@@ -560,6 +569,7 @@ function getDogBreedsCatalog(): array
         'Beagle' => ['Beag'],
         'Chihuahua' => ['Chi'],
         'Pomeranian' => ['Pom'],
+        'Shiba Inu' => ['Shiba'],
     ];
 
     foreach ($supplementalBreedAliases as $breedName => $aliases) {
