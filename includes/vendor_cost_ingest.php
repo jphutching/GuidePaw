@@ -471,26 +471,35 @@ if (!function_exists('gpVendorCostImportPorkbunPdf')) {
             $invoiceDate = trim((string) $m[1]);
         }
 
-        $normalizedText = trim(preg_replace('/\s+/', ' ', $text) ?? '');
+        $lines = preg_split('/\R/', $text) ?: [];
         $rows = [];
         $invoiceTotalCents = null;
-
-        if ($normalizedText !== '') {
-            if (preg_match('/(?:Total Charged|Invoice Total|Amount Due|Grand Total)\s*(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $normalizedText, $summaryMatch)) {
-                $invoiceTotalCents = gpVendorParseMoneyCents((string) $summaryMatch[1]);
+        foreach ($lines as $line) {
+            $line = trim(preg_replace('/\s+/', ' ', (string) $line) ?? '');
+            if ($line === '') {
+                continue;
             }
 
-            if (preg_match('/(?:guidepaw\.app\s+)?Domain Registration\s+1\s+SUCCESS\s+(?:\$|USD)?\s*([0-9][0-9,]*\.[0-9]{2})/i', $normalizedText, $rowMatch)) {
-                $amountCents = gpVendorParseMoneyCents((string) $rowMatch[1]);
-                if ($amountCents !== null && $amountCents > 0) {
-                    $rows[] = [
-                        'date' => $invoiceDate,
-                        'amount_cents' => $amountCents,
-                        'order_ref' => $invoiceNumber,
-                        'item' => 'guidepaw.app Domain Registration',
-                    ];
-                    if ($invoiceTotalCents === null) {
-                        $invoiceTotalCents = $amountCents;
+            if ($invoiceTotalCents === null && (stripos($line, 'Total Charged') !== false || stripos($line, 'Invoice Total') !== false || stripos($line, 'Amount Due') !== false || stripos($line, 'Grand Total') !== false)) {
+                if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
+                    $invoiceTotalCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
+                }
+                continue;
+            }
+
+            if (stripos($line, 'guidepaw.app') !== false && stripos($line, 'SUCCESS') !== false && stripos($line, 'Domain Registration') !== false) {
+                if (preg_match_all('/([0-9][0-9,]*\.[0-9]{2})/', $line, $moneyMatches) && !empty($moneyMatches[1])) {
+                    $amountCents = gpVendorParseMoneyCents((string) end($moneyMatches[1]));
+                    if ($amountCents !== null && $amountCents > 0) {
+                        $rows[] = [
+                            'date' => $invoiceDate,
+                            'amount_cents' => $amountCents,
+                            'order_ref' => $invoiceNumber,
+                            'item' => 'guidepaw.app Domain Registration',
+                        ];
+                        if ($invoiceTotalCents === null) {
+                            $invoiceTotalCents = $amountCents;
+                        }
                     }
                 }
             }
