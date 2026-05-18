@@ -558,35 +558,33 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                             <option value="drive_ok" <?= $answers['sensitivity'] === 'drive_ok' ? 'selected' : '' ?>>Drive is okay</option>
                         </select>
                     </div>
-                    <div class="col-12">
-                        <details class="border rounded-4 p-3 bg-white">
-                            <summary class="fw-bold">Drill-down mode</summary>
-                            <div class="row g-3 mt-1">
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label fw-bold">Breed family</label>
-                                    <select class="form-select" name="drill_family">
-                                        <option value="any" <?= $drillFamily === 'any' ? 'selected' : '' ?>>Any family</option>
-                                        <?php foreach ($familyOptions as $family): ?>
-                                            <option value="<?= e($family) ?>" <?= $drillFamily === $family ? 'selected' : '' ?>><?= e($family) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label fw-bold">Drill size</label>
-                                    <select class="form-select" name="drill_size">
-                                        <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
-                                        <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
-                                        <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
-                                        <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
-                                        <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
-                                        <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-text">Use this when you already have a broad fit and want to narrow the list to a family or working size.</div>
-                                </div>
+                    <div class="col-12 border rounded-4 p-3 bg-white">
+                        <div class="fw-bold mb-2">Drill-down mode</div>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold">Breed family</label>
+                                <select class="form-select" name="drill_family">
+                                    <option value="any" <?= $drillFamily === 'any' ? 'selected' : '' ?>>Any family</option>
+                                    <?php foreach ($familyOptions as $family): ?>
+                                        <option value="<?= e($family) ?>" <?= $drillFamily === $family ? 'selected' : '' ?>><?= e($family) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
-                        </details>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-bold">Drill size</label>
+                                <select class="form-select" name="drill_size">
+                                    <option value="any" <?= $drillSize === 'any' ? 'selected' : '' ?>>Any size</option>
+                                    <option value="toy" <?= $drillSize === 'toy' ? 'selected' : '' ?>><?= e($sizeLabel['toy']) ?></option>
+                                    <option value="small" <?= $drillSize === 'small' ? 'selected' : '' ?>><?= e($sizeLabel['small']) ?></option>
+                                    <option value="medium" <?= $drillSize === 'medium' ? 'selected' : '' ?>><?= e($sizeLabel['medium']) ?></option>
+                                    <option value="large" <?= $drillSize === 'large' ? 'selected' : '' ?>><?= e($sizeLabel['large']) ?></option>
+                                    <option value="giant" <?= $drillSize === 'giant' ? 'selected' : '' ?>><?= e($sizeLabel['giant']) ?></option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-text">Use this when you already have a broad fit and want to narrow the list to a family or working size.</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-12">
                         <button class="btn btn-primary w-100" type="submit">Show breed ideas</button>
