@@ -285,20 +285,136 @@ if (!function_exists('gpVendorCostReadPdfText')) {
             return ['ok' => false, 'error' => 'The uploaded PDF could not be read.'];
         }
 
-        $command = 'pdftotext -layout -nopgbrk -q ' . escapeshellarg($path) . ' -';
-        $output = [];
-        $exitCode = 0;
-        @exec($command, $output, $exitCode);
-        if ($exitCode !== 0) {
+        $text = '';
+        if (function_exists('exec') && trim((string) shell_exec('command -v pdftotext 2>/dev/null')) !== '') {
+            $command = 'pdftotext -layout -nopgbrk -q ' . escapeshellarg($path) . ' -';
+            $output = [];
+            $exitCode = 0;
+            @exec($command, $output, $exitCode);
+            if ($exitCode === 0) {
+                $text = trim(implode("\n", $output));
+            }
+        }
+
+        if ($text === '') {
+            $binary = file_get_contents($path);
+            if (!is_string($binary) || $binary === '') {
+                return ['ok' => false, 'error' => 'The PDF did not contain extractable text.'];
+            }
+            $text = gpVendorPdfExtractTextFromBinary($binary);
+        }
+
+        if ($text === '') {
             return ['ok' => false, 'error' => 'Could not extract text from the PDF.'];
         }
 
-        $text = trim(implode("\n", $output));
-        if ($text === '') {
-            return ['ok' => false, 'error' => 'The PDF did not contain extractable text.'];
+        return ['ok' => true, 'text' => $text];
+    }
+}
+
+if (!function_exists('gpVendorPdfDecodeHexString')) {
+    function gpVendorPdfDecodeHexString(string $hex, array $map): string
+    {
+        $hex = preg_replace('/[^0-9A-Fa-f]/', '', $hex) ?? '';
+        if ($hex === '') {
+            return '';
+        }
+        if ((strlen($hex) % 4) !== 0) {
+            $hex = str_pad($hex, (int) ceil(strlen($hex) / 4) * 4, '0', STR_PAD_RIGHT);
+        }
+        $text = '';
+        for ($i = 0; $i < strlen($hex); $i += 4) {
+            $code = strtoupper(substr($hex, $i, 4));
+            $text .= $map[$code] ?? '';
+        }
+        return $text;
+    }
+}
+
+if (!function_exists('gpVendorPdfExtractTextFromBinary')) {
+    function gpVendorPdfExtractTextFromBinary(string $pdf): string
+    {
+        $objBodies = [];
+        if (preg_match_all('/(\d+)\s+0\s+obj(.*?)endobj/s', $pdf, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $objBodies[(int) $match[1]] = (string) $match[2];
+            }
         }
 
-        return ['ok' => true, 'text' => $text];
+        $fontToUnicode = [];
+        if (preg_match_all('/\/(F\d+)\s+(\d+)\s+0\s+R\b/', $pdf, $fontRefs, PREG_SET_ORDER)) {
+            foreach ($fontRefs as $fontRef) {
+                $fontName = (string) $fontRef[1];
+                $fontObj = (int) $fontRef[2];
+                $body = $objBodies[$fontObj] ?? '';
+                if ($body !== '' && preg_match('/\/ToUnicode\s+(\d+)\s+0\s+R\b/', $body, $toUnicodeMatch)) {
+                    $fontToUnicode[$fontName] = (int) $toUnicodeMatch[1];
+                }
+            }
+        }
+
+        $cmapMaps = [];
+        foreach ($fontToUnicode as $fontName => $cmapObj) {
+            $body = $objBodies[$cmapObj] ?? '';
+            if ($body === '') {
+                continue;
+            }
+            $stream = '';
+            if (preg_match('/stream\r?\n(.*?)\r?\nendstream/s', $body, $streamMatch)) {
+                $stream = (string) $streamMatch[1];
+            }
+            if ($stream === '') {
+                continue;
+            }
+            $cmap = @gzuncompress($stream);
+            if ($cmap === false) {
+                $cmap = @gzinflate($stream);
+            }
+            if (!is_string($cmap) || $cmap === '') {
+                continue;
+            }
+            $map = [];
+            if (preg_match_all('/<([0-9A-Fa-f]{4})>\s*<([0-9A-Fa-f]{4})>\s*\[([^\]]+)\]/s', $cmap, $rangeMatches, PREG_SET_ORDER)) {
+                foreach ($rangeMatches as $rangeMatch) {
+                    $start = hexdec($rangeMatch[1]);
+                    $end = hexdec($rangeMatch[2]);
+                    preg_match_all('/<([0-9A-Fa-f]{4})>/', $rangeMatch[3], $chars);
+                    $codePoint = $start;
+                    foreach ($chars[1] as $charHex) {
+                        $map[strtoupper(str_pad(dechex($codePoint), 4, '0', STR_PAD_LEFT))] = mb_convert_encoding(hex2bin($charHex), 'UTF-8', 'UTF-16BE');
+                        $codePoint++;
+                        if ($codePoint > $end) {
+                            break;
+                        }
+                    }
+                }
+            }
+            $cmapMaps[$fontName] = $map;
+        }
+
+        $textParts = [];
+        if (preg_match_all('/BT(.*?)ET/s', $pdf, $blocks, PREG_SET_ORDER)) {
+            foreach ($blocks as $blockMatch) {
+                $block = (string) $blockMatch[1];
+                $fontName = '';
+                if (preg_match('/\/(F\d+)\s+\d+(?:\.\d+)?\s+Tf/', $block, $fontMatch)) {
+                    $fontName = (string) $fontMatch[1];
+                }
+                $map = $cmapMaps[$fontName] ?? [];
+                $blockText = '';
+                if (preg_match_all('/<([0-9A-Fa-f]+)>/', $block, $hexMatches)) {
+                    foreach ($hexMatches[1] as $hex) {
+                        $blockText .= gpVendorPdfDecodeHexString((string) $hex, $map);
+                    }
+                }
+                $blockText = trim(preg_replace('/\s+/', ' ', $blockText) ?? '');
+                if ($blockText !== '') {
+                    $textParts[] = $blockText;
+                }
+            }
+        }
+
+        return trim(implode("\n", $textParts));
     }
 }
 
