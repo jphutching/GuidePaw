@@ -546,6 +546,7 @@ function getDogBreedsCatalog(): array
     }
 
     $supplementalBreedAliases = [
+        'Bernese Mountain Dog' => ['Berner'],
         'Australian Cattle Dog' => ['Blue Heeler', 'Red Heeler', 'Queensland Heeler', 'ACD'],
         'French Bulldog' => ['Frenchie'],
         'American Cocker Spaniel' => ['American Cocker'],
@@ -578,6 +579,7 @@ function getDogBreedsCatalog(): array
         'Chihuahua' => ['Chi'],
         'Pomeranian' => ['Pom'],
         'Shiba Inu' => ['Shiba'],
+        'Newfoundland' => ['Newfie', 'Newfy'],
     ];
 
     foreach ($supplementalBreedAliases as $breedName => $aliases) {
