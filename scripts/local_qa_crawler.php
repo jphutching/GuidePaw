@@ -1474,6 +1474,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         && str_contains($breedQuestionnaireBody, 'optional. if you already have a breed in mind');
     $breedQuestionnaireFocusFiltersSeen = gpQaPageLooksOk($breedQuestionnairePage)
         && str_contains($breedQuestionnaireBody, 'breed focus filter')
+        && str_contains($breedQuestionnaireBody, 'breed-focus-group')
         && str_contains($breedQuestionnaireBody, 'public access')
         && str_contains($breedQuestionnaireBody, 'companion')
         && str_contains($breedQuestionnaireBody, 'task work');
