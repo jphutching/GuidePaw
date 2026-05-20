@@ -2,6 +2,7 @@
 require 'includes/db_connect.php'; 
 require_once __DIR__ . '/includes/roles.php';
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/seo.php';
 
 if (!empty($_SESSION['user_id'])) {
     $existingUser = getUserRecord($pdo, (int) $_SESSION['user_id']);
@@ -77,7 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="theme-color" content="#0d6efd">
     <link rel="manifest" href="manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e(appName()) ?></title>
+    <?php guidepawSeoHead([
+        'title' => 'GuidePaw Login',
+        'description' => 'Sign in to your GuidePaw dashboard, dogs, and training tools.',
+        'robots' => 'noindex,nofollow',
+        'type' => 'website',
+        'image' => '/assets/brand/guidepaw-logo.png',
+    ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container p-5 bg-light">

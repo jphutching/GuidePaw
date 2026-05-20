@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/app_config.php';
+require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/stripe_checkout.php';
 checkLogin();
 
@@ -88,7 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d6efd">
 <link rel="manifest" href="manifest.json">
-<title>Support Funding · <?= e(appName()) ?></title>
+<?php guidepawSeoHead([
+    'title' => 'Support GuidePaw',
+    'description' => 'Support GuidePaw with a one-time gift or monthly contribution, or browse merch and community links.',
+    'robots' => 'index,follow',
+    'type' => 'website',
+    'image' => '/assets/brand/guidepaw-logo.png',
+]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>

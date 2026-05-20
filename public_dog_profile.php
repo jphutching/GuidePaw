@@ -4,6 +4,7 @@ require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
 require_once 'includes/qr_tracking.php';
 require_once 'includes/app_config.php';
+require_once 'includes/seo.php';
 require_once 'includes/support_badges.php';
 
 $dogId = isset($_GET['dog']) ? (int) $_GET['dog'] : 0;
@@ -11,7 +12,7 @@ $token = trim((string) ($_GET['token'] ?? ''));
 
 if ($dogId <= 0 || $token === '' || !publicDogProfileTokenValid($dogId, $token)) {
     http_response_code(404);
-    echo '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Profile not found</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light"><main class="container py-5"><div class="card p-4 shadow-sm"><h1 class="h4">Profile not found</h1><p class="text-muted mb-0">This public dog profile link is invalid or expired.</p></div></main></body></html>';
+    echo '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Profile not found</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light"><main class="container py-5"><div class="card p-4 shadow-sm"><h1 class="h4">Profile not found</h1><p class="text-muted mb-0">This public dog profile link is invalid or expired.</p></div></main></body></html>';
     exit;
 }
 
@@ -44,7 +45,7 @@ $stmt->execute([$dogId]);
 $dog = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$dog) {
     http_response_code(404);
-    echo '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Profile not found</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light"><main class="container py-5"><div class="card p-4 shadow-sm"><h1 class="h4">Profile not found</h1><p class="text-muted mb-0">This public dog profile does not exist.</p></div></main></body></html>';
+    echo '<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Profile not found</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="bg-light"><main class="container py-5"><div class="card p-4 shadow-sm"><h1 class="h4">Profile not found</h1><p class="text-muted mb-0">This public dog profile does not exist.</p></div></main></body></html>';
     exit;
 }
 
@@ -86,7 +87,13 @@ gpLogDogQrScan($pdo, (int) $dogId);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= e($dogName) ?> · Public Profile</title>
+<?php guidepawSeoHead([
+    'title' => $dogName . ' · Public Dog Profile',
+    'description' => 'Public service dog contact profile for ' . $dogName . '. Share found-dog location reports, view handler contact details, and check public notes.',
+    'robots' => 'noindex,nofollow',
+    'type' => 'profile',
+    'image' => $dogPhoto !== '' ? $dogPhoto : '/assets/brand/guidepaw-logo.png',
+]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
 body { background: #f1f5f9; color:#0f172a; }

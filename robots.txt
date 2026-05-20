@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /includes/
+Disallow: /scripts/
+Disallow: /sql/
+Disallow: /storage/
+Disallow: /tests/
+Disallow: /vendor/
+Disallow: /public_dog_profile.php
+Disallow: /report_found_dog.php
+
+Sitemap: https://guidepaw.app/sitemap.php

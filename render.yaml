@@ -20,7 +20,7 @@ projects:
             dockerfilePath: ./Dockerfile
             autoDeployTrigger: commit
             domains:
-              - beta.guidepaw.app
+              - guidepaw.app
             envVars:
               - key: APP_ENV
                 value: production
@@ -29,7 +29,7 @@ projects:
                 value: "false"
 
               - key: APP_URL
-                value: https://beta.guidepaw.app
+                value: https://guidepaw.app
 
               - key: DB_CONNECTION
                 value: pgsql

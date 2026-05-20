@@ -2,6 +2,7 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once 'includes/app_config.php';
+require_once 'includes/seo.php';
 checkLogin();
 
 $userId = (int) $_SESSION['user_id'];
@@ -16,7 +17,13 @@ $guidepawFacebookUrl = 'https://www.facebook.com/share/1J2hMnUBbm/';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0d6efd">
 <link rel="manifest" href="manifest.json">
-<title>Contact Us · <?= e(appName()) ?></title>
+<?php guidepawSeoHead([
+    'title' => 'Contact GuidePaw',
+    'description' => 'Reach GuidePaw for feedback, support, and handler profile links.',
+    'robots' => 'index,follow',
+    'type' => 'website',
+    'image' => '/assets/brand/guidepaw-logo.png',
+]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>

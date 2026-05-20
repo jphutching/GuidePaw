@@ -12,6 +12,8 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'render_deploy_complete', 'text' => 'Render redeploy completed successfully after latest GitHub commits.', 'expected' => 'beta.guidepaw.app loads without application error.'],
                 ['id' => 'render_web_starter', 'text' => 'Render web service plan is Starter.', 'expected' => 'render.yaml and Render dashboard show the web service on starter.'],
                 ['id' => 'render_db_basic', 'text' => 'Render PostgreSQL database plan is still basic-256mb, not starter.', 'expected' => 'Database plan has not been accidentally downgraded or changed.'],
+                ['id' => 'robots_txt', 'text' => 'robots.txt is present for search engines.', 'expected' => 'robots.txt lists internal disallows and points at the sitemap.'],
+                ['id' => 'sitemap_xml', 'text' => 'sitemap.xml endpoint loads for search engines.', 'expected' => 'sitemap.php returns XML with public GuidePaw URLs.'],
                 ['id' => 'zepto_env_present', 'text' => 'ZeptoMail environment variables are present.', 'expected' => 'ZEPTO_API_URL, token, from address/name, bounce address, and MAIL_FROM values exist.'],
                 ['id' => 'telegram_env_present', 'text' => 'Telegram beta notification env vars are present if Telegram notifications are enabled.', 'expected' => 'Telegram bot token/chat id settings remain configured outside committed code.'],
                 ['id' => 'migrations_applied', 'text' => 'Database migrations run successfully.', 'expected' => 'Dog access/status/transfer/audit tables and columns exist on beta.'],
@@ -24,6 +26,7 @@ function gpBetaQaChecklistItems(): array
             'items' => [
                 ['id' => 'login_page', 'text' => 'Login page loads.', 'expected' => 'login.php opens with the handler login form.'],
                 ['id' => 'login_breed_questionnaire_cta', 'text' => 'Login page surfaces the public breed questionnaire CTA.', 'expected' => 'The login page invites visitors to open the Breed Questionnaire without an account.'],
+                ['id' => 'public_home_page', 'text' => 'Public home landing page loads for logged-out visitors.', 'expected' => 'index.php shows the public GuidePaw landing page before sign in.'],
                 ['id' => 'login_admin', 'text' => 'Admin account can log in.', 'expected' => 'Admin lands on dashboard or required Handler Profile page if missing required fields.'],
                 ['id' => 'login_test_acct', 'text' => 'Test account can log in.', 'expected' => 'Test account can proceed after required fields are present.'],
                 ['id' => 'required_profile_gate', 'text' => 'Incomplete account is redirected to Handler Profile before continuing.', 'expected' => 'Display name, Home street, Home city, Home state, Home ZIP, Public phone, and Public email are blocking fields.'],

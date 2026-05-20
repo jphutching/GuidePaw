@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
+require_once 'includes/seo.php';
 checkLogin();
 ?>
 <!doctype html>
@@ -8,7 +9,13 @@ checkLogin();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Travel Rights</title>
+    <?php guidepawSeoHead([
+        'title' => 'Air Travel Rights for Service Dogs',
+        'description' => 'GuidePaw’s practical air travel reference for service dogs, DOT forms, and flight-day rules.',
+        'robots' => 'noindex,nofollow',
+        'type' => 'article',
+        'image' => '/assets/brand/guidepaw-logo.png',
+    ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>

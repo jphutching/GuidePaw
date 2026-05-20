@@ -18,6 +18,144 @@ require_once __DIR__ . '/includes/notifications.php';
 require_once __DIR__ . '/includes/training_suggestion_links.php';
 require_once __DIR__ . '/includes/daily_wins.php';
 require_once 'includes/app_config.php';
+
+if (empty($_SESSION['user_id'])) {
+    require_once __DIR__ . '/includes/seo.php';
+    $landingTitle = 'GuidePaw | Dog Training Logs, Service Dog Profiles, and Handler Tools';
+    $landingDescription = 'GuidePaw helps handlers research breeds, track training, manage dog profiles, share public service dog details, and keep support tools organized.';
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php guidepawSeoHead([
+        'title' => $landingTitle,
+        'description' => $landingDescription,
+        'robots' => 'index,follow',
+        'canonical' => guidepawSeoAbsoluteUrl('/'),
+        'image' => '/assets/brand/guidepaw-logo.png',
+    ]); ?>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f1f5f9; color: #0f172a; }
+        .landing-shell { max-width: 1100px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+        .landing-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 28px; padding: 1.5rem; box-shadow: 0 12px 28px rgba(15,23,42,.18); }
+        .landing-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); background: #fff; }
+        .landing-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .landing-pill { display:inline-flex; align-items:center; gap:.45rem; border-radius:999px; padding:.45rem .75rem; background: rgba(255,255,255,.12); font-weight:700; }
+        .landing-example { border: 1px solid rgba(15,23,42,.08); border-radius: 16px; padding: 1rem; background: #fff; height: 100%; }
+        .landing-faq summary { cursor: pointer; font-weight: 700; }
+    </style>
+    </head>
+    <body>
+    <?php guidepawBrandHeader(); ?>
+    <main class="landing-shell">
+        <section class="landing-hero mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div class="flex-grow-1" style="min-width: 260px;">
+                    <div class="landing-pill mb-3">Dog training logs • service dog profiles • breed research</div>
+                    <h1 class="display-6 fw-bold mb-3">GuidePaw keeps handler work organized.</h1>
+                    <p class="lead mb-4"><?= e($landingDescription) ?></p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-light btn-lg fw-bold" href="breed_questionnaire.php">Research a breed</a>
+                        <a class="btn btn-outline-light btn-lg fw-bold" href="register.php">Create an account</a>
+                        <a class="btn btn-outline-light btn-lg fw-bold" href="support_funding.php">Support GuidePaw</a>
+                    </div>
+                </div>
+                <div class="landing-card p-3 text-dark" style="min-width: 280px; max-width: 360px; width: 100%;">
+                    <div class="small text-uppercase text-muted fw-semibold">What people use it for</div>
+                    <ul class="mt-3 mb-0 ps-3">
+                        <li>Track training sessions and quick wins.</li>
+                        <li>Share a public dog profile and found-dog contact details.</li>
+                        <li>Compare breeds before committing to a dog.</li>
+                        <li>Keep ADA, travel, and support notes in one place.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-4">
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="text-uppercase text-muted fw-semibold small">Examples</div>
+                    <h2 class="h3 mb-0">Public examples people can browse</h2>
+                </div>
+                <div class="text-muted">These are read-only entry points, not editable marketing filler.</div>
+            </div>
+            <div class="landing-grid">
+                <div class="landing-example">
+                    <div class="fw-bold mb-1">Breed Questionnaire</div>
+                    <div class="text-muted small">Size, focus, family, and nickname matching to help narrow breeds worth researching.</div>
+                </div>
+                <div class="landing-example">
+                    <div class="fw-bold mb-1">Public Dog Profile</div>
+                    <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes.</div>
+                </div>
+                <div class="landing-example">
+                    <div class="fw-bold mb-1">Support Options</div>
+                    <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
+                </div>
+                <div class="landing-example">
+                    <div class="fw-bold mb-1">Service Dog Notes</div>
+                    <div class="text-muted small">Practical ADA and travel notes for handlers who need a quick reference.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="row g-3 mb-4">
+            <div class="col-lg-7">
+                <div class="landing-card p-4 h-100">
+                    <div class="text-uppercase text-muted fw-semibold small mb-2">How it works</div>
+                    <h2 class="h3">A straightforward path from research to daily use</h2>
+                    <ol class="mt-3 mb-0">
+                        <li>Research a breed before you commit.</li>
+                        <li>Create a handler account and add your dogs.</li>
+                        <li>Track training, reminders, and public profile details.</li>
+                        <li>Keep support options and add-ons separate from the core workflow.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="landing-card p-4 h-100">
+                    <div class="text-uppercase text-muted fw-semibold small mb-2">Common questions</div>
+                    <div class="landing-faq accordion accordion-flush" id="gpFaq">
+                        <details class="mb-3">
+                            <summary>Is the breed questionnaire public?</summary>
+                            <p class="text-muted mt-2 mb-0">Yes. It is meant for people researching a dog before they create an account.</p>
+                        </details>
+                        <details class="mb-3">
+                            <summary>Do I need an account to browse the examples?</summary>
+                            <p class="text-muted mt-2 mb-0">No. The public landing, breed tool, and support page are all readable without signing in.</p>
+                        </details>
+                        <details>
+                            <summary>What is the main dashboard for?</summary>
+                            <p class="text-muted mt-2 mb-0">The dashboard is for logged-in handlers to manage dogs, training, and support tools.</p>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-card p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="text-uppercase text-muted fw-semibold small mb-1">Next step</div>
+                    <h2 class="h4 mb-0">Start with the breed questionnaire or sign in to your dashboard.</h2>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Open breed tool</a>
+                    <a class="btn btn-outline-primary fw-bold" href="login.php">Sign in</a>
+                </div>
+            </div>
+        </section>
+    </main>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 checkLogin();
 
 gpExpireDogHandlerAccess($pdo);

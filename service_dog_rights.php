@@ -1,6 +1,7 @@
 <?php
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
+require_once 'includes/seo.php';
 checkLogin();
 ?>
 <!DOCTYPE html>
@@ -8,7 +9,13 @@ checkLogin();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detailed ADA Notes</title>
+    <?php guidepawSeoHead([
+        'title' => 'Detailed ADA Service Dog Notes',
+        'description' => 'A practical GuidePaw reference for ADA service dog rights, handler responsibilities, and calm response scripts.',
+        'robots' => 'noindex,nofollow',
+        'type' => 'article',
+        'image' => '/assets/brand/guidepaw-logo.png',
+    ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>

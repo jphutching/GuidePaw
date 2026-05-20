@@ -444,7 +444,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
     gpQaResult($results, 'crawler_admin_login', $adminLoggedIn, $adminLoggedIn ? 'admin login succeeded' : 'admin login failed');
 
     if ($adminLoggedIn) {
+        $publicHomePage = gpQaRequest($baseUrl, 'index.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $loginPage = gpQaRequest($baseUrl, 'login.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $robotsTxtPage = gpQaRequest($baseUrl, 'robots.txt', 'GET', [], '', $insecureLocalSsl, '', false);
+        $sitemapPage = gpQaRequest($baseUrl, 'sitemap.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $healthzPage = gpQaRequest($baseUrl, 'healthz.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $csrfTokenPage = gpQaRequest($baseUrl, 'csrf_token.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminHomePage = gpQaRequest($baseUrl, 'admin.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -454,12 +457,27 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaLogin($baseUrl, $adminUser, $adminPass, $logoutCookieHeader, $logoutCookie, $insecureLocalSsl);
         }
         $logoutPage = gpQaRequest($baseUrl, 'logout.php', 'GET', [], $logoutCookie ?: $adminCookie, $insecureLocalSsl);
+        $publicHomePageBody = strtolower($publicHomePage['body']);
         $loginPageBody = strtolower($loginPage['body']);
+        $robotsTxtBody = strtolower($robotsTxtPage['body']);
+        $sitemapPageBody = strtolower($sitemapPage['body']);
+        $publicHomeSeen = gpQaPageLooksOk($publicHomePage)
+            && str_contains($publicHomePageBody, 'guidepaw keeps handler work organized')
+            && str_contains($publicHomePageBody, 'breed questionnaire')
+            && str_contains($publicHomePageBody, 'public dog profile');
         $loginSeen = gpQaPageLooksOk($loginPage) && (str_contains($loginPageBody, 'handler login') || str_contains($loginPageBody, 'remember me on this device'));
         $loginBreedQuestionnaireSeen = gpQaPageLooksOk($loginPage)
             && str_contains($loginPageBody, 'research a breed first')
             && str_contains($loginPageBody, 'open breed questionnaire')
             && str_contains($loginPageBody, 'without an account');
+        $robotsTxtSeen = gpQaPageLooksOk($robotsTxtPage)
+            && str_contains($robotsTxtBody, 'sitemap')
+            && str_contains($robotsTxtBody, 'disallow: /admin/');
+        $sitemapSeen = gpQaPageLooksOk($sitemapPage)
+            && str_contains($sitemapPageBody, '<urlset')
+            && str_contains($sitemapPageBody, '/breed_questionnaire.php')
+            && str_contains($sitemapPageBody, '/support_funding.php')
+            && str_contains($sitemapPageBody, '/contact_us.php');
         $logoutSeen = gpQaPageLooksOk($logoutPage) && (str_contains(strtolower($logoutPage['url']), 'login.php') || str_contains(strtolower($logoutPage['body']), 'handler login'));
         $healthzSeen = gpQaPageLooksOk($healthzPage) && (str_contains(strtolower($healthzPage['body']), '"status":"ok"') || str_contains(strtolower($healthzPage['body']), '"database":"ok"'));
         $csrfTokenSeen = gpQaPageLooksOk($csrfTokenPage) && (str_contains(strtolower($csrfTokenPage['body']), '"success":true') || str_contains(strtolower($csrfTokenPage['body']), 'csrf_token'));
@@ -560,6 +578,9 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             fwrite(STDERR, "Admin session did not survive login; falling back to Playwright crawler.\n");
             exit(1);
         }
+        gpQaResult($results, 'public_home_page_loads', $publicHomeSeen, 'HTTP ' . $publicHomePage['status'] . ($publicHomeSeen ? ' public landing found' : ' public landing missing'));
+        gpQaResult($results, 'robots_txt_loads', $robotsTxtSeen, 'HTTP ' . $robotsTxtPage['status'] . ($robotsTxtSeen ? ' robots.txt found' : ' robots.txt missing'));
+        gpQaResult($results, 'sitemap_xml_loads', $sitemapSeen, 'HTTP ' . $sitemapPage['status'] . ($sitemapSeen ? ' sitemap found' : ' sitemap missing'));
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
         gpQaResult($results, 'login_breed_questionnaire_cta', $loginBreedQuestionnaireSeen, 'HTTP ' . $loginPage['status'] . ($loginBreedQuestionnaireSeen ? ' breed questionnaire CTA found' : ' breed questionnaire CTA missing'));
         gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));

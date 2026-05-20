@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/app_config.php';
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/dog_breeds.php';
 
 if (!function_exists('e')) {
@@ -958,7 +959,14 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Breed Questionnaire · <?= e(appName()) ?></title>
+<?php guidepawSeoHead([
+    'title' => 'Breed Questionnaire for Handler and Service Dog Research',
+    'description' => 'Compare breed groups by size, energy, grooming, and the kind of work you need before you choose a dog.',
+    'canonical' => guidepawSeoAbsoluteUrl('/breed_questionnaire.php'),
+    'robots' => 'index,follow',
+    'type' => 'article',
+    'image' => '/assets/brand/guidepaw-logo.png',
+]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>

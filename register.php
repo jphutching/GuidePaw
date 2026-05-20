@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/seo.php';
 require 'includes/db_connect.php';
 require_once 'includes/beta_access.php';
 require_once 'includes/ada_state_laws.php';
@@ -95,8 +96,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Create GuidePaw Handler Account</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php guidepawSeoHead([
+        'title' => 'Create a GuidePaw Handler Account',
+        'description' => 'Create your handler profile first. Dog profiles are set up after login.',
+        'robots' => 'noindex,nofollow',
+        'type' => 'website',
+        'image' => '/assets/brand/guidepaw-logo.png',
+    ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* GUIDEPAW_PASSWORD_UX_V1 */

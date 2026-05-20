@@ -12,6 +12,7 @@ find includes -name "*.php" -type f -print0 | xargs -0 -r -n1 php -l >/dev/null
 
 echo "== Syncing live files =="
 sudo cp *.php "$LIVE/"
+sudo cp robots.txt "$LIVE/" 2>/dev/null || true
 sudo cp -r api "$LIVE/"
 sudo cp app.js sw.js manifest.json offline.html styles.css "$LIVE/" 2>/dev/null || true
 sudo cp -r includes "$LIVE/"
