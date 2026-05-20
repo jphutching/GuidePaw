@@ -11,6 +11,7 @@ Current status:
 - Phase 1 auth/account work is implemented in the Android bridge.
 - Phase 2 dog switching is implemented in the Android bridge.
 - Phase 3 logs and training work is implemented in the Android bridge.
+- Phase 4 public QR/profile and found-dog work is implemented in the Android bridge.
 - The remaining phases below are the next mobile backlog.
 
 ## Phase 1: Account and auth
@@ -83,6 +84,8 @@ Backend:
 - public profile token flow
 - existing public profile pages
 - found-dog report flow
+- public profile preview API
+- found-dog report API
 
 Android screens:
 - public profile preview
@@ -95,6 +98,9 @@ Must support:
 - public notes
 - scan/report path
 - support badge display
+
+Status:
+- implemented in Android bridge
 
 ## Phase 5: Support, paywalls, and add-ons
 

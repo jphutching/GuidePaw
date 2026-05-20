@@ -6,9 +6,13 @@ import com.guidepaw.bridge.model.AccountOverview
 import com.guidepaw.bridge.model.HealthSnapshot
 import com.guidepaw.bridge.model.LoginSession
 import com.guidepaw.bridge.model.DogsOverview
+import com.guidepaw.bridge.model.FoundDogReportResult
 import com.guidepaw.bridge.model.TrainingLogEntry
 import com.guidepaw.bridge.model.TrainingLogFeed
 import com.guidepaw.bridge.model.TrainingLogSaveResult
+import com.guidepaw.bridge.model.PublicDogProfile
+import com.guidepaw.bridge.model.PublicProfileOverview
+import com.guidepaw.bridge.model.PublicProfileSupportBadge
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -127,6 +131,96 @@ class GuidePawApiClient {
         }
     }
 
+    fun fetchPublicProfile(config: BridgeConfig, dogId: Long? = null): ApiResult<PublicProfileOverview> {
+        val path = buildString {
+            append("/api/public_profile.php")
+            val query = mutableListOf<String>()
+            dogId?.takeIf { it > 0L }?.let { query.add("dog_id=$it") }
+            if (query.isNotEmpty()) {
+                append("?")
+                append(query.joinToString("&"))
+            }
+        }
+        val connection = openApiConnection(config, "GET", path)
+        return decodeJson(connection) { json ->
+            val dogJson = json.optJSONObject("dog") ?: JSONObject()
+            val badgeJson = dogJson.optJSONObject("support_badge")
+            ApiResult.Success(
+                PublicProfileOverview(
+                    dogId = json.optLong("dog_id", dogId ?: 0L),
+                    publicUrl = json.optString("public_url", ""),
+                    qrUrl = json.optString("qr_url", ""),
+                    reportUrl = json.optString("report_url", ""),
+                    reportApiUrl = json.optString("report_api_url", ""),
+                    reportToken = json.optString("report_token", ""),
+                    dog = PublicDogProfile(
+                        name = dogJson.optString("name", ""),
+                        breed = dogJson.optString("breed", ""),
+                        accessRole = dogJson.optString("access_role", ""),
+                        supportBadge = badgeJson?.let {
+                            PublicProfileSupportBadge(
+                                tier = it.optString("tier", ""),
+                                label = it.optString("label", ""),
+                                image = it.optString("image", ""),
+                                lifetime = it.optBoolean("lifetime", false),
+                                expiresAt = it.optString("expires_at", "").takeIf { value -> value.isNotBlank() },
+                            )
+                        },
+                        handlerName = dogJson.optString("handler_name", ""),
+                        handlerPhone = dogJson.optString("handler_phone", ""),
+                        handlerEmail = dogJson.optString("handler_email", ""),
+                        backupContactName = dogJson.optString("backup_contact_name", ""),
+                        backupContactPhone = dogJson.optString("backup_contact_phone", ""),
+                        homeState = dogJson.optString("home_state", ""),
+                        publicNotes = dogJson.optString("public_notes", ""),
+                        foundDogInstructions = dogJson.optString("found_dog_instructions", ""),
+                        criticalAllergies = dogJson.optString("critical_allergies", ""),
+                        serviceTasks = dogJson.optString("service_tasks", ""),
+                        profilePhotoUrl = dogJson.optString("profile_photo_url", ""),
+                    ),
+                )
+            )
+        }
+    }
+
+    fun submitFoundDogReport(
+        reportApiUrl: String,
+        dogId: Long,
+        token: String,
+        finderLocation: String,
+        finderName: String,
+        finderPhone: String,
+        finderMessage: String,
+        finderLatitude: Double? = null,
+        finderLongitude: Double? = null,
+        finderAccuracyM: Int? = null,
+    ): ApiResult<FoundDogReportResult> {
+        val connection = openBareConnection(reportApiUrl, "POST", "")
+        val payload = JSONObject().apply {
+            put("dog_id", dogId)
+            put("token", token)
+            put("finder_location", finderLocation)
+            put("finder_name", finderName)
+            put("finder_phone", finderPhone)
+            put("finder_message", finderMessage)
+            if (finderLatitude != null) put("finder_latitude", finderLatitude)
+            if (finderLongitude != null) put("finder_longitude", finderLongitude)
+            if (finderAccuracyM != null) put("finder_accuracy_m", finderAccuracyM)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            ApiResult.Success(
+                FoundDogReportResult(
+                    reportId = json.optLong("report_id", 0L),
+                    notified = json.optBoolean("notified", false),
+                    message = json.optString("message", "Reported."),
+                )
+            )
+        }
+    }
+
     fun fetchTrainingLogDetail(config: BridgeConfig, logId: Long): ApiResult<TrainingLogEntry> {
         val connection = openApiConnection(config, "GET", "/api/logs.php?log_id=$logId")
         return decodeJson(connection) { json ->
@@ -237,7 +331,11 @@ class GuidePawApiClient {
 
     private fun openBareConnection(apiBaseUrl: String, method: String, path: String): HttpURLConnection {
         val base = apiBaseUrl.trim().trimEnd('/')
-        val suffix = if (path.startsWith("/")) path else "/$path"
+        val suffix = when {
+            path.isBlank() -> ""
+            path.startsWith("/") -> path
+            else -> "/$path"
+        }
         return (URL(base + suffix).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             doOutput = method == "POST"

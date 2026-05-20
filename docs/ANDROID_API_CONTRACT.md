@@ -42,6 +42,12 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 - `POST /api/wearables.php`
 - Returns wearable trend data and accepts synced snapshots from the Android bridge
 
+### Public profile and found-dog reporting
+
+- `GET /api/public_profile.php?dog_id=123`
+- `POST /api/found_dog_reports.php`
+- Returns public QR/profile details for the selected dog and accepts native found-dog reports
+
 ## Current Android bridge flow
 
 1. User logs in through the app or the GuidePaw pairing link.
@@ -49,6 +55,7 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 3. The app requests Health Connect permissions.
 4. The app reads steps and heart-rate summaries.
 5. The app posts snapshots to `/api/wearables.php`.
+6. The app loads the public QR/profile payload and can send found-dog reports.
 
 ## What is already enough
 
@@ -59,6 +66,8 @@ The current API surface is enough for:
 - dog selection
 - log list/detail/read/write
 - wearable snapshot sync
+- public profile preview
+- native found-dog reporting
 
 ## What to add later only if needed
 

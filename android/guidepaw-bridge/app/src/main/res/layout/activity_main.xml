@@ -335,5 +335,118 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="Public QR and found-dog flow"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <TextView
+            android:id="@+id/publicProfileSummaryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Public profile: sign in and choose a dog to load QR details." />
+
+        <TextView
+            android:id="@+id/publicProfileStatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Status: waiting for profile" />
+
+        <ImageView
+            android:id="@+id/publicProfileQrImage"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginTop="10dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerInside"
+            android:contentDescription="QR code for the public profile" />
+
+        <Button
+            android:id="@+id/publicProfileRefreshButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Refresh public profile" />
+
+        <Button
+            android:id="@+id/publicProfileShareButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Share public profile link" />
+
+        <Button
+            android:id="@+id/publicProfileOpenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Open public profile" />
+
+        <TextView
+            android:id="@+id/publicProfileDetailText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Load a profile to see public contact details and notes." />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Found-dog report form"
+            android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+        <EditText
+            android:id="@+id/foundLocationInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Location or cross street"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/foundNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Your name"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/foundPhoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Your phone"
+            android:inputType="phone" />
+
+        <EditText
+            android:id="@+id/foundMessageInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Optional message"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top" />
+
+        <Button
+            android:id="@+id/publicReportOpenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Open found-dog page" />
+
+        <Button
+            android:id="@+id/publicReportSubmitButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Send found-dog report" />
     </LinearLayout>
 </ScrollView>

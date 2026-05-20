@@ -1,11 +1,13 @@
 package com.guidepaw.bridge
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -64,6 +66,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var trainingLogsListContainer: LinearLayout
     private lateinit var saveTrainingLogButton: Button
     private lateinit var clearTrainingLogButton: Button
+    private lateinit var publicProfileSummaryText: TextView
+    private lateinit var publicProfileDetailText: TextView
+    private lateinit var publicProfileStatusText: TextView
+    private lateinit var publicProfileQrImage: ImageView
+    private lateinit var publicProfileRefreshButton: Button
+    private lateinit var publicProfileShareButton: Button
+    private lateinit var publicProfileOpenButton: Button
+    private lateinit var publicReportOpenButton: Button
+    private lateinit var publicReportSubmitButton: Button
+    private lateinit var foundLocationInput: EditText
+    private lateinit var foundNameInput: EditText
+    private lateinit var foundPhoneInput: EditText
+    private lateinit var foundMessageInput: EditText
     private lateinit var autoSyncSwitch: Switch
     private val trainingSkillOptions = listOf(
         "Focus / Watch me",
@@ -89,6 +104,7 @@ class MainActivity : AppCompatActivity() {
     )
     private var selectedTrainingLogId: Long? = null
     private var selectedTrainingSkills: LinkedHashSet<String> = linkedSetOf()
+    private var currentPublicProfile: com.guidepaw.bridge.model.PublicProfileOverview? = null
 
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -160,6 +176,19 @@ class MainActivity : AppCompatActivity() {
         trainingLogsListContainer = findViewById(R.id.trainingLogsListContainer)
         saveTrainingLogButton = findViewById(R.id.saveTrainingLogButton)
         clearTrainingLogButton = findViewById(R.id.clearTrainingLogButton)
+        publicProfileSummaryText = findViewById(R.id.publicProfileSummaryText)
+        publicProfileDetailText = findViewById(R.id.publicProfileDetailText)
+        publicProfileStatusText = findViewById(R.id.publicProfileStatusText)
+        publicProfileQrImage = findViewById(R.id.publicProfileQrImage)
+        publicProfileRefreshButton = findViewById(R.id.publicProfileRefreshButton)
+        publicProfileShareButton = findViewById(R.id.publicProfileShareButton)
+        publicProfileOpenButton = findViewById(R.id.publicProfileOpenButton)
+        publicReportOpenButton = findViewById(R.id.publicReportOpenButton)
+        publicReportSubmitButton = findViewById(R.id.publicReportSubmitButton)
+        foundLocationInput = findViewById(R.id.foundLocationInput)
+        foundNameInput = findViewById(R.id.foundNameInput)
+        foundPhoneInput = findViewById(R.id.foundPhoneInput)
+        foundMessageInput = findViewById(R.id.foundMessageInput)
         autoSyncSwitch = findViewById(R.id.autoSyncSwitch)
     }
 
@@ -172,6 +201,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }
         findViewById<Button>(R.id.openBridgeButton).setOnClickListener { openBridgeLink() }
         findViewById<Button>(R.id.manageAccessButton).setOnClickListener { openHealthConnectSettings() }
+        publicProfileRefreshButton.setOnClickListener { refreshPublicProfile() }
+        publicProfileShareButton.setOnClickListener { sharePublicProfileLink() }
+        publicProfileOpenButton.setOnClickListener { openPublicProfile() }
+        publicReportOpenButton.setOnClickListener { openFoundDogReportPage() }
+        publicReportSubmitButton.setOnClickListener { submitFoundDogReport() }
         saveTrainingLogButton.setOnClickListener { saveTrainingLogEntry() }
         clearTrainingLogButton.setOnClickListener { clearTrainingLogEditor() }
         autoSyncSwitch.setOnCheckedChangeListener { _, enabled ->
@@ -225,6 +259,8 @@ class MainActivity : AppCompatActivity() {
         } ?: run {
             accountText.text = getString(R.string.account_summary_empty)
             dogsText.text = getString(R.string.dogs_summary_empty)
+            renderTrainingLogs(null, null)
+            renderPublicProfile(null)
         }
         autoSyncSwitch.isChecked = prefs.isAutoSyncEnabled()
         refreshLastSync()
@@ -358,6 +394,7 @@ class MainActivity : AppCompatActivity() {
             dogsText.text = getString(R.string.dogs_summary_empty)
             renderDogsList(null, emptyList())
             renderTrainingLogs(null, null)
+            renderPublicProfile(null)
             return
         }
 
@@ -413,6 +450,7 @@ class MainActivity : AppCompatActivity() {
                 is ApiResult.Failure -> {
                     dogsText.text = getString(R.string.dogs_summary_error, dogsResult.message)
                     renderDogsList(null, emptyList())
+                    renderPublicProfile(null)
                 }
             }
 
@@ -429,6 +467,7 @@ class MainActivity : AppCompatActivity() {
                 else -> null
             }
             refreshTrainingLogs(activeDogId)
+            refreshPublicProfile(activeDogId)
             updateStatus("GuidePaw account summary loaded.")
         }
     }
@@ -830,6 +869,225 @@ class MainActivity : AppCompatActivity() {
             val parsed = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(value)
             if (parsed != null) DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(parsed) else value
         }.getOrDefault(value)
+    }
+
+    private fun refreshPublicProfile(explicitDogId: Long? = null) {
+        val config = prefs.load()
+        if (config == null) {
+            currentPublicProfile = null
+            renderPublicProfile(null)
+            return
+        }
+        val dogId = explicitDogId ?: config.dogId
+        if (dogId <= 0L) {
+            currentPublicProfile = null
+            renderPublicProfile(null)
+            return
+        }
+
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchPublicProfile(config, dogId)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    currentPublicProfile = result.data
+                    renderPublicProfile(result.data)
+                }
+                is ApiResult.Failure -> {
+                    currentPublicProfile = null
+                    renderPublicProfile(null)
+                    publicProfileSummaryText.text = "Public profile: ${result.message}"
+                }
+            }
+        }
+    }
+
+    private fun renderPublicProfile(profile: com.guidepaw.bridge.model.PublicProfileOverview?) {
+        if (profile == null) {
+            publicProfileSummaryText.text = "Public profile: sign in and choose a dog to see QR/share details."
+            publicProfileDetailText.text = "Found-dog reporting is disabled until a public profile is loaded."
+            publicProfileStatusText.text = "Status: waiting for profile"
+            publicProfileQrImage.setImageDrawable(null)
+            return
+        }
+
+        val dog = profile.dog
+        publicProfileSummaryText.text = buildString {
+            append(dog.name)
+            if (dog.breed.isNotBlank()) {
+                append(" • ")
+                append(dog.breed)
+            }
+            if (dog.accessRole.isNotBlank()) {
+                append(" • ")
+                append(dog.accessRole)
+            }
+        }
+        publicProfileStatusText.text = if (dog.supportBadge != null) {
+            "Support badge: ${dog.supportBadge.label}"
+        } else {
+            "Support badge: none"
+        }
+        publicProfileDetailText.text = buildString {
+            append("Public profile:\n")
+            append(profile.publicUrl)
+            append("\n\nQR opens tracked on the website. The QR below matches the live public link.")
+            if (dog.handlerName.isNotBlank()) {
+                append("\n\nHandler: ")
+                append(dog.handlerName)
+            }
+            if (dog.handlerPhone.isNotBlank()) {
+                append("\nPhone: ")
+                append(dog.handlerPhone)
+            }
+            if (dog.handlerEmail.isNotBlank()) {
+                append("\nEmail: ")
+                append(dog.handlerEmail)
+            }
+            if (dog.backupContactPhone.isNotBlank()) {
+                append("\nBackup: ")
+                append(dog.backupContactName.ifBlank { "Backup contact" })
+                append(" · ")
+                append(dog.backupContactPhone)
+            }
+            if (dog.homeState.isNotBlank()) {
+                append("\nHome state: ")
+                append(dog.homeState)
+            }
+            if (dog.publicNotes.isNotBlank()) {
+                append("\n\nPublic notes:\n")
+                append(dog.publicNotes)
+            }
+            if (dog.foundDogInstructions.isNotBlank()) {
+                append("\n\nIf found:\n")
+                append(dog.foundDogInstructions)
+            }
+            if (dog.criticalAllergies.isNotBlank()) {
+                append("\n\nMedical note:\n")
+                append(dog.criticalAllergies)
+            }
+            if (dog.serviceTasks.isNotBlank()) {
+                append("\n\nService tasks:\n")
+                append(dog.serviceTasks)
+            }
+            if (dog.supportBadge != null) {
+                append("\n\nSupport badge: ")
+                append(dog.supportBadge.label)
+                if (!dog.supportBadge.expiresAt.isNullOrBlank()) {
+                    append(" until ")
+                    append(dog.supportBadge.expiresAt)
+                } else if (dog.supportBadge.lifetime) {
+                    append(" for life")
+                }
+            }
+        }
+        loadQrBitmap(profile.qrUrl)
+    }
+
+    private fun loadQrBitmap(url: String) {
+        if (url.isBlank()) {
+            publicProfileQrImage.setImageDrawable(null)
+            return
+        }
+        lifecycleScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                runCatching {
+                    val connection = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                    connection.connectTimeout = 12000
+                    connection.readTimeout = 12000
+                    connection.inputStream.use { input ->
+                        BitmapFactory.decodeStream(input)
+                    }
+                }.getOrNull()
+            }
+            if (bitmap != null) {
+                publicProfileQrImage.setImageBitmap(bitmap)
+            } else {
+                publicProfileQrImage.setImageDrawable(null)
+            }
+        }
+    }
+
+    private fun sharePublicProfileLink() {
+        val profile = currentPublicProfile ?: run {
+            updateStatus("Load a public profile first.")
+            return
+        }
+        val share = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "GuidePaw public profile")
+            putExtra(Intent.EXTRA_TEXT, profile.publicUrl)
+        }
+        startActivity(Intent.createChooser(share, "Share public profile"))
+    }
+
+    private fun openPublicProfile() {
+        val profile = currentPublicProfile ?: run {
+            updateStatus("Load a public profile first.")
+            return
+        }
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(profile.publicUrl)))
+        }.onFailure {
+            updateStatus("Could not open the public profile link.")
+        }
+    }
+
+    private fun openFoundDogReportPage() {
+        val profile = currentPublicProfile ?: run {
+            updateStatus("Load a public profile first.")
+            return
+        }
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(profile.reportUrl)))
+        }.onFailure {
+            updateStatus("Could not open the found-dog report link.")
+        }
+    }
+
+    private fun submitFoundDogReport() {
+        val profile = currentPublicProfile ?: run {
+            updateStatus("Load a public profile first.")
+            return
+        }
+        val location = foundLocationInput.text.toString().trim()
+        val name = foundNameInput.text.toString().trim()
+        val phone = foundPhoneInput.text.toString().trim()
+        val message = foundMessageInput.text.toString().trim()
+        if (location.isBlank() && phone.isBlank()) {
+            updateStatus("Enter a location and phone number before sending the report.")
+            return
+        }
+        if (phone.isBlank()) {
+            updateStatus("Enter a phone number before sending the report.")
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Sending found-dog report...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().submitFoundDogReport(
+                    reportApiUrl = profile.reportApiUrl,
+                    dogId = profile.dogId,
+                    token = profile.reportToken,
+                    finderLocation = location,
+                    finderName = name,
+                    finderPhone = phone,
+                    finderMessage = message,
+                )
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    updateStatus(result.data.message)
+                    foundLocationInput.setText("")
+                    foundNameInput.setText("")
+                    foundPhoneInput.setText("")
+                    foundMessageInput.setText("")
+                }
+                is ApiResult.Failure -> updateStatus("Could not send found-dog report: ${result.message}")
+            }
+        }
     }
 
     private fun refreshLastSync() {

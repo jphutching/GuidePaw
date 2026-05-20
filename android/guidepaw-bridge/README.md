@@ -9,6 +9,8 @@ What it does:
 - loads the connected GuidePaw account and accessible dogs from the API
 - lists, views, and edits training logs for the active dog
 - surfaces training suggestions from the backend
+- loads the public QR profile payload for the active dog
+- shows the QR image, share link, and found-dog report form
 - requests Health Connect permissions
 - reads daily steps and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand
