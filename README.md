@@ -33,6 +33,7 @@ What is included:
 - `docs/INSTALL_TERMUX_DEBIAN.md`
 - `docs/RENDER_DEPLOY.md`
 - `docs/CURRENT_BUILD_NOTES.md`
+- `docs/ANDROID_API_CONTRACT.md`
 
 ## Important
 This package is PostgreSQL-only. Do not reintroduce MySQL/MariaDB files or runtime paths.
