@@ -210,6 +210,7 @@ body { background: #f1f5f9; color:#0f172a; }
             <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
             <a class="btn btn-outline-secondary btn-call w-100" href="breed_comparison_hub.php">Open Breed Comparison Hub</a>
             <a class="btn btn-outline-secondary btn-call w-100" href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a>
+            <a class="btn btn-outline-secondary btn-call w-100" href="housing_access_faq.php">Housing &amp; Access FAQ</a>
             <a class="btn btn-outline-dark btn-call w-100" href="faq.php">Read FAQ</a>
             <a class="btn btn-outline-dark btn-call w-100" href="air_travel_rights.php">Air Travel Rights</a>
         </div>

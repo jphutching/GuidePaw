@@ -59,6 +59,14 @@ $faqSchema = [
                     'text' => 'No. GuidePaw is a practical organizer and reference tool, but you should still rely on official ADA, HUD, DOT, and airline guidance for final rules.',
                 ],
             ],
+            [
+                '@type' => 'Question',
+                'name' => 'Where do housing and access disputes fit?',
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => 'Housing requests are different from public access. Use the public housing and access FAQ for a plain-language summary, then verify the details with HUD and ADA guidance.',
+                ],
+            ],
         ],
     ],
 ];
@@ -139,6 +147,10 @@ $faqSchema = [
             <div class="faq-q">Does GuidePaw replace ADA.gov or airline rules?</div>
             <div class="faq-a">No. GuidePaw is a practical organizer and reference tool, but you should still rely on official ADA, HUD, DOT, and airline guidance for final rules.</div>
         </div>
+        <div class="faq-item">
+            <div class="faq-q">Where do housing and access disputes fit?</div>
+            <div class="faq-a">Housing requests are different from public access. Use the public housing and access FAQ for a plain-language summary, then verify the details with HUD and ADA guidance.</div>
+        </div>
     </section>
 
     <section class="row g-3">
@@ -150,6 +162,7 @@ $faqSchema = [
                     <li><a href="breed_questionnaire.php">Breed Questionnaire</a></li>
                     <li><a href="breed_comparison.php">Breed Comparison</a></li>
                     <li><a href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a></li>
+                    <li><a href="housing_access_faq.php">Housing &amp; Access FAQ</a></li>
                     <li><a href="support_funding.php">Support GuidePaw</a></li>
                     <li><a href="service_dog_rights.php">Service Dog Rights</a></li>
                     <li><a href="air_travel_rights.php">Air Travel Rights</a></li>

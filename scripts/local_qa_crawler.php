@@ -601,6 +601,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         gpQaResult($results, 'robots_txt_loads', $robotsTxtSeen, 'HTTP ' . $robotsTxtPage['status'] . ($robotsTxtSeen ? ' robots.txt found' : ' robots.txt missing'));
         gpQaResult($results, 'sitemap_xml_loads', $sitemapSeen, 'HTTP ' . $sitemapPage['status'] . ($sitemapSeen ? ' sitemap found' : ' sitemap missing'));
         $faqPage = gpQaRequest($baseUrl, 'faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $housingFaqPage = gpQaRequest($baseUrl, 'housing_access_faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonSeen = gpQaPageLooksOk($breedComparisonPage) && (str_contains(strtolower($breedComparisonPage['body']), 'cavalier king charles spaniel vs english toy spaniel') || str_contains(strtolower($breedComparisonPage['body']), 'more comparisons'));
         $faqSeen = gpQaPageLooksOk($faqPage) && str_contains(strtolower($faqPage['body']), 'guidepaw faq');
         $legalInfoBody = strtolower($legalInfoPage['body']);
@@ -608,9 +609,14 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             && str_contains($legalInfoBody, 'no official national registry')
             && str_contains($legalInfoBody, 'emotional support animals')
             && str_contains($legalInfoBody, 'service dogs');
+        $housingFaqBody = strtolower($housingFaqPage['body']);
+        $housingFaqSeen = gpQaPageLooksOk($housingFaqPage)
+            && str_contains($housingFaqBody, 'housing & access faq')
+            && str_contains($housingFaqBody, 'housing questions follow a different rule set');
         gpQaResult($results, 'breed_comparison_hub_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison hub found' : ' breed comparison hub missing'));
         gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         gpQaResult($results, 'service_dog_esa_legal_info_page_loads', $legalInfoSeen, 'HTTP ' . $legalInfoPage['status'] . ($legalInfoSeen ? ' legal info found' : ' legal info missing'));
+        gpQaResult($results, 'housing_access_faq_page_loads', $housingFaqSeen, 'HTTP ' . $housingFaqPage['status'] . ($housingFaqSeen ? ' housing faq found' : ' housing faq missing'));
         $breedComparisonLabSeen = gpQaPageLooksOk($breedComparisonLabPage) && str_contains(strtolower($breedComparisonLabPage['body']), 'labrador retriever vs golden retriever');
         $breedComparisonPoodleSeen = gpQaPageLooksOk($breedComparisonPoodlePage) && str_contains(strtolower($breedComparisonPoodlePage['body']), 'standard poodle vs toy poodle');
         $breedComparisonAussieSeen = gpQaPageLooksOk($breedComparisonAussiePage) && str_contains(strtolower($breedComparisonAussiePage['body']), 'australian shepherd vs miniature american shepherd');

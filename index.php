@@ -164,6 +164,10 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Service Dog &amp; ESA Legal Info</div>
                     <div class="text-muted small">Plain-language guide for service dogs, ESAs, housing, and air travel basics.</div>
                 </a>
+                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php">
+                    <div class="fw-bold mb-1">Housing &amp; Access FAQ</div>
+                    <div class="text-muted small">What to do when a business, landlord, or policy asks for paperwork.</div>
+                </a>
             </div>
         </section>
 
@@ -183,6 +187,10 @@ if (empty($_SESSION['user_id'])) {
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
                     <div class="fw-bold mb-1">GuidePaw FAQ</div>
                     <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php">
+                    <div class="fw-bold mb-1">Housing &amp; Access FAQ</div>
+                    <div class="text-muted small">Public answers for access disputes, housing requests, and paperwork questions.</div>
                 </a>
             </div>
         </section>

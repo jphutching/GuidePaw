@@ -60,6 +60,11 @@ $pages = [
         'priority' => '0.8',
     ],
     [
+        'loc' => guidepawSeoAbsoluteUrl('/housing_access_faq.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.8',
+    ],
+    [
         'loc' => guidepawSeoAbsoluteUrl('/support_funding.php'),
         'changefreq' => 'monthly',
         'priority' => '0.8',
