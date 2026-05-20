@@ -79,6 +79,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var foundNameInput: EditText
     private lateinit var foundPhoneInput: EditText
     private lateinit var foundMessageInput: EditText
+    private lateinit var billingSummaryText: TextView
+    private lateinit var billingStatusText: TextView
+    private lateinit var billingRefreshButton: Button
+    private lateinit var billingSupportOnceButton: Button
+    private lateinit var billingSupportMonthlyButton: Button
+    private lateinit var billingPlanContainer: LinearLayout
+    private lateinit var billingServiceContainer: LinearLayout
+    private lateinit var billingSupportHistoryContainer: LinearLayout
+    private lateinit var billingPurchaseHistoryContainer: LinearLayout
     private lateinit var autoSyncSwitch: Switch
     private val trainingSkillOptions = listOf(
         "Focus / Watch me",
@@ -105,6 +114,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedTrainingLogId: Long? = null
     private var selectedTrainingSkills: LinkedHashSet<String> = linkedSetOf()
     private var currentPublicProfile: com.guidepaw.bridge.model.PublicProfileOverview? = null
+    private var currentBillingOverview: com.guidepaw.bridge.model.BillingOverview? = null
 
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -189,6 +199,15 @@ class MainActivity : AppCompatActivity() {
         foundNameInput = findViewById(R.id.foundNameInput)
         foundPhoneInput = findViewById(R.id.foundPhoneInput)
         foundMessageInput = findViewById(R.id.foundMessageInput)
+        billingSummaryText = findViewById(R.id.billingSummaryText)
+        billingStatusText = findViewById(R.id.billingStatusText)
+        billingRefreshButton = findViewById(R.id.billingRefreshButton)
+        billingSupportOnceButton = findViewById(R.id.billingSupportOnceButton)
+        billingSupportMonthlyButton = findViewById(R.id.billingSupportMonthlyButton)
+        billingPlanContainer = findViewById(R.id.billingPlanContainer)
+        billingServiceContainer = findViewById(R.id.billingServiceContainer)
+        billingSupportHistoryContainer = findViewById(R.id.billingSupportHistoryContainer)
+        billingPurchaseHistoryContainer = findViewById(R.id.billingPurchaseHistoryContainer)
         autoSyncSwitch = findViewById(R.id.autoSyncSwitch)
     }
 
@@ -206,6 +225,9 @@ class MainActivity : AppCompatActivity() {
         publicProfileOpenButton.setOnClickListener { openPublicProfile() }
         publicReportOpenButton.setOnClickListener { openFoundDogReportPage() }
         publicReportSubmitButton.setOnClickListener { submitFoundDogReport() }
+        billingRefreshButton.setOnClickListener { refreshBillingOverview() }
+        billingSupportOnceButton.setOnClickListener { startSupportCheckout("one_time") }
+        billingSupportMonthlyButton.setOnClickListener { startSupportCheckout("monthly") }
         saveTrainingLogButton.setOnClickListener { saveTrainingLogEntry() }
         clearTrainingLogButton.setOnClickListener { clearTrainingLogEditor() }
         autoSyncSwitch.setOnCheckedChangeListener { _, enabled ->
@@ -395,6 +417,7 @@ class MainActivity : AppCompatActivity() {
             renderDogsList(null, emptyList())
             renderTrainingLogs(null, null)
             renderPublicProfile(null)
+            renderBillingOverview(null)
             return
         }
 
@@ -468,6 +491,7 @@ class MainActivity : AppCompatActivity() {
             }
             refreshTrainingLogs(activeDogId)
             refreshPublicProfile(activeDogId)
+            refreshBillingOverview(activeDogId)
             updateStatus("GuidePaw account summary loaded.")
         }
     }
@@ -1005,6 +1029,261 @@ class MainActivity : AppCompatActivity() {
                 publicProfileQrImage.setImageBitmap(bitmap)
             } else {
                 publicProfileQrImage.setImageDrawable(null)
+            }
+        }
+    }
+
+    private fun refreshBillingOverview(explicitDogId: Long? = null) {
+        val config = prefs.load()
+        if (config == null) {
+            renderBillingOverview(null)
+            return
+        }
+
+        val dogId = explicitDogId ?: config.dogId
+        lifecycleScope.launch {
+            updateStatus("Loading billing and add-ons...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchBillingOverview(config, dogId.takeIf { it > 0L })
+            }
+            when (result) {
+                is ApiResult.Success -> renderBillingOverview(result.data)
+                is ApiResult.Failure -> {
+                    renderBillingOverview(null)
+                    billingSummaryText.text = "Support, plans, and add-ons: ${result.message}"
+                }
+            }
+        }
+    }
+
+    private fun renderBillingOverview(overview: com.guidepaw.bridge.model.BillingOverview?) {
+        currentBillingOverview = overview
+        billingPlanContainer.removeAllViews()
+        billingServiceContainer.removeAllViews()
+        billingSupportHistoryContainer.removeAllViews()
+        billingPurchaseHistoryContainer.removeAllViews()
+
+        if (overview == null) {
+            billingSummaryText.text = "Support, plans, and add-ons: sign in and choose a dog to see billing state."
+            billingStatusText.text = "Status: waiting for billing data"
+            billingSupportOnceButton.text = "Support once"
+            billingSupportOnceButton.isEnabled = false
+            billingSupportMonthlyButton.text = "Support monthly"
+            billingSupportMonthlyButton.isEnabled = false
+            return
+        }
+
+        billingSummaryText.text = buildString {
+            append("Current plan: ")
+            append(overview.currentTierLabel)
+            append(" • Dogs: ")
+            append(overview.dogCount)
+            append(" • ")
+            append(if (overview.canCreateAnotherDog) "Can add another dog" else "Dog limit reached")
+        }
+        billingStatusText.text = buildString {
+            append("Active dog ID: ")
+            append(if (overview.activeDogId > 0L) overview.activeDogId else "none")
+            if (overview.supportBadge != null) {
+                append(" • Support badge: ")
+                append(overview.supportBadge.label)
+            }
+        }
+
+        overview.supportOptions.forEach { option ->
+            if (option.supportType == "monthly") {
+                billingSupportMonthlyButton.text = option.label
+                billingSupportMonthlyButton.isEnabled = option.checkoutAvailable
+            } else {
+                billingSupportOnceButton.text = option.label
+                billingSupportOnceButton.isEnabled = option.checkoutAvailable
+            }
+        }
+
+        overview.planRows.forEach { plan ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 18)
+            }
+            row.addView(TextView(this).apply {
+                text = if (plan.isCurrent) "${plan.label} • Current" else plan.label
+                textSize = 16f
+                setTextColor(resources.getColor(android.R.color.black, theme))
+            })
+            row.addView(TextView(this).apply {
+                text = plan.summary
+            })
+            if (plan.includedText.isNotEmpty()) {
+                row.addView(TextView(this).apply {
+                    text = "Included: ${plan.includedText.joinToString(", ")}"
+                })
+            }
+            if (plan.lockedText.isNotEmpty()) {
+                row.addView(TextView(this).apply {
+                    text = "Locked below this plan: ${plan.lockedText.joinToString(", ")}"
+                })
+            }
+            billingPlanContainer.addView(row)
+        }
+
+        overview.serviceRows.forEach { service ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 20)
+            }
+            row.addView(TextView(this).apply {
+                text = buildString {
+                    append(service.label)
+                    if (service.active) append(" • Active")
+                }
+                textSize = 16f
+                setTextColor(resources.getColor(android.R.color.black, theme))
+            })
+            row.addView(TextView(this).apply {
+                text = service.summary
+            })
+            row.addView(TextView(this).apply {
+                text = buildString {
+                    append("Scope: ")
+                    append(service.scope)
+                    append(" • Price: $")
+                    append(String.format(Locale.US, "%.2f", service.priceCents / 100.0))
+                    if (service.notes.isNotBlank()) {
+                        append("\n")
+                        append(service.notes)
+                    }
+                    if (service.includedText.isNotEmpty()) {
+                        append("\nIncludes: ")
+                        append(service.includedText.joinToString(", "))
+                    }
+                    if (service.lockedText.isNotEmpty()) {
+                        append("\nLocked: ")
+                        append(service.lockedText.joinToString(", "))
+                    }
+                }
+            })
+            val actionButton = Button(this).apply {
+                text = when {
+                    service.active -> "Already active"
+                    service.checkoutAvailable -> service.actionLabel.ifBlank { "Buy now" }
+                    service.requiresActiveDog -> "Choose a dog first"
+                    else -> "Checkout unavailable"
+                }
+                isEnabled = service.checkoutAvailable && !service.active
+                setOnClickListener {
+                    startServiceCheckout(service)
+                }
+            }
+            row.addView(actionButton)
+            billingServiceContainer.addView(row)
+        }
+
+        if (overview.recentSupportEvents.isEmpty()) {
+            billingSupportHistoryContainer.addView(TextView(this).apply {
+                text = "No support receipts yet."
+            })
+        } else {
+            overview.recentSupportEvents.forEach { event ->
+                billingSupportHistoryContainer.addView(TextView(this).apply {
+                    text = buildString {
+                        append(event.title)
+                        append(" • $")
+                        append(String.format(Locale.US, "%.2f", event.amountCents / 100.0))
+                        append(" • ")
+                        append(event.status.ifBlank { "paid" })
+                        if (event.createdAt.isNotBlank()) {
+                            append("\n")
+                            append(event.createdAt)
+                        }
+                    }
+                })
+            }
+        }
+
+        if (overview.recentPurchaseEvents.isEmpty()) {
+            billingPurchaseHistoryContainer.addView(TextView(this).apply {
+                text = "No service purchases yet."
+            })
+        } else {
+            overview.recentPurchaseEvents.forEach { event ->
+                billingPurchaseHistoryContainer.addView(TextView(this).apply {
+                    text = buildString {
+                        append(event.title)
+                        append(" • $")
+                        append(String.format(Locale.US, "%.2f", event.amountCents / 100.0))
+                        append(" • ")
+                        append(event.status.ifBlank { "paid" })
+                        if (event.createdAt.isNotBlank()) {
+                            append("\n")
+                            append(event.createdAt)
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    private fun openCheckoutUrl(url: String, successMessage: String) {
+        if (url.isBlank()) {
+            updateStatus("Checkout link is missing.")
+            return
+        }
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            updateStatus(successMessage)
+        }.onFailure {
+            updateStatus("Could not open checkout.")
+        }
+    }
+
+    private fun startSupportCheckout(supportType: String) {
+        val config = prefs.load() ?: run {
+            updateStatus("Save the pairing code first.")
+            return
+        }
+        lifecycleScope.launch {
+            updateStatus("Opening support checkout...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().startBillingCheckout(config, "support", supportType = supportType)
+            }
+            when (result) {
+                is ApiResult.Success -> openCheckoutUrl(result.data.checkoutUrl, result.data.message)
+                is ApiResult.Failure -> updateStatus("Could not start support checkout: ${result.message}")
+            }
+        }
+    }
+
+    private fun startServiceCheckout(service: com.guidepaw.bridge.model.BillingServiceRow) {
+        val config = prefs.load() ?: run {
+            updateStatus("Save the pairing code first.")
+            return
+        }
+        if (service.active) {
+            updateStatus("${service.label} is already active.")
+            return
+        }
+        val dogId = when {
+            service.scope == "dog" -> config.dogId.takeIf { it > 0L }
+            else -> null
+        }
+        if (service.scope == "dog" && dogId == null) {
+            updateStatus("Choose a dog before buying this add-on.")
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Opening ${service.label} checkout...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().startBillingCheckout(
+                    config = config,
+                    kind = "service",
+                    serviceSlug = service.slug,
+                    dogId = dogId,
+                )
+            }
+            when (result) {
+                is ApiResult.Success -> openCheckoutUrl(result.data.checkoutUrl, result.data.message)
+                is ApiResult.Failure -> updateStatus("Could not start checkout: ${result.message}")
             }
         }
     }

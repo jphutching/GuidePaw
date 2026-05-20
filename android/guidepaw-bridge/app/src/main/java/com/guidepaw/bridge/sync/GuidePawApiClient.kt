@@ -3,6 +3,12 @@ package com.guidepaw.bridge.sync
 import com.guidepaw.bridge.model.BridgeConfig
 import com.guidepaw.bridge.model.AccessibleDogSummary
 import com.guidepaw.bridge.model.AccountOverview
+import com.guidepaw.bridge.model.BillingCheckoutResult
+import com.guidepaw.bridge.model.BillingEventRow
+import com.guidepaw.bridge.model.BillingOverview
+import com.guidepaw.bridge.model.BillingPlanRow
+import com.guidepaw.bridge.model.BillingServiceRow
+import com.guidepaw.bridge.model.BillingSupportOption
 import com.guidepaw.bridge.model.HealthSnapshot
 import com.guidepaw.bridge.model.LoginSession
 import com.guidepaw.bridge.model.DogsOverview
@@ -183,6 +189,136 @@ class GuidePawApiClient {
         }
     }
 
+    fun fetchBillingOverview(config: BridgeConfig, dogId: Long? = null): ApiResult<BillingOverview> {
+        val path = buildString {
+            append("/api/billing.php")
+            val query = mutableListOf<String>()
+            dogId?.takeIf { it > 0L }?.let { query.add("dog_id=$it") }
+            if (query.isNotEmpty()) {
+                append("?")
+                append(query.joinToString("&"))
+            }
+        }
+        val connection = openApiConnection(config, "GET", path)
+        return decodeJson(connection) { json ->
+            val planRowsJson = json.optJSONArray("plan_rows") ?: JSONArray()
+            val supportOptionsJson = json.optJSONArray("support_options") ?: JSONArray()
+            val serviceRowsJson = json.optJSONArray("service_rows") ?: JSONArray()
+            val recentSupportEventsJson = json.optJSONArray("recent_support_events") ?: JSONArray()
+            val recentPurchaseEventsJson = json.optJSONArray("recent_purchase_events") ?: JSONArray()
+
+            ApiResult.Success(
+                BillingOverview(
+                    userId = json.optLong("user_id", 0L),
+                    username = json.optString("username", ""),
+                    activeDogId = json.optLong("active_dog_id", 0L),
+                    currentTier = json.optString("current_tier", "free"),
+                    currentTierLabel = json.optString("current_tier_label", "Free"),
+                    dogCount = json.optInt("dog_count", 0),
+                    canCreateAnotherDog = json.optBoolean("can_create_another_dog", false),
+                    supportBadge = json.optJSONObject("support_badge")?.let {
+                        PublicProfileSupportBadge(
+                            tier = it.optString("tier", ""),
+                            label = it.optString("label", ""),
+                            image = it.optString("image", ""),
+                            lifetime = it.optBoolean("lifetime", false),
+                            expiresAt = it.optString("expires_at", "").takeIf { value -> value.isNotBlank() },
+                        )
+                    },
+                    planRows = buildList {
+                        for (i in 0 until planRowsJson.length()) {
+                            val row = planRowsJson.optJSONObject(i) ?: continue
+                            add(
+                                BillingPlanRow(
+                                    slug = row.optString("slug", ""),
+                                    label = row.optString("label", ""),
+                                    summary = row.optString("summary", ""),
+                                    includedText = parseStringArray(row, "included_text"),
+                                    lockedText = parseStringArray(row, "locked_text"),
+                                    requiredTier = row.optString("required_tier", "free"),
+                                    isCurrent = row.optBoolean("is_current", false),
+                                )
+                            )
+                        }
+                    },
+                    supportOptions = buildList {
+                        for (i in 0 until supportOptionsJson.length()) {
+                            val row = supportOptionsJson.optJSONObject(i) ?: continue
+                            add(
+                                BillingSupportOption(
+                                    supportType = row.optString("support_type", "one_time"),
+                                    label = row.optString("label", ""),
+                                    summary = row.optString("summary", ""),
+                                    emoji = row.optString("emoji", ""),
+                                    mode = row.optString("mode", "payment"),
+                                    priceIdConfigured = row.optBoolean("price_id_configured", false),
+                                    checkoutAvailable = row.optBoolean("checkout_available", false),
+                                )
+                            )
+                        }
+                    },
+                    serviceRows = buildList {
+                        for (i in 0 until serviceRowsJson.length()) {
+                            val row = serviceRowsJson.optJSONObject(i) ?: continue
+                            add(
+                                BillingServiceRow(
+                                    slug = row.optString("slug", ""),
+                                    label = row.optString("label", ""),
+                                    summary = row.optString("summary", ""),
+                                    includedText = parseStringArray(row, "included_text"),
+                                    lockedText = parseStringArray(row, "locked_text"),
+                                    billingModel = row.optString("billing_model", "plan"),
+                                    requiredTier = row.optString("required_tier", "free"),
+                                    scope = row.optString("scope", "user"),
+                                    priceCents = row.optInt("price_cents", 0),
+                                    currency = row.optString("currency", "usd"),
+                                    stripePriceId = row.optString("stripe_price_id", ""),
+                                    notes = row.optString("notes", ""),
+                                    active = row.optBoolean("active", false),
+                                    checkoutAvailable = row.optBoolean("checkout_available", false),
+                                    requiresActiveDog = row.optBoolean("requires_active_dog", false),
+                                    actionLabel = row.optString("action_label", ""),
+                                )
+                            )
+                        }
+                    },
+                    recentSupportEvents = buildList {
+                        for (i in 0 until recentSupportEventsJson.length()) {
+                            val row = recentSupportEventsJson.optJSONObject(i) ?: continue
+                            add(
+                                BillingEventRow(
+                                    source = row.optString("source", "support"),
+                                    title = row.optString("title", "Support"),
+                                    amountCents = row.optInt("amount_cents", 0),
+                                    currency = row.optString("currency", "usd"),
+                                    status = row.optString("status", ""),
+                                    createdAt = row.optString("created_at", ""),
+                                    details = row.optString("details", ""),
+                                )
+                            )
+                        }
+                    },
+                    recentPurchaseEvents = buildList {
+                        for (i in 0 until recentPurchaseEventsJson.length()) {
+                            val row = recentPurchaseEventsJson.optJSONObject(i) ?: continue
+                            add(
+                                BillingEventRow(
+                                    source = row.optString("source", "purchase"),
+                                    title = row.optString("title", "Service purchase"),
+                                    amountCents = row.optInt("amount_cents", 0),
+                                    currency = row.optString("currency", "usd"),
+                                    status = row.optString("status", ""),
+                                    createdAt = row.optString("created_at", ""),
+                                    details = row.optString("details", ""),
+                                )
+                            )
+                        }
+                    },
+                )
+            )
+        }
+    }
+
     fun submitFoundDogReport(
         reportApiUrl: String,
         dogId: Long,
@@ -216,6 +352,38 @@ class GuidePawApiClient {
                     reportId = json.optLong("report_id", 0L),
                     notified = json.optBoolean("notified", false),
                     message = json.optString("message", "Reported."),
+                )
+            )
+        }
+    }
+
+    fun startBillingCheckout(
+        config: BridgeConfig,
+        kind: String,
+        supportType: String = "",
+        serviceSlug: String = "",
+        dogId: Long? = null,
+    ): ApiResult<BillingCheckoutResult> {
+        val connection = openApiConnection(config, "POST", "/api/billing.php")
+        val payload = JSONObject().apply {
+            put("action", "start_checkout")
+            put("kind", kind)
+            if (supportType.isNotBlank()) put("support_type", supportType)
+            if (serviceSlug.isNotBlank()) put("service_slug", serviceSlug)
+            if (dogId != null && dogId > 0L) put("dog_id", dogId)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            ApiResult.Success(
+                BillingCheckoutResult(
+                    kind = json.optString("kind", kind),
+                    supportType = json.optString("support_type", supportType),
+                    serviceSlug = json.optString("service_slug", serviceSlug),
+                    dogId = json.optLong("dog_id", dogId ?: 0L),
+                    checkoutUrl = json.optString("checkout_url", ""),
+                    message = json.optString("message", "Opened."),
                 )
             )
         }

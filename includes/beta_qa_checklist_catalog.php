@@ -251,6 +251,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'api_me_endpoint', 'text' => 'API me endpoint returns the authenticated user.', 'expected' => 'api/me.php returns success:true and the current account details.'],
                 ['id' => 'api_dogs_endpoint', 'text' => 'API dogs endpoint returns accessible dogs.', 'expected' => 'api/dogs.php returns success:true and an array of accessible dogs.'],
                 ['id' => 'api_logs_endpoint', 'text' => 'API logs endpoint returns log records.', 'expected' => 'api/logs.php returns success:true and a log array.'],
+                ['id' => 'api_billing_endpoint', 'text' => 'API billing endpoint returns plan state, support options, and add-on catalog.', 'expected' => 'api/billing.php returns success:true, a current plan summary, support options, and service rows.'],
                 ['id' => 'beta_requests_admin', 'text' => 'Beta Requests admin page loads.', 'expected' => 'Submitted beta requests are visible/manageable.'],
                 ['id' => 'admin_beta_requests', 'text' => 'Admin Beta Access Requests page loads.', 'expected' => 'admin_beta_requests.php lists requests and access controls.'],
                 ['id' => 'admin_tactical_requests', 'text' => 'Admin Tactical Requests page loads and can approve or deny verified teams.', 'expected' => 'admin_tactical_requests.php lists tactical requests and lets admin approve or deny them.'],

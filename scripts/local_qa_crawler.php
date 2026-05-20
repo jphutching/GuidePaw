@@ -504,10 +504,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $apiDogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiLogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiWearables = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiBilling = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiMeSeen = false;
         $apiDogsSeen = false;
         $apiLogsSeen = false;
         $apiWearablesSeen = false;
+        $apiBillingSeen = false;
         if ($checkApiRoutes) {
             $apiTokensPage = gpQaRequest($baseUrl, 'api_tokens.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
             $apiTokensBody = strtolower($apiTokensPage['body']);
@@ -536,12 +538,15 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $apiMe = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/me.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
             $apiDogs = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/dogs.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
             $apiLogs = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/logs.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
+            $apiBilling = $apiToken !== '' ? gpQaApiRequest($baseUrl, 'api/billing.php', $apiToken) : ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'missing token'];
             $apiMeJson = json_decode($apiMe['body'], true);
             $apiDogsJson = json_decode($apiDogs['body'], true);
             $apiLogsJson = json_decode($apiLogs['body'], true);
+            $apiBillingJson = json_decode($apiBilling['body'], true);
             $apiMeSeen = gpQaPageLooksOk($apiMe) && is_array($apiMeJson) && !empty($apiMeJson['success']) && !empty($apiMeJson['user']['username']);
             $apiDogsSeen = gpQaPageLooksOk($apiDogs) && is_array($apiDogsJson) && !empty($apiDogsJson['success']) && isset($apiDogsJson['dogs']) && is_array($apiDogsJson['dogs']);
             $apiLogsSeen = gpQaPageLooksOk($apiLogs) && is_array($apiLogsJson) && !empty($apiLogsJson['success']) && isset($apiLogsJson['logs']) && is_array($apiLogsJson['logs']);
+            $apiBillingSeen = gpQaPageLooksOk($apiBilling) && is_array($apiBillingJson) && !empty($apiBillingJson['success']) && isset($apiBillingJson['service_rows']) && is_array($apiBillingJson['service_rows']) && isset($apiBillingJson['support_options']) && is_array($apiBillingJson['support_options']);
             $apiWearableDogId = (int) (($apiDogsJson['dogs'][0]['id'] ?? 0) ?: 0);
             if ($apiWearableDogId > 0 && $apiToken !== '') {
                 $apiWearables = gpQaApiRequest($baseUrl, 'api/wearables.php', $apiToken, 'POST', [
@@ -645,6 +650,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_me_endpoint', $apiMeSeen, 'HTTP ' . $apiMe['status'] . ($apiMeSeen ? ' api me ok' : ' api me missing'));
             gpQaResult($results, 'api_dogs_endpoint', $apiDogsSeen, 'HTTP ' . $apiDogs['status'] . ($apiDogsSeen ? ' api dogs ok' : ' api dogs missing'));
             gpQaResult($results, 'api_logs_endpoint', $apiLogsSeen, 'HTTP ' . $apiLogs['status'] . ($apiLogsSeen ? ' api logs ok' : ' api logs missing'));
+            gpQaResult($results, 'api_billing_endpoint', $apiBillingSeen, 'HTTP ' . $apiBilling['status'] . ($apiBillingSeen ? ' api billing ok' : ' api billing missing'));
             gpQaResult($results, 'api_wearables_endpoint', $apiWearablesSeen, 'HTTP ' . $apiWearables['status'] . ($apiWearablesSeen ? ' wearable sync recorded' : ' wearable sync missing'));
         } else {
             gpQaResult($results, 'api_tokens_page_loads', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api_tokens.php and bearer-token endpoints');
@@ -652,6 +658,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_me_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/me.php');
             gpQaResult($results, 'api_dogs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/dogs.php');
             gpQaResult($results, 'api_logs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/logs.php');
+            gpQaResult($results, 'api_billing_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/billing.php');
             gpQaResult($results, 'api_wearables_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php');
         }
         $pages = [

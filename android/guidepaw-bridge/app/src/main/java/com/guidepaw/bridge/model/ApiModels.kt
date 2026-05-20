@@ -92,6 +92,80 @@ data class FoundDogReportResult(
     val message: String,
 )
 
+data class BillingPlanRow(
+    val slug: String,
+    val label: String,
+    val summary: String,
+    val includedText: List<String>,
+    val lockedText: List<String>,
+    val requiredTier: String,
+    val isCurrent: Boolean,
+)
+
+data class BillingSupportOption(
+    val supportType: String,
+    val label: String,
+    val summary: String,
+    val emoji: String,
+    val mode: String,
+    val priceIdConfigured: Boolean,
+    val checkoutAvailable: Boolean,
+)
+
+data class BillingServiceRow(
+    val slug: String,
+    val label: String,
+    val summary: String,
+    val includedText: List<String>,
+    val lockedText: List<String>,
+    val billingModel: String,
+    val requiredTier: String,
+    val scope: String,
+    val priceCents: Int,
+    val currency: String,
+    val stripePriceId: String,
+    val notes: String,
+    val active: Boolean,
+    val checkoutAvailable: Boolean,
+    val requiresActiveDog: Boolean,
+    val actionLabel: String,
+)
+
+data class BillingEventRow(
+    val source: String,
+    val title: String,
+    val amountCents: Int,
+    val currency: String,
+    val status: String,
+    val createdAt: String,
+    val details: String,
+)
+
+data class BillingOverview(
+    val userId: Long,
+    val username: String,
+    val activeDogId: Long,
+    val currentTier: String,
+    val currentTierLabel: String,
+    val dogCount: Int,
+    val canCreateAnotherDog: Boolean,
+    val supportBadge: PublicProfileSupportBadge?,
+    val planRows: List<BillingPlanRow>,
+    val supportOptions: List<BillingSupportOption>,
+    val serviceRows: List<BillingServiceRow>,
+    val recentSupportEvents: List<BillingEventRow>,
+    val recentPurchaseEvents: List<BillingEventRow>,
+)
+
+data class BillingCheckoutResult(
+    val kind: String,
+    val supportType: String,
+    val serviceSlug: String,
+    val dogId: Long,
+    val checkoutUrl: String,
+    val message: String,
+)
+
 data class LoginSession(
     val token: String,
     val expiresAt: String,

@@ -48,6 +48,13 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 - `POST /api/found_dog_reports.php`
 - Returns public QR/profile details for the selected dog and accepts native found-dog reports
 
+### Billing, support, and add-ons
+
+- `GET /api/billing.php?dog_id=123`
+- `POST /api/billing.php`
+- Returns the current plan state, support badge, support receipt history, and a la carte service catalog
+- Starts Stripe Checkout for one-time or monthly support and for eligible add-on services
+
 ## Current Android bridge flow
 
 1. User logs in through the app or the GuidePaw pairing link.
@@ -56,6 +63,7 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 4. The app reads steps and heart-rate summaries.
 5. The app posts snapshots to `/api/wearables.php`.
 6. The app loads the public QR/profile payload and can send found-dog reports.
+7. The app loads billing state and can open support or add-on checkout sessions.
 
 ## What is already enough
 
@@ -68,6 +76,7 @@ The current API surface is enough for:
 - wearable snapshot sync
 - public profile preview
 - native found-dog reporting
+- billing state and checkout initiation
 
 ## What to add later only if needed
 

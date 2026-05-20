@@ -125,6 +125,9 @@ Must support:
 - extra dog slot add-on
 - current plan state
 
+Status:
+- implemented in Android bridge
+
 ## Phase 6: Wearable sync
 
 Goal: keep the Health Connect bridge working.
