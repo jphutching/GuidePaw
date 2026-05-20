@@ -603,10 +603,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $faqPage = gpQaRequest($baseUrl, 'faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonSeen = gpQaPageLooksOk($breedComparisonPage) && (str_contains(strtolower($breedComparisonPage['body']), 'cavalier king charles spaniel vs english toy spaniel') || str_contains(strtolower($breedComparisonPage['body']), 'more comparisons'));
         $faqSeen = gpQaPageLooksOk($faqPage) && str_contains(strtolower($faqPage['body']), 'guidepaw faq');
-        $legalInfoSeen = gpQaPageLooksOk($legalInfoPage) && (
-            str_contains(strtolower($legalInfoPage['body']), 'service dog & esa legal info')
-            || str_contains(strtolower($legalInfoPage['body']), 'service dogs & esa')
-        );
+        $legalInfoBody = strtolower($legalInfoPage['body']);
+        $legalInfoSeen = gpQaPageLooksOk($legalInfoPage)
+            && str_contains($legalInfoBody, 'no official national registry')
+            && str_contains($legalInfoBody, 'emotional support animals')
+            && str_contains($legalInfoBody, 'service dogs');
         gpQaResult($results, 'breed_comparison_hub_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison hub found' : ' breed comparison hub missing'));
         gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         gpQaResult($results, 'service_dog_esa_legal_info_page_loads', $legalInfoSeen, 'HTTP ' . $legalInfoPage['status'] . ($legalInfoSeen ? ' legal info found' : ' legal info missing'));
