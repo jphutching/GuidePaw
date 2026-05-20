@@ -208,6 +208,7 @@ body { background: #f1f5f9; color:#0f172a; }
         <p class="text-muted mb-3">Use the public questionnaire to compare breed groups by size, energy, grooming, and the kind of work you need.</p>
         <div class="d-grid gap-2">
             <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
+            <a class="btn btn-outline-primary btn-call w-100" href="breed_family_guide.php">Breed Family Guide</a>
             <a class="btn btn-outline-secondary btn-call w-100" href="breed_comparison_hub.php">Open Breed Comparison Hub</a>
             <a class="btn btn-outline-secondary btn-call w-100" href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a>
             <a class="btn btn-outline-secondary btn-call w-100" href="housing_access_faq.php">Housing &amp; Access FAQ</a>

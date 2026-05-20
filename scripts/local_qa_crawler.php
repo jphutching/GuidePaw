@@ -450,6 +450,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $robotsTxtPage = gpQaRequest($baseUrl, 'robots.txt', 'GET', [], '', $insecureLocalSsl, '', false);
         $sitemapPage = gpQaRequest($baseUrl, 'sitemap.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonHubPage = gpQaRequest($baseUrl, 'breed_comparison_hub.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $breedFamilyGuidePage = gpQaRequest($baseUrl, 'breed_family_guide.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonPage = gpQaRequest($baseUrl, 'breed_comparison.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $legalInfoPage = gpQaRequest($baseUrl, 'service_dog_esa_legal_info.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonLabPage = gpQaRequest($baseUrl, 'breed_compare_labrador_golden.php', 'GET', [], '', $insecureLocalSsl, '', false);
@@ -604,6 +605,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $housingFaqPage = gpQaRequest($baseUrl, 'housing_access_faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonSeen = gpQaPageLooksOk($breedComparisonPage) && (str_contains(strtolower($breedComparisonPage['body']), 'cavalier king charles spaniel vs english toy spaniel') || str_contains(strtolower($breedComparisonPage['body']), 'more comparisons'));
         $faqSeen = gpQaPageLooksOk($faqPage) && str_contains(strtolower($faqPage['body']), 'guidepaw faq');
+        $breedFamilyGuideSeen = gpQaPageLooksOk($breedFamilyGuidePage) && str_contains(strtolower($breedFamilyGuidePage['body']), 'breed family guide');
         $legalInfoBody = strtolower($legalInfoPage['body']);
         $legalInfoSeen = gpQaPageLooksOk($legalInfoPage)
             && str_contains($legalInfoBody, 'no official national registry')
@@ -617,6 +619,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($housingFaqBody, 'fair housing act')
             );
         gpQaResult($results, 'breed_comparison_hub_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison hub found' : ' breed comparison hub missing'));
+        gpQaResult($results, 'breed_family_guide_page_loads', $breedFamilyGuideSeen, 'HTTP ' . $breedFamilyGuidePage['status'] . ($breedFamilyGuideSeen ? ' family guide found' : ' family guide missing'));
         gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         gpQaResult($results, 'service_dog_esa_legal_info_page_loads', $legalInfoSeen, 'HTTP ' . $legalInfoPage['status'] . ($legalInfoSeen ? ' legal info found' : ' legal info missing'));
         gpQaResult($results, 'housing_access_faq_page_loads', $housingFaqSeen, 'HTTP ' . $housingFaqPage['status'] . ($housingFaqSeen ? ' housing faq found' : ' housing faq missing'));

@@ -184,6 +184,10 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Breed Comparison Hub</div>
                     <div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div>
                 </a>
+                <a class="landing-example text-decoration-none text-dark" href="breed_family_guide.php">
+                    <div class="fw-bold mb-1">Breed Family Guide</div>
+                    <div class="text-muted small">Broad family-level overview before you compare exact breeds.</div>
+                </a>
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
                     <div class="fw-bold mb-1">GuidePaw FAQ</div>
                     <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>

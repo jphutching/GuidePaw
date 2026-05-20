@@ -160,6 +160,7 @@ $faqSchema = [
                 <h2 class="h4">Useful starting points</h2>
                 <ul class="mb-0">
                     <li><a href="breed_questionnaire.php">Breed Questionnaire</a></li>
+                    <li><a href="breed_family_guide.php">Breed Family Guide</a></li>
                     <li><a href="breed_comparison.php">Breed Comparison</a></li>
                     <li><a href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a></li>
                     <li><a href="housing_access_faq.php">Housing &amp; Access FAQ</a></li>
