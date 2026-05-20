@@ -9,9 +9,10 @@ $description = 'Browse GuidePaw breed families with plain-language notes about s
 $families = [
     [
         'name' => 'Spaniel family',
-        'summary' => 'Good for handlers who want a smaller, affectionate dog with close attention to family and routine. Watch barking, confidence, grooming, and handling tolerance.',
+        'summary' => 'Good for handlers who want an affectionate, people-oriented dog with close attention to routine. Watch barking, confidence, grooming, and handling tolerance.',
         'links' => [
             ['href' => 'breed_comparison.php', 'label' => 'Cavalier vs English Toy Spaniel'],
+            ['href' => 'breed_questionnaire.php?breed_query=Cavalier%20King%20Charles%20Spaniel', 'label' => 'Research a spaniel breed'],
             ['href' => 'breed_comparison_hub.php', 'label' => 'Browse more comparisons'],
         ],
     ],
@@ -28,6 +29,7 @@ $families = [
         'summary' => 'Useful when intelligence and trainability matter, but grooming and coat care are part of the commitment. Compare sizes by fit, not just personality.',
         'links' => [
             ['href' => 'breed_compare_standard_toy_poodle.php', 'label' => 'Standard vs Toy Poodle'],
+            ['href' => 'breed_questionnaire.php?breed_query=Poodle', 'label' => 'Research a poodle breed'],
             ['href' => 'breed_questionnaire.php', 'label' => 'Use the questionnaire'],
         ],
     ],
@@ -36,6 +38,7 @@ $families = [
         'summary' => 'Low-to-the-ground herding dogs that can be bright, sturdy, and fun, but may be vocal or stubborn if not handled consistently.',
         'links' => [
             ['href' => 'breed_compare_pembroke_cardigan_corgi.php', 'label' => 'Pembroke vs Cardigan Corgi'],
+            ['href' => 'breed_questionnaire.php?breed_query=Corgi', 'label' => 'Research a corgi breed'],
             ['href' => 'breed_questionnaire.php', 'label' => 'Use the questionnaire'],
         ],
     ],
@@ -44,6 +47,7 @@ $families = [
         'summary' => 'Good for active teams that want engagement and problem-solving, but they often need structured training and off-switch work.',
         'links' => [
             ['href' => 'breed_compare_aussie_mini_american_shepherd.php', 'label' => 'Australian Shepherd vs Miniature American Shepherd'],
+            ['href' => 'breed_questionnaire.php?breed_query=Australian%20Shepherd', 'label' => 'Research a herding breed'],
             ['href' => 'breed_questionnaire.php', 'label' => 'Use the questionnaire'],
         ],
     ],
@@ -52,6 +56,7 @@ $families = [
         'summary' => 'A smaller option can work well for travel and close handling, but physical durability and public confidence still matter.',
         'links' => [
             ['href' => 'breed_compare_french_bulldog_boston_terrier.php', 'label' => 'French Bulldog vs Boston Terrier'],
+            ['href' => 'breed_questionnaire.php?breed_query=Boston%20Terrier', 'label' => 'Research a compact breed'],
             ['href' => 'breed_questionnaire.php', 'label' => 'Use the questionnaire'],
         ],
     ],
@@ -131,16 +136,41 @@ body { background:#f1f5f9; color:#0f172a; }
             <div style="min-width:260px; max-width:720px;">
                 <div class="pill mb-3">Public family guide</div>
                 <h1 class="display-6 fw-bold mb-3">GuidePaw Breed Family Guide</h1>
-                <p class="lead mb-0">A broader way to compare breed families before you go deeper. Start here if you know the kind of dog you want, but not the exact breed.</p>
+                <p class="lead mb-3">A broader way to compare breed families before you go deeper. Start here if you know the kind of dog you want, but not the exact breed.</p>
+                <p class="mb-0" style="max-width: 62ch;">The families below are practical search groups, not rigid kennel-club definitions. Use them to narrow the type of dog first, then compare exact breeds or run the questionnaire.</p>
             </div>
             <div class="panel p-3 text-dark" style="min-width:280px; max-width:360px;">
                 <div class="small text-uppercase text-muted fw-semibold">Next step</div>
                 <h2 class="h5 mb-2">Move from family to exact breed</h2>
-                <p class="muted mb-3">Use the family guide for the overview, then open the questionnaire or comparison hub to narrow the fit.</p>
+                <p class="muted mb-3">Use the family guide for the overview, then open the questionnaire or comparison hub to narrow the fit. If you already know a name, search it directly in the questionnaire.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Open Breed Questionnaire</a>
                     <a class="btn btn-outline-primary fw-bold" href="breed_comparison_hub.php">Open Comparison Hub</a>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="panel p-4 h-100">
+                <div class="text-uppercase text-muted fw-semibold small mb-2">Start with</div>
+                <h2 class="h5">What kind of dog fits the work?</h2>
+                <p class="muted mb-0">Look at size, grooming, energy, and handling before you focus on one breed name.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel p-4 h-100">
+                <div class="text-uppercase text-muted fw-semibold small mb-2">Then compare</div>
+                <h2 class="h5">Breeds inside the family</h2>
+                <p class="muted mb-0">Use the comparison pages when you are already close and need a narrower decision.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel p-4 h-100">
+                <div class="text-uppercase text-muted fw-semibold small mb-2">If you are stuck</div>
+                <h2 class="h5">Let the questionnaire rank options</h2>
+                <p class="muted mb-0">The questionnaire handles size, focus, and nickname matching if you need the site to narrow the list for you.</p>
             </div>
         </div>
     </section>
@@ -170,6 +200,7 @@ body { background:#f1f5f9; color:#0f172a; }
                     <li>Start with size, grooming, energy, and handling tolerance.</li>
                     <li>Then compare the breeds that sit inside the family you like best.</li>
                     <li>Use the questionnaire when you want the site to rank likely fits for you.</li>
+                    <li>Use the comparison hub when you already have two or three breeds in mind.</li>
                 </ul>
             </div>
         </div>
