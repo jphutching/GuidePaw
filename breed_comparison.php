@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/app_config.php';
+require_once __DIR__ . '/includes/auth_helpers.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/seo.php';
 
@@ -225,6 +226,17 @@ $schema = [
                     <div class="accordion-body">Open the public questionnaire, set your size and public-access needs, then use the results to narrow down family and breed names that fit.</div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="panel p-4 mt-4">
+        <div class="label mb-2">More comparisons</div>
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-4"><a class="text-decoration-none text-dark d-block panel p-3 h-100" href="breed_compare_labrador_golden.php"><div class="fw-bold mb-1">Labrador Retriever vs Golden Retriever</div><div class="muted small">Compare retriever size, coat, and family fit.</div></a></div>
+            <div class="col-md-6 col-lg-4"><a class="text-decoration-none text-dark d-block panel p-3 h-100" href="breed_compare_standard_toy_poodle.php"><div class="fw-bold mb-1">Standard Poodle vs Toy Poodle</div><div class="muted small">Compare the size split inside the Poodle family.</div></a></div>
+            <div class="col-md-6 col-lg-4"><a class="text-decoration-none text-dark d-block panel p-3 h-100" href="breed_compare_aussie_mini_american_shepherd.php"><div class="fw-bold mb-1">Australian Shepherd vs Miniature American Shepherd</div><div class="muted small">Compare the larger and smaller herding options.</div></a></div>
+            <div class="col-md-6 col-lg-4"><a class="text-decoration-none text-dark d-block panel p-3 h-100" href="breed_compare_pembroke_cardigan_corgi.php"><div class="fw-bold mb-1">Pembroke Welsh Corgi vs Cardigan Welsh Corgi</div><div class="muted small">Compare the two corgi breeds without mixing them up.</div></a></div>
+            <div class="col-md-6 col-lg-4"><a class="text-decoration-none text-dark d-block panel p-3 h-100" href="breed_compare_french_bulldog_boston_terrier.php"><div class="fw-bold mb-1">French Bulldog vs Boston Terrier</div><div class="muted small">Compare two compact companion breeds with health caveats.</div></a></div>
         </div>
     </section>
 </main>

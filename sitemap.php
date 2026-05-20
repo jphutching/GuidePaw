@@ -20,6 +20,31 @@ $pages = [
         'priority' => '0.8',
     ],
     [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_compare_labrador_golden.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.7',
+    ],
+    [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_compare_standard_toy_poodle.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.7',
+    ],
+    [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_compare_aussie_mini_american_shepherd.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.7',
+    ],
+    [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_compare_pembroke_cardigan_corgi.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.7',
+    ],
+    [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_compare_french_bulldog_boston_terrier.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.7',
+    ],
+    [
         'loc' => guidepawSeoAbsoluteUrl('/faq.php'),
         'changefreq' => 'monthly',
         'priority' => '0.8',

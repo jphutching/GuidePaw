@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/app_config.php';
+require_once __DIR__ . '/includes/auth_helpers.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/seo.php';
 

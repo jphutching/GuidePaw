@@ -171,8 +171,8 @@ if (empty($_SESSION['user_id'])) {
             </div>
             <div class="landing-grid">
                 <a class="landing-example text-decoration-none text-dark" href="breed_comparison.php">
-                    <div class="fw-bold mb-1">Breed Comparison</div>
-                    <div class="text-muted small">Cavalier King Charles Spaniel vs English Toy Spaniel and why the names get mixed up.</div>
+                    <div class="fw-bold mb-1">Breed Comparisons</div>
+                    <div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div>
                 </a>
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
                     <div class="fw-bold mb-1">GuidePaw FAQ</div>
