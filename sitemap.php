@@ -15,6 +15,16 @@ $pages = [
         'priority' => '0.9',
     ],
     [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_comparison.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.8',
+    ],
+    [
+        'loc' => guidepawSeoAbsoluteUrl('/faq.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.8',
+    ],
+    [
         'loc' => guidepawSeoAbsoluteUrl('/support_funding.php'),
         'changefreq' => 'monthly',
         'priority' => '0.8',

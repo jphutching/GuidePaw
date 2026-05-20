@@ -592,6 +592,12 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             : 'skipped: no GA4 measurement id configured');
         gpQaResult($results, 'robots_txt_loads', $robotsTxtSeen, 'HTTP ' . $robotsTxtPage['status'] . ($robotsTxtSeen ? ' robots.txt found' : ' robots.txt missing'));
         gpQaResult($results, 'sitemap_xml_loads', $sitemapSeen, 'HTTP ' . $sitemapPage['status'] . ($sitemapSeen ? ' sitemap found' : ' sitemap missing'));
+        $breedComparisonPage = gpQaRequest($baseUrl, 'breed_comparison.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $faqPage = gpQaRequest($baseUrl, 'faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $breedComparisonSeen = gpQaPageLooksOk($breedComparisonPage) && (str_contains(strtolower($breedComparisonPage['body']), 'cavalier king charles spaniel vs english toy spaniel') || str_contains(strtolower($breedComparisonPage['body']), 'breed comparison'));
+        $faqSeen = gpQaPageLooksOk($faqPage) && str_contains(strtolower($faqPage['body']), 'guidepaw faq');
+        gpQaResult($results, 'breed_comparison_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonPage['status'] . ($breedComparisonSeen ? ' breed comparison found' : ' breed comparison missing'));
+        gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
         gpQaResult($results, 'login_breed_questionnaire_cta', $loginBreedQuestionnaireSeen, 'HTTP ' . $loginPage['status'] . ($loginBreedQuestionnaireSeen ? ' breed questionnaire CTA found' : ' breed questionnaire CTA missing'));
         gpQaResult($results, 'logout_redirect', $logoutSeen, 'HTTP ' . $logoutPage['status'] . ($logoutSeen ? ' logout redirect found' : ' logout redirect missing'));

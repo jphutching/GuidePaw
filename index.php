@@ -161,6 +161,26 @@ if (empty($_SESSION['user_id'])) {
             </div>
         </section>
 
+        <section class="mb-4">
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+                <div>
+                    <div class="text-uppercase text-muted fw-semibold small">Public guides</div>
+                    <h2 class="h3 mb-0">Search-friendly pages with real answers</h2>
+                </div>
+                <div class="text-muted">Built for public search intent, not keyword stuffing.</div>
+            </div>
+            <div class="landing-grid">
+                <a class="landing-example text-decoration-none text-dark" href="breed_comparison.php">
+                    <div class="fw-bold mb-1">Breed Comparison</div>
+                    <div class="text-muted small">Cavalier King Charles Spaniel vs English Toy Spaniel and why the names get mixed up.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="faq.php">
+                    <div class="fw-bold mb-1">GuidePaw FAQ</div>
+                    <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>
+                </a>
+            </div>
+        </section>
+
         <section class="row g-3 mb-4">
             <div class="col-lg-7">
                 <div class="landing-card p-4 h-100">

@@ -208,6 +208,8 @@ body { background: #f1f5f9; color:#0f172a; }
         <p class="text-muted mb-3">Use the public questionnaire to compare breed groups by size, energy, grooming, and the kind of work you need.</p>
         <div class="d-grid gap-2">
             <a class="btn btn-outline-primary btn-call w-100" href="breed_questionnaire.php">Open Breed Questionnaire</a>
+            <a class="btn btn-outline-secondary btn-call w-100" href="breed_comparison.php">Compare Spaniel Breeds</a>
+            <a class="btn btn-outline-dark btn-call w-100" href="faq.php">Read FAQ</a>
             <a class="btn btn-outline-dark btn-call w-100" href="air_travel_rights.php">Air Travel Rights</a>
         </div>
         <div class="inherited-hint mt-2">Use the air-travel guide for service-dog flight rules and the separate note for dogs in training.</div>
