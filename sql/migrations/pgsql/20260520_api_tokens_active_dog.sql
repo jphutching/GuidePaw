@@ -1,0 +1,6 @@
+ALTER TABLE api_tokens
+    ADD COLUMN IF NOT EXISTS active_dog_id INTEGER NULL REFERENCES dogs(id) ON DELETE SET NULL;
+
+ALTER TABLE api_tokens
+    ADD COLUMN IF NOT EXISTS active_dog_updated_at TIMESTAMP NULL;
+

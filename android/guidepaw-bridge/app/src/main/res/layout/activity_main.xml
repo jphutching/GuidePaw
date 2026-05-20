@@ -193,5 +193,12 @@
             android:layout_marginTop="12dp"
             android:text="@string/dogs_summary_empty"
             android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <LinearLayout
+            android:id="@+id/dogsListContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp" />
     </LinearLayout>
 </ScrollView>

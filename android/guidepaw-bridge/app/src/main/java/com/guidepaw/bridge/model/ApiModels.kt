@@ -5,6 +5,7 @@ data class AccountOverview(
     val username: String,
     val dbDriver: String,
     val schemaVersion: Int,
+    val activeDogId: Long,
 )
 
 data class AccessibleDogSummary(
@@ -13,6 +14,11 @@ data class AccessibleDogSummary(
     val breed: String,
     val accessRole: String,
     val lifecycleStatus: String,
+)
+
+data class DogsOverview(
+    val activeDogId: Long,
+    val dogs: List<AccessibleDogSummary>,
 )
 
 data class LoginSession(

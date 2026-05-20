@@ -5,6 +5,7 @@ import com.guidepaw.bridge.model.AccessibleDogSummary
 import com.guidepaw.bridge.model.AccountOverview
 import com.guidepaw.bridge.model.HealthSnapshot
 import com.guidepaw.bridge.model.LoginSession
+import com.guidepaw.bridge.model.DogsOverview
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -59,12 +60,13 @@ class GuidePawApiClient {
                     username = user.optString("username", ""),
                     dbDriver = json.optString("db_driver", ""),
                     schemaVersion = json.optInt("schema_version", 0),
+                    activeDogId = json.optLong("active_dog_id", 0L),
                 )
             )
         }
     }
 
-    fun fetchAccessibleDogs(config: BridgeConfig): ApiResult<List<AccessibleDogSummary>> {
+    fun fetchAccessibleDogs(config: BridgeConfig): ApiResult<DogsOverview> {
         val connection = openApiConnection(config, "GET", "/api/dogs.php")
         return decodeJson(connection) { json ->
             val dogsJson = json.optJSONArray("dogs") ?: JSONArray()
@@ -82,7 +84,26 @@ class GuidePawApiClient {
                     )
                 }
             }
-            ApiResult.Success(dogs)
+            ApiResult.Success(
+                DogsOverview(
+                    activeDogId = json.optLong("active_dog_id", 0L),
+                    dogs = dogs,
+                )
+            )
+        }
+    }
+
+    fun setActiveDog(config: BridgeConfig, dogId: Long): ApiResult<Long> {
+        val connection = openApiConnection(config, "POST", "/api/dogs.php")
+        val payload = JSONObject().apply {
+            put("action", "set_active_dog")
+            put("dog_id", dogId)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            ApiResult.Success(json.optLong("active_dog_id", dogId))
         }
     }
 

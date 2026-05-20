@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -40,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lastSyncText: TextView
     private lateinit var accountText: TextView
     private lateinit var dogsText: TextView
+    private lateinit var dogsListContainer: LinearLayout
     private lateinit var autoSyncSwitch: Switch
 
     private val requiredPermissions = setOf(
@@ -96,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         lastSyncText = findViewById(R.id.lastSyncText)
         accountText = findViewById(R.id.accountText)
         dogsText = findViewById(R.id.dogsText)
+        dogsListContainer = findViewById(R.id.dogsListContainer)
         autoSyncSwitch = findViewById(R.id.autoSyncSwitch)
     }
 
@@ -276,6 +279,7 @@ class MainActivity : AppCompatActivity() {
         if (config == null) {
             accountText.text = getString(R.string.account_summary_empty)
             dogsText.text = getString(R.string.dogs_summary_empty)
+            renderDogsList(null, emptyList())
             return
         }
 
@@ -305,7 +309,8 @@ class MainActivity : AppCompatActivity() {
 
             when (dogsResult) {
                 is ApiResult.Success -> {
-                    val dogs = dogsResult.data
+                    val overview = dogsResult.data
+                    val dogs = overview.dogs
                     dogsText.text = if (dogs.isEmpty()) {
                         getString(R.string.dogs_summary_none)
                     } else {
@@ -325,14 +330,16 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    renderDogsList(overview.activeDogId.takeIf { it > 0L }, dogs)
                 }
                 is ApiResult.Failure -> {
                     dogsText.text = getString(R.string.dogs_summary_error, dogsResult.message)
+                    renderDogsList(null, emptyList())
                 }
             }
 
-            if ((prefs.load()?.dogId ?: 0L) <= 0L && dogsResult is ApiResult.Success && dogsResult.data.isNotEmpty()) {
-                val firstDog = dogsResult.data.first()
+            if ((prefs.load()?.dogId ?: 0L) <= 0L && dogsResult is ApiResult.Success && dogsResult.data.dogs.isNotEmpty()) {
+                val firstDog = dogsResult.data.dogs.first()
                 dogIdInput.setText(firstDog.id.toString())
                 dogNameInput.setText(firstDog.name)
                 saveConfigFromForm(showMessage = false)
@@ -365,6 +372,62 @@ class MainActivity : AppCompatActivity() {
     private fun openHealthConnectSettings() {
         val intent = Intent(android.provider.Settings.ACTION_SETTINGS)
         runCatching { startActivity(intent) }
+    }
+
+    private fun renderDogsList(activeDogId: Long?, dogs: List<com.guidepaw.bridge.model.AccessibleDogSummary>) {
+        dogsListContainer.removeAllViews()
+        if (dogs.isEmpty()) {
+            return
+        }
+
+        dogs.forEach { dog ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 20)
+            }
+            val title = TextView(this).apply {
+                text = buildString {
+                    append(dog.name)
+                    if (activeDogId != null && activeDogId == dog.id) append(" • Active")
+                }
+                textSize = 16f
+                setTextColor(resources.getColor(android.R.color.black, theme))
+            }
+            val meta = TextView(this).apply {
+                text = "${dog.breed.ifBlank { "Breed not set" }} • ${dog.accessRole} • ${dog.lifecycleStatus}"
+            }
+            val button = Button(this).apply {
+                text = if (activeDogId != null && activeDogId == dog.id) "Active Dog" else "Use this dog"
+                isEnabled = !(activeDogId != null && activeDogId == dog.id)
+                setOnClickListener {
+                    lifecycleScope.launch {
+                        updateStatus("Switching active dog...")
+                        val config = prefs.load()
+                        if (config == null) {
+                            updateStatus("Save the pairing code first.")
+                            return@launch
+                        }
+                        val result = withContext(Dispatchers.IO) {
+                            GuidePawApiClient().setActiveDog(config, dog.id)
+                        }
+                        when (result) {
+                            is ApiResult.Success -> {
+                                dogIdInput.setText(dog.id.toString())
+                                dogNameInput.setText(dog.name)
+                                saveConfigFromForm(showMessage = false)
+                                refreshAccountSummary()
+                                updateStatus("Active dog switched to ${dog.name}.")
+                            }
+                            is ApiResult.Failure -> updateStatus("Could not switch dog: ${result.message}")
+                        }
+                    }
+                }
+            }
+            row.addView(title)
+            row.addView(meta)
+            row.addView(button)
+            dogsListContainer.addView(row)
+        }
     }
 
     private fun refreshLastSync() {
