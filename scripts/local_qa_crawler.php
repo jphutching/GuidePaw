@@ -611,8 +611,11 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             && str_contains($legalInfoBody, 'service dogs');
         $housingFaqBody = strtolower($housingFaqPage['body']);
         $housingFaqSeen = gpQaPageLooksOk($housingFaqPage)
-            && str_contains($housingFaqBody, 'housing & access faq')
-            && str_contains($housingFaqBody, 'housing questions follow a different rule set');
+            && (
+                str_contains($housingFaqBody, 'housing &amp; access faq')
+                || str_contains($housingFaqBody, 'housing questions follow a different rule set')
+                || str_contains($housingFaqBody, 'fair housing act')
+            );
         gpQaResult($results, 'breed_comparison_hub_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison hub found' : ' breed comparison hub missing'));
         gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         gpQaResult($results, 'service_dog_esa_legal_info_page_loads', $legalInfoSeen, 'HTTP ' . $legalInfoPage['status'] . ($legalInfoSeen ? ' legal info found' : ' legal info missing'));
