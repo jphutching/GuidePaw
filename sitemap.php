@@ -20,6 +20,11 @@ $pages = [
         'priority' => '0.8',
     ],
     [
+        'loc' => guidepawSeoAbsoluteUrl('/breed_comparison_hub.php'),
+        'changefreq' => 'weekly',
+        'priority' => '0.9',
+    ],
+    [
         'loc' => guidepawSeoAbsoluteUrl('/breed_compare_labrador_golden.php'),
         'changefreq' => 'monthly',
         'priority' => '0.7',

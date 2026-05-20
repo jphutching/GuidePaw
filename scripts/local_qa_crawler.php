@@ -449,6 +449,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $loginPage = gpQaRequest($baseUrl, 'login.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $robotsTxtPage = gpQaRequest($baseUrl, 'robots.txt', 'GET', [], '', $insecureLocalSsl, '', false);
         $sitemapPage = gpQaRequest($baseUrl, 'sitemap.php', 'GET', [], '', $insecureLocalSsl, '', false);
+        $breedComparisonHubPage = gpQaRequest($baseUrl, 'breed_comparison_hub.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonHubPage = gpQaRequest($baseUrl, 'breed_comparison.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonLabPage = gpQaRequest($baseUrl, 'breed_compare_labrador_golden.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonPoodlePage = gpQaRequest($baseUrl, 'breed_compare_standard_toy_poodle.php', 'GET', [], '', $insecureLocalSsl, '', false);
@@ -601,7 +602,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $faqPage = gpQaRequest($baseUrl, 'faq.php', 'GET', [], '', $insecureLocalSsl, '', false);
         $breedComparisonSeen = gpQaPageLooksOk($breedComparisonHubPage) && (str_contains(strtolower($breedComparisonHubPage['body']), 'cavalier king charles spaniel vs english toy spaniel') || str_contains(strtolower($breedComparisonHubPage['body']), 'more comparisons'));
         $faqSeen = gpQaPageLooksOk($faqPage) && str_contains(strtolower($faqPage['body']), 'guidepaw faq');
-        gpQaResult($results, 'breed_comparison_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison found' : ' breed comparison missing'));
+        gpQaResult($results, 'breed_comparison_hub_page_loads', $breedComparisonSeen, 'HTTP ' . $breedComparisonHubPage['status'] . ($breedComparisonSeen ? ' breed comparison hub found' : ' breed comparison hub missing'));
         gpQaResult($results, 'faq_page_loads', $faqSeen, 'HTTP ' . $faqPage['status'] . ($faqSeen ? ' faq found' : ' faq missing'));
         $breedComparisonLabSeen = gpQaPageLooksOk($breedComparisonLabPage) && str_contains(strtolower($breedComparisonLabPage['body']), 'labrador retriever vs golden retriever');
         $breedComparisonPoodleSeen = gpQaPageLooksOk($breedComparisonPoodlePage) && str_contains(strtolower($breedComparisonPoodlePage['body']), 'standard poodle vs toy poodle');

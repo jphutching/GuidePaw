@@ -21,8 +21,8 @@ require_once 'includes/app_config.php';
 
 if (empty($_SESSION['user_id'])) {
     require_once __DIR__ . '/includes/seo.php';
-    $landingTitle = 'GuidePaw | Dog Training Logs, Service Dog Profiles, and Handler Tools';
-    $landingDescription = 'GuidePaw helps handlers research breeds, track training, manage dog profiles, share public service dog details, and keep support tools organized.';
+    $landingTitle = 'GuidePaw | Dog Training Logs, Service Dog Profiles, Breed Research, and Guide Paw Tools';
+    $landingDescription = 'GuidePaw helps handlers research breeds, track training, manage dog profiles, share public service dog details, and keep support tools organized. Guide Paw searches should land here too.';
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -35,6 +35,7 @@ if (empty($_SESSION['user_id'])) {
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
             'name' => appShortName(),
+            'alternateName' => 'Guide Paw',
             'url' => guidepawSeoAbsoluteUrl('/'),
             'description' => $landingDescription,
             'potentialAction' => [
@@ -47,6 +48,7 @@ if (empty($_SESSION['user_id'])) {
             '@context' => 'https://schema.org',
             '@type' => 'Organization',
             'name' => appShortName(),
+            'alternateName' => 'Guide Paw',
             'url' => guidepawSeoAbsoluteUrl('/'),
             'logo' => guidepawSeoAbsoluteUrl('/assets/brand/guidepaw-logo.png'),
             'sameAs' => array_values(array_filter([
@@ -112,7 +114,7 @@ if (empty($_SESSION['user_id'])) {
         <section class="landing-hero mb-4">
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div class="flex-grow-1" style="min-width: 260px;">
-                    <div class="landing-pill mb-3">Dog training logs • service dog profiles • breed research</div>
+                    <div class="landing-pill mb-3">Dog training logs • service dog profiles • breed research • Guide Paw</div>
                     <h1 class="display-6 fw-bold mb-3">GuidePaw keeps handler work organized.</h1>
                     <p class="lead mb-4"><?= e($landingDescription) ?></p>
                     <div class="d-flex flex-wrap gap-2">
@@ -170,8 +172,8 @@ if (empty($_SESSION['user_id'])) {
                 <div class="text-muted">Built for public search intent, not keyword stuffing.</div>
             </div>
             <div class="landing-grid">
-                <a class="landing-example text-decoration-none text-dark" href="breed_comparison.php">
-                    <div class="fw-bold mb-1">Breed Comparisons</div>
+                <a class="landing-example text-decoration-none text-dark" href="breed_comparison_hub.php">
+                    <div class="fw-bold mb-1">Breed Comparison Hub</div>
                     <div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div>
                 </a>
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
