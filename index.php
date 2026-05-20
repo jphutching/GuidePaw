@@ -160,6 +160,10 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Service Dog Notes</div>
                     <div class="text-muted small">Practical ADA and travel notes for handlers who need a quick reference.</div>
                 </div>
+                <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php">
+                    <div class="fw-bold mb-1">Service Dog &amp; ESA Legal Info</div>
+                    <div class="text-muted small">Plain-language guide for service dogs, ESAs, housing, and air travel basics.</div>
+                </a>
             </div>
         </section>
 

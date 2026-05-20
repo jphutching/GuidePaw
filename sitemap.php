@@ -55,6 +55,11 @@ $pages = [
         'priority' => '0.8',
     ],
     [
+        'loc' => guidepawSeoAbsoluteUrl('/service_dog_esa_legal_info.php'),
+        'changefreq' => 'monthly',
+        'priority' => '0.8',
+    ],
+    [
         'loc' => guidepawSeoAbsoluteUrl('/support_funding.php'),
         'changefreq' => 'monthly',
         'priority' => '0.8',

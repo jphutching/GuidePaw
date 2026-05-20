@@ -149,6 +149,7 @@ $faqSchema = [
                 <ul class="mb-0">
                     <li><a href="breed_questionnaire.php">Breed Questionnaire</a></li>
                     <li><a href="breed_comparison.php">Breed Comparison</a></li>
+                    <li><a href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a></li>
                     <li><a href="support_funding.php">Support GuidePaw</a></li>
                     <li><a href="service_dog_rights.php">Service Dog Rights</a></li>
                     <li><a href="air_travel_rights.php">Air Travel Rights</a></li>
