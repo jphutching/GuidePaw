@@ -966,6 +966,25 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
     'robots' => 'index,follow',
     'type' => 'article',
     'image' => '/assets/brand/guidepaw-logo.png',
+    'json_ld' => [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebApplication',
+            'name' => 'Breed Questionnaire',
+            'applicationCategory' => 'LifestyleApplication',
+            'operatingSystem' => 'Web',
+            'url' => guidepawSeoAbsoluteUrl('/breed_questionnaire.php'),
+            'description' => 'Compare breed groups by size, energy, grooming, and the kind of work you need before you choose a dog.',
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => appShortName(),
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => guidepawSeoAbsoluteUrl('/assets/brand/guidepaw-logo.png'),
+                ],
+            ],
+        ],
+    ],
 ]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">

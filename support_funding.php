@@ -95,6 +95,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'robots' => 'index,follow',
     'type' => 'website',
     'image' => '/assets/brand/guidepaw-logo.png',
+    'json_ld' => [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebPage',
+            'name' => 'Support GuidePaw',
+            'url' => guidepawSeoAbsoluteUrl('/support_funding.php'),
+            'description' => 'Support GuidePaw with a one-time gift or monthly contribution, or browse merch and community links.',
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => [
+                [
+                    '@type' => 'Question',
+                    'name' => 'Can I support GuidePaw once or monthly?',
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text' => 'Yes. GuidePaw supports both one-time and monthly support through Stripe Checkout.',
+                    ],
+                ],
+                [
+                    '@type' => 'Question',
+                    'name' => 'Is support separate from core access?',
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text' => 'Yes. The free core stays available while support and add-ons remain optional.',
+                    ],
+                ],
+            ],
+        ],
+    ],
 ]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">

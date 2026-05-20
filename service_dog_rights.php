@@ -15,6 +15,26 @@ checkLogin();
         'robots' => 'noindex,nofollow',
         'type' => 'article',
         'image' => '/assets/brand/guidepaw-logo.png',
+        'json_ld' => [
+            [
+                '@context' => 'https://schema.org',
+                '@type' => 'Article',
+                'headline' => 'Detailed ADA Service Dog Notes',
+                'description' => 'A practical GuidePaw reference for ADA service dog rights, handler responsibilities, and calm response scripts.',
+                'author' => [
+                    '@type' => 'Organization',
+                    'name' => appShortName(),
+                ],
+                'publisher' => [
+                    '@type' => 'Organization',
+                    'name' => appShortName(),
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => guidepawSeoAbsoluteUrl('/assets/brand/guidepaw-logo.png'),
+                    ],
+                ],
+            ],
+        ],
     ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">

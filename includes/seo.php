@@ -48,6 +48,7 @@ if (!function_exists('guidepawSeoHead')) {
         $siteName = trim((string) ($options['site_name'] ?? appShortName())) ?: appShortName();
         $image = trim((string) ($options['image'] ?? ''));
         $measurementId = guidepawSeoMeasurementId();
+        $jsonLd = $options['json_ld'] ?? [];
         $skipCanonical = stripos($robots, 'noindex') !== false || stripos($robots, 'none') !== false;
 
         if ($title !== '') {
@@ -96,6 +97,19 @@ if (!function_exists('guidepawSeoHead')) {
         }
         if ($description !== '') {
             echo '<meta name="twitter:description" content="' . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . '">' . PHP_EOL;
+        }
+
+        if (is_array($jsonLd) && $jsonLd !== []) {
+            $blocks = isset($jsonLd[0]) && is_array($jsonLd[0]) ? $jsonLd : [$jsonLd];
+            foreach ($blocks as $block) {
+                if (!is_array($block) || $block === []) {
+                    continue;
+                }
+                $encoded = json_encode($block, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                if ($encoded !== false) {
+                    echo '<script type="application/ld+json">' . $encoded . '</script>' . PHP_EOL;
+                }
+            }
         }
 
         if ($measurementId !== '') {

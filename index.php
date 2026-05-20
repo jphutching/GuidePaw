@@ -29,12 +29,70 @@ if (empty($_SESSION['user_id'])) {
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php
+    $landingSchema = [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => appShortName(),
+            'url' => guidepawSeoAbsoluteUrl('/'),
+            'description' => $landingDescription,
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => guidepawSeoAbsoluteUrl('/breed_questionnaire.php') . '?breed_query={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => appShortName(),
+            'url' => guidepawSeoAbsoluteUrl('/'),
+            'logo' => guidepawSeoAbsoluteUrl('/assets/brand/guidepaw-logo.png'),
+            'sameAs' => array_values(array_filter([
+                gpEnv('GUIDEPAW_DISCORD_INVITE_URL', ''),
+                gpEnv('GUIDEPAW_MERCH_STORE_URL', ''),
+            ])),
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => [
+                [
+                    '@type' => 'Question',
+                    'name' => 'Is the breed questionnaire public?',
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text' => 'Yes. It is meant for people researching a dog before they create an account.',
+                    ],
+                ],
+                [
+                    '@type' => 'Question',
+                    'name' => 'Do I need an account to browse the examples?',
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text' => 'No. The public landing, breed tool, and support page are all readable without signing in.',
+                    ],
+                ],
+                [
+                    '@type' => 'Question',
+                    'name' => 'What is the dashboard for?',
+                    'acceptedAnswer' => [
+                        '@type' => 'Answer',
+                        'text' => 'The dashboard is for logged-in handlers to manage dogs, training, and support tools.',
+                    ],
+                ],
+            ],
+        ],
+    ];
+    ?>
     <?php guidepawSeoHead([
         'title' => $landingTitle,
         'description' => $landingDescription,
         'robots' => 'index,follow',
         'canonical' => guidepawSeoAbsoluteUrl('/'),
         'image' => '/assets/brand/guidepaw-logo.png',
+        'json_ld' => $landingSchema,
     ]); ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -66,7 +124,7 @@ if (empty($_SESSION['user_id'])) {
                 <div class="landing-card p-3 text-dark" style="min-width: 280px; max-width: 360px; width: 100%;">
                     <div class="small text-uppercase text-muted fw-semibold">What people use it for</div>
                     <ul class="mt-3 mb-0 ps-3">
-                        <li>Track training sessions and quick wins.</li>
+                        <li>Track training sessions, reminders, and quick wins.</li>
                         <li>Share a public dog profile and found-dog contact details.</li>
                         <li>Compare breeds before committing to a dog.</li>
                         <li>Keep ADA, travel, and support notes in one place.</li>

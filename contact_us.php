@@ -23,6 +23,22 @@ $guidepawFacebookUrl = 'https://www.facebook.com/share/1J2hMnUBbm/';
     'robots' => 'index,follow',
     'type' => 'website',
     'image' => '/assets/brand/guidepaw-logo.png',
+    'json_ld' => [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'ContactPage',
+            'name' => 'Contact GuidePaw',
+            'url' => guidepawSeoAbsoluteUrl('/contact_us.php'),
+            'description' => 'Reach GuidePaw for feedback, support, and handler profile links.',
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => appShortName(),
+            'url' => guidepawSeoAbsoluteUrl('/'),
+            'logo' => guidepawSeoAbsoluteUrl('/assets/brand/guidepaw-logo.png'),
+        ],
+    ],
 ]); ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
