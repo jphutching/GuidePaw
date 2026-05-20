@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clearTrainingLogButton: Button
     private lateinit var wearableSummaryText: TextView
     private lateinit var wearableStatusText: TextView
+    private lateinit var wearableCatalogText: TextView
     private lateinit var wearableRefreshButton: Button
     private lateinit var wearableEventsSummaryText: TextView
     private lateinit var wearableEventsContainer: LinearLayout
@@ -194,6 +195,7 @@ class MainActivity : AppCompatActivity() {
         clearTrainingLogButton = findViewById(R.id.clearTrainingLogButton)
         wearableSummaryText = findViewById(R.id.wearableSummaryText)
         wearableStatusText = findViewById(R.id.wearableStatusText)
+        wearableCatalogText = findViewById(R.id.wearableCatalogText)
         wearableRefreshButton = findViewById(R.id.wearableRefreshButton)
         wearableEventsSummaryText = findViewById(R.id.wearableEventsSummaryText)
         wearableEventsContainer = findViewById(R.id.wearableEventsContainer)
@@ -259,6 +261,7 @@ class MainActivity : AppCompatActivity() {
         })
         populateTrainingLocationTypes()
         populateTrainingSkillOptions()
+        populateWearableCatalog()
         trainingLogFocusValueText.text = "Focus level: 3/5"
     }
 
@@ -874,6 +877,34 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun populateWearableCatalog() {
+        wearableCatalogText.text = """
+            Dog trackers:
+            • Tractive GPS Tracker (Dog 6 / XL)
+            • Fi Series 3+ Smart Collar
+            • Garmin Alpha / TT series
+            • PetPace (2.0 / 3.0)
+            • Invoxia Biotracker
+            • Halo Collar
+            • FitBark
+            • PitPat
+            • Whistle
+
+            Handler wearables:
+            • Garmin (Vivoactive, Forerunner, Fenix, Instinct)
+            • Apple Watch (Series / Ultra)
+            • Samsung Galaxy Watch (Ultra / 7 / 8)
+            • Google Pixel Watch (3 / 4)
+            • Whoop (5.0)
+            • Oura Ring
+            • Fitbit
+            • Polar / Suunto
+
+            Integrated tip:
+            • Garmin watch + Garmin dog system for the strongest handler + dog pairing.
+        """.trimIndent()
     }
 
     private fun saveTrainingLogEntry() {

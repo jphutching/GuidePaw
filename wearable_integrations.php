@@ -155,6 +155,44 @@ $csrf = generateCsrfToken();
     </div>
 
     <div class="card">
+        <h2 class="h5 mb-2">Wearable compatibility catalog</h2>
+        <p class="small mb-3">Use this as a practical pairing guide for dog trackers and handler wearables that fit the GuidePaw sync flow.</p>
+        <div class="grid">
+            <div class="metric">
+                <div class="small">Dog trackers</div>
+                <div class="small mt-2">
+                    Tractive GPS Tracker (Dog 6 / XL)<br>
+                    Fi Series 3+ Smart Collar<br>
+                    Garmin Alpha / TT series<br>
+                    PetPace (2.0 / 3.0)<br>
+                    Invoxia Biotracker<br>
+                    Halo Collar<br>
+                    FitBark<br>
+                    PitPat<br>
+                    Whistle
+                </div>
+            </div>
+            <div class="metric">
+                <div class="small">Handler wearables</div>
+                <div class="small mt-2">
+                    Garmin (Vivoactive, Forerunner, Fenix, Instinct)<br>
+                    Apple Watch (Series / Ultra)<br>
+                    Samsung Galaxy Watch (Ultra / 7 / 8)<br>
+                    Google Pixel Watch (3 / 4)<br>
+                    Whoop (5.0)<br>
+                    Oura Ring<br>
+                    Fitbit<br>
+                    Polar / Suunto
+                </div>
+            </div>
+            <div class="metric">
+                <div class="small">Integration tip</div>
+                <div class="small mt-2">Garmin watch + Garmin dog system gives the cleanest handler + dog pairing when both sides are in the Garmin ecosystem.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
         <h2 class="h5 mb-2">Connect Wearable</h2>
         <p class="small mb-3">Pick the dog once, then create a connection code. The phone bridge scans the QR and sends future summaries automatically. You do not need to copy an API token.</p>
         <div class="small mb-3">
