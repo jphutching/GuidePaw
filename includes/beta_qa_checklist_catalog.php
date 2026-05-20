@@ -14,6 +14,7 @@ function gpBetaQaChecklistItems(): array
                 ['id' => 'render_db_basic', 'text' => 'Render PostgreSQL database plan is still basic-256mb, not starter.', 'expected' => 'Database plan has not been accidentally downgraded or changed.'],
                 ['id' => 'robots_txt', 'text' => 'robots.txt is present for search engines.', 'expected' => 'robots.txt lists internal disallows and points at the sitemap.'],
                 ['id' => 'sitemap_xml', 'text' => 'sitemap.xml endpoint loads for search engines.', 'expected' => 'sitemap.php returns XML with public GuidePaw URLs.'],
+                ['id' => 'ga4_public_home', 'text' => 'Public home page includes the configured GA4 tag when a measurement id is present.', 'expected' => 'The public landing page outputs the gtag snippet for the configured measurement id.'],
                 ['id' => 'zepto_env_present', 'text' => 'ZeptoMail environment variables are present.', 'expected' => 'ZEPTO_API_URL, token, from address/name, bounce address, and MAIL_FROM values exist.'],
                 ['id' => 'telegram_env_present', 'text' => 'Telegram beta notification env vars are present if Telegram notifications are enabled.', 'expected' => 'Telegram bot token/chat id settings remain configured outside committed code.'],
                 ['id' => 'migrations_applied', 'text' => 'Database migrations run successfully.', 'expected' => 'Dog access/status/transfer/audit tables and columns exist on beta.'],

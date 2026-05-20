@@ -47,6 +47,7 @@ $feedbackDbUser = (string)($options['feedback-db-user'] ?? getenv('GUIDEPAW_FEED
 $feedbackDbPass = (string)($options['feedback-db-pass'] ?? getenv('GUIDEPAW_FEEDBACK_DB_PASSWORD') ?? getenv('DB_PASSWORD') ?: '');
 $feedbackLimit = max(1, (int)($options['feedback-limit'] ?? getenv('GUIDEPAW_FEEDBACK_LIMIT') ?: 200));
 $checkApiRoutes = strtolower((string) (getenv('GUIDEPAW_CHECK_API_ROUTES') ?: 'no')) === 'yes';
+$gaMeasurementId = trim((string) (getenv('GUIDEPAW_GA4_MEASUREMENT_ID') ?: getenv('GOOGLE_ANALYTICS_MEASUREMENT_ID') ?: getenv('GA4_MEASUREMENT_ID') ?: ''));
 
 if ($adminPass === '') {
     fwrite(STDERR, "Missing --admin-pass or GUIDEPAW_ADMIN_PASS.\n");
@@ -579,6 +580,16 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             exit(1);
         }
         gpQaResult($results, 'public_home_page_loads', $publicHomeSeen, 'HTTP ' . $publicHomePage['status'] . ($publicHomeSeen ? ' public landing found' : ' public landing missing'));
+        $ga4Seen = true;
+        if ($gaMeasurementId !== '') {
+            $ga4Seen = $publicHomeSeen && (
+                str_contains($publicHomePage['body'], "gtag('config', '" . $gaMeasurementId . "'")
+                || str_contains($publicHomePage['body'], 'gtag/js?id=' . $gaMeasurementId)
+            );
+        }
+        gpQaResult($results, 'public_home_ga4_tag', $ga4Seen, $gaMeasurementId !== ''
+            ? 'measurement=' . $gaMeasurementId . ($ga4Seen ? ' gtag found on public home' : ' gtag missing from public home')
+            : 'skipped: no GA4 measurement id configured');
         gpQaResult($results, 'robots_txt_loads', $robotsTxtSeen, 'HTTP ' . $robotsTxtPage['status'] . ($robotsTxtSeen ? ' robots.txt found' : ' robots.txt missing'));
         gpQaResult($results, 'sitemap_xml_loads', $sitemapSeen, 'HTTP ' . $sitemapPage['status'] . ($sitemapSeen ? ' sitemap found' : ' sitemap missing'));
         gpQaResult($results, 'login_page_loads', $loginSeen, 'HTTP ' . $loginPage['status'] . ($loginSeen ? ' login page found' : ' login page missing'));
