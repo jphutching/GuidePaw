@@ -69,6 +69,13 @@
             android:layout_marginTop="16dp" />
 
         <Button
+            android:id="@+id/refreshAccountButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/refresh_account"
+            android:layout_marginTop="8dp" />
+
+        <Button
             android:id="@+id/openBridgeButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -116,5 +123,21 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/last_sync_never" />
+
+        <TextView
+            android:id="@+id/accountText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/account_summary_empty"
+            android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+        <TextView
+            android:id="@+id/dogsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/dogs_summary_empty"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
     </LinearLayout>
 </ScrollView>

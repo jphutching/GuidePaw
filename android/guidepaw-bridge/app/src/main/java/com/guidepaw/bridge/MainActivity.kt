@@ -14,6 +14,7 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.lifecycle.lifecycleScope
 import com.guidepaw.bridge.model.BridgeConfig
+import com.guidepaw.bridge.sync.ApiResult
 import com.guidepaw.bridge.sync.GuidePawApiClient
 import com.guidepaw.bridge.sync.GuidePawSyncScheduler
 import com.guidepaw.bridge.sync.HealthConnectRepository
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sourceInput: EditText
     private lateinit var statusText: TextView
     private lateinit var lastSyncText: TextView
+    private lateinit var accountText: TextView
+    private lateinit var dogsText: TextView
     private lateinit var autoSyncSwitch: Switch
 
     private val requiredPermissions = setOf(
@@ -81,11 +84,14 @@ class MainActivity : AppCompatActivity() {
         sourceInput = findViewById(R.id.sourceInput)
         statusText = findViewById(R.id.statusText)
         lastSyncText = findViewById(R.id.lastSyncText)
+        accountText = findViewById(R.id.accountText)
+        dogsText = findViewById(R.id.dogsText)
         autoSyncSwitch = findViewById(R.id.autoSyncSwitch)
     }
 
     private fun wireButtons() {
         findViewById<Button>(R.id.saveButton).setOnClickListener { saveConfigFromForm() }
+        findViewById<Button>(R.id.refreshAccountButton).setOnClickListener { refreshAccountSummary() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }
         findViewById<Button>(R.id.openBridgeButton).setOnClickListener { openBridgeLink() }
@@ -124,6 +130,10 @@ class MainActivity : AppCompatActivity() {
             dogIdInput.setText(config.dogId.toString())
             dogNameInput.setText(config.dogName)
             sourceInput.setText(config.source)
+            refreshAccountSummary()
+        } ?: run {
+            accountText.text = getString(R.string.account_summary_empty)
+            dogsText.text = getString(R.string.dogs_summary_empty)
         }
         autoSyncSwitch.isChecked = prefs.isAutoSyncEnabled()
         refreshLastSync()
@@ -152,6 +162,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         if (showMessage) updateStatus("Pairing saved. You can request access and sync now.")
+        refreshAccountSummary()
     }
 
     private fun requestHealthConnectAccess() {
@@ -192,9 +203,74 @@ class MainActivity : AppCompatActivity() {
                     prefs.setLastSyncAt(System.currentTimeMillis())
                     refreshLastSync()
                     updateStatus("Synced successfully.")
+                    refreshAccountSummary()
                 }
                 is com.guidepaw.bridge.sync.UploadResult.Failure -> updateStatus("Sync failed: ${uploadResult.message}")
             }
+        }
+    }
+
+    private fun refreshAccountSummary() {
+        val config = prefs.load()
+        if (config == null) {
+            accountText.text = getString(R.string.account_summary_empty)
+            dogsText.text = getString(R.string.dogs_summary_empty)
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Loading GuidePaw account summary...")
+            val accountResult = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchAccountOverview(config)
+            }
+            val dogsResult = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchAccessibleDogs(config)
+            }
+
+            when (accountResult) {
+                is ApiResult.Success -> {
+                    val account = accountResult.data
+                    accountText.text = getString(
+                        R.string.account_summary_loaded,
+                        account.username,
+                        account.dbDriver,
+                        account.schemaVersion,
+                    )
+                }
+                is ApiResult.Failure -> {
+                    accountText.text = getString(R.string.account_summary_error, accountResult.message)
+                }
+            }
+
+            when (dogsResult) {
+                is ApiResult.Success -> {
+                    val dogs = dogsResult.data
+                    dogsText.text = if (dogs.isEmpty()) {
+                        getString(R.string.dogs_summary_none)
+                    } else {
+                        buildString {
+                            append(getString(R.string.dogs_summary_loaded, dogs.size))
+                            dogs.take(5).forEach { dog ->
+                                append('\n')
+                                append("• ")
+                                append(dog.name)
+                                if (dog.breed.isNotBlank()) {
+                                    append(" — ")
+                                    append(dog.breed)
+                                }
+                                append(" (")
+                                append(dog.accessRole)
+                                append(")")
+                            }
+                        }
+                    }
+                }
+                is ApiResult.Failure -> {
+                    dogsText.text = getString(R.string.dogs_summary_error, dogsResult.message)
+                }
+            }
+
+            updateStatus("GuidePaw account summary loaded.")
         }
     }
 
