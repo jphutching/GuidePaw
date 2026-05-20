@@ -15,3 +15,9 @@ data class AccessibleDogSummary(
     val lifecycleStatus: String,
 )
 
+data class LoginSession(
+    val token: String,
+    val expiresAt: String,
+    val userId: Long,
+    val username: String,
+)

@@ -7,6 +7,10 @@ Scope:
 - `guidepaw.app` as the source of truth
 - read-only public pages are allowed in-app
 
+Current status:
+- Phase 1 auth/account work is implemented in the Android bridge.
+- The remaining phases below are the next mobile backlog.
+
 ## Phase 1: Account and auth
 
 Goal: let the app sign in and identify the current user.
@@ -171,4 +175,3 @@ Android screens:
 ## Definition of done
 
 The Android app can replace the website for normal daily handler work, while the website remains the system of record and public search surface.
-

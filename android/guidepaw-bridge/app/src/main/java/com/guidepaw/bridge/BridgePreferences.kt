@@ -19,10 +19,10 @@ class BridgePreferences(context: Context) {
     fun load(): BridgeConfig? {
         val endpoint = prefs.getString(KEY_ENDPOINT, "")?.trim().orEmpty()
         val token = prefs.getString(KEY_TOKEN, "")?.trim().orEmpty()
-        val dogId = prefs.getLong(KEY_DOG_ID, -1L)
+        val dogId = prefs.getLong(KEY_DOG_ID, 0L)
         val dogName = prefs.getString(KEY_DOG_NAME, "")?.trim().orEmpty()
         val source = prefs.getString(KEY_SOURCE, "health_connect")?.trim().orEmpty()
-        if (endpoint.isBlank() || token.isBlank() || dogId <= 0L) return null
+        if (endpoint.isBlank() || token.isBlank()) return null
         return BridgeConfig(endpoint = endpoint, token = token, dogId = dogId, dogName = dogName, source = if (source.isBlank()) "health_connect" else source)
     }
 

@@ -27,6 +27,11 @@ import java.util.Date
 class MainActivity : AppCompatActivity() {
     private lateinit var prefs: BridgePreferences
     private lateinit var endpointInput: EditText
+    private lateinit var usernameInput: EditText
+    private lateinit var passwordInput: EditText
+    private lateinit var totpInput: EditText
+    private lateinit var recoveryInput: EditText
+    private lateinit var tokenLabelInput: EditText
     private lateinit var tokenInput: EditText
     private lateinit var dogIdInput: EditText
     private lateinit var dogNameInput: EditText
@@ -78,6 +83,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun bindViews() {
         endpointInput = findViewById(R.id.endpointInput)
+        usernameInput = findViewById(R.id.usernameInput)
+        passwordInput = findViewById(R.id.passwordInput)
+        totpInput = findViewById(R.id.totpInput)
+        recoveryInput = findViewById(R.id.recoveryInput)
+        tokenLabelInput = findViewById(R.id.tokenLabelInput)
         tokenInput = findViewById(R.id.tokenInput)
         dogIdInput = findViewById(R.id.dogIdInput)
         dogNameInput = findViewById(R.id.dogNameInput)
@@ -90,6 +100,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun wireButtons() {
+        findViewById<Button>(R.id.loginButton).setOnClickListener { loginAndSaveToken() }
         findViewById<Button>(R.id.saveButton).setOnClickListener { saveConfigFromForm() }
         findViewById<Button>(R.id.refreshAccountButton).setOnClickListener { refreshAccountSummary() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
@@ -139,6 +150,52 @@ class MainActivity : AppCompatActivity() {
         refreshLastSync()
     }
 
+    private fun loginAndSaveToken() {
+        val endpoint = endpointInput.text.toString().trim()
+        val username = usernameInput.text.toString().trim()
+        val password = passwordInput.text.toString()
+        val totpCode = totpInput.text.toString().trim()
+        val recoveryKey = recoveryInput.text.toString().trim()
+        val tokenLabel = tokenLabelInput.text.toString().trim().ifBlank { "Android Companion" }
+
+        if (endpoint.isBlank() || username.isBlank() || password.isBlank()) {
+            updateStatus("Enter the API endpoint, username, and password.")
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Signing in to GuidePaw...")
+            val apiBase = endpoint.substringBefore("/api/", endpoint).trimEnd('/')
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().login(apiBase, username, password, tokenLabel, totpCode, recoveryKey)
+            }
+
+            when (result) {
+                is ApiResult.Success -> {
+                    val session = result.data
+                    val currentDogId = dogIdInput.text.toString().trim().toLongOrNull() ?: 0L
+                    val currentDogName = dogNameInput.text.toString().trim()
+                    val currentSource = sourceInput.text.toString().trim().ifBlank { "health_connect" }
+                    prefs.save(
+                        BridgeConfig(
+                            endpoint = endpoint,
+                            token = session.token,
+                            dogId = currentDogId,
+                            dogName = currentDogName,
+                            source = currentSource,
+                        )
+                    )
+                    tokenInput.setText(session.token)
+                    updateStatus("Signed in as ${session.username}. Token expires ${session.expiresAt}.")
+                    refreshAccountSummary()
+                }
+                is ApiResult.Failure -> {
+                    updateStatus("Sign-in failed: ${result.message}")
+                }
+            }
+        }
+    }
+
     private fun saveConfigFromForm(showMessage: Boolean = true) {
         val endpoint = endpointInput.text.toString().trim()
         val token = tokenInput.text.toString().trim()
@@ -174,6 +231,10 @@ class MainActivity : AppCompatActivity() {
         val config = prefs.load()
         if (config == null) {
             updateStatus("Save the pairing code first.")
+            return
+        }
+        if (config.dogId <= 0L) {
+            updateStatus("Choose a dog before syncing.")
             return
         }
 
@@ -270,6 +331,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            if ((prefs.load()?.dogId ?: 0L) <= 0L && dogsResult is ApiResult.Success && dogsResult.data.isNotEmpty()) {
+                val firstDog = dogsResult.data.first()
+                dogIdInput.setText(firstDog.id.toString())
+                dogNameInput.setText(firstDog.name)
+                saveConfigFromForm(showMessage = false)
+            }
+
             updateStatus("GuidePaw account summary loaded.")
         }
     }
@@ -278,6 +346,10 @@ class MainActivity : AppCompatActivity() {
         val config = prefs.load()
         if (config == null) {
             updateStatus("Save the pairing code first.")
+            return
+        }
+        if (config.dogId <= 0L) {
+            updateStatus("Choose a dog before opening the pairing page.")
             return
         }
         val uri = Uri.parse(

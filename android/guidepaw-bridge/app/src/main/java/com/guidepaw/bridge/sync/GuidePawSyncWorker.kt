@@ -14,6 +14,7 @@ class GuidePawSyncWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val prefs = BridgePreferences(applicationContext)
         val config = prefs.load() ?: return@withContext Result.success()
+        if (config.dogId <= 0L) return@withContext Result.success()
 
         runCatching {
             val snapshot = HealthConnectRepository(applicationContext).buildTodaySnapshot()

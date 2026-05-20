@@ -4,6 +4,7 @@ Minimal Android companion app for GuidePaw wearable sync.
 
 What it does:
 - accepts a pairing link from `wearable_bridge.php`
+- can sign in directly with username/password and save a token on the phone
 - stores the pairing endpoint and token on the phone
 - loads the connected GuidePaw account and accessible dogs from the API
 - requests Health Connect permissions

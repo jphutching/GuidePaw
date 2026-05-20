@@ -4,12 +4,51 @@ import com.guidepaw.bridge.model.BridgeConfig
 import com.guidepaw.bridge.model.AccessibleDogSummary
 import com.guidepaw.bridge.model.AccountOverview
 import com.guidepaw.bridge.model.HealthSnapshot
+import com.guidepaw.bridge.model.LoginSession
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
 class GuidePawApiClient {
+    fun login(
+        apiBaseUrl: String,
+        username: String,
+        password: String,
+        tokenLabel: String,
+        totpCode: String = "",
+        recoveryKey: String = "",
+    ): ApiResult<LoginSession> {
+        val connection = openBareConnection(apiBaseUrl, "POST", "/api/login.php")
+        val payload = JSONObject().apply {
+            put("username", username)
+            put("password", password)
+            put("token_label", tokenLabel)
+            if (totpCode.isNotBlank()) put("totp_code", totpCode)
+            if (recoveryKey.isNotBlank()) put("recovery_key", recoveryKey)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            val user = json.optJSONObject("user") ?: JSONObject()
+            val token = json.optString("token", "")
+            val expiresAt = json.optString("expires_at", "")
+            if (token.isBlank()) {
+                ApiResult.Failure(connection.responseCode, "Login succeeded but token was missing.")
+            } else {
+                ApiResult.Success(
+                    LoginSession(
+                        token = token,
+                        expiresAt = expiresAt,
+                        userId = user.optLong("id", 0L),
+                        username = user.optString("username", username),
+                    )
+                )
+            }
+        }
+    }
+
     fun fetchAccountOverview(config: BridgeConfig): ApiResult<AccountOverview> {
         val connection = openApiConnection(config, "GET", "/api/me.php")
         return decodeJson(connection) { json ->
@@ -48,6 +87,9 @@ class GuidePawApiClient {
     }
 
     fun postSnapshot(config: BridgeConfig, snapshot: HealthSnapshot): UploadResult {
+        if (config.dogId <= 0L) {
+            return UploadResult.Failure(422, "Choose a dog before syncing wearable data.")
+        }
         val connection = openEndpointConnection(config, "POST")
 
         val payload = JSONObject().apply {
@@ -82,6 +124,18 @@ class GuidePawApiClient {
             doOutput = method == "POST"
             setRequestProperty("Authorization", "Bearer ${config.token}")
             setRequestProperty("X-API-Token", config.token)
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            connectTimeout = 15000
+            readTimeout = 15000
+        }
+    }
+
+    private fun openBareConnection(apiBaseUrl: String, method: String, path: String): HttpURLConnection {
+        val base = apiBaseUrl.trim().trimEnd('/')
+        val suffix = if (path.startsWith("/")) path else "/$path"
+        return (URL(base + suffix).openConnection() as HttpURLConnection).apply {
+            requestMethod = method
+            doOutput = method == "POST"
             setRequestProperty("Content-Type", "application/json; charset=utf-8")
             connectTimeout = 15000
             readTimeout = 15000
