@@ -7,6 +7,8 @@ What it does:
 - can sign in directly with username/password and save a token on the phone
 - stores the pairing endpoint and token on the phone
 - loads the connected GuidePaw account and accessible dogs from the API
+- lists, views, and edits training logs for the active dog
+- surfaces training suggestions from the backend
 - requests Health Connect permissions
 - reads daily steps and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand

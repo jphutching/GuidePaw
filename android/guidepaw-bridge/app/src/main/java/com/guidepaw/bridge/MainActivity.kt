@@ -3,10 +3,15 @@ package com.guidepaw.bridge
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.SeekBar
 import android.widget.Switch
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
@@ -23,7 +28,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var prefs: BridgePreferences
@@ -42,7 +49,46 @@ class MainActivity : AppCompatActivity() {
     private lateinit var accountText: TextView
     private lateinit var dogsText: TextView
     private lateinit var dogsListContainer: LinearLayout
+    private lateinit var trainingSuggestionsText: TextView
+    private lateinit var trainingLogsSummaryText: TextView
+    private lateinit var trainingLogDetailText: TextView
+    private lateinit var trainingLogModeText: TextView
+    private lateinit var trainingLogDateInput: EditText
+    private lateinit var trainingLogLocationInput: EditText
+    private lateinit var trainingLogCityStateInput: EditText
+    private lateinit var trainingLogNotesInput: EditText
+    private lateinit var trainingLogTypeSpinner: Spinner
+    private lateinit var trainingLogFocusSeek: SeekBar
+    private lateinit var trainingLogFocusValueText: TextView
+    private lateinit var trainingSkillsContainer: LinearLayout
+    private lateinit var trainingLogsListContainer: LinearLayout
+    private lateinit var saveTrainingLogButton: Button
+    private lateinit var clearTrainingLogButton: Button
     private lateinit var autoSyncSwitch: Switch
+    private val trainingSkillOptions = listOf(
+        "Focus / Watch me",
+        "Loose leash",
+        "Settle",
+        "Recall",
+        "Task work",
+        "CGC prep",
+        "Sit/Stay",
+        "Heel",
+        "Leave It",
+        "Under Tuck",
+        "DPT Task",
+        "PA Focus",
+    )
+    private val trainingLocationTypes = listOf(
+        "In-Cab",
+        "Truck Stop",
+        "Shipper/Receiver",
+        "Public Store",
+        "Rest Area",
+        "Other",
+    )
+    private var selectedTrainingLogId: Long? = null
+    private var selectedTrainingSkills: LinkedHashSet<String> = linkedSetOf()
 
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -99,6 +145,21 @@ class MainActivity : AppCompatActivity() {
         accountText = findViewById(R.id.accountText)
         dogsText = findViewById(R.id.dogsText)
         dogsListContainer = findViewById(R.id.dogsListContainer)
+        trainingSuggestionsText = findViewById(R.id.trainingSuggestionsText)
+        trainingLogsSummaryText = findViewById(R.id.trainingLogsSummaryText)
+        trainingLogDetailText = findViewById(R.id.trainingLogDetailText)
+        trainingLogModeText = findViewById(R.id.trainingLogModeText)
+        trainingLogDateInput = findViewById(R.id.trainingLogDateInput)
+        trainingLogLocationInput = findViewById(R.id.trainingLogLocationInput)
+        trainingLogCityStateInput = findViewById(R.id.trainingLogCityStateInput)
+        trainingLogNotesInput = findViewById(R.id.trainingLogNotesInput)
+        trainingLogTypeSpinner = findViewById(R.id.trainingLogTypeSpinner)
+        trainingLogFocusSeek = findViewById(R.id.trainingLogFocusSeek)
+        trainingLogFocusValueText = findViewById(R.id.trainingLogFocusValueText)
+        trainingSkillsContainer = findViewById(R.id.trainingSkillsContainer)
+        trainingLogsListContainer = findViewById(R.id.trainingLogsListContainer)
+        saveTrainingLogButton = findViewById(R.id.saveTrainingLogButton)
+        clearTrainingLogButton = findViewById(R.id.clearTrainingLogButton)
         autoSyncSwitch = findViewById(R.id.autoSyncSwitch)
     }
 
@@ -106,15 +167,31 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.loginButton).setOnClickListener { loginAndSaveToken() }
         findViewById<Button>(R.id.saveButton).setOnClickListener { saveConfigFromForm() }
         findViewById<Button>(R.id.refreshAccountButton).setOnClickListener { refreshAccountSummary() }
+        findViewById<Button>(R.id.refreshLogsButton).setOnClickListener { refreshTrainingLogs() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }
         findViewById<Button>(R.id.openBridgeButton).setOnClickListener { openBridgeLink() }
         findViewById<Button>(R.id.manageAccessButton).setOnClickListener { openHealthConnectSettings() }
+        saveTrainingLogButton.setOnClickListener { saveTrainingLogEntry() }
+        clearTrainingLogButton.setOnClickListener { clearTrainingLogEditor() }
         autoSyncSwitch.setOnCheckedChangeListener { _, enabled ->
             prefs.setAutoSyncEnabled(enabled)
             GuidePawSyncScheduler.schedule(this, enabled)
             updateStatus(if (enabled) "Automatic sync enabled every 6 hours." else "Automatic sync disabled.")
         }
+        trainingLogFocusSeek.max = 4
+        trainingLogFocusSeek.progress = 2
+        trainingLogFocusSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                trainingLogFocusValueText.text = "Focus level: ${progress + 1}/5"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
+        populateTrainingLocationTypes()
+        populateTrainingSkillOptions()
+        trainingLogFocusValueText.text = "Focus level: 3/5"
     }
 
     private fun handleIntent(intent: Intent?) {
@@ -280,6 +357,7 @@ class MainActivity : AppCompatActivity() {
             accountText.text = getString(R.string.account_summary_empty)
             dogsText.text = getString(R.string.dogs_summary_empty)
             renderDogsList(null, emptyList())
+            renderTrainingLogs(null, null)
             return
         }
 
@@ -345,6 +423,12 @@ class MainActivity : AppCompatActivity() {
                 saveConfigFromForm(showMessage = false)
             }
 
+            val activeDogId = when {
+                dogsResult is ApiResult.Success && dogsResult.data.activeDogId > 0L -> dogsResult.data.activeDogId
+                (prefs.load()?.dogId ?: 0L) > 0L -> prefs.load()?.dogId ?: 0L
+                else -> null
+            }
+            refreshTrainingLogs(activeDogId)
             updateStatus("GuidePaw account summary loaded.")
         }
     }
@@ -428,6 +512,324 @@ class MainActivity : AppCompatActivity() {
             row.addView(button)
             dogsListContainer.addView(row)
         }
+    }
+
+    private fun populateTrainingLocationTypes() {
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, trainingLocationTypes)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        trainingLogTypeSpinner.adapter = adapter
+    }
+
+    private fun populateTrainingSkillOptions() {
+        trainingSkillsContainer.removeAllViews()
+        trainingSkillOptions.forEach { skill ->
+            val checkBox = CheckBox(this).apply {
+                text = skill
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        selectedTrainingSkills.add(skill)
+                    } else {
+                        selectedTrainingSkills.remove(skill)
+                    }
+                }
+            }
+            trainingSkillsContainer.addView(checkBox)
+        }
+    }
+
+    private fun clearTrainingLogEditor() {
+        selectedTrainingLogId = null
+        selectedTrainingSkills.clear()
+        trainingLogModeText.text = "New log"
+        trainingLogDateInput.setText(SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date()))
+        trainingLogLocationInput.setText("")
+        trainingLogCityStateInput.setText("")
+        trainingLogNotesInput.setText("")
+        trainingLogFocusSeek.progress = 2
+        trainingLogFocusValueText.text = "Focus level: 3/5"
+        trainingLogTypeSpinner.setSelection(trainingLocationTypes.indexOf("Other").coerceAtLeast(0))
+        for (i in 0 until trainingSkillsContainer.childCount) {
+            val child = trainingSkillsContainer.getChildAt(i)
+            if (child is CheckBox) {
+                child.isChecked = false
+            }
+        }
+        saveTrainingLogButton.text = "Save log"
+    }
+
+    private fun populateTrainingLogEditor(log: com.guidepaw.bridge.model.TrainingLogEntry) {
+        selectedTrainingLogId = log.id
+        trainingLogModeText.text = "Editing log #${log.id}"
+        trainingLogDateInput.setText(formatTrainingLogDateForEditor(log.logDate))
+        trainingLogLocationInput.setText(log.locationName)
+        trainingLogCityStateInput.setText(log.locationCityState)
+        val typeIndex = trainingLocationTypes.indexOf(log.locationType).takeIf { it >= 0 } ?: trainingLocationTypes.indexOf("Other").coerceAtLeast(0)
+        trainingLogTypeSpinner.setSelection(typeIndex)
+        trainingLogFocusSeek.progress = (log.focusLevel.coerceIn(1, 5) - 1)
+        trainingLogFocusValueText.text = "Focus level: ${log.focusLevel.coerceIn(1, 5)}/5"
+        trainingLogNotesInput.setText(log.handlerNotes)
+        selectedTrainingSkills.clear()
+        selectedTrainingSkills.addAll(log.skillsPracticed)
+        for (i in 0 until trainingSkillsContainer.childCount) {
+            val child = trainingSkillsContainer.getChildAt(i)
+            if (child is CheckBox) {
+                val skill = child.text?.toString().orEmpty()
+                child.isChecked = skill in selectedTrainingSkills
+            }
+        }
+        saveTrainingLogButton.text = "Update log"
+    }
+
+    private fun renderTrainingLogs(feed: com.guidepaw.bridge.model.TrainingLogFeed?, selectedLog: com.guidepaw.bridge.model.TrainingLogEntry? = null) {
+        trainingLogsListContainer.removeAllViews()
+        if (feed == null) {
+            trainingSuggestionsText.text = "Training suggestions: sign in and load a dog to see next-step guidance."
+            trainingLogsSummaryText.text = "Training logs: save pairing and choose a dog to load history."
+            trainingLogDetailText.text = "Select a log to view detail."
+            clearTrainingLogEditor()
+            return
+        }
+
+        val suggestions = feed.trainingSuggestions
+        trainingSuggestionsText.text = if (suggestions.isEmpty()) {
+            "Training suggestions: no suggestions yet."
+        } else {
+            buildString {
+                append("Training suggestions:\n")
+                suggestions.take(5).forEachIndexed { index, suggestion ->
+                    append("• ")
+                    append(suggestion)
+                    if (index < suggestions.size - 1) append('\n')
+                }
+            }
+        }
+        trainingLogsSummaryText.text = if (feed.logs.isEmpty()) {
+            "Training logs: no logs yet for this dog."
+        } else {
+            "Training logs: ${feed.logs.size} recent entries loaded."
+        }
+
+        if (selectedLog != null) {
+            renderTrainingLogDetail(selectedLog, suggestions)
+        } else {
+            trainingLogDetailText.text = if (feed.logs.isEmpty()) {
+                "Select a log to view detail."
+            } else {
+                "Tap View to read a log detail, or Edit to load one into the form."
+            }
+        }
+
+        if (feed.logs.isEmpty()) {
+            return
+        }
+
+        feed.logs.forEach { log ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, 20)
+            }
+            val title = TextView(this).apply {
+                text = log.locationName
+                textSize = 16f
+                setTextColor(resources.getColor(android.R.color.black, theme))
+            }
+            val meta = TextView(this).apply {
+                text = buildString {
+                    append(formatTrainingLogDateForDisplay(log.logDate))
+                    if (log.locationCityState.isNotBlank()) {
+                        append(" • ")
+                        append(log.locationCityState)
+                    }
+                    if (log.locationType.isNotBlank()) {
+                        append(" • ")
+                        append(log.locationType)
+                    }
+                    append(" • Focus ")
+                    append(log.focusLevel)
+                    append("/5")
+                }
+            }
+            val note = TextView(this).apply {
+                text = if (log.handlerNotes.isBlank()) "No notes saved." else log.handlerNotes
+                maxLines = 2
+            }
+            val buttons = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+            val viewButton = Button(this).apply {
+                text = "View"
+                setOnClickListener {
+                    lifecycleScope.launch {
+                        val config = prefs.load()
+                        if (config == null) {
+                            updateStatus("Save the pairing code first.")
+                            return@launch
+                        }
+                        updateStatus("Loading log detail...")
+                        val result = withContext(Dispatchers.IO) {
+                            GuidePawApiClient().fetchTrainingLogDetail(config, log.id)
+                        }
+                        when (result) {
+                            is ApiResult.Success -> {
+                                renderTrainingLogs(feed, result.data)
+                                updateStatus("Training log loaded.")
+                            }
+                            is ApiResult.Failure -> updateStatus("Could not load log: ${result.message}")
+                        }
+                    }
+                }
+            }
+            val editButton = Button(this).apply {
+                text = "Edit"
+                setOnClickListener {
+                    populateTrainingLogEditor(log)
+                    trainingLogDetailText.text = "Editing log #${log.id}. Save to update it."
+                }
+            }
+            buttons.addView(viewButton)
+            buttons.addView(editButton)
+            row.addView(title)
+            row.addView(meta)
+            row.addView(note)
+            row.addView(buttons)
+            trainingLogsListContainer.addView(row)
+        }
+    }
+
+    private fun renderTrainingLogDetail(log: com.guidepaw.bridge.model.TrainingLogEntry, suggestions: List<String>) {
+        trainingLogDetailText.text = buildString {
+            append("Log #")
+            append(log.id)
+            append('\n')
+            append(formatTrainingLogDateForDisplay(log.logDate))
+            append('\n')
+            append(log.locationName)
+            if (log.locationCityState.isNotBlank()) {
+                append(" • ")
+                append(log.locationCityState)
+            }
+            if (log.locationType.isNotBlank()) {
+                append(" • ")
+                append(log.locationType)
+            }
+            append("\nFocus ")
+            append(log.focusLevel)
+            append("/5")
+            if (log.skillsPracticed.isNotEmpty()) {
+                append("\nSkills: ")
+                append(log.skillsPracticed.joinToString(", "))
+            }
+            if (log.handlerNotes.isNotBlank()) {
+                append("\n\n")
+                append(log.handlerNotes)
+            }
+            if (suggestions.isNotEmpty()) {
+                append("\n\nNext steps:")
+                suggestions.take(3).forEach { suggestion ->
+                    append("\n• ")
+                    append(suggestion)
+                }
+            }
+        }
+    }
+
+    private fun refreshTrainingLogs(explicitDogId: Long? = null) {
+        val config = prefs.load()
+        if (config == null) {
+            renderTrainingLogs(null, null)
+            return
+        }
+        val dogId = explicitDogId ?: config.dogId
+        if (dogId <= 0L) {
+            renderTrainingLogs(null, null)
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Loading training logs...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchTrainingLogs(config, dogId)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    renderTrainingLogs(result.data)
+                    updateStatus("Training logs loaded.")
+                }
+                is ApiResult.Failure -> {
+                    trainingSuggestionsText.text = "Training suggestions: could not load."
+                    trainingLogsSummaryText.text = "Training logs: ${result.message}"
+                    trainingLogDetailText.text = "Select a log to view detail."
+                    trainingLogsListContainer.removeAllViews()
+                }
+            }
+        }
+    }
+
+    private fun saveTrainingLogEntry() {
+        val config = prefs.load()
+        if (config == null) {
+            updateStatus("Save the pairing code first.")
+            return
+        }
+
+        val dogId = config.dogId
+        if (dogId <= 0L) {
+            updateStatus("Choose a dog before saving logs.")
+            return
+        }
+
+        val locationName = trainingLogLocationInput.text.toString().trim()
+        val cityState = trainingLogCityStateInput.text.toString().trim()
+        val dateValue = trainingLogDateInput.text.toString().trim()
+        val locationType = trainingLogTypeSpinner.selectedItem?.toString().orEmpty().ifBlank { "Other" }
+        val focusLevel = trainingLogFocusSeek.progress + 1
+        val notes = trainingLogNotesInput.text.toString().trim()
+        if (locationName.isBlank()) {
+            updateStatus("Enter a location name first.")
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus(if (selectedTrainingLogId == null) "Saving training log..." else "Updating training log...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().saveTrainingLog(
+                    config = config,
+                    logId = selectedTrainingLogId,
+                    dogId = dogId,
+                    logDate = dateValue.ifBlank { null },
+                    locationName = locationName,
+                    locationCityState = cityState,
+                    locationType = locationType,
+                    focusLevel = focusLevel,
+                    skills = selectedTrainingSkills.toList(),
+                    handlerNotes = notes,
+                )
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    updateStatus(result.data.message)
+                    clearTrainingLogEditor()
+                    refreshTrainingLogs(dogId)
+                }
+                is ApiResult.Failure -> updateStatus("Could not save training log: ${result.message}")
+            }
+        }
+    }
+
+    private fun formatTrainingLogDateForEditor(value: String): String {
+        if (value.isBlank()) return ""
+        return runCatching {
+            val parsed = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(value)
+            if (parsed != null) SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(parsed) else value
+        }.getOrDefault(value)
+    }
+
+    private fun formatTrainingLogDateForDisplay(value: String): String {
+        if (value.isBlank()) return "Unknown time"
+        return runCatching {
+            val parsed = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(value)
+            if (parsed != null) DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(parsed) else value
+        }.getOrDefault(value)
     }
 
     private fun refreshLastSync() {

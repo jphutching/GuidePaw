@@ -6,6 +6,9 @@ import com.guidepaw.bridge.model.AccountOverview
 import com.guidepaw.bridge.model.HealthSnapshot
 import com.guidepaw.bridge.model.LoginSession
 import com.guidepaw.bridge.model.DogsOverview
+import com.guidepaw.bridge.model.TrainingLogEntry
+import com.guidepaw.bridge.model.TrainingLogFeed
+import com.guidepaw.bridge.model.TrainingLogSaveResult
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -88,6 +91,87 @@ class GuidePawApiClient {
                 DogsOverview(
                     activeDogId = json.optLong("active_dog_id", 0L),
                     dogs = dogs,
+                )
+            )
+        }
+    }
+
+    fun fetchTrainingLogs(config: BridgeConfig, dogId: Long? = null): ApiResult<TrainingLogFeed> {
+        val path = buildString {
+            append("/api/logs.php")
+            val query = mutableListOf<String>()
+            dogId?.takeIf { it > 0L }?.let { query.add("dog_id=$it") }
+            if (query.isNotEmpty()) {
+                append("?")
+                append(query.joinToString("&"))
+            }
+        }
+        val connection = openApiConnection(config, "GET", path)
+        return decodeJson(connection) { json ->
+            val logsJson = json.optJSONArray("logs") ?: JSONArray()
+            val logs = buildList {
+                for (i in 0 until logsJson.length()) {
+                    val row = logsJson.optJSONObject(i) ?: continue
+                    add(parseTrainingLogEntry(row))
+                }
+            }
+            val suggestions = parseStringArray(json, "training_suggestions")
+            ApiResult.Success(
+                TrainingLogFeed(
+                    activeDogId = json.optLong("active_dog_id", 0L),
+                    dogId = json.optLong("dog_id", dogId ?: 0L),
+                    logs = logs,
+                    trainingSuggestions = suggestions,
+                )
+            )
+        }
+    }
+
+    fun fetchTrainingLogDetail(config: BridgeConfig, logId: Long): ApiResult<TrainingLogEntry> {
+        val connection = openApiConnection(config, "GET", "/api/logs.php?log_id=$logId")
+        return decodeJson(connection) { json ->
+            val row = json.optJSONObject("log") ?: JSONObject()
+            ApiResult.Success(parseTrainingLogEntry(row))
+        }
+    }
+
+    fun saveTrainingLog(
+        config: BridgeConfig,
+        logId: Long?,
+        dogId: Long,
+        logDate: String?,
+        locationName: String,
+        locationCityState: String,
+        locationType: String,
+        focusLevel: Int,
+        skills: List<String>,
+        handlerNotes: String,
+        latitude: Double? = null,
+        longitude: Double? = null,
+    ): ApiResult<TrainingLogSaveResult> {
+        val connection = openApiConnection(config, "POST", "/api/logs.php")
+        val payload = JSONObject().apply {
+            if (logId != null && logId > 0L) put("id", logId)
+            put("dog_id", dogId)
+            put("location_name", locationName)
+            put("location_city_state", locationCityState)
+            put("location_type", locationType)
+            put("focus_level", focusLevel)
+            put("skills", JSONArray(skills))
+            put("handler_notes", handlerNotes)
+            if (!logDate.isNullOrBlank()) put("log_date", logDate)
+            if (latitude != null) put("latitude", latitude)
+            if (longitude != null) put("longitude", longitude)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            ApiResult.Success(
+                TrainingLogSaveResult(
+                    logId = json.optLong("log_id", logId ?: 0L),
+                    message = json.optString("message", "Saved."),
+                    trainingSuggestions = parseStringArray(json, "training_suggestions"),
                 )
             )
         }
@@ -192,6 +276,46 @@ class GuidePawApiClient {
     private fun readBody(connection: HttpURLConnection): String {
         return runCatching { connection.inputStream.bufferedReader().use { it.readText() } }
             .getOrElse { runCatching { connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty() }.getOrDefault("") }
+    }
+
+    private fun parseTrainingLogEntry(row: JSONObject): TrainingLogEntry {
+        return TrainingLogEntry(
+            id = row.optLong("id", 0L),
+            dogId = row.optLong("dog_id", 0L),
+            userId = row.optLong("user_id", 0L),
+            handlerUsername = row.optString("handler_username", ""),
+            logDate = row.optString("log_date", ""),
+            locationName = row.optString("location_name", ""),
+            locationCityState = row.optString("location_city_state", ""),
+            locationType = row.optString("location_type", ""),
+            focusLevel = row.optInt("focus_level", 3),
+            skillsPracticed = parseStringArray(row, "skills_practiced"),
+            handlerNotes = row.optString("handler_notes", ""),
+            latitude = if (row.isNull("latitude")) null else row.optDouble("latitude"),
+            longitude = if (row.isNull("longitude")) null else row.optDouble("longitude"),
+        )
+    }
+
+    private fun parseStringArray(json: JSONObject, key: String): List<String> {
+        val raw = json.opt(key)
+        return when (raw) {
+            is JSONArray -> buildList {
+                for (i in 0 until raw.length()) {
+                    val value = raw.optString(i, "").trim()
+                    if (value.isNotBlank()) add(value)
+                }
+            }
+            is String -> runCatching {
+                val parsed = JSONArray(raw)
+                buildList {
+                    for (i in 0 until parsed.length()) {
+                        val value = parsed.optString(i, "").trim()
+                        if (value.isNotBlank()) add(value)
+                    }
+                }
+            }.getOrDefault(emptyList())
+            else -> emptyList()
+        }
     }
 }
 

@@ -9,6 +9,8 @@ Scope:
 
 Current status:
 - Phase 1 auth/account work is implemented in the Android bridge.
+- Phase 2 dog switching is implemented in the Android bridge.
+- Phase 3 logs and training work is implemented in the Android bridge.
 - The remaining phases below are the next mobile backlog.
 
 ## Phase 1: Account and auth
@@ -54,6 +56,7 @@ Goal: cover the daily work handlers already do on the site.
 
 Backend:
 - `GET /api/logs.php?dog_id=123`
+- `GET /api/logs.php?log_id=456`
 - `POST /api/logs.php`
 
 Android screens:
@@ -70,6 +73,7 @@ Must support:
 - focus level
 - skills practiced
 - handler notes
+- log detail and update flow
 
 ## Phase 4: QR and public profile
 

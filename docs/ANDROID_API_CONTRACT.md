@@ -31,8 +31,10 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 ### Training logs
 
 - `GET /api/logs.php?dog_id=123`
+- `GET /api/logs.php?log_id=456`
 - `POST /api/logs.php`
 - Read and write daily logs for a dog the user can access
+- Return log detail and training suggestions for the selected dog
 
 ### Wearable sync
 
@@ -55,7 +57,7 @@ The current API surface is enough for:
 - user sign-in
 - account bootstrap
 - dog selection
-- log read/write
+- log list/detail/read/write
 - wearable snapshot sync
 
 ## What to add later only if needed

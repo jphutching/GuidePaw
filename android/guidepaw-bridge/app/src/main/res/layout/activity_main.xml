@@ -200,5 +200,140 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="Training logs and history"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <TextView
+            android:id="@+id/trainingSuggestionsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Training suggestions: load a dog to see next-step guidance."
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <TextView
+            android:id="@+id/trainingLogsSummaryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Training logs: save pairing and choose a dog to load history."
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <TextView
+            android:id="@+id/trainingLogDetailText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Select a log to view detail."
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <TextView
+            android:id="@+id/trainingLogModeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="New log"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <EditText
+            android:id="@+id/trainingLogDateInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Date/time (YYYY-MM-DD HH:MM)"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/trainingLogLocationInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Location name"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/trainingLogCityStateInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="City, state"
+            android:inputType="textCapWords" />
+
+        <Spinner
+            android:id="@+id/trainingLogTypeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/trainingLogFocusValueText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Focus level: 3/5" />
+
+        <SeekBar
+            android:id="@+id/trainingLogFocusSeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:max="4" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Skills practiced"
+            android:textAppearance="?attr/textAppearanceTitleSmall" />
+
+        <LinearLayout
+            android:id="@+id/trainingSkillsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp" />
+
+        <EditText
+            android:id="@+id/trainingLogNotesInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Handler notes"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top" />
+
+        <Button
+            android:id="@+id/saveTrainingLogButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Save log" />
+
+        <Button
+            android:id="@+id/clearTrainingLogButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Clear form" />
+
+        <Button
+            android:id="@+id/refreshLogsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Refresh logs" />
+
+        <LinearLayout
+            android:id="@+id/trainingLogsListContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp" />
     </LinearLayout>
 </ScrollView>
