@@ -40,7 +40,7 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 
 - `GET /api/wearables.php?dog_id=123`
 - `POST /api/wearables.php`
-- Returns wearable trend data and accepts synced snapshots from the Android bridge
+- Returns wearable trend data, recent sync events, and accepts synced snapshots from the Android bridge
 
 ### Public profile and found-dog reporting
 

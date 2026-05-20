@@ -148,6 +148,9 @@ Must support:
 - daily snapshot sync
 - auto-sync scheduling
 
+Status:
+- implemented in Android bridge
+
 ## Phase 7: Public read-only content
 
 Goal: let the app show the public site content without needing a browser.

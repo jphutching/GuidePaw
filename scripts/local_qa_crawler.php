@@ -504,11 +504,13 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         $apiDogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiLogs = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiWearables = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
+        $apiWearableOverview = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiBilling = ['status' => 0, 'body' => '', 'headers' => '', 'url' => '', 'error' => 'skipped'];
         $apiMeSeen = false;
         $apiDogsSeen = false;
         $apiLogsSeen = false;
         $apiWearablesSeen = false;
+        $apiWearableOverviewSeen = false;
         $apiBillingSeen = false;
         if ($checkApiRoutes) {
             $apiTokensPage = gpQaRequest($baseUrl, 'api_tokens.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
@@ -562,9 +564,18 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                     'summary_text' => 'Automated wearable sync test from Health Connect.',
                     'notes' => 'Posted by local QA crawler.',
                 ]);
-                $apiWearablesJson = json_decode($apiWearables['body'], true);
-                $apiWearablesSeen = gpQaPageLooksOk($apiWearables) && is_array($apiWearablesJson) && !empty($apiWearablesJson['success']) && !empty($apiWearablesJson['event_id']);
-            }
+            $apiWearablesJson = json_decode($apiWearables['body'], true);
+            $apiWearablesSeen = gpQaPageLooksOk($apiWearables) && is_array($apiWearablesJson) && !empty($apiWearablesJson['success']) && !empty($apiWearablesJson['event_id']);
+            $apiWearableOverview = gpQaApiRequest($baseUrl, 'api/wearables.php?dog_id=' . $apiWearableDogId, $apiToken);
+            $apiWearableOverviewJson = json_decode($apiWearableOverview['body'], true);
+            $apiWearableOverviewSeen = gpQaPageLooksOk($apiWearableOverview)
+                && is_array($apiWearableOverviewJson)
+                && !empty($apiWearableOverviewJson['success'])
+                && isset($apiWearableOverviewJson['summary'])
+                && is_array($apiWearableOverviewJson['summary'])
+                && isset($apiWearableOverviewJson['events'])
+                && is_array($apiWearableOverviewJson['events']);
+        }
         }
         $adminSessionProbe = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminSessionProbeBody = strtolower($adminSessionProbe['body']);
@@ -652,6 +663,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_logs_endpoint', $apiLogsSeen, 'HTTP ' . $apiLogs['status'] . ($apiLogsSeen ? ' api logs ok' : ' api logs missing'));
             gpQaResult($results, 'api_billing_endpoint', $apiBillingSeen, 'HTTP ' . $apiBilling['status'] . ($apiBillingSeen ? ' api billing ok' : ' api billing missing'));
             gpQaResult($results, 'api_wearables_endpoint', $apiWearablesSeen, 'HTTP ' . $apiWearables['status'] . ($apiWearablesSeen ? ' wearable sync recorded' : ' wearable sync missing'));
+            gpQaResult($results, 'api_wearables_overview_endpoint', $apiWearableOverviewSeen, 'HTTP ' . $apiWearableOverview['status'] . ($apiWearableOverviewSeen ? ' wearable overview ok' : ' wearable overview missing'));
         } else {
             gpQaResult($results, 'api_tokens_page_loads', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api_tokens.php and bearer-token endpoints');
             gpQaResult($results, 'api_login_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/login.php');
@@ -660,6 +672,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_logs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/logs.php');
             gpQaResult($results, 'api_billing_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/billing.php');
             gpQaResult($results, 'api_wearables_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php');
+            gpQaResult($results, 'api_wearables_overview_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php overview');
         }
         $pages = [
             'dashboard_loads' => 'index.php',

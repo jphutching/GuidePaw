@@ -19,6 +19,9 @@ import com.guidepaw.bridge.model.TrainingLogSaveResult
 import com.guidepaw.bridge.model.PublicDogProfile
 import com.guidepaw.bridge.model.PublicProfileOverview
 import com.guidepaw.bridge.model.PublicProfileSupportBadge
+import com.guidepaw.bridge.model.WearableOverview
+import com.guidepaw.bridge.model.WearableSyncEvent
+import com.guidepaw.bridge.model.WearableTrendSummary
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -485,6 +488,27 @@ class GuidePawApiClient {
         }
     }
 
+    fun fetchWearableOverview(config: BridgeConfig, dogId: Long? = null): ApiResult<WearableOverview> {
+        val path = buildString {
+            append("/api/wearables.php")
+            if (dogId != null && dogId > 0L) {
+                append("?dog_id=")
+                append(dogId)
+            }
+        }
+        val connection = openApiConnection(config, "GET", path)
+        return decodeJson(connection) { json ->
+            ApiResult.Success(
+                WearableOverview(
+                    userId = json.optLong("user_id", 0L),
+                    dogId = json.optLong("dog_id", dogId ?: 0L),
+                    summary = parseWearableSummary(json.optJSONObject("summary") ?: JSONObject()),
+                    events = parseWearableEvents(json.optJSONArray("events")),
+                )
+            )
+        }
+    }
+
     private fun openEndpointConnection(config: BridgeConfig, method: String): HttpURLConnection {
         return (URL(config.endpoint.trim()).openConnection() as HttpURLConnection).apply {
             requestMethod = method
@@ -560,6 +584,46 @@ class GuidePawApiClient {
             latitude = if (row.isNull("latitude")) null else row.optDouble("latitude"),
             longitude = if (row.isNull("longitude")) null else row.optDouble("longitude"),
         )
+    }
+
+    private fun parseWearableSummary(json: JSONObject): WearableTrendSummary {
+        return WearableTrendSummary(
+            eventCount = json.optInt("event_count", 0),
+            totalSteps = json.optInt("total_steps", 0),
+            totalActiveMinutes = json.optInt("total_active_minutes", 0),
+            avgDistanceMiles = if (json.isNull("avg_distance_miles")) null else json.optDouble("avg_distance_miles"),
+            avgHeartRate = if (json.isNull("avg_heart_rate")) null else json.optDouble("avg_heart_rate"),
+            avgSleepHours = if (json.isNull("avg_sleep_hours")) null else json.optDouble("avg_sleep_hours"),
+        )
+    }
+
+    private fun parseWearableEvent(row: JSONObject): WearableSyncEvent {
+        return WearableSyncEvent(
+            id = row.optLong("id", 0L),
+            recordedForDate = row.optString("recorded_for_date", ""),
+            createdAt = row.optString("created_at", ""),
+            dogName = row.optString("dog_name", ""),
+            source = row.optString("source", ""),
+            deviceName = row.optString("device_name", ""),
+            steps = if (row.isNull("steps")) null else row.optInt("steps"),
+            activeMinutes = if (row.isNull("active_minutes")) null else row.optInt("active_minutes"),
+            distanceMiles = if (row.isNull("distance_miles")) null else row.optDouble("distance_miles"),
+            avgHeartRate = if (row.isNull("avg_heart_rate")) null else row.optDouble("avg_heart_rate"),
+            sleepHours = if (row.isNull("sleep_hours")) null else row.optDouble("sleep_hours"),
+            summaryText = row.optString("summary_text", ""),
+        )
+    }
+
+    private fun parseWearableEvents(array: JSONArray?): List<WearableSyncEvent> {
+        if (array == null) {
+            return emptyList()
+        }
+        return buildList {
+            for (i in 0 until array.length()) {
+                val row = array.optJSONObject(i) ?: continue
+                add(parseWearableEvent(row))
+            }
+        }
     }
 
     private fun parseStringArray(json: JSONObject, key: String): List<String> {

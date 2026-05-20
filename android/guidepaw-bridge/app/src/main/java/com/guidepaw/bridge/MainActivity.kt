@@ -66,6 +66,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var trainingLogsListContainer: LinearLayout
     private lateinit var saveTrainingLogButton: Button
     private lateinit var clearTrainingLogButton: Button
+    private lateinit var wearableSummaryText: TextView
+    private lateinit var wearableStatusText: TextView
+    private lateinit var wearableRefreshButton: Button
+    private lateinit var wearableEventsSummaryText: TextView
+    private lateinit var wearableEventsContainer: LinearLayout
     private lateinit var publicProfileSummaryText: TextView
     private lateinit var publicProfileDetailText: TextView
     private lateinit var publicProfileStatusText: TextView
@@ -115,6 +120,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedTrainingSkills: LinkedHashSet<String> = linkedSetOf()
     private var currentPublicProfile: com.guidepaw.bridge.model.PublicProfileOverview? = null
     private var currentBillingOverview: com.guidepaw.bridge.model.BillingOverview? = null
+    private var currentWearableOverview: com.guidepaw.bridge.model.WearableOverview? = null
 
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -186,6 +192,11 @@ class MainActivity : AppCompatActivity() {
         trainingLogsListContainer = findViewById(R.id.trainingLogsListContainer)
         saveTrainingLogButton = findViewById(R.id.saveTrainingLogButton)
         clearTrainingLogButton = findViewById(R.id.clearTrainingLogButton)
+        wearableSummaryText = findViewById(R.id.wearableSummaryText)
+        wearableStatusText = findViewById(R.id.wearableStatusText)
+        wearableRefreshButton = findViewById(R.id.wearableRefreshButton)
+        wearableEventsSummaryText = findViewById(R.id.wearableEventsSummaryText)
+        wearableEventsContainer = findViewById(R.id.wearableEventsContainer)
         publicProfileSummaryText = findViewById(R.id.publicProfileSummaryText)
         publicProfileDetailText = findViewById(R.id.publicProfileDetailText)
         publicProfileStatusText = findViewById(R.id.publicProfileStatusText)
@@ -225,6 +236,7 @@ class MainActivity : AppCompatActivity() {
         publicProfileOpenButton.setOnClickListener { openPublicProfile() }
         publicReportOpenButton.setOnClickListener { openFoundDogReportPage() }
         publicReportSubmitButton.setOnClickListener { submitFoundDogReport() }
+        wearableRefreshButton.setOnClickListener { refreshWearableOverview() }
         billingRefreshButton.setOnClickListener { refreshBillingOverview() }
         billingSupportOnceButton.setOnClickListener { startSupportCheckout("one_time") }
         billingSupportMonthlyButton.setOnClickListener { startSupportCheckout("monthly") }
@@ -282,7 +294,9 @@ class MainActivity : AppCompatActivity() {
             accountText.text = getString(R.string.account_summary_empty)
             dogsText.text = getString(R.string.dogs_summary_empty)
             renderTrainingLogs(null, null)
+            renderWearableOverview(null)
             renderPublicProfile(null)
+            renderBillingOverview(null)
         }
         autoSyncSwitch.isChecked = prefs.isAutoSyncEnabled()
         refreshLastSync()
@@ -402,6 +416,7 @@ class MainActivity : AppCompatActivity() {
                     prefs.setLastSyncAt(System.currentTimeMillis())
                     refreshLastSync()
                     updateStatus("Synced successfully.")
+                    refreshWearableOverview(config.dogId)
                     refreshAccountSummary()
                 }
                 is com.guidepaw.bridge.sync.UploadResult.Failure -> updateStatus("Sync failed: ${uploadResult.message}")
@@ -474,6 +489,7 @@ class MainActivity : AppCompatActivity() {
                     dogsText.text = getString(R.string.dogs_summary_error, dogsResult.message)
                     renderDogsList(null, emptyList())
                     renderPublicProfile(null)
+                    renderWearableOverview(null)
                 }
             }
 
@@ -490,6 +506,7 @@ class MainActivity : AppCompatActivity() {
                 else -> null
             }
             refreshTrainingLogs(activeDogId)
+            refreshWearableOverview(activeDogId)
             refreshPublicProfile(activeDogId)
             refreshBillingOverview(activeDogId)
             updateStatus("GuidePaw account summary loaded.")
@@ -828,6 +845,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun refreshWearableOverview(explicitDogId: Long? = null) {
+        val config = prefs.load()
+        if (config == null) {
+            renderWearableOverview(null)
+            return
+        }
+
+        val dogId = explicitDogId ?: config.dogId
+        if (dogId <= 0L) {
+            renderWearableOverview(null)
+            return
+        }
+
+        lifecycleScope.launch {
+            updateStatus("Loading wearable sync summary...")
+            val result = withContext(Dispatchers.IO) {
+                GuidePawApiClient().fetchWearableOverview(config, dogId)
+            }
+            when (result) {
+                is ApiResult.Success -> {
+                    renderWearableOverview(result.data)
+                    updateStatus("Wearable sync summary loaded.")
+                }
+                is ApiResult.Failure -> {
+                    renderWearableOverview(null)
+                    wearableSummaryText.text = "Wearable sync: ${result.message}"
+                }
+            }
+        }
+    }
+
     private fun saveTrainingLogEntry() {
         val config = prefs.load()
         if (config == null) {
@@ -893,6 +941,101 @@ class MainActivity : AppCompatActivity() {
             val parsed = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).parse(value)
             if (parsed != null) DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(parsed) else value
         }.getOrDefault(value)
+    }
+
+    private fun renderWearableOverview(overview: com.guidepaw.bridge.model.WearableOverview?) {
+        currentWearableOverview = overview
+        wearableEventsContainer.removeAllViews()
+        if (overview == null) {
+            wearableSummaryText.text = "Wearable sync: load a dog to see recent Health Connect snapshots."
+            wearableStatusText.text = "Status: waiting for wearable data"
+            wearableEventsSummaryText.text = "Recent syncs: none loaded."
+            wearableRefreshButton.isEnabled = false
+            return
+        }
+
+        wearableRefreshButton.isEnabled = true
+        wearableSummaryText.text = buildString {
+            append("Events: ")
+            append(overview.summary.eventCount)
+            append(" • Steps: ")
+            append(overview.summary.totalSteps)
+            append(" • Active minutes: ")
+            append(overview.summary.totalActiveMinutes)
+        }
+        wearableStatusText.text = buildString {
+            append("Dog ID: ")
+            append(overview.dogId)
+            if (overview.summary.avgHeartRate != null) {
+                append(" • Avg HR: ")
+                append(String.format(Locale.US, "%.0f", overview.summary.avgHeartRate))
+            }
+            if (overview.summary.avgDistanceMiles != null) {
+                append(" • Avg distance: ")
+                append(String.format(Locale.US, "%.2f", overview.summary.avgDistanceMiles))
+                append(" mi")
+            }
+            if (overview.summary.avgSleepHours != null) {
+                append(" • Avg sleep: ")
+                append(String.format(Locale.US, "%.1f", overview.summary.avgSleepHours))
+                append(" h")
+            }
+        }
+        wearableEventsSummaryText.text = if (overview.events.isEmpty()) {
+            "Recent syncs: no wearable snapshots recorded yet."
+        } else {
+            "Recent syncs: ${overview.events.size} loaded."
+        }
+
+        if (overview.events.isEmpty()) {
+            wearableEventsContainer.addView(TextView(this).apply {
+                text = "No wearable snapshots yet."
+            })
+            return
+        }
+
+        overview.events.take(6).forEach { event ->
+            wearableEventsContainer.addView(TextView(this).apply {
+                text = buildString {
+                    append(event.recordedForDate.ifBlank { event.createdAt.ifBlank { "Unknown date" } })
+                    if (event.dogName.isNotBlank()) {
+                        append(" • ")
+                        append(event.dogName)
+                    }
+                    if (event.source.isNotBlank()) {
+                        append(" • ")
+                        append(event.source)
+                    }
+                    if (event.steps != null) {
+                        append("\nSteps: ")
+                        append(event.steps)
+                    }
+                    if (event.activeMinutes != null) {
+                        append(" • Active: ")
+                        append(event.activeMinutes)
+                    }
+                    if (event.distanceMiles != null) {
+                        append(" • Distance: ")
+                        append(String.format(Locale.US, "%.2f", event.distanceMiles))
+                        append(" mi")
+                    }
+                    if (event.avgHeartRate != null) {
+                        append(" • HR: ")
+                        append(String.format(Locale.US, "%.0f", event.avgHeartRate))
+                        append(" bpm")
+                    }
+                    if (event.sleepHours != null) {
+                        append(" • Sleep: ")
+                        append(String.format(Locale.US, "%.1f", event.sleepHours))
+                        append(" h")
+                    }
+                    if (event.summaryText.isNotBlank()) {
+                        append("\n")
+                        append(event.summaryText)
+                    }
+                }
+            })
+        }
     }
 
     private fun refreshPublicProfile(explicitDogId: Long? = null) {

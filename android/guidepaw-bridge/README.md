@@ -14,6 +14,7 @@ What it does:
 - loads billing state, support badge info, and add-on status
 - can open support and service checkout sessions
 - requests Health Connect permissions
+- loads wearable sync summary and recent wearable snapshots for the active dog
 - reads daily steps and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand
 

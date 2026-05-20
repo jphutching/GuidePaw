@@ -166,6 +166,37 @@ data class BillingCheckoutResult(
     val message: String,
 )
 
+data class WearableTrendSummary(
+    val eventCount: Int,
+    val totalSteps: Int,
+    val totalActiveMinutes: Int,
+    val avgDistanceMiles: Double?,
+    val avgHeartRate: Double?,
+    val avgSleepHours: Double?,
+)
+
+data class WearableSyncEvent(
+    val id: Long,
+    val recordedForDate: String,
+    val createdAt: String,
+    val dogName: String,
+    val source: String,
+    val deviceName: String,
+    val steps: Int?,
+    val activeMinutes: Int?,
+    val distanceMiles: Double?,
+    val avgHeartRate: Double?,
+    val sleepHours: Double?,
+    val summaryText: String,
+)
+
+data class WearableOverview(
+    val userId: Long,
+    val dogId: Long,
+    val summary: WearableTrendSummary,
+    val events: List<WearableSyncEvent>,
+)
+
 data class LoginSession(
     val token: String,
     val expiresAt: String,
