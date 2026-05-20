@@ -73,3 +73,6 @@ Add a thin API layer only when the Android app needs:
 Start Android against the current API contract now.
 Do not move the backend to Laravel just to begin mobile work.
 
+## Implementation order
+
+Use `docs/ANDROID_MOBILE_BACKLOG.md` as the work queue. It keeps the mobile scope on normal handler workflows and leaves admin tools web-only.

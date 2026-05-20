@@ -10,6 +10,10 @@ What it does:
 - reads daily steps and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand
 
+See also:
+- `docs/ANDROID_API_CONTRACT.md`
+- `docs/ANDROID_MOBILE_BACKLOG.md`
+
 Setup:
 1. Open the project in Android Studio.
 2. Let Gradle sync.
