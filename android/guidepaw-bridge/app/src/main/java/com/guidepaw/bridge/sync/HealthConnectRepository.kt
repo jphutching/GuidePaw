@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
@@ -26,17 +27,19 @@ class HealthConnectRepository(context: Context) {
         val activityStart = LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant()
         val sleepStart = activityStart.minusSeconds(24 * 60 * 60)
         val end = Instant.now()
+        val activityMetrics = buildSet {
+            add(StepsRecord.COUNT_TOTAL)
+            add(DistanceRecord.DISTANCE_TOTAL)
+            add(TotalCaloriesBurnedRecord.ENERGY_TOTAL)
+            add(HeartRateRecord.BPM_AVG)
+            add(HeartRateRecord.BPM_MIN)
+            add(HeartRateRecord.BPM_MAX)
+            add(RestingHeartRateRecord.BPM_AVG)
+            add(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL)
+        }
         val activityResult = client.aggregate(
             AggregateRequest(
-                metrics = setOf(
-                    StepsRecord.COUNT_TOTAL,
-                    DistanceRecord.DISTANCE_TOTAL,
-                    TotalCaloriesBurnedRecord.ENERGY_TOTAL,
-                    HeartRateRecord.BPM_AVG,
-                    HeartRateRecord.BPM_MIN,
-                    HeartRateRecord.BPM_MAX,
-                    RestingHeartRateRecord.BPM_AVG,
-                ),
+                metrics = activityMetrics,
                 timeRangeFilter = TimeRangeFilter.between(activityStart, end),
                 dataOriginFilter = emptySet(),
             )
@@ -52,6 +55,8 @@ class HealthConnectRepository(context: Context) {
         val steps = activityResult[StepsRecord.COUNT_TOTAL]
         val distance = activityResult[DistanceRecord.DISTANCE_TOTAL]
         val calories = activityResult[TotalCaloriesBurnedRecord.ENERGY_TOTAL]
+        val exerciseDuration = activityResult[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]
+        val exerciseMinutes = exerciseDuration?.toMinutes()
         val avgHr = activityResult[HeartRateRecord.BPM_AVG]
         val minHr = activityResult[HeartRateRecord.BPM_MIN]
         val maxHr = activityResult[HeartRateRecord.BPM_MAX]
@@ -63,6 +68,7 @@ class HealthConnectRepository(context: Context) {
             if (steps != null) append(" Steps today: $steps.")
             if (distance != null) append(" Distance today: ${String.format(Locale.US, "%.2f", distance.inMiles)} mi.")
             if (calories != null) append(" Calories burned: ${String.format(Locale.US, "%.0f", calories.inKilocalories)} kcal.")
+            if (exerciseMinutes != null) append(" Exercise minutes: $exerciseMinutes.")
             if (sleepHours != null) append(" Sleep last 24h: ${String.format(Locale.US, "%.1f", sleepHours)} h.")
             if (avgHr != null) append(" Avg heart rate: $avgHr bpm.")
             if (minHr != null && maxHr != null) append(" Range: $minHr-$maxHr bpm.")
@@ -74,6 +80,7 @@ class HealthConnectRepository(context: Context) {
             steps = steps,
             distanceMiles = distance?.inMiles,
             totalCaloriesBurned = calories?.inKilocalories,
+            activityIntensityMinutes = exerciseMinutes,
             avgHeartRate = avgHr,
             minHeartRate = minHr,
             maxHeartRate = maxHr,

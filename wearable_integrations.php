@@ -177,6 +177,7 @@ $csrf = generateCsrfToken();
         <div class="metric"><div class="small">Active minutes</div><strong><?= (int) $summary['total_active_minutes'] ?></strong></div>
         <div class="metric"><div class="small">Rest minutes</div><strong><?= (int) ($summary['total_rest_minutes'] ?? 0) ?></strong></div>
         <div class="metric"><div class="small">Play minutes</div><strong><?= (int) ($summary['total_play_minutes'] ?? 0) ?></strong></div>
+        <div class="metric"><div class="small">Exercise minutes</div><strong><?= (int) ($summary['total_activity_intensity_minutes'] ?? 0) ?></strong></div>
         <div class="metric"><div class="small">Avg heart rate</div><strong><?= $summary['avg_heart_rate'] === null ? '—' : h(number_format((float) $summary['avg_heart_rate'], 0)) ?></strong></div>
     </div>
 
@@ -372,6 +373,7 @@ $csrf = generateCsrfToken();
                 <div><label>Play minutes</label><input type="number" name="play_minutes" min="0" step="1"></div>
                 <div><label>Distance miles</label><input type="number" name="distance_miles" min="0" step="0.01"></div>
                 <div><label>Total calories burned</label><input type="number" name="total_calories_burned" min="0" step="0.1"></div>
+                <div><label>Exercise minutes</label><input type="number" name="activity_intensity_minutes" min="0" step="1"></div>
                 <div><label>Avg heart rate</label><input type="number" name="avg_heart_rate" min="0" step="1"></div>
                 <div><label>Resting heart rate</label><input type="number" name="resting_heart_rate" min="0" step="1"></div>
                 <div><label>Sleep hours</label><input type="number" name="sleep_hours" min="0" step="0.1"></div>
@@ -436,6 +438,10 @@ $csrf = generateCsrfToken();
                 <label>Play minutes</label>
                 <input type="number" name="play_minutes" min="0" step="1" placeholder="28">
             </div>
+            <div class="col-md-4">
+                <label>Exercise minutes</label>
+                <input type="number" name="activity_intensity_minutes" min="0" step="1" placeholder="36">
+            </div>
                 <div class="col-md-4">
                     <label>Battery percent</label>
                     <input type="number" name="battery_percent" min="0" max="100" step="1" placeholder="88">
@@ -454,7 +460,7 @@ $csrf = generateCsrfToken();
             </div>
             <div class="col-12">
                 <label>Paste FitBark CSV / JSON</label>
-                <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,battery_percent,summary_text&#10;2026-05-20,FitBark,420,115,28,88,Calm morning and short play bursts."></textarea>
+                <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,activity_intensity_minutes,battery_percent,summary_text&#10;2026-05-20,FitBark,420,115,28,36,88,Calm morning and short play bursts."></textarea>
             </div>
             <div class="col-12 d-grid d-md-flex gap-2">
                 <button type="submit" class="btn btn-primary">Save tracker snapshot</button>
@@ -476,6 +482,7 @@ $csrf = generateCsrfToken();
                     <th>Active</th>
                     <th>Rest</th>
                     <th>Play</th>
+                    <th>Exercise</th>
                     <th>Distance</th>
                     <th>Calories</th>
                     <th>HR</th>
@@ -493,6 +500,7 @@ $csrf = generateCsrfToken();
                         <td><?= h((string) ($event['active_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['rest_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['play_minutes'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['activity_intensity_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['distance_miles'] ?? '')) ?></td>
                         <td><?= h((string) ($event['total_calories_burned'] ?? '')) ?></td>
                         <td><?= h((string) ($event['avg_heart_rate'] ?? '')) ?></td>

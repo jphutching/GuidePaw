@@ -16,7 +16,7 @@ What it does:
 - requests Health Connect permissions
 - loads wearable sync summary and recent wearable snapshots for the active dog
 - shows the saved wearable setup for the active dog
-- reads daily steps, distance, calories burned, sleep, heart-rate, and resting-heart-rate summaries
+- reads daily steps, distance, calories burned, exercise minutes, sleep, heart-rate, and resting-heart-rate summaries
 - can import FitBark or other tracker activity minutes and battery percentage from a CSV or JSON payload on the web side
 - posts snapshots back to GuidePaw automatically or on demand
 

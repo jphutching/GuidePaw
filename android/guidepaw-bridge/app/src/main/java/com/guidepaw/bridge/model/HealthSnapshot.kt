@@ -5,6 +5,7 @@ data class HealthSnapshot(
     val steps: Long?,
     val distanceMiles: Double?,
     val totalCaloriesBurned: Double?,
+    val activityIntensityMinutes: Long?,
     val avgHeartRate: Long?,
     val minHeartRate: Long?,
     val maxHeartRate: Long?,

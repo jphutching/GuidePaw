@@ -471,6 +471,7 @@ class GuidePawApiClient {
             put("steps", snapshot.steps)
             put("distance_miles", snapshot.distanceMiles)
             put("total_calories_burned", snapshot.totalCaloriesBurned)
+            put("activity_intensity_minutes", snapshot.activityIntensityMinutes)
             put("avg_heart_rate", snapshot.avgHeartRate)
             put("resting_heart_rate", snapshot.restingHeartRate)
             put("sleep_hours", snapshot.sleepHours)
@@ -599,6 +600,12 @@ class GuidePawApiClient {
             totalActiveMinutes = json.optInt("total_active_minutes", 0),
             totalRestMinutes = json.optInt("total_rest_minutes", 0),
             totalPlayMinutes = json.optInt("total_play_minutes", 0),
+            activityIntensityMinutes = when {
+                !json.isNull("total_activity_intensity_minutes") -> json.optLong("total_activity_intensity_minutes")
+                !json.isNull("avg_activity_intensity_minutes") -> json.optLong("avg_activity_intensity_minutes")
+                !json.isNull("activity_intensity_minutes") -> json.optLong("activity_intensity_minutes")
+                else -> null
+            },
             avgBatteryPercent = if (json.isNull("avg_battery_percent")) null else json.optDouble("avg_battery_percent"),
             avgDistanceMiles = if (json.isNull("avg_distance_miles")) null else json.optDouble("avg_distance_miles"),
             totalCaloriesBurned = if (json.isNull("avg_total_calories_burned")) null else json.optDouble("avg_total_calories_burned"),
@@ -644,6 +651,7 @@ class GuidePawApiClient {
             batteryPercent = if (row.isNull("battery_percent")) null else row.optInt("battery_percent"),
             distanceMiles = if (row.isNull("distance_miles")) null else row.optDouble("distance_miles"),
             totalCaloriesBurned = if (row.isNull("total_calories_burned")) null else row.optDouble("total_calories_burned"),
+            activityIntensityMinutes = if (row.isNull("activity_intensity_minutes")) null else row.optLong("activity_intensity_minutes"),
             avgHeartRate = if (row.isNull("avg_heart_rate")) null else row.optDouble("avg_heart_rate"),
             restingHeartRate = if (row.isNull("resting_heart_rate")) null else row.optDouble("resting_heart_rate"),
             sleepHours = if (row.isNull("sleep_hours")) null else row.optDouble("sleep_hours"),

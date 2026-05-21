@@ -35,6 +35,7 @@ function gpWearableEnsureEventColumns(PDO $pdo): void
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS play_minutes INTEGER");
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS battery_percent INTEGER");
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS total_calories_burned DOUBLE PRECISION");
+    $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS activity_intensity_minutes INTEGER");
 }
 
 function gpWearableParseSummary(string $payload): array
@@ -54,6 +55,7 @@ function gpWearableParseSummary(string $payload): array
             'active_minutes' => isset($decoded['active_minutes']) ? (int) $decoded['active_minutes'] : null,
             'distance_miles' => isset($decoded['distance_miles']) ? (float) $decoded['distance_miles'] : null,
             'total_calories_burned' => isset($decoded['total_calories_burned']) ? (float) $decoded['total_calories_burned'] : null,
+            'activity_intensity_minutes' => isset($decoded['activity_intensity_minutes']) ? (int) $decoded['activity_intensity_minutes'] : null,
             'avg_heart_rate' => isset($decoded['avg_heart_rate']) ? (int) $decoded['avg_heart_rate'] : null,
             'resting_heart_rate' => isset($decoded['resting_heart_rate']) ? (int) $decoded['resting_heart_rate'] : null,
             'sleep_hours' => isset($decoded['sleep_hours']) ? (float) $decoded['sleep_hours'] : null,
@@ -120,6 +122,7 @@ function gpWearableParseSummary(string $payload): array
         'play_minutes' => isset($pairs['play_minutes']) && is_numeric($pairs['play_minutes']) ? (int) $pairs['play_minutes'] : null,
         'distance_miles' => isset($pairs['distance_miles']) && is_numeric($pairs['distance_miles']) ? (float) $pairs['distance_miles'] : null,
         'total_calories_burned' => isset($pairs['total_calories_burned']) && is_numeric($pairs['total_calories_burned']) ? (float) $pairs['total_calories_burned'] : null,
+        'activity_intensity_minutes' => isset($pairs['activity_intensity_minutes']) && is_numeric($pairs['activity_intensity_minutes']) ? (int) $pairs['activity_intensity_minutes'] : null,
         'avg_heart_rate' => isset($pairs['avg_heart_rate']) && is_numeric($pairs['avg_heart_rate']) ? (int) $pairs['avg_heart_rate'] : null,
         'resting_heart_rate' => isset($pairs['resting_heart_rate']) && is_numeric($pairs['resting_heart_rate']) ? (int) $pairs['resting_heart_rate'] : null,
         'sleep_hours' => isset($pairs['sleep_hours']) && is_numeric($pairs['sleep_hours']) ? (float) $pairs['sleep_hours'] : null,
@@ -486,6 +489,7 @@ function gpWearableTrendSummary(array $events): array
         'avg_battery_percent' => null,
         'avg_distance_miles' => null,
         'avg_total_calories_burned' => null,
+        'total_activity_intensity_minutes' => 0,
         'avg_heart_rate' => null,
         'avg_resting_heart_rate' => null,
         'avg_sleep_hours' => null,
@@ -493,6 +497,7 @@ function gpWearableTrendSummary(array $events): array
 
     $distance = [];
     $calories = [];
+    $intensity = [];
     $heart = [];
     $resting = [];
     $sleep = [];
@@ -507,6 +512,9 @@ function gpWearableTrendSummary(array $events): array
         }
         if ($event['total_calories_burned'] !== null && $event['total_calories_burned'] !== '') {
             $calories[] = (float) $event['total_calories_burned'];
+        }
+        if ($event['activity_intensity_minutes'] !== null && $event['activity_intensity_minutes'] !== '') {
+            $intensity[] = (int) $event['activity_intensity_minutes'];
         }
         if ($event['avg_heart_rate'] !== null && $event['avg_heart_rate'] !== '') {
             $heart[] = (int) $event['avg_heart_rate'];
@@ -527,6 +535,9 @@ function gpWearableTrendSummary(array $events): array
     }
     if ($calories) {
         $summary['avg_total_calories_burned'] = array_sum($calories) / count($calories);
+    }
+    if ($intensity) {
+        $summary['total_activity_intensity_minutes'] = array_sum($intensity);
     }
     if ($heart) {
         $summary['avg_heart_rate'] = array_sum($heart) / count($heart);
@@ -553,8 +564,8 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
 
     $stmt = $pdo->prepare("
         INSERT INTO wearable_sync_events
-        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, total_calories_burned, avg_heart_rate, resting_heart_rate, sleep_hours, battery_percent, summary_text, notes, raw_payload)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, total_calories_burned, activity_intensity_minutes, avg_heart_rate, resting_heart_rate, sleep_hours, battery_percent, summary_text, notes, raw_payload)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id
     ");
     $stmt->execute([
@@ -569,6 +580,7 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
         isset($data['play_minutes']) && $data['play_minutes'] !== '' ? (int) $data['play_minutes'] : null,
         isset($data['distance_miles']) && $data['distance_miles'] !== '' ? (float) $data['distance_miles'] : null,
         isset($data['total_calories_burned']) && $data['total_calories_burned'] !== '' ? (float) $data['total_calories_burned'] : null,
+        isset($data['activity_intensity_minutes']) && $data['activity_intensity_minutes'] !== '' ? (int) $data['activity_intensity_minutes'] : null,
         isset($data['avg_heart_rate']) && $data['avg_heart_rate'] !== '' ? (int) $data['avg_heart_rate'] : null,
         isset($data['resting_heart_rate']) && $data['resting_heart_rate'] !== '' ? (int) $data['resting_heart_rate'] : null,
         isset($data['sleep_hours']) && $data['sleep_hours'] !== '' ? (float) $data['sleep_hours'] : null,

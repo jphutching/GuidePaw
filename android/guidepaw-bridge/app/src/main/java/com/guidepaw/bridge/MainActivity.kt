@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
@@ -134,6 +135,7 @@ class MainActivity : AppCompatActivity() {
         HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
         HealthPermission.getReadPermission(RestingHeartRateRecord::class),
+        HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),
         HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND,
     )
@@ -1040,6 +1042,11 @@ class MainActivity : AppCompatActivity() {
                 append(String.format(Locale.US, "%.0f", overview.summary.totalCaloriesBurned))
                 append(" kcal")
             }
+            if (overview.summary.activityIntensityMinutes != null) {
+                append(" • Exercise: ")
+                append(overview.summary.activityIntensityMinutes)
+                append(" min")
+            }
             if (overview.summary.avgDistanceMiles != null) {
                 append(" • Avg distance: ")
                 append(String.format(Locale.US, "%.2f", overview.summary.avgDistanceMiles))
@@ -1138,6 +1145,11 @@ class MainActivity : AppCompatActivity() {
                         append(" • Calories: ")
                         append(String.format(Locale.US, "%.0f", event.totalCaloriesBurned))
                         append(" kcal")
+                    }
+                    if (event.activityIntensityMinutes != null) {
+                        append(" • Exercise: ")
+                        append(event.activityIntensityMinutes)
+                        append(" min")
                     }
                     if (event.avgHeartRate != null) {
                         append(" • HR: ")
