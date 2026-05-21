@@ -157,6 +157,13 @@
             android:text="@string/manage_access"
             android:layout_marginTop="8dp" />
 
+        <Button
+            android:id="@+id/editHandlerProfileButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/handler_profile_title"
+            android:layout_marginTop="8dp" />
+
         <Switch
             android:id="@+id/autoSyncSwitch"
             android:layout_width="wrap_content"

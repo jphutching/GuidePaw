@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/handler_profile_title"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium" />
+
+        <TextView
+            android:id="@+id/handlerProfileSummaryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/handler_profile_summary_empty" />
+
+        <TextView
+            android:id="@+id/handlerProfileStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/status_idle" />
+
+        <Button
+            android:id="@+id/handlerProfileRefreshButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/handler_profile_refresh" />
+
+        <EditText
+            android:id="@+id/handlerDisplayNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/handler_display_name_hint"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/handlerHomeStreetInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_home_street_hint"
+            android:inputType="textPostalAddress" />
+
+        <EditText
+            android:id="@+id/handlerHomeAptInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_home_apt_hint"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/handlerHomeCityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_home_city_hint"
+            android:inputType="textCapWords" />
+
+        <EditText
+            android:id="@+id/handlerHomeStateInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_home_state_hint"
+            android:inputType="textCapCharacters"
+            android:maxLength="2" />
+
+        <EditText
+            android:id="@+id/handlerHomeZipInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_home_zip_hint"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/handlerPhoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_phone_hint"
+            android:inputType="phone" />
+
+        <EditText
+            android:id="@+id/handlerPublicEmailInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_public_email_hint"
+            android:inputType="textEmailAddress" />
+
+        <EditText
+            android:id="@+id/handlerFacebookUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_facebook_url_hint"
+            android:inputType="textUri" />
+
+        <EditText
+            android:id="@+id/handlerProfilePhotoUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_profile_photo_url_hint"
+            android:inputType="textUri" />
+
+        <EditText
+            android:id="@+id/handlerBackupNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_backup_name_hint"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/handlerBackupPhoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_backup_phone_hint"
+            android:inputType="phone" />
+
+        <EditText
+            android:id="@+id/handlerPublicNotesInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_public_notes_hint"
+            android:inputType="textMultiLine"
+            android:minLines="4"
+            android:gravity="top" />
+
+        <EditText
+            android:id="@+id/handlerSmsPhoneInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/handler_sms_phone_hint"
+            android:inputType="phone" />
+
+        <CheckBox
+            android:id="@+id/handlerSmsEnabledCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/handler_sms_enabled" />
+
+        <Button
+            android:id="@+id/handlerProfileSaveButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/handler_profile_save" />
+
+    </LinearLayout>
+</ScrollView>

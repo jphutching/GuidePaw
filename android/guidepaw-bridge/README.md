@@ -7,6 +7,7 @@ What it does:
 - can sign in directly with username/password and save a token on the phone
 - stores the pairing endpoint and token on the phone
 - loads the connected GuidePaw account and accessible dogs from the API
+- loads and edits the handler profile from the API
 - lists, views, and edits training logs for the active dog
 - surfaces training suggestions from the backend
 - loads the public QR profile payload for the active dog

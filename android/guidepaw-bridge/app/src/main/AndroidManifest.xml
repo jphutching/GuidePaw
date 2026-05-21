@@ -32,6 +32,9 @@
             android:name=".PublicPageActivity"
             android:exported="false" />
         <activity
+            android:name=".HandlerProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".PermissionsRationaleActivity"
             android:exported="true">
             <intent-filter>

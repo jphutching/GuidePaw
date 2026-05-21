@@ -3,6 +3,8 @@ package com.guidepaw.bridge.sync
 import com.guidepaw.bridge.model.BridgeConfig
 import com.guidepaw.bridge.model.AccessibleDogSummary
 import com.guidepaw.bridge.model.AccountOverview
+import com.guidepaw.bridge.model.HandlerProfileOverview
+import com.guidepaw.bridge.model.HandlerProfileSaveResult
 import com.guidepaw.bridge.model.BillingCheckoutResult
 import com.guidepaw.bridge.model.BillingEventRow
 import com.guidepaw.bridge.model.BillingOverview
@@ -78,6 +80,71 @@ class GuidePawApiClient {
                     dbDriver = json.optString("db_driver", ""),
                     schemaVersion = json.optInt("schema_version", 0),
                     activeDogId = json.optLong("active_dog_id", 0L),
+                )
+            )
+        }
+    }
+
+    fun fetchHandlerProfile(config: BridgeConfig): ApiResult<HandlerProfileOverview> {
+        val connection = openApiConnection(config, "GET", "/api/profile.php")
+        return decodeJson(connection) { json ->
+            val user = json.optJSONObject("user") ?: JSONObject()
+            ApiResult.Success(
+                HandlerProfileOverview(
+                    userId = user.optLong("id", 0L),
+                    username = user.optString("username", ""),
+                    displayName = user.optString("display_name", ""),
+                    homeStreet = user.optString("home_street", ""),
+                    homeApt = user.optString("home_apt", ""),
+                    homeCity = user.optString("home_city", ""),
+                    homeState = user.optString("home_state", ""),
+                    homeZip = user.optString("home_zip", ""),
+                    phone = user.optString("phone", ""),
+                    publicEmail = user.optString("public_email", ""),
+                    facebookUrl = user.optString("facebook_url", ""),
+                    profilePhotoUrl = user.optString("profile_photo_url", ""),
+                    backupContactName = user.optString("backup_contact_name", ""),
+                    backupContactPhone = user.optString("backup_contact_phone", ""),
+                    publicNotes = user.optString("public_notes", ""),
+                    smsPhone = user.optString("sms_phone", ""),
+                    smsNotificationsEnabled = user.optBoolean("sms_notifications_enabled", false),
+                    homeAddress = user.optString("home_address", ""),
+                )
+            )
+        }
+    }
+
+    fun saveHandlerProfile(config: BridgeConfig, profile: HandlerProfileOverview, profilePhotoUrl: String = ""): ApiResult<HandlerProfileSaveResult> {
+        val connection = openApiConnection(config, "POST", "/api/profile.php")
+        val payload = JSONObject().apply {
+            put("display_name", profile.displayName)
+            put("home_street", profile.homeStreet)
+            put("home_apt", profile.homeApt)
+            put("home_city", profile.homeCity)
+            put("home_state", profile.homeState)
+            put("home_zip", profile.homeZip)
+            put("phone", profile.phone)
+            put("public_email", profile.publicEmail)
+            if (profile.facebookUrl.isNotBlank()) put("facebook_url", profile.facebookUrl)
+            if (profilePhotoUrl.isNotBlank()) put("profile_photo_url", profilePhotoUrl)
+            if (profile.backupContactName.isNotBlank()) put("backup_contact_name", profile.backupContactName)
+            if (profile.backupContactPhone.isNotBlank()) put("backup_contact_phone", profile.backupContactPhone)
+            if (profile.publicNotes.isNotBlank()) put("public_notes", profile.publicNotes)
+            if (profile.smsPhone.isNotBlank()) put("sms_phone", profile.smsPhone)
+            put("sms_notifications_enabled", profile.smsNotificationsEnabled)
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            val user = json.optJSONObject("user") ?: JSONObject()
+            ApiResult.Success(
+                HandlerProfileSaveResult(
+                    message = json.optString("message", "Saved."),
+                    displayName = user.optString("display_name", profile.displayName),
+                    publicEmail = user.optString("public_email", profile.publicEmail),
+                    phone = user.optString("phone", profile.phone),
+                    profilePhotoUrl = user.optString("profile_photo_url", profilePhotoUrl),
                 )
             )
         }

@@ -29,4 +29,23 @@
     <string name="dogs_summary_none">Dogs summary: no accessible dogs returned by the API.</string>
     <string name="dogs_summary_loaded">Accessible dogs (%1$d):</string>
     <string name="dogs_summary_error">Dogs summary could not load: %1$s</string>
+    <string name="handler_profile_title">Handler profile</string>
+    <string name="handler_profile_summary_empty">Handler profile: sign in and load the profile to edit it.</string>
+    <string name="handler_profile_refresh">Refresh profile</string>
+    <string name="handler_profile_save">Save profile</string>
+    <string name="handler_display_name_hint">Display name</string>
+    <string name="handler_home_street_hint">Street address</string>
+    <string name="handler_home_apt_hint">Apt / suite</string>
+    <string name="handler_home_city_hint">City</string>
+    <string name="handler_home_state_hint">State</string>
+    <string name="handler_home_zip_hint">ZIP code</string>
+    <string name="handler_phone_hint">Public phone</string>
+    <string name="handler_public_email_hint">Public email</string>
+    <string name="handler_facebook_url_hint">Facebook profile URL</string>
+    <string name="handler_profile_photo_url_hint">Profile photo URL</string>
+    <string name="handler_backup_name_hint">Backup contact name</string>
+    <string name="handler_backup_phone_hint">Backup contact phone</string>
+    <string name="handler_public_notes_hint">Public notes</string>
+    <string name="handler_sms_phone_hint">SMS phone</string>
+    <string name="handler_sms_enabled">Enable SMS notifications</string>
 </resources>

@@ -23,6 +23,13 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 - `GET /api/me.php`
 - Returns the authenticated user, database driver, and schema version
 
+### Handler profile
+
+- `GET /api/profile.php`
+- `POST /api/profile.php`
+- Loads and saves the authenticated handler profile from the Android app
+- Supports split address fields, public contact fields, backup contact details, SMS notification settings, and a profile-photo URL
+
 ### Dogs
 
 - `GET /api/dogs.php`
@@ -66,7 +73,8 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 4. The app reads steps and heart-rate summaries.
 5. The app posts snapshots to `/api/wearables.php`.
 6. The app loads the public QR/profile payload and can send found-dog reports.
-7. The app loads billing state and can open support or add-on checkout sessions.
+7. The app loads and saves the handler profile.
+8. The app loads billing state and can open support or add-on checkout sessions.
 
 ## What is already enough
 
@@ -79,6 +87,7 @@ The current API surface is enough for:
 - wearable snapshot sync
 - public profile preview
 - native found-dog reporting
+- handler profile read/write
 - billing state and checkout initiation
 
 The Android app can also show read-only public GuidePaw pages in a native WebView using the public site base URL derived from the paired endpoint.
@@ -88,7 +97,6 @@ The Android app can also show read-only public GuidePaw pages in a native WebVie
 Add a thin API layer only when the Android app needs:
 
 - push notification inbox
-- profile editing
 - dog invite / handler invite management
 - public QR profile management
 - offline sync conflict resolution

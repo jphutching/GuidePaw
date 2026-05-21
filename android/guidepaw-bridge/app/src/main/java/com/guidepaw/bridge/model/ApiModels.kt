@@ -8,6 +8,35 @@ data class AccountOverview(
     val activeDogId: Long,
 )
 
+data class HandlerProfileOverview(
+    val userId: Long,
+    val username: String,
+    val displayName: String,
+    val homeStreet: String,
+    val homeApt: String,
+    val homeCity: String,
+    val homeState: String,
+    val homeZip: String,
+    val phone: String,
+    val publicEmail: String,
+    val facebookUrl: String,
+    val profilePhotoUrl: String,
+    val backupContactName: String,
+    val backupContactPhone: String,
+    val publicNotes: String,
+    val smsPhone: String,
+    val smsNotificationsEnabled: Boolean,
+    val homeAddress: String,
+)
+
+data class HandlerProfileSaveResult(
+    val message: String,
+    val displayName: String,
+    val publicEmail: String,
+    val phone: String,
+    val profilePhotoUrl: String,
+)
+
 data class AccessibleDogSummary(
     val id: Long,
     val name: String,

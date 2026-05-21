@@ -12,6 +12,10 @@ Current status:
 - Phase 2 dog switching is implemented in the Android bridge.
 - Phase 3 logs and training work is implemented in the Android bridge.
 - Phase 4 public QR/profile and found-dog work is implemented in the Android bridge.
+- Phase 5 profile editing is implemented in the Android bridge.
+- Phase 6 support, paywalls, and add-ons are implemented in the Android bridge.
+- Phase 7 wearable sync is implemented in the Android bridge.
+- Phase 8 public read-only content is implemented in the Android bridge.
 - The remaining phases below are the next mobile backlog.
 
 ## Phase 1: Account and auth
@@ -106,7 +110,32 @@ Status:
 - Health Connect sync now pulls steps, distance, calories burned, exercise minutes, sleep, heart-rate, and resting-heart-rate summaries into the wearable timeline
 - FitBark is the first dedicated tracker connector path and can import rest, active, play minutes, and battery percentage
 
-## Phase 5: Support, paywalls, and add-ons
+## Phase 5: Profile editing
+
+Goal: let the Android app edit the handler profile without using the website.
+
+Backend:
+- `GET /api/profile.php`
+- `POST /api/profile.php`
+
+Android screens:
+- profile summary
+- profile editor
+
+Must support:
+- display name
+- split home address fields
+- public phone and email
+- Facebook URL
+- profile photo URL
+- backup contact name and phone
+- public notes
+- SMS phone and notification toggle
+
+Status:
+- implemented in Android bridge
+
+## Phase 6: Support, paywalls, and add-ons
 
 Goal: keep the monetized flows usable in the app.
 
@@ -132,7 +161,7 @@ Must support:
 Status:
 - implemented in Android bridge
 
-## Phase 6: Wearable sync
+## Phase 7: Wearable sync
 
 Goal: keep the Health Connect bridge working.
 
@@ -155,7 +184,7 @@ Must support:
 Status:
 - implemented in Android bridge
 
-## Phase 7: Public read-only content
+## Phase 8: Public read-only content
 
 Goal: let the app show the public site content without needing a browser.
 
@@ -191,9 +220,10 @@ Status:
 2. Dogs and active dog switching
 3. Logs and training
 4. QR/public profile and found-dog flow
-5. Support/paywalls/add-ons
-6. Wearable sync
-7. Public read-only content
+5. Profile editing
+6. Support/paywalls/add-ons
+7. Wearable sync
+8. Public read-only content
 
 ## Definition of done
 

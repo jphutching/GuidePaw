@@ -254,6 +254,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.loginButton).setOnClickListener { loginAndSaveToken() }
         findViewById<Button>(R.id.saveButton).setOnClickListener { saveConfigFromForm() }
         findViewById<Button>(R.id.refreshAccountButton).setOnClickListener { refreshAccountSummary() }
+        findViewById<Button>(R.id.editHandlerProfileButton).setOnClickListener {
+            startActivity(Intent(this, HandlerProfileActivity::class.java))
+        }
         findViewById<Button>(R.id.refreshLogsButton).setOnClickListener { refreshTrainingLogs() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }
