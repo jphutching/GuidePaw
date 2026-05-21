@@ -5,6 +5,8 @@ require_once __DIR__ . '/includes/seo.php';
 
 $title = 'GuidePaw Companion App | Training, Logs, Dogs, and Wearables';
 $description = 'GuidePaw Companion is the Android app for normal handler work: training logs, goals, dogs, profiles, notifications, public read-only pages, and built-in wearable data.';
+$apkVersion = '0.000';
+$apkFile = 'downloads/GuidePaw_Companion_v' . $apkVersion . '.apk';
 $schema = [
     [
         '@context' => 'https://schema.org',
@@ -60,7 +62,7 @@ $schema = [
                 <p class="muted mb-3">The companion app is a native build, not a browser wrapper. It covers the training work you already do on the website, without admin screens.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Start with breed research</a>
-                    <a class="btn btn-outline-primary fw-bold" href="downloads/GuidePaw-Companion-debug.apk">Download debug APK</a>
+                    <a class="btn btn-outline-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download debug APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
                     <a class="btn btn-outline-primary fw-bold" href="training_program.php">See training tools</a>
                 </div>
             </div>
@@ -100,7 +102,7 @@ $schema = [
                     <p class="mb-0">This is the current test build for the companion app. It is not a final Google Play release, and it may change while the Android side is still being filled out.</p>
                 </div>
                 <div>
-                    <a class="btn btn-primary fw-bold" href="downloads/GuidePaw-Companion-debug.apk">Download APK</a>
+                    <a class="btn btn-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
                 </div>
             </div>
         </div>

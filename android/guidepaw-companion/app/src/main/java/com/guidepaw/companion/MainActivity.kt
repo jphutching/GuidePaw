@@ -20,6 +20,8 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -29,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var statusView: TextView
     private lateinit var progressView: LinearProgressIndicator
+    private lateinit var versionView: TextView
 
     private lateinit var loginCard: MaterialCardView
     private lateinit var dashboardCard: MaterialCardView
@@ -40,7 +43,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var passwordInput: TextInputEditText
     private lateinit var twoFactorInput: TextInputEditText
     private lateinit var recoveryKeyInput: TextInputEditText
-    private lateinit var tokenLabelInput: TextInputEditText
 
     private lateinit var dashboardSummaryView: TextView
     private lateinit var activeDogSummaryView: TextView
@@ -68,6 +70,7 @@ class MainActivity : AppCompatActivity() {
     private var currentLogs: List<GuidePawLogItem> = emptyList()
     private var currentSuggestions: List<String> = emptyList()
     private var currentActiveDogId: Int? = null
+    private var currentEditingLogId: Int? = null
     private var currentSectionButtonId: Int = R.id.btnOverview
 
     private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
@@ -94,6 +97,9 @@ class MainActivity : AppCompatActivity() {
 
         val storedToken = prefs.getString(KEY_TOKEN, null)
         if (!storedToken.isNullOrBlank()) {
+            currentToken = storedToken
+            showSignedInShell("Restoring saved session...")
+            restoreCachedDashboard()
             refreshDashboard(storedToken, null)
         } else {
             showLoggedOut("Sign in to load your dogs, logs, and training dashboard.")
@@ -108,6 +114,7 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         statusView = findViewById(R.id.statusView)
         progressView = findViewById(R.id.progressView)
+        versionView = findViewById(R.id.versionView)
 
         loginCard = findViewById(R.id.loginCard)
         dashboardCard = findViewById(R.id.dashboardCard)
@@ -120,7 +127,6 @@ class MainActivity : AppCompatActivity() {
         passwordInput = findViewById(R.id.passwordInput)
         twoFactorInput = findViewById(R.id.twoFactorInput)
         recoveryKeyInput = findViewById(R.id.recoveryKeyInput)
-        tokenLabelInput = findViewById(R.id.tokenLabelInput)
 
         dashboardSummaryView = findViewById(R.id.dashboardSummaryView)
         activeDogSummaryView = findViewById(R.id.activeDogSummaryView)
@@ -144,6 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
+        versionView.text = "v0.001"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
@@ -212,7 +219,6 @@ class MainActivity : AppCompatActivity() {
     private fun attemptLogin() {
         val username = usernameInput.text?.toString()?.trim().orEmpty()
         val password = passwordInput.text?.toString().orEmpty()
-        val tokenLabel = tokenLabelInput.text?.toString()?.trim().orEmpty().ifBlank { "GuidePaw Companion" }
         val totpCode = twoFactorInput.text?.toString()?.trim().orEmpty()
         val recoveryKey = recoveryKeyInput.text?.toString()?.trim().orEmpty()
 
@@ -224,7 +230,7 @@ class MainActivity : AppCompatActivity() {
         setLoading(true, "Signing in...")
         worker.execute {
             try {
-                val result = api.login(username, password, tokenLabel, totpCode, recoveryKey)
+                val result = api.login(username, password, "GuidePaw Companion", totpCode, recoveryKey)
                 runOnUiThread {
                     if (result.requiresTwoFactor && result.token.isNullOrBlank()) {
                         showTwoFactorPrompt(result.message ?: "Two-factor authentication is required.")
@@ -237,6 +243,7 @@ class MainActivity : AppCompatActivity() {
                         return@runOnUiThread
                     }
                     saveToken(result.token)
+                    showSignedInShell("Signed in. Loading dashboard...")
                     refreshDashboard(result.token, null)
                 }
             } catch (e: GuidePawApiException) {
@@ -264,10 +271,10 @@ class MainActivity : AppCompatActivity() {
             showLoggedOut("Sign in to load the dashboard.")
             return
         }
-        refreshDashboard(token, currentActiveDogId)
+        refreshDashboard(token, currentActiveDogId, keepSignedInOnFailure = currentMe != null)
     }
 
-    private fun refreshDashboard(token: String, preferDogId: Int?) {
+    private fun refreshDashboard(token: String, preferDogId: Int?, keepSignedInOnFailure: Boolean = false) {
         setLoading(true, "Refreshing dashboard...")
         worker.execute {
             try {
@@ -285,20 +292,29 @@ class MainActivity : AppCompatActivity() {
                     currentActiveDogId = activeDogId ?: logsResult.activeDogId
                     currentLogs = logsResult.logs
                     currentSuggestions = logsResult.trainingSuggestions
+                    saveCachedDashboard()
                     renderDashboard()
                     setLoading(false, "Dashboard updated.")
                 }
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
-                    if (e.statusCode == 401 || e.statusCode == 403) {
-                        signOut("Session expired. Please sign in again.")
+                    if (keepSignedInOnFailure) {
+                        showSignedInShell(e.message ?: "Could not load the full dashboard yet.")
                     } else {
-                        setLoading(false, e.message ?: "Could not refresh dashboard.")
-                        statusView.text = e.message ?: "Could not refresh dashboard."
+                        prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
+                        showLoggedOut(e.message ?: "Session expired. Please sign in again.")
                     }
+                    setLoading(false, e.message ?: "Could not refresh dashboard.")
+                    statusView.text = e.message ?: "Could not refresh dashboard."
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
+                    if (keepSignedInOnFailure) {
+                        showSignedInShell(t.message ?: "Could not load the full dashboard yet.")
+                    } else {
+                        prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
+                        showLoggedOut(t.message ?: "Could not refresh dashboard.")
+                    }
                     setLoading(false, t.message ?: "Could not refresh dashboard.")
                     statusView.text = t.message ?: "Could not refresh dashboard."
                 }
@@ -480,6 +496,16 @@ class MainActivity : AppCompatActivity() {
                     setPadding(0, dp(8), 0, 0)
                 })
             }
+            inner.addView(MaterialButton(this).apply {
+                text = "Edit"
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(10) }
+                setOnClickListener {
+                    beginEditLog(log)
+                }
+            })
             card.addView(inner)
             logsContainer.addView(card)
         }
@@ -516,7 +542,7 @@ class MainActivity : AppCompatActivity() {
                 val response = api.saveLog(
                     token = token,
                     dogId = dogId,
-                    logId = null,
+                    logId = currentEditingLogId,
                     locationName = locationName,
                     cityState = cityState,
                     locationType = locationType,
@@ -528,6 +554,7 @@ class MainActivity : AppCompatActivity() {
                     trainMessageView.text = response.message ?: "Training log saved."
                     logNotesInput.setText("")
                     skillChipGroup.clearCheck()
+                    clearEditLog()
                     refreshDashboard(token, dogId)
                 }
             } catch (e: GuidePawApiException) {
@@ -567,6 +594,22 @@ class MainActivity : AppCompatActivity() {
         setLoading(false, null)
     }
 
+    private fun showSignedInShell(message: String) {
+        loginCard.visibility = View.GONE
+        dashboardCard.visibility = View.VISIBLE
+        dashboardSummaryView.text = "Signed in"
+        activeDogSummaryView.text = "Loading account details..."
+        accountSummaryView.text = "Loading..."
+        dogsMessageView.text = "Loading dogs..."
+        wearablesBodyView.text = "Loading wearable data..."
+        suggestionsContainer.removeAllViews()
+        suggestionsContainer.addView(makePlainText("Loading training suggestions..."))
+        dogsContainer.removeAllViews()
+        logsContainer.removeAllViews()
+        statusView.text = message
+        loginMessageView.text = ""
+    }
+
     private fun showLoggedOut(message: String) {
         currentToken = null
         currentMe = null
@@ -574,6 +617,8 @@ class MainActivity : AppCompatActivity() {
         currentLogs = emptyList()
         currentSuggestions = emptyList()
         currentActiveDogId = null
+        currentEditingLogId = null
+        prefs.edit().remove(KEY_CACHE).commit()
         loginCard.visibility = View.VISIBLE
         dashboardCard.visibility = View.GONE
         loginMessageView.text = message
@@ -582,7 +627,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signOut(message: String) {
-        prefs.edit().remove(KEY_TOKEN).apply()
+        prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
         twoFactorInput.setText("")
         recoveryKeyInput.setText("")
         showLoggedOut(message)
@@ -590,7 +635,43 @@ class MainActivity : AppCompatActivity() {
 
     private fun saveToken(token: String) {
         currentToken = token
-        prefs.edit().putString(KEY_TOKEN, token).apply()
+        prefs.edit().putString(KEY_TOKEN, token).commit()
+    }
+
+    private fun beginEditLog(log: GuidePawLogItem) {
+        currentEditingLogId = log.id
+        logLocationInput.setText(log.locationName)
+        logCityStateInput.setText(log.locationCityState ?: "")
+        logTypeInput.setText(log.locationType ?: locationTypes.first(), false)
+        focusSeekBar.progress = (log.focusLevel.coerceIn(1, 6) - 1)
+        updateFocusLabel(log.focusLevel.coerceIn(1, 6))
+        logNotesInput.setText(log.handlerNotes)
+        skillChipGroup.clearCheck()
+        log.skillsPracticed.forEach { skill ->
+            val chip = findSkillChip(skill)
+            if (chip != null) {
+                chip.isChecked = true
+            }
+        }
+        saveLogButton.text = "Update training log"
+        sectionToggle.check(R.id.btnTraining)
+        showSection(R.id.btnTraining)
+        trainMessageView.text = "Editing log from ${log.logDate.takeIf { it.isNotBlank() } ?: "recent session"}."
+    }
+
+    private fun clearEditLog() {
+        currentEditingLogId = null
+        saveLogButton.text = "Save training log"
+    }
+
+    private fun findSkillChip(label: String): Chip? {
+        for (idx in 0 until skillChipGroup.childCount) {
+            val child = skillChipGroup.getChildAt(idx)
+            if (child is Chip && child.text.toString().equals(label, ignoreCase = true)) {
+                return child
+            }
+        }
+        return null
     }
 
     private fun openExternal(url: String) {
@@ -625,10 +706,117 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun restoreCachedDashboard() {
+        val raw = prefs.getString(KEY_CACHE, null).orEmpty()
+        if (raw.isBlank()) {
+            return
+        }
+        runCatching {
+            val cache = JSONObject(raw)
+            currentMe = cache.optJSONObject("me")?.let {
+                GuidePawMeResult(
+                    username = it.optString("username", ""),
+                    activeDogId = optNullableInt(it, "activeDogId"),
+                    dbDriver = it.optText("dbDriver"),
+                    schemaVersion = it.optText("schemaVersion"),
+                )
+            }
+            currentDogs = cache.optJSONArray("dogs")?.let { array ->
+                (0 until array.length()).mapNotNull { idx ->
+                    val obj = array.optJSONObject(idx) ?: return@mapNotNull null
+                    GuidePawDogItem(
+                        id = obj.optInt("id", 0),
+                        name = obj.optString("name", "Dog"),
+                        breed = obj.optText("breed"),
+                        ownerUsername = obj.optText("ownerUsername"),
+                        accessRole = obj.optText("accessRole"),
+                        lifecycleStatus = obj.optText("lifecycleStatus"),
+                    )
+                }
+            }.orEmpty()
+            currentLogs = cache.optJSONArray("logs")?.let { array ->
+                (0 until array.length()).mapNotNull { idx ->
+                    val obj = array.optJSONObject(idx) ?: return@mapNotNull null
+                    GuidePawLogItem(
+                        id = obj.optInt("id", 0),
+                        logDate = obj.optString("logDate", ""),
+                        locationName = obj.optString("locationName", ""),
+                        locationCityState = obj.optText("locationCityState"),
+                        locationType = obj.optText("locationType"),
+                        focusLevel = obj.optInt("focusLevel", 3),
+                        skillsPracticed = obj.optJSONArray("skillsPracticed")?.toStringList().orEmpty(),
+                        handlerNotes = obj.optString("handlerNotes", ""),
+                    )
+                }
+            }.orEmpty()
+            currentSuggestions = cache.optJSONArray("suggestions")?.toStringList().orEmpty()
+            currentActiveDogId = optNullableInt(cache, "activeDogId")
+            if (currentMe != null || currentDogs.isNotEmpty() || currentLogs.isNotEmpty()) {
+                loginCard.visibility = View.GONE
+                dashboardCard.visibility = View.VISIBLE
+                renderDashboard()
+                setLoading(false, "Loaded saved dashboard state.")
+            }
+        }
+    }
+
+    private fun saveCachedDashboard() {
+        val me = currentMe ?: return
+        val cache = JSONObject()
+            .put("me", JSONObject()
+                .put("username", me.username)
+                .put("activeDogId", me.activeDogId ?: JSONObject.NULL)
+                .put("dbDriver", me.dbDriver ?: JSONObject.NULL)
+                .put("schemaVersion", me.schemaVersion ?: JSONObject.NULL))
+            .put("activeDogId", currentActiveDogId ?: JSONObject.NULL)
+            .put("dogs", JSONArray(currentDogs.map { dog ->
+                JSONObject()
+                    .put("id", dog.id)
+                    .put("name", dog.name)
+                    .put("breed", dog.breed ?: JSONObject.NULL)
+                    .put("ownerUsername", dog.ownerUsername ?: JSONObject.NULL)
+                    .put("accessRole", dog.accessRole ?: JSONObject.NULL)
+                    .put("lifecycleStatus", dog.lifecycleStatus ?: JSONObject.NULL)
+            }))
+            .put("logs", JSONArray(currentLogs.map { log ->
+                JSONObject()
+                    .put("id", log.id)
+                    .put("logDate", log.logDate)
+                    .put("locationName", log.locationName)
+                    .put("locationCityState", log.locationCityState ?: JSONObject.NULL)
+                    .put("locationType", log.locationType ?: JSONObject.NULL)
+                    .put("focusLevel", log.focusLevel)
+                    .put("skillsPracticed", JSONArray(log.skillsPracticed))
+                    .put("handlerNotes", log.handlerNotes)
+            }))
+            .put("suggestions", JSONArray(currentSuggestions))
+        prefs.edit().putString(KEY_CACHE, cache.toString()).commit()
+    }
+
+    private fun optNullableInt(json: JSONObject, key: String): Int? {
+        return if (json.has(key) && !json.isNull(key)) {
+            val value = json.optString(key, "").trim()
+            if (value.isNotBlank()) value.toIntOrNull() ?: json.optInt(key, 0).takeIf { it > 0 } else null
+        } else {
+            null
+        }
+    }
+
+    private fun JSONObject.optText(key: String): String? {
+        return optString(key, "").trim().takeIf { it.isNotBlank() }
+    }
+
+    private fun JSONArray.toStringList(): List<String> {
+        return (0 until length()).mapNotNull { idx ->
+            optString(idx, "").trim().takeIf { it.isNotBlank() }
+        }
+    }
+
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
         private const val PREFS_NAME = "guidepaw_companion"
         private const val KEY_TOKEN = "auth_token"
+        private const val KEY_CACHE = "dashboard_cache"
     }
 }
