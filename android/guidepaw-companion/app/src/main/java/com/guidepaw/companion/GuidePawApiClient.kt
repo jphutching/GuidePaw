@@ -56,6 +56,77 @@ data class GuidePawSaveLogResult(
     val trainingSuggestions: List<String>,
 )
 
+data class GuidePawWearableCatalogItem(
+    val slug: String,
+    val label: String,
+    val vendor: String,
+    val pairingMode: String,
+    val dataFocus: String,
+    val notes: String,
+    val deviceType: String,
+)
+
+data class GuidePawWearableEvent(
+    val id: Int,
+    val dogId: Int?,
+    val dogName: String,
+    val source: String,
+    val deviceName: String,
+    val recordedForDate: String,
+    val steps: Int?,
+    val activeMinutes: Int?,
+    val restMinutes: Int?,
+    val playMinutes: Int?,
+    val distanceMiles: Double?,
+    val totalCaloriesBurned: Double?,
+    val activityIntensityMinutes: Int?,
+    val avgHeartRate: Int?,
+    val restingHeartRate: Int?,
+    val sleepHours: Double?,
+    val batteryPercent: Int?,
+    val summaryText: String,
+    val notes: String,
+    val createdAt: String,
+)
+
+data class GuidePawWearableSetup(
+    val handlerWearableSlug: String?,
+    val dogTrackerSlug: String?,
+    val syncMode: String?,
+    val notes: String?,
+    val handlerWearableLabel: String?,
+    val handlerWearableVendor: String?,
+    val handlerWearablePairingMode: String?,
+    val handlerWearableDataFocus: String?,
+    val dogTrackerLabel: String?,
+    val dogTrackerVendor: String?,
+    val dogTrackerPairingMode: String?,
+    val dogTrackerDataFocus: String?,
+    val syncModeLabel: String?,
+)
+
+data class GuidePawSimpleLabelNotes(
+    val label: String,
+    val notes: String,
+)
+
+data class GuidePawWearableResult(
+    val activeDogId: Int?,
+    val dogId: Int?,
+    val currentSetup: GuidePawWearableSetup?,
+    val summary: Map<String, Any?>,
+    val handlerWearables: List<GuidePawWearableCatalogItem>,
+    val dogTrackers: List<GuidePawWearableCatalogItem>,
+    val syncModes: Map<String, GuidePawSimpleLabelNotes>,
+    val recentEvents: List<GuidePawWearableEvent>,
+    val dogs: List<GuidePawDogItem>,
+)
+
+data class GuidePawWearableSaveResult(
+    val message: String?,
+    val eventId: Int? = null,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -197,6 +268,65 @@ class GuidePawApiClient(
         )
     }
 
+    fun wearables(token: String, dogId: Int? = null): GuidePawWearableResult {
+        val query = if (dogId != null && dogId > 0) {
+            "api/wearables.php?dog_id=$dogId"
+        } else {
+            "api/wearables.php"
+        }
+        val response = requestJson(query, "GET", token, null)
+        ensureSuccess(response)
+        return GuidePawWearableResult(
+            activeDogId = optNullableInt(response.json, "active_dog_id"),
+            dogId = optNullableInt(response.json, "dog_id"),
+            currentSetup = response.json.optJSONObject("current_setup")?.let { setup ->
+                GuidePawWearableSetup(
+                    handlerWearableSlug = setup.optText("handler_wearable_slug"),
+                    dogTrackerSlug = setup.optText("dog_tracker_slug"),
+                    syncMode = setup.optText("sync_mode"),
+                    notes = setup.optText("notes"),
+                    handlerWearableLabel = setup.optText("handler_wearable_label"),
+                    handlerWearableVendor = setup.optText("handler_wearable_vendor"),
+                    handlerWearablePairingMode = setup.optText("handler_wearable_pairing_mode"),
+                    handlerWearableDataFocus = setup.optText("handler_wearable_data_focus"),
+                    dogTrackerLabel = setup.optText("dog_tracker_label"),
+                    dogTrackerVendor = setup.optText("dog_tracker_vendor"),
+                    dogTrackerPairingMode = setup.optText("dog_tracker_pairing_mode"),
+                    dogTrackerDataFocus = setup.optText("dog_tracker_data_focus"),
+                    syncModeLabel = setup.optText("sync_mode_label"),
+                )
+            },
+            summary = response.json.optJSONObject("summary").toSimpleMap(),
+            handlerWearables = response.json.optJSONArray("handler_wearables")?.toWearableCatalogList().orEmpty(),
+            dogTrackers = response.json.optJSONArray("dog_trackers")?.toWearableCatalogList().orEmpty(),
+            syncModes = response.json.optJSONObject("sync_modes")?.toSyncModeMap().orEmpty(),
+            recentEvents = response.json.optJSONArray("recent_events")?.toWearableEventList().orEmpty(),
+            dogs = response.json.optJSONArray("dogs")?.toDogList().orEmpty(),
+        )
+    }
+
+    fun saveWearableSetup(
+        token: String,
+        dogId: Int,
+        handlerWearableSlug: String,
+        dogTrackerSlug: String,
+        syncMode: String,
+        notes: String,
+    ): GuidePawWearableSaveResult {
+        val payload = JSONObject()
+            .put("action", "save_setup")
+            .put("dog_id", dogId)
+            .put("handler_wearable_slug", handlerWearableSlug)
+            .put("dog_tracker_slug", dogTrackerSlug)
+            .put("sync_mode", syncMode)
+            .put("notes", notes)
+        val response = requestJson("api/wearables.php", "POST", token, payload)
+        ensureSuccess(response)
+        return GuidePawWearableSaveResult(
+            message = response.json.optText("message"),
+        )
+    }
+
     private fun requestJson(path: String, method: String, token: String?, body: JSONObject?): ApiResponse {
         val resolvedPath = if (token.isNullOrBlank()) {
             path
@@ -262,8 +392,109 @@ class GuidePawApiClient(
         }
     }
 
+    private fun optNullableDouble(json: JSONObject, key: String): Double? {
+        return if (json.has(key) && !json.isNull(key)) {
+            val value = json.optString(key, "").trim()
+            if (value.isNotBlank()) value.toDoubleOrNull() else null
+        } else {
+            null
+        }
+    }
+
     private fun JSONObject.optText(key: String): String? {
         return optString(key, "").trim().takeIf { it.isNotBlank() }
+    }
+
+    private fun JSONObject.toSimpleMap(): Map<String, Any?> {
+        val map = linkedMapOf<String, Any?>()
+        val keys = keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            map[key] = when (val value = opt(key)) {
+                is JSONObject -> value.toSimpleMap()
+                is JSONArray -> value.toList().mapNotNull { element ->
+                    when (element) {
+                        is JSONObject -> element.toSimpleMap()
+                        JSONObject.NULL -> null
+                        else -> element
+                    }
+                }
+                JSONObject.NULL -> null
+                else -> value
+            }
+        }
+        return map
+    }
+
+    private fun JSONArray.toWearableCatalogList(): List<GuidePawWearableCatalogItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GuidePawWearableCatalogItem(
+                slug = obj.optString("slug", ""),
+                label = obj.optString("label", ""),
+                vendor = obj.optString("vendor", ""),
+                pairingMode = obj.optString("pairing_mode", ""),
+                dataFocus = obj.optString("data_focus", ""),
+                notes = obj.optString("notes", ""),
+                deviceType = obj.optString("device_type", ""),
+            )
+        }
+    }
+
+    private fun JSONObject.toSyncModeMap(): Map<String, GuidePawSimpleLabelNotes> {
+        val map = linkedMapOf<String, GuidePawSimpleLabelNotes>()
+        val keys = keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val obj = optJSONObject(key) ?: continue
+            map[key] = GuidePawSimpleLabelNotes(
+                label = obj.optString("label", key),
+                notes = obj.optString("notes", ""),
+            )
+        }
+        return map
+    }
+
+    private fun JSONArray.toWearableEventList(): List<GuidePawWearableEvent> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GuidePawWearableEvent(
+                id = obj.optInt("id", 0),
+                dogId = optNullableInt(obj, "dog_id"),
+                dogName = obj.optString("dog_name", ""),
+                source = obj.optString("source", ""),
+                deviceName = obj.optString("device_name", ""),
+                recordedForDate = obj.optString("recorded_for_date", ""),
+                steps = optNullableInt(obj, "steps"),
+                activeMinutes = optNullableInt(obj, "active_minutes"),
+                restMinutes = optNullableInt(obj, "rest_minutes"),
+                playMinutes = optNullableInt(obj, "play_minutes"),
+                distanceMiles = optNullableDouble(obj, "distance_miles"),
+                totalCaloriesBurned = optNullableDouble(obj, "total_calories_burned"),
+                activityIntensityMinutes = optNullableInt(obj, "activity_intensity_minutes"),
+                avgHeartRate = optNullableInt(obj, "avg_heart_rate"),
+                restingHeartRate = optNullableInt(obj, "resting_heart_rate"),
+                sleepHours = optNullableDouble(obj, "sleep_hours"),
+                batteryPercent = optNullableInt(obj, "battery_percent"),
+                summaryText = obj.optString("summary_text", ""),
+                notes = obj.optString("notes", ""),
+                createdAt = obj.optString("created_at", ""),
+            )
+        }
+    }
+
+    private fun JSONArray.toDogList(): List<GuidePawDogItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GuidePawDogItem(
+                id = obj.optInt("id", 0),
+                name = obj.optString("name", "Dog"),
+                breed = obj.optText("breed") ?: obj.optText("breed_name"),
+                ownerUsername = obj.optText("owner_username"),
+                accessRole = obj.optText("access_role"),
+                lifecycleStatus = obj.optText("lifecycle_status"),
+            )
+        }
     }
 
     private fun JSONArray.toStringList(): List<String> {

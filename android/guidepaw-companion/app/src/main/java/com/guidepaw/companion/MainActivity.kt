@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.chip.Chip
@@ -31,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var statusView: TextView
     private lateinit var progressView: LinearProgressIndicator
+    private lateinit var menuButton: MaterialButton
     private lateinit var versionBadgeView: TextView
     private lateinit var versionView: TextView
 
@@ -115,6 +117,7 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         statusView = findViewById(R.id.statusView)
         progressView = findViewById(R.id.progressView)
+        menuButton = findViewById(R.id.btnMenu)
         versionBadgeView = findViewById(R.id.versionBadgeView)
         versionView = findViewById(R.id.versionView)
 
@@ -152,8 +155,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.005"
-        versionBadgeView.text = "v0.005"
+        versionView.text = "v0.007"
+        versionBadgeView.text = "v0.007"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
@@ -184,9 +187,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnRefresh).setOnClickListener { refreshCurrent() }
         findViewById<MaterialButton>(R.id.btnSignOut).setOnClickListener { signOut("Signed out.") }
         saveLogButton.setOnClickListener { submitTrainingLog() }
+        menuButton.setOnClickListener { showMenuDialog() }
 
         findViewById<MaterialButton>(R.id.btnOpenWearablesWeb).setOnClickListener {
             openExternal("https://guidepaw.app/wearable_integrations.php")
+        }
+        findViewById<MaterialButton>(R.id.btnOpenNotificationsWeb).setOnClickListener {
+            openExternal("https://guidepaw.app/notifications.php")
         }
         findViewById<MaterialButton>(R.id.btnOpenAppPage).setOnClickListener {
             openExternal("https://guidepaw.app/app.php")
@@ -682,6 +689,71 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 
+    private fun showMenuDialog() {
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(18), dp(18), dp(8))
+        }
+        content.addView(makeMenuSection("Dog", listOf(
+            MenuAction("Dogs", R.id.btnDogs),
+        )))
+        content.addView(makeMenuSection("Logs", listOf(
+            MenuAction("Overview", R.id.btnOverview),
+            MenuAction("Training logs", R.id.btnTraining),
+        )))
+        content.addView(makeMenuSection("Training", listOf(
+            MenuAction("Training", R.id.btnTraining),
+        )))
+        content.addView(makeMenuSection("Care", listOf(
+            MenuAction("Wearables", R.id.btnWearables),
+        )))
+        content.addView(makeMenuSection("More", listOf(
+            MenuAction("Notification Center") { openExternal("https://guidepaw.app/notifications.php") },
+            MenuAction("Public guides", R.id.btnPublic),
+            MenuAction("GuidePaw app page") { openExternal("https://guidepaw.app/app.php") },
+            MenuAction("Breed questionnaire") { openExternal("https://guidepaw.app/breed_questionnaire.php") },
+            MenuAction("FAQ") { openExternal("https://guidepaw.app/faq.php") },
+            MenuAction("Breed comparisons") { openExternal("https://guidepaw.app/breed_comparison_hub.php") },
+            MenuAction("Breed family guide") { openExternal("https://guidepaw.app/breed_family_guide.php") },
+            MenuAction("Legal info") { openExternal("https://guidepaw.app/service_dog_esa_legal_info.php") },
+        )))
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("GuidePaw")
+            .setView(content)
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun makeMenuSection(title: String, actions: List<MenuAction>): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(10), 0, dp(2))
+
+            addView(TextView(this@MainActivity).apply {
+                text = title
+                setTextColor(0xFF0F172A.toInt())
+                textSize = 14f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setPadding(0, 0, 0, dp(6))
+            })
+
+            actions.forEach { action ->
+                addView(MaterialButton(this@MainActivity).apply {
+                    text = action.label
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { topMargin = dp(6) }
+                    setOnClickListener {
+                        action.onClick?.invoke()
+                            ?: sectionToggle.check(action.sectionButtonId ?: R.id.btnOverview)
+                    }
+                })
+            }
+        }
+    }
+
     private fun setLoading(isLoading: Boolean, message: String?) {
         progressView.visibility = if (isLoading) View.VISIBLE else View.INVISIBLE
         if (message != null) {
@@ -837,6 +909,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private data class MenuAction(
+        val label: String,
+        val sectionButtonId: Int? = null,
+        val onClick: (() -> Unit)? = null,
+    )
 
     companion object {
         private const val PREFS_NAME = "guidepaw_companion"
