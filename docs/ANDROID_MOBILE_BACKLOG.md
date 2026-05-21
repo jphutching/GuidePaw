@@ -104,7 +104,7 @@ Status:
 - wearable setup summary, compatibility catalog, and recent syncs are now visible for the active dog
 - setup now shows the expected data route and metric focus for the chosen devices
 - Health Connect sync now pulls steps, distance, sleep, and heart-rate summaries into the wearable timeline
-- FitBark is the first dedicated tracker connector path and can import rest, active, and play minutes
+- FitBark is the first dedicated tracker connector path and can import rest, active, play minutes, and battery percentage
 
 ## Phase 5: Support, paywalls, and add-ons
 

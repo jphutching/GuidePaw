@@ -33,6 +33,7 @@ function gpWearableEnsureEventColumns(PDO $pdo): void
 
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS rest_minutes INTEGER");
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS play_minutes INTEGER");
+    $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS battery_percent INTEGER");
 }
 
 function gpWearableParseSummary(string $payload): array
@@ -49,13 +50,14 @@ function gpWearableParseSummary(string $payload): array
             'device_name' => trim((string) ($decoded['device_name'] ?? '')),
             'recorded_for_date' => trim((string) ($decoded['recorded_for_date'] ?? '')),
             'steps' => isset($decoded['steps']) ? (int) $decoded['steps'] : null,
-            'active_minutes' => isset($decoded['active_minutes']) ? (int) $decoded['active_minutes'] : null,
-            'distance_miles' => isset($decoded['distance_miles']) ? (float) $decoded['distance_miles'] : null,
-            'avg_heart_rate' => isset($decoded['avg_heart_rate']) ? (int) $decoded['avg_heart_rate'] : null,
-            'sleep_hours' => isset($decoded['sleep_hours']) ? (float) $decoded['sleep_hours'] : null,
-            'summary_text' => trim((string) ($decoded['summary_text'] ?? '')),
-            'notes' => trim((string) ($decoded['notes'] ?? '')),
-        ];
+        'active_minutes' => isset($decoded['active_minutes']) ? (int) $decoded['active_minutes'] : null,
+        'distance_miles' => isset($decoded['distance_miles']) ? (float) $decoded['distance_miles'] : null,
+        'avg_heart_rate' => isset($decoded['avg_heart_rate']) ? (int) $decoded['avg_heart_rate'] : null,
+        'sleep_hours' => isset($decoded['sleep_hours']) ? (float) $decoded['sleep_hours'] : null,
+        'battery_percent' => isset($decoded['battery_percent']) ? (int) $decoded['battery_percent'] : null,
+        'summary_text' => trim((string) ($decoded['summary_text'] ?? '')),
+        'notes' => trim((string) ($decoded['notes'] ?? '')),
+    ];
     }
 
     $lines = preg_split('/\r\n|\r|\n/', $payload) ?: [];
@@ -207,6 +209,7 @@ function gpWearableNormalizeRecordInput(array $input, string $defaultSource = 'm
         'distance_miles' => gpWearableNumericValue($merged, ['distance_miles', 'distanceMiles', 'distance'], true),
         'avg_heart_rate' => gpWearableNumericValue($merged, ['avg_heart_rate', 'avgHeartRate', 'heart_rate', 'heartRate'], false),
         'sleep_hours' => gpWearableNumericValue($merged, ['sleep_hours', 'sleepHours'], true),
+        'battery_percent' => gpWearableNumericValue($merged, ['battery_percent', 'batteryPercent', 'battery', 'battery_level'], false),
         'summary_text' => $summaryText !== '' ? $summaryText : null,
         'notes' => $notes !== '' ? $notes : null,
         'raw_payload' => is_string($rawPayload) ? trim($rawPayload) : null,
@@ -473,6 +476,7 @@ function gpWearableTrendSummary(array $events): array
         'total_active_minutes' => 0,
         'total_rest_minutes' => 0,
         'total_play_minutes' => 0,
+        'avg_battery_percent' => null,
         'avg_distance_miles' => null,
         'avg_heart_rate' => null,
         'avg_sleep_hours' => null,
@@ -481,6 +485,7 @@ function gpWearableTrendSummary(array $events): array
     $distance = [];
     $heart = [];
     $sleep = [];
+    $battery = [];
     foreach ($events as $event) {
         $summary['total_steps'] += (int) ($event['steps'] ?? 0);
         $summary['total_active_minutes'] += (int) ($event['active_minutes'] ?? 0);
@@ -495,6 +500,9 @@ function gpWearableTrendSummary(array $events): array
         if ($event['sleep_hours'] !== null && $event['sleep_hours'] !== '') {
             $sleep[] = (float) $event['sleep_hours'];
         }
+        if ($event['battery_percent'] !== null && $event['battery_percent'] !== '') {
+            $battery[] = (int) $event['battery_percent'];
+        }
     }
 
     if ($distance) {
@@ -505,6 +513,9 @@ function gpWearableTrendSummary(array $events): array
     }
     if ($sleep) {
         $summary['avg_sleep_hours'] = array_sum($sleep) / count($sleep);
+    }
+    if ($battery) {
+        $summary['avg_battery_percent'] = array_sum($battery) / count($battery);
     }
 
     return $summary;
@@ -519,8 +530,8 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
 
     $stmt = $pdo->prepare("
         INSERT INTO wearable_sync_events
-        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, avg_heart_rate, sleep_hours, summary_text, notes, raw_payload)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, avg_heart_rate, sleep_hours, battery_percent, summary_text, notes, raw_payload)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id
     ");
     $stmt->execute([
@@ -536,6 +547,7 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
         isset($data['distance_miles']) && $data['distance_miles'] !== '' ? (float) $data['distance_miles'] : null,
         isset($data['avg_heart_rate']) && $data['avg_heart_rate'] !== '' ? (int) $data['avg_heart_rate'] : null,
         isset($data['sleep_hours']) && $data['sleep_hours'] !== '' ? (float) $data['sleep_hours'] : null,
+        isset($data['battery_percent']) && $data['battery_percent'] !== '' ? (int) $data['battery_percent'] : null,
         trim((string) ($data['summary_text'] ?? '')) ?: null,
         trim((string) ($data['notes'] ?? '')) ?: null,
         trim((string) ($data['raw_payload'] ?? '')) ?: null,

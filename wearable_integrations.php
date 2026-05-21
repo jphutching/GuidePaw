@@ -434,9 +434,13 @@ $csrf = generateCsrfToken();
                 <label>Play minutes</label>
                 <input type="number" name="play_minutes" min="0" step="1" placeholder="28">
             </div>
+            <div class="col-md-4">
+                <label>Battery percent</label>
+                <input type="number" name="battery_percent" min="0" max="100" step="1" placeholder="88">
+            </div>
             <div class="col-12">
                 <label>Summary</label>
-                <textarea name="summary_text" placeholder="FitBark activity snapshot, rest balance, or export note."></textarea>
+                <textarea name="summary_text" placeholder="FitBark activity snapshot, tracker battery note, or export note."></textarea>
             </div>
             <div class="col-12">
                 <label>Notes</label>
@@ -444,7 +448,7 @@ $csrf = generateCsrfToken();
             </div>
             <div class="col-12">
                 <label>Paste FitBark CSV / JSON</label>
-                <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,summary_text&#10;2026-05-20,FitBark,420,115,28,Calm morning and short play bursts."></textarea>
+                <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,battery_percent,summary_text&#10;2026-05-20,FitBark,420,115,28,88,Calm morning and short play bursts."></textarea>
             </div>
             <div class="col-12 d-grid d-md-flex gap-2">
                 <button type="submit" class="btn btn-primary">Save tracker snapshot</button>
@@ -469,6 +473,7 @@ $csrf = generateCsrfToken();
                     <th>Distance</th>
                     <th>HR</th>
                     <th>Sleep</th>
+                    <th>Battery</th>
                     <th>Summary</th>
                 </tr>
                 <?php foreach ($events as $event): ?>
@@ -483,6 +488,7 @@ $csrf = generateCsrfToken();
                         <td><?= h((string) ($event['distance_miles'] ?? '')) ?></td>
                         <td><?= h((string) ($event['avg_heart_rate'] ?? '')) ?></td>
                         <td><?= h((string) ($event['sleep_hours'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['battery_percent'] ?? '')) ?></td>
                         <td><?= h((string) ($event['summary_text'] ?? '')) ?></td>
                     </tr>
                 <?php endforeach; ?>

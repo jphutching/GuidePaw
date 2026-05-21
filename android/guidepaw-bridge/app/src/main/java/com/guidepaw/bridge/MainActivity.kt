@@ -1008,6 +1008,11 @@ class MainActivity : AppCompatActivity() {
                 append(" • Play: ")
                 append(overview.summary.totalPlayMinutes)
             }
+            if (overview.summary.avgBatteryPercent != null) {
+                append(" • Battery: ")
+                append(String.format(Locale.US, "%.0f", overview.summary.avgBatteryPercent))
+                append("%")
+            }
         }
         wearableStatusText.text = buildString {
             append("Dog ID: ")
@@ -1099,6 +1104,11 @@ class MainActivity : AppCompatActivity() {
                     if (event.playMinutes != null) {
                         append(" • Play: ")
                         append(event.playMinutes)
+                    }
+                    if (event.batteryPercent != null) {
+                        append(" • Battery: ")
+                        append(event.batteryPercent)
+                        append("%")
                     }
                     if (event.distanceMiles != null) {
                         append(" • Distance: ")
