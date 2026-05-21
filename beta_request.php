@@ -42,6 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card shadow p-4">
         <h1 class="h3 mb-2">Request GuidePaw Beta Access</h1>
         <p class="text-muted">Submit your request and the GuidePaw admin will review it. Approved requests receive a one-time beta access token by email.</p>
+        <div class="alert alert-info small">
+            <strong>Notice:</strong> If you requested a beta access token, please check your spam or junk folder. Approval emails can land there. If you already received a token, you can also go directly to <a href="https://guidepaw.app/beta_token.php">https://guidepaw.app/beta_token.php</a> and paste it in.
+        </div>
 
         <?php if ($success): ?>
             <div class="alert alert-success">
