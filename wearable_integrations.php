@@ -96,6 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'recorded_for_date' => trim((string) ($_POST['recorded_for_date'] ?? ($parsed['recorded_for_date'] ?? ''))),
             'steps' => $_POST['steps'] ?? ($parsed['steps'] ?? ''),
             'active_minutes' => $_POST['active_minutes'] ?? ($parsed['active_minutes'] ?? ''),
+            'rest_minutes' => $_POST['rest_minutes'] ?? ($parsed['rest_minutes'] ?? ''),
+            'play_minutes' => $_POST['play_minutes'] ?? ($parsed['play_minutes'] ?? ''),
             'distance_miles' => $_POST['distance_miles'] ?? ($parsed['distance_miles'] ?? ''),
             'avg_heart_rate' => $_POST['avg_heart_rate'] ?? ($parsed['avg_heart_rate'] ?? ''),
             'sleep_hours' => $_POST['sleep_hours'] ?? ($parsed['sleep_hours'] ?? ''),
@@ -173,6 +175,8 @@ $csrf = generateCsrfToken();
         <div class="metric"><div class="small">Sync events</div><strong><?= (int) $summary['event_count'] ?></strong></div>
         <div class="metric"><div class="small">Total steps</div><strong><?= (int) $summary['total_steps'] ?></strong></div>
         <div class="metric"><div class="small">Active minutes</div><strong><?= (int) $summary['total_active_minutes'] ?></strong></div>
+        <div class="metric"><div class="small">Rest minutes</div><strong><?= (int) ($summary['total_rest_minutes'] ?? 0) ?></strong></div>
+        <div class="metric"><div class="small">Play minutes</div><strong><?= (int) ($summary['total_play_minutes'] ?? 0) ?></strong></div>
         <div class="metric"><div class="small">Avg heart rate</div><strong><?= $summary['avg_heart_rate'] === null ? '—' : h(number_format((float) $summary['avg_heart_rate'], 0)) ?></strong></div>
     </div>
 
@@ -343,7 +347,7 @@ $csrf = generateCsrfToken();
         <summary class="h5 mb-0">Manual entry</summary>
         <div class="mt-3">
             <p class="small mb-2">For a pasted summary or a one-off import, use the manual form below.</p>
-            <div class="small mb-2">Source values you can use: <code>health_connect</code>, <code>samsung_health</code>, <code>fitbit</code>, <code>garmin</code>, or <code>manual</code>.</div>
+            <div class="small mb-2">Source values you can use: <code>health_connect</code>, <code>samsung_health</code>, <code>fitbit</code>, <code>fitbark</code>, <code>garmin</code>, or <code>manual</code>.</div>
         </div>
         <form method="post">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
@@ -364,6 +368,8 @@ $csrf = generateCsrfToken();
             <div class="grid">
                 <div><label>Steps</label><input type="number" name="steps" min="0" step="1"></div>
                 <div><label>Active minutes</label><input type="number" name="active_minutes" min="0" step="1"></div>
+                <div><label>Rest minutes</label><input type="number" name="rest_minutes" min="0" step="1"></div>
+                <div><label>Play minutes</label><input type="number" name="play_minutes" min="0" step="1"></div>
                 <div><label>Distance miles</label><input type="number" name="distance_miles" min="0" step="0.01"></div>
                 <div><label>Avg heart rate</label><input type="number" name="avg_heart_rate" min="0" step="1"></div>
                 <div><label>Sleep hours</label><input type="number" name="sleep_hours" min="0" step="0.1"></div>
@@ -379,6 +385,61 @@ $csrf = generateCsrfToken();
     </div>
 
     <div class="card">
+        <h2 class="h5 mb-2">FitBark import</h2>
+        <p class="small mb-3">FitBark is the first dedicated dog-tracker path because its data maps cleanly to GuidePaw's activity timeline. Paste a FitBark CSV export or JSON payload and store rest, active, and play minutes on the active dog.</p>
+        <p class="small mb-3">FitBark's public developer notes describe activity minutes in terms of Rest, Active, and Play. That gives GuidePaw a useful first vendor connector without needing a custom OAuth flow yet.</p>
+        <form method="post" class="row g-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+            <input type="hidden" name="save_snapshot" value="1">
+            <input type="hidden" name="source" value="fitbark">
+            <div class="col-md-4">
+                <label>Dog</label>
+                <select name="dog_id">
+                    <option value="0" <?= $selectedDogId === 0 ? 'selected' : '' ?>>All dogs</option>
+                    <?php foreach ($dogs as $dog): ?>
+                        <option value="<?= (int) $dog['id'] ?>" <?= $selectedDogId === (int) $dog['id'] ? 'selected' : '' ?>><?= h($dog['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Date</label>
+                <input type="date" name="recorded_for_date">
+            </div>
+            <div class="col-md-4">
+                <label>Device name</label>
+                <input type="text" name="device_name" value="FitBark" placeholder="FitBark">
+            </div>
+            <div class="col-md-4">
+                <label>Rest minutes</label>
+                <input type="number" name="rest_minutes" min="0" step="1" placeholder="420">
+            </div>
+            <div class="col-md-4">
+                <label>Active minutes</label>
+                <input type="number" name="active_minutes" min="0" step="1" placeholder="115">
+            </div>
+            <div class="col-md-4">
+                <label>Play minutes</label>
+                <input type="number" name="play_minutes" min="0" step="1" placeholder="28">
+            </div>
+            <div class="col-12">
+                <label>Summary</label>
+                <textarea name="summary_text" placeholder="FitBark activity snapshot, rest balance, or export note."></textarea>
+            </div>
+            <div class="col-12">
+                <label>Notes</label>
+                <textarea name="notes" placeholder="Optional notes about the tracker, collar fit, or how the dog felt after activity."></textarea>
+            </div>
+            <div class="col-12">
+                <label>Paste FitBark CSV / JSON</label>
+                <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,summary_text&#10;2026-05-20,FitBark,420,115,28,Calm morning and short play bursts."></textarea>
+            </div>
+            <div class="col-12 d-grid d-md-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save FitBark snapshot</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
         <h2 class="h5">Recent syncs</h2>
         <?php if (!$events): ?>
             <p class="small">No wearable snapshots have been recorded yet.</p>
@@ -390,6 +451,8 @@ $csrf = generateCsrfToken();
                     <th>Source</th>
                     <th>Steps</th>
                     <th>Active</th>
+                    <th>Rest</th>
+                    <th>Play</th>
                     <th>Distance</th>
                     <th>HR</th>
                     <th>Sleep</th>
@@ -402,6 +465,8 @@ $csrf = generateCsrfToken();
                         <td><?= h((string) ($event['source'] ?? 'manual')) ?></td>
                         <td><?= h((string) ($event['steps'] ?? '')) ?></td>
                         <td><?= h((string) ($event['active_minutes'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['rest_minutes'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['play_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['distance_miles'] ?? '')) ?></td>
                         <td><?= h((string) ($event['avg_heart_rate'] ?? '')) ?></td>
                         <td><?= h((string) ($event['sleep_hours'] ?? '')) ?></td>

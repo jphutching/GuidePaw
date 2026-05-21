@@ -17,6 +17,7 @@ What it does:
 - loads wearable sync summary and recent wearable snapshots for the active dog
 - shows the saved wearable setup for the active dog
 - reads daily steps, distance, sleep, and heart-rate summaries
+- can import FitBark activity minutes from a CSV or JSON payload on the web side
 - posts snapshots back to GuidePaw automatically or on demand
 
 See also:

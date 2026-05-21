@@ -1000,6 +1000,14 @@ class MainActivity : AppCompatActivity() {
             append(overview.summary.totalSteps)
             append(" • Active minutes: ")
             append(overview.summary.totalActiveMinutes)
+            if (overview.summary.totalRestMinutes > 0) {
+                append(" • Rest: ")
+                append(overview.summary.totalRestMinutes)
+            }
+            if (overview.summary.totalPlayMinutes > 0) {
+                append(" • Play: ")
+                append(overview.summary.totalPlayMinutes)
+            }
         }
         wearableStatusText.text = buildString {
             append("Dog ID: ")
@@ -1083,6 +1091,14 @@ class MainActivity : AppCompatActivity() {
                     if (event.activeMinutes != null) {
                         append(" • Active: ")
                         append(event.activeMinutes)
+                    }
+                    if (event.restMinutes != null) {
+                        append(" • Rest: ")
+                        append(event.restMinutes)
+                    }
+                    if (event.playMinutes != null) {
+                        append(" • Play: ")
+                        append(event.playMinutes)
                     }
                     if (event.distanceMiles != null) {
                         append(" • Distance: ")

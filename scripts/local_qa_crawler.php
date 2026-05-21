@@ -1290,6 +1290,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'recent syncs')
                 || str_contains($body, 'wearable compatibility catalog')
                 || str_contains($body, 'device setup')
+                || str_contains($body, 'fitbark import')
                 || str_contains($body, 'tractive gps tracker')
                 || str_contains($body, 'garmin watch + garmin dog system')
                 || str_contains($body, 'connect wearable')

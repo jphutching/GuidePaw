@@ -25,6 +25,16 @@ function gpWearableIntegrationsTableReady(PDO $pdo): bool
     return $ready;
 }
 
+function gpWearableEnsureEventColumns(PDO $pdo): void
+{
+    if (!gpWearableIntegrationsTableReady($pdo)) {
+        return;
+    }
+
+    $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS rest_minutes INTEGER");
+    $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS play_minutes INTEGER");
+}
+
 function gpWearableParseSummary(string $payload): array
 {
     $payload = trim($payload);
@@ -50,6 +60,41 @@ function gpWearableParseSummary(string $payload): array
 
     $lines = preg_split('/\r\n|\r|\n/', $payload) ?: [];
     $pairs = [];
+    $csvHeaders = null;
+    $csvValues = null;
+    foreach ($lines as $line) {
+        if (strpos($line, ',') === false) {
+            continue;
+        }
+        $candidateHeaders = array_map('trim', str_getcsv($line));
+        if (count($candidateHeaders) < 2) {
+            continue;
+        }
+        $csvHeaders = $candidateHeaders;
+        break;
+    }
+    if (is_array($csvHeaders)) {
+        foreach ($lines as $line) {
+            if (strpos($line, ',') === false) {
+                continue;
+            }
+            $candidateValues = array_map('trim', str_getcsv($line));
+            if (count($candidateValues) !== count($csvHeaders)) {
+                continue;
+            }
+            $csvValues = $candidateValues;
+            break;
+        }
+    }
+    if (is_array($csvHeaders) && is_array($csvValues)) {
+        $mapped = @array_combine(
+            array_map(static fn(string $value): string => strtolower(trim($value)), $csvHeaders),
+            $csvValues
+        );
+        if (is_array($mapped)) {
+            $pairs = array_merge($pairs, $mapped);
+        }
+    }
     foreach ($lines as $line) {
         if (strpos($line, ':') === false) {
             continue;
@@ -66,6 +111,8 @@ function gpWearableParseSummary(string $payload): array
         'recorded_for_date' => trim((string) ($pairs['date'] ?? $pairs['recorded_for_date'] ?? '')),
         'steps' => isset($pairs['steps']) && is_numeric($pairs['steps']) ? (int) $pairs['steps'] : null,
         'active_minutes' => isset($pairs['active_minutes']) && is_numeric($pairs['active_minutes']) ? (int) $pairs['active_minutes'] : null,
+        'rest_minutes' => isset($pairs['rest_minutes']) && is_numeric($pairs['rest_minutes']) ? (int) $pairs['rest_minutes'] : null,
+        'play_minutes' => isset($pairs['play_minutes']) && is_numeric($pairs['play_minutes']) ? (int) $pairs['play_minutes'] : null,
         'distance_miles' => isset($pairs['distance_miles']) && is_numeric($pairs['distance_miles']) ? (float) $pairs['distance_miles'] : null,
         'avg_heart_rate' => isset($pairs['avg_heart_rate']) && is_numeric($pairs['avg_heart_rate']) ? (int) $pairs['avg_heart_rate'] : null,
         'sleep_hours' => isset($pairs['sleep_hours']) && is_numeric($pairs['sleep_hours']) ? (float) $pairs['sleep_hours'] : null,
@@ -155,6 +202,8 @@ function gpWearableNormalizeRecordInput(array $input, string $defaultSource = 'm
         'recorded_for_date' => $recordedForDate,
         'steps' => gpWearableNumericValue($merged, ['steps', 'step_count', 'stepCount']),
         'active_minutes' => gpWearableNumericValue($merged, ['active_minutes', 'activeMinutes', 'active_time_minutes'], false),
+        'rest_minutes' => gpWearableNumericValue($merged, ['rest_minutes', 'restMinutes', 'rest_time_minutes'], false),
+        'play_minutes' => gpWearableNumericValue($merged, ['play_minutes', 'playMinutes', 'play_time_minutes'], false),
         'distance_miles' => gpWearableNumericValue($merged, ['distance_miles', 'distanceMiles', 'distance'], true),
         'avg_heart_rate' => gpWearableNumericValue($merged, ['avg_heart_rate', 'avgHeartRate', 'heart_rate', 'heartRate'], false),
         'sleep_hours' => gpWearableNumericValue($merged, ['sleep_hours', 'sleepHours'], true),
@@ -422,6 +471,8 @@ function gpWearableTrendSummary(array $events): array
         'event_count' => count($events),
         'total_steps' => 0,
         'total_active_minutes' => 0,
+        'total_rest_minutes' => 0,
+        'total_play_minutes' => 0,
         'avg_distance_miles' => null,
         'avg_heart_rate' => null,
         'avg_sleep_hours' => null,
@@ -433,6 +484,8 @@ function gpWearableTrendSummary(array $events): array
     foreach ($events as $event) {
         $summary['total_steps'] += (int) ($event['steps'] ?? 0);
         $summary['total_active_minutes'] += (int) ($event['active_minutes'] ?? 0);
+        $summary['total_rest_minutes'] += (int) ($event['rest_minutes'] ?? 0);
+        $summary['total_play_minutes'] += (int) ($event['play_minutes'] ?? 0);
         if ($event['distance_miles'] !== null && $event['distance_miles'] !== '') {
             $distance[] = (float) $event['distance_miles'];
         }
@@ -462,11 +515,12 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
     if (!gpWearableIntegrationsTableReady($pdo)) {
         throw new RuntimeException('Wearable sync storage has not been deployed yet.');
     }
+    gpWearableEnsureEventColumns($pdo);
 
     $stmt = $pdo->prepare("
         INSERT INTO wearable_sync_events
-        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, distance_miles, avg_heart_rate, sleep_hours, summary_text, notes, raw_payload)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, avg_heart_rate, sleep_hours, summary_text, notes, raw_payload)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id
     ");
     $stmt->execute([
@@ -477,6 +531,8 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
         trim((string) ($data['recorded_for_date'] ?? '')) ?: null,
         isset($data['steps']) && $data['steps'] !== '' ? (int) $data['steps'] : null,
         isset($data['active_minutes']) && $data['active_minutes'] !== '' ? (int) $data['active_minutes'] : null,
+        isset($data['rest_minutes']) && $data['rest_minutes'] !== '' ? (int) $data['rest_minutes'] : null,
+        isset($data['play_minutes']) && $data['play_minutes'] !== '' ? (int) $data['play_minutes'] : null,
         isset($data['distance_miles']) && $data['distance_miles'] !== '' ? (float) $data['distance_miles'] : null,
         isset($data['avg_heart_rate']) && $data['avg_heart_rate'] !== '' ? (int) $data['avg_heart_rate'] : null,
         isset($data['sleep_hours']) && $data['sleep_hours'] !== '' ? (float) $data['sleep_hours'] : null,
