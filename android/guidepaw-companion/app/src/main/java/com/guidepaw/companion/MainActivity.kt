@@ -150,7 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.001"
+        versionView.text = "v0.002"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)

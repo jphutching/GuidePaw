@@ -206,6 +206,7 @@ class GuidePawApiClient(
             setRequestProperty("Accept", "application/json")
             if (!token.isNullOrBlank()) {
                 setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("X-API-TOKEN", token)
             }
             if (body != null) {
                 doOutput = true
