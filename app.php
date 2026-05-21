@@ -50,14 +50,14 @@ $schema = [
     <section class="hero mb-4">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
             <div style="min-width:260px; max-width:700px;">
-                <div class="pill mb-3">Android companion app</div>
+                <div class="pill mb-3">Native Android companion app</div>
                 <h1 class="display-6 fw-bold mb-3">GuidePaw Companion</h1>
-                <p class="lead mb-0">The mobile app for normal handler work: training first, with wearables baked in so the app sees the dog, the activity, and the rest cycle together.</p>
+                <p class="lead mb-0">The native mobile app for normal handler work: training first, with wearables baked in so the app sees the dog, the activity, and the rest cycle together.</p>
             </div>
             <div class="panel p-3 text-dark" style="min-width:280px; max-width:320px;">
                 <div class="small text-uppercase text-muted fw-semibold">What it replaces</div>
                 <h2 class="h5 mb-2">Daily handler tasks</h2>
-                <p class="muted mb-3">The companion app is meant to cover the training work you already do on the website, without admin screens.</p>
+                <p class="muted mb-3">The companion app is a native build, not a browser wrapper. It covers the training work you already do on the website, without admin screens.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Start with breed research</a>
                     <a class="btn btn-outline-primary fw-bold" href="downloads/GuidePaw-Companion-debug.apk">Download debug APK</a>
