@@ -116,6 +116,7 @@ $faqSchema = [
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Open Breed Questionnaire</a>
                     <a class="btn btn-outline-primary fw-bold" href="breed_comparison.php">Compare breeds</a>
+                    <a class="btn btn-outline-secondary fw-bold" href="app.php">GuidePaw Companion App</a>
                 </div>
             </div>
         </div>
@@ -160,6 +161,7 @@ $faqSchema = [
                 <h2 class="h4">Useful starting points</h2>
                 <ul class="mb-0">
                     <li><a href="breed_questionnaire.php">Breed Questionnaire</a></li>
+                    <li><a href="app.php">GuidePaw Companion App</a></li>
                     <li><a href="breed_family_guide.php">Breed Family Guide</a></li>
                     <li><a href="breed_comparison.php">Breed Comparison</a></li>
                     <li><a href="service_dog_esa_legal_info.php">Service Dog &amp; ESA Legal Info</a></li>

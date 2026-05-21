@@ -119,6 +119,7 @@ if (empty($_SESSION['user_id'])) {
                     <p class="lead mb-4"><?= e($landingDescription) ?></p>
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-light btn-lg fw-bold" href="breed_questionnaire.php">Research a breed</a>
+                        <a class="btn btn-outline-light btn-lg fw-bold" href="app.php">GuidePaw Companion App</a>
                         <a class="btn btn-outline-light btn-lg fw-bold" href="register.php">Create an account</a>
                         <a class="btn btn-outline-light btn-lg fw-bold" href="support_funding.php">Support GuidePaw</a>
                     </div>
@@ -130,6 +131,7 @@ if (empty($_SESSION['user_id'])) {
                         <li>Share a public dog profile and found-dog contact details.</li>
                         <li>Compare breeds before committing to a dog.</li>
                         <li>Keep ADA, travel, and support notes in one place.</li>
+                        <li>Use the companion app for training and wearable data.</li>
                     </ul>
                 </div>
             </div>
@@ -156,6 +158,10 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Support Options</div>
                     <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
                 </div>
+                <a class="landing-example text-decoration-none text-dark" href="app.php">
+                    <div class="fw-bold mb-1">GuidePaw Companion App</div>
+                    <div class="text-muted small">Training-first mobile access with wearable data built in.</div>
+                </a>
                 <div class="landing-example">
                     <div class="fw-bold mb-1">Service Dog Notes</div>
                     <div class="text-muted small">Practical ADA and travel notes for handlers who need a quick reference.</div>
