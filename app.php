@@ -60,6 +60,7 @@ $schema = [
                 <p class="muted mb-3">The companion app is meant to cover the training work you already do on the website, without admin screens.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Start with breed research</a>
+                    <a class="btn btn-outline-primary fw-bold" href="downloads/GuidePaw-Companion-debug.apk">Download debug APK</a>
                     <a class="btn btn-outline-primary fw-bold" href="training_program.php">See training tools</a>
                 </div>
             </div>
@@ -86,6 +87,21 @@ $schema = [
                 <div class="text-uppercase text-muted fw-semibold small mb-2">Wearables baked in</div>
                 <h2 class="h4">One device layer, not a separate bridge</h2>
                 <p class="mb-0">Health Connect, tracker imports, and vendor feeds should roll into the same timeline as training. The app should use the data, not force the handler to manage a separate wearable page.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-4">
+        <div class="landing-card p-4">
+            <div class="text-uppercase text-muted fw-semibold small mb-2">Download</div>
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                <div style="min-width:260px; max-width:720px;">
+                    <h2 class="h3 mb-2">GuidePaw Companion debug APK</h2>
+                    <p class="mb-0">This is the current test build for the companion app. It is not a final Google Play release, and it may change while the Android side is still being filled out.</p>
+                </div>
+                <div>
+                    <a class="btn btn-primary fw-bold" href="downloads/GuidePaw-Companion-debug.apk">Download APK</a>
+                </div>
             </div>
         </div>
     </section>
