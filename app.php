@@ -67,6 +67,7 @@ $schema = [
                     <a class="btn btn-outline-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download debug APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
                     <a class="btn btn-outline-primary fw-bold" href="training_program.php">See training tools</a>
                 </div>
+                <p class="small mt-3 mb-0 text-secondary">Because this is a sideloaded test build, Android or your browser may warn that the APK is not from a verified store. That warning is expected until we publish a signed release build or Play Store release.</p>
             </div>
         </div>
     </section>

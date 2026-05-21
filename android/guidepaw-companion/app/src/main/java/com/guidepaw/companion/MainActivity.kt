@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var updateStatusView: TextView
     private lateinit var updateNowButton: MaterialButton
     private lateinit var dismissUpdateButton: MaterialButton
+    private lateinit var feedbackButton: MaterialButton
     private lateinit var menuButton: MaterialButton
     private lateinit var versionBadgeView: TextView
     private lateinit var versionView: TextView
@@ -175,6 +177,7 @@ class MainActivity : AppCompatActivity() {
         updateStatusView = findViewById(R.id.updateStatusView)
         updateNowButton = findViewById(R.id.btnUpdateNow)
         dismissUpdateButton = findViewById(R.id.btnDismissUpdate)
+        feedbackButton = findViewById(R.id.btnFeedback)
         menuButton = findViewById(R.id.btnMenu)
         versionBadgeView = findViewById(R.id.versionBadgeView)
         versionView = findViewById(R.id.versionView)
@@ -245,6 +248,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnRefresh).setOnClickListener { refreshCurrent() }
         findViewById<MaterialButton>(R.id.btnSignOut).setOnClickListener { signOut("Signed out.") }
         saveLogButton.setOnClickListener { submitTrainingLog() }
+        feedbackButton.setOnClickListener { startActivity(Intent(this, FeedbackActivity::class.java)) }
         menuButton.setOnClickListener { showMenuDialog() }
         updateNowButton.setOnClickListener { startAppUpdate() }
         dismissUpdateButton.setOnClickListener { hideUpdateNotice() }
@@ -782,9 +786,14 @@ class MainActivity : AppCompatActivity() {
             MenuAction("Legal info") { openExternal("https://guidepaw.app/service_dog_esa_legal_info.php") },
         )))
 
+        val scrollView = ScrollView(this).apply {
+            isFillViewport = true
+            addView(content)
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("GuidePaw")
-            .setView(content)
+            .setView(scrollView)
             .setNegativeButton("Close", null)
             .show()
     }
