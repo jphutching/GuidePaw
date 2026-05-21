@@ -385,13 +385,12 @@ $csrf = generateCsrfToken();
     </div>
 
     <div class="card">
-        <h2 class="h5 mb-2">FitBark import</h2>
-        <p class="small mb-3">FitBark is the first dedicated dog-tracker path because its data maps cleanly to GuidePaw's activity timeline. Paste a FitBark CSV export or JSON payload and store rest, active, and play minutes on the active dog.</p>
-        <p class="small mb-3">FitBark's public developer notes describe activity minutes in terms of Rest, Active, and Play. That gives GuidePaw a useful first vendor connector without needing a custom OAuth flow yet.</p>
+        <h2 class="h5 mb-2">Dog tracker import</h2>
+        <p class="small mb-3">This is the reusable dog-tracker import path for FitBark now, and for Tractive, PetPace, Halo, Fi, Invoxia, PitPat, or Whistle exports later. GuidePaw stores the tracker source with the snapshot so the timeline stays usable even before each vendor gets a live API.</p>
+        <p class="small mb-3">FitBark is the first dedicated tracker connector because its data maps cleanly to rest, active, and play minutes. Other trackers can use the same import form until we wire a vendor-specific API or export parser.</p>
         <form method="post" class="row g-2 align-items-end">
             <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
             <input type="hidden" name="save_snapshot" value="1">
-            <input type="hidden" name="source" value="fitbark">
             <div class="col-md-4">
                 <label>Dog</label>
                 <select name="dog_id">
@@ -402,12 +401,26 @@ $csrf = generateCsrfToken();
                 </select>
             </div>
             <div class="col-md-4">
+                <label>Tracker source</label>
+                <select name="source">
+                    <option value="fitbark">FitBark</option>
+                    <option value="tractive">Tractive</option>
+                    <option value="petpace">PetPace</option>
+                    <option value="halo">Halo</option>
+                    <option value="fi">Fi</option>
+                    <option value="invoxia">Invoxia</option>
+                    <option value="pitpat">PitPat</option>
+                    <option value="whistle">Whistle</option>
+                    <option value="garmin_alpha_tt">Garmin Alpha / TT</option>
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label>Date</label>
                 <input type="date" name="recorded_for_date">
             </div>
             <div class="col-md-4">
                 <label>Device name</label>
-                <input type="text" name="device_name" value="FitBark" placeholder="FitBark">
+                <input type="text" name="device_name" placeholder="FitBark, Tractive, Fi, Halo, etc.">
             </div>
             <div class="col-md-4">
                 <label>Rest minutes</label>
@@ -434,7 +447,7 @@ $csrf = generateCsrfToken();
                 <textarea name="wearable_payload" placeholder="date,device_name,rest_minutes,active_minutes,play_minutes,summary_text&#10;2026-05-20,FitBark,420,115,28,Calm morning and short play bursts."></textarea>
             </div>
             <div class="col-12 d-grid d-md-flex gap-2">
-                <button type="submit" class="btn btn-primary">Save FitBark snapshot</button>
+                <button type="submit" class="btn btn-primary">Save tracker snapshot</button>
             </div>
         </form>
     </div>
