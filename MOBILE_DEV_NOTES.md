@@ -4,15 +4,6 @@
 
 GuidePaw is currently a PHP/PostgreSQL web app.
 
-Preferred mobile path:
-- Android first
-- Use Capacitor for a lightweight app wrapper when ready
-- iOS later using macOS/Xcode or a cloud Mac build service
-
-Current Android contract:
-- `docs/ANDROID_API_CONTRACT.md`
-- The existing PHP API is enough to start Android work without a backend rewrite.
-
 ## Installed Android tooling
 
 Android Studio:

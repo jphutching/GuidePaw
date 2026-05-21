@@ -4,7 +4,6 @@ require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
 require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/feature_flags.php';
-require_once __DIR__ . '/includes/api_auth.php';
 require_once __DIR__ . '/includes/wearable_integrations.php';
 
 checkLogin();
@@ -30,45 +29,12 @@ $dogsStmt->execute([$userId]);
 $dogs = $dogsStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 $defaultDogId = (int) ($dogs[0]['id'] ?? 0);
 $status = $_GET['status'] ?? '';
-$message = '';
-$bridgePayload = '';
-$bridgeQrUrl = '';
-$bridgeLink = '';
-$bridgeTokenLabel = '';
-$bridgeDogName = '';
-$bridgeTokenIssued = false;
-$appBaseUrl = rtrim((string) appEnv('APP_URL', 'https://guidepaw.app'), '/');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
     if (!$dogs) {
         header('Location: wearable_integrations.php?status=need_dog');
         exit;
-    }
-
-    if (isset($_POST['connect_wearable'])) {
-        $selectedDogId = (int) ($_POST['dog_id'] ?? $defaultDogId);
-        if ($selectedDogId <= 0 || !in_array($selectedDogId, array_map(static fn($dog) => (int) $dog['id'], $dogs), true)) {
-            $selectedDogId = $defaultDogId;
-        }
-        $selectedDog = null;
-        foreach ($dogs as $dog) {
-            if ((int) $dog['id'] === $selectedDogId) {
-                $selectedDog = $dog;
-                break;
-            }
-        }
-
-        $bridgeTokenLabel = 'Wearable Bridge';
-        if ($selectedDog && !empty($selectedDog['name'])) {
-            $bridgeTokenLabel .= ' - ' . trim((string) $selectedDog['name']);
-            $bridgeDogName = trim((string) $selectedDog['name']);
-        }
-        $issued = issueApiToken($pdo, $userId, $bridgeTokenLabel);
-        $bridgeTokenIssued = true;
-        $bridgeLink = $appBaseUrl . '/wearable_bridge.php?token=' . rawurlencode($issued['token']) . '&dog_id=' . $selectedDogId;
-        $bridgeQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . rawurlencode($bridgeLink);
-        $message = 'Wearable connection code created.';
     }
 
     if (isset($_POST['save_device_setup'])) {
@@ -158,19 +124,13 @@ $csrf = generateCsrfToken();
 <div class="wrap">
     <p><a href="index.php">← Dashboard</a></p>
     <h1>Wearable Integrations</h1>
-    <p class="small">Connect a watch or collar once, then let GuidePaw bring in the summary automatically.</p>
+    <p class="small">Use this page to record wearable snapshots, choose the device pairing that best matches your tracker setup, and keep the timeline readable.</p>
 
     <?php if ($status === 'saved'): ?>
         <div class="card">Wearable snapshot saved.</div>
     <?php elseif ($status === 'setup_saved'): ?>
         <div class="card">Wearable device setup saved.</div>
-    <?php elseif ($status === 'need_dog'): ?>
-        <div class="card">Add a dog profile before saving wearable snapshots.</div>
     <?php endif; ?>
-    <?php if ($bridgeTokenIssued && $bridgeQrUrl !== ''): ?>
-        <div class="card">Wearable connection code created. Scan the QR from the phone bridge to finish pairing.</div>
-    <?php endif; ?>
-
     <div class="grid">
         <div class="metric"><div class="small">Sync events</div><strong><?= (int) $summary['event_count'] ?></strong></div>
         <div class="metric"><div class="small">Total steps</div><strong><?= (int) $summary['total_steps'] ?></strong></div>
@@ -224,7 +184,7 @@ $csrf = generateCsrfToken();
             </div>
             <div class="col-12">
                 <label class="form-label">Notes</label>
-                <textarea class="form-control" name="notes" placeholder="Use this to note what data you want GuidePaw to trust: steps, sleep, heart rate, GPS, battery alerts, or manual bridge import."><?= h((string) ($currentSetup['notes'] ?? '')) ?></textarea>
+                <textarea class="form-control" name="notes" placeholder="Use this to note what data you want GuidePaw to trust: steps, sleep, heart rate, GPS, battery alerts, or manual import."><?= h((string) ($currentSetup['notes'] ?? '')) ?></textarea>
             </div>
             <div class="col-12 d-grid d-md-flex gap-2">
                 <button type="submit" class="btn btn-primary">Save device setup</button>
@@ -291,57 +251,6 @@ $csrf = generateCsrfToken();
                 <div class="small mt-2">Garmin watch + Garmin dog system gives the cleanest handler + dog pairing when both sides are in the Garmin ecosystem.</div>
             </div>
         </div>
-    </div>
-
-    <div class="card">
-        <h2 class="h5 mb-2">Connect Wearable</h2>
-        <p class="small mb-3">Pick the dog once, then create a connection code. The phone bridge scans the QR and sends future summaries automatically. You do not need to copy an API token.</p>
-        <div class="small mb-3">
-            Android bridge app:
-            <a href="bridge_apk.php" class="btn btn-sm btn-outline-primary ms-1">Bridge APK</a>
-            <span class="ms-2">for the current Android phone you are pairing.</span>
-        </div>
-        <div class="small mb-3">
-            Prerequisites on the phone:
-            <a href="https://play.google.com/store/apps/details?id=com.sec.android.app.shealth" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-1">Samsung Health</a>
-            <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary ms-1">Health Connect</a>
-        </div>
-        <form method="post" class="row g-2 align-items-end">
-            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-            <div class="col-md-6">
-                <label>Dog</label>
-                <select name="dog_id">
-                    <?php foreach ($dogs as $dog): ?>
-                        <option value="<?= (int) $dog['id'] ?>" <?= $selectedDogId === (int) $dog['id'] ? 'selected' : '' ?>><?= h($dog['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-6 d-grid">
-                <button type="submit" name="connect_wearable" value="1">Create Connect Code</button>
-            </div>
-        </form>
-        <?php if ($bridgeTokenIssued && $bridgeQrUrl !== ''): ?>
-            <div class="row g-3 align-items-center mt-3">
-                <div class="col-md-5 text-center">
-                    <a href="<?= h($bridgeLink) ?>" class="d-inline-block" aria-label="Open wearable pairing page">
-                        <img src="<?= h($bridgeQrUrl) ?>" alt="Wearable connect QR code" style="max-width:260px;width:100%;height:auto;border:1px solid #ddd;border-radius:12px;background:#fff;padding:10px;">
-                    </a>
-                </div>
-                <div class="col-md-7">
-                    <div class="fw-semibold mb-2">Connection ready</div>
-                    <div class="small mb-2">Scan the QR or tap the button below. Both open the GuidePaw pairing page instead of a raw text note.</div>
-                    <div class="small mb-2"><strong>Device:</strong> <?= h($bridgeDogName !== '' ? $bridgeDogName : 'Selected dog') ?></div>
-                    <div class="small mb-2"><strong>Source:</strong> Health Connect</div>
-                    <div class="small mb-2"><strong>Open link:</strong> <code style="display:inline-block;padding:4px 6px;word-break:break-all;"><?= h($appBaseUrl . '/wearable_bridge.php') ?></code></div>
-                    <div class="mt-3">
-                        <a href="<?= h($bridgeLink) ?>" style="display:inline-block;padding:10px 14px;background:#0d6efd;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;">Open pairing page</a>
-                    </div>
-                    <div class="small text-muted">Keep this page open while you pair. The next syncs will show up here automatically.</div>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="small text-muted mt-2">Samsung Health on the phone can feed Health Connect, and the GuidePaw bridge can send data here automatically after pairing on the current phone.</div>
-        <?php endif; ?>
     </div>
 
     <details class="card">

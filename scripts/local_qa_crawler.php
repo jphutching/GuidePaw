@@ -552,33 +552,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             $apiLogsSeen = gpQaPageLooksOk($apiLogs) && is_array($apiLogsJson) && !empty($apiLogsJson['success']) && isset($apiLogsJson['logs']) && is_array($apiLogsJson['logs']);
             $apiBillingSeen = gpQaPageLooksOk($apiBilling) && is_array($apiBillingJson) && !empty($apiBillingJson['success']) && isset($apiBillingJson['service_rows']) && is_array($apiBillingJson['service_rows']) && isset($apiBillingJson['support_options']) && is_array($apiBillingJson['support_options']);
             $apiNotificationsSeen = gpQaPageLooksOk($apiNotifications) && is_array($apiNotificationsJson) && !empty($apiNotificationsJson['success']) && isset($apiNotificationsJson['notifications']) && is_array($apiNotificationsJson['notifications']);
-            $apiWearableDogId = (int) (($apiDogsJson['dogs'][0]['id'] ?? 0) ?: 0);
-            if ($apiWearableDogId > 0 && $apiToken !== '') {
-                $apiWearables = gpQaApiRequest($baseUrl, 'api/wearables.php', $apiToken, 'POST', [
-                    'dog_id' => $apiWearableDogId,
-                    'source' => 'health_connect',
-                    'device_name' => 'Galaxy Watch QA',
-                    'recorded_for_date' => date('Y-m-d'),
-                    'steps' => 8421,
-                    'active_minutes' => 77,
-                    'distance_miles' => 3.9,
-                    'avg_heart_rate' => 92,
-                    'sleep_hours' => 7.4,
-                    'summary_text' => 'Automated wearable sync test from Health Connect.',
-                    'notes' => 'Posted by local QA crawler.',
-                ]);
-            $apiWearablesJson = json_decode($apiWearables['body'], true);
-            $apiWearablesSeen = gpQaPageLooksOk($apiWearables) && is_array($apiWearablesJson) && !empty($apiWearablesJson['success']) && !empty($apiWearablesJson['event_id']);
-            $apiWearableOverview = gpQaApiRequest($baseUrl, 'api/wearables.php?dog_id=' . $apiWearableDogId, $apiToken);
-            $apiWearableOverviewJson = json_decode($apiWearableOverview['body'], true);
-            $apiWearableOverviewSeen = gpQaPageLooksOk($apiWearableOverview)
-                && is_array($apiWearableOverviewJson)
-                && !empty($apiWearableOverviewJson['success'])
-                && isset($apiWearableOverviewJson['summary'])
-                && is_array($apiWearableOverviewJson['summary'])
-                && isset($apiWearableOverviewJson['events'])
-                && is_array($apiWearableOverviewJson['events']);
-        }
         }
         $adminSessionProbe = gpQaRequest($baseUrl, 'index.php', 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
         $adminSessionProbeBody = strtolower($adminSessionProbe['body']);
@@ -666,8 +639,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_logs_endpoint', $apiLogsSeen, 'HTTP ' . $apiLogs['status'] . ($apiLogsSeen ? ' api logs ok' : ' api logs missing'));
             gpQaResult($results, 'api_billing_endpoint', $apiBillingSeen, 'HTTP ' . $apiBilling['status'] . ($apiBillingSeen ? ' api billing ok' : ' api billing missing'));
             gpQaResult($results, 'api_notifications_endpoint', $apiNotificationsSeen, 'HTTP ' . $apiNotifications['status'] . ($apiNotificationsSeen ? ' api notifications ok' : ' api notifications missing'));
-            gpQaResult($results, 'api_wearables_endpoint', $apiWearablesSeen, 'HTTP ' . $apiWearables['status'] . ($apiWearablesSeen ? ' wearable sync recorded' : ' wearable sync missing'));
-            gpQaResult($results, 'api_wearables_overview_endpoint', $apiWearableOverviewSeen, 'HTTP ' . $apiWearableOverview['status'] . ($apiWearableOverviewSeen ? ' wearable overview ok' : ' wearable overview missing'));
         } else {
             gpQaResult($results, 'api_tokens_page_loads', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api_tokens.php and bearer-token endpoints');
             gpQaResult($results, 'api_login_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/login.php');
@@ -676,8 +647,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
             gpQaResult($results, 'api_logs_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/logs.php');
             gpQaResult($results, 'api_billing_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/billing.php');
             gpQaResult($results, 'api_notifications_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/notifications.php');
-            gpQaResult($results, 'api_wearables_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php');
-            gpQaResult($results, 'api_wearables_overview_endpoint', true, 'skipped: set GUIDEPAW_CHECK_API_ROUTES=yes to verify api/wearables.php overview');
         }
         $pages = [
             'dashboard_loads' => 'index.php',
@@ -741,7 +710,6 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
         'training_history_page_loads' => 'training_history.php',
         'stats_page_loads' => 'stats.php',
         'air_travel_rights_page_loads' => 'air_travel_rights.php',
-        'bridge_apk_page_loads' => 'bridge_apk.php',
         'wearable_integrations_page_loads' => 'wearable_integrations.php',
         'alerts_page_loads' => 'alerts.php',
         'dog_health_page_loads' => 'dog_health.php',
@@ -1298,57 +1266,10 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 || str_contains($body, 'fitbark import')
                 || str_contains($body, 'tractive gps tracker')
                 || str_contains($body, 'garmin watch + garmin dog system')
-                || str_contains($body, 'connect wearable')
-                || str_contains($body, 'connection ready')
                 || str_contains($body, 'manual entry')
             )
             : true;
         if ($path === 'wearable_integrations.php' && gpQaPageLooksOk($res)) {
-            $wearableConnectPage = $res;
-            $wearableConnectBody = strtolower($wearableConnectPage['body']);
-            $wearableConnectPostedSeen = false;
-            $wearableBridgeTargetSeen = false;
-            $wearableBridgePageSeen = false;
-            if (preg_match('/<option[^>]+value="(\d+)"[^>]*selected/i', $wearableConnectPage['body'], $wearableDogMatch) || preg_match('/<option[^>]+value="(\d+)"/i', $wearableConnectPage['body'], $wearableDogMatch)) {
-                if (!preg_match('/name="csrf_token" value="([^"]+)"/i', $wearableConnectPage['body'], $wearableCsrfMatch)) {
-                    $wearableCsrfMatch = [null, ''];
-                }
-                $wearableConnectDogId = (int) $wearableDogMatch[1];
-                $wearableConnectCsrf = html_entity_decode($wearableCsrfMatch[1], ENT_QUOTES | ENT_HTML5);
-                if ($wearableConnectDogId > 0 && $wearableConnectCsrf !== '') {
-                    $wearableConnectPost = gpQaRequest($baseUrl, 'wearable_integrations.php', 'POST', [
-                        'csrf_token' => $wearableConnectCsrf,
-                        'dog_id' => $wearableConnectDogId,
-                        'connect_wearable' => '1',
-                    ], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-                    $wearableConnectPostBody = strtolower($wearableConnectPost['body']);
-                    $wearableConnectPostedSeen = gpQaPageLooksOk($wearableConnectPost) && (
-                        str_contains($wearableConnectPostBody, 'wearable connection code created')
-                        || str_contains($wearableConnectPostBody, 'connection ready')
-                        || str_contains($wearableConnectPostBody, 'scan the qr')
-                    );
-                    $wearableBridgeTargetSeen = gpQaPageLooksOk($wearableConnectPost) && str_contains($wearableConnectPost['body'], 'wearable_bridge.php%3Ftoken%3D');
-                    if (preg_match('/href="([^"]*wearable_bridge\.php\?token=[^"]+)"/i', $wearableConnectPost['body'], $wearableBridgeLinkMatch)) {
-                        $wearableBridgeLink = html_entity_decode($wearableBridgeLinkMatch[1], ENT_QUOTES | ENT_HTML5);
-                        $wearableBridgePath = (string) (parse_url($wearableBridgeLink, PHP_URL_PATH) ?: '');
-                        $wearableBridgeQuery = (string) (parse_url($wearableBridgeLink, PHP_URL_QUERY) ?: '');
-                        $wearableBridgeRequest = $wearableBridgePath !== '' ? $wearableBridgePath . ($wearableBridgeQuery !== '' ? '?' . $wearableBridgeQuery : '') : '';
-                        if ($wearableBridgeRequest !== '') {
-                            $wearableBridgePage = gpQaRequest($baseUrl, $wearableBridgeRequest, 'GET', [], $adminCookie, $insecureLocalSsl, $adminCookieHeader);
-                            $wearableBridgeBody = strtolower($wearableBridgePage['body']);
-                            $wearableBridgePageSeen = gpQaPageLooksOk($wearableBridgePage) && (
-                                str_contains($wearableBridgeBody, 'open guidepaw companion on this phone')
-                                || str_contains($wearableBridgeBody, 'open in guidepaw companion')
-                                || str_contains($wearableBridgeBody, 'copy connection code')
-                                || str_contains($wearableBridgeBody, 'connection details')
-                            );
-                        }
-                    }
-                }
-            }
-            gpQaResult($results, 'wearable_connect_code', $wearableConnectPostedSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableConnectPostedSeen ? ' wearable connect code created' : ' wearable connect code missing'));
-            gpQaResult($results, 'wearable_bridge_qr_target', $wearableBridgeTargetSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableBridgeTargetSeen ? ' wearable bridge URL found in QR' : ' wearable bridge URL missing from QR'));
-            gpQaResult($results, 'wearable_bridge_page_loads', $wearableBridgePageSeen, 'HTTP ' . $wearableConnectPage['status'] . ($wearableBridgePageSeen ? ' wearable bridge page found' : ' wearable bridge page missing'));
         }
         $alertsPageLooksReady = $path === 'alerts.php'
             ? (

@@ -8,8 +8,6 @@ Endpoints:
 - `GET /api/dogs.php`
 - `GET /api/logs.php?dog_id=123`
 - `POST /api/logs.php`
-- `GET /api/wearables.php?dog_id=123`
-- `POST /api/wearables.php`
 
 Authentication:
 - Create tokens in `api_tokens.php`
@@ -20,4 +18,4 @@ Authentication:
 When a user has 2FA enabled, `/api/login.php` requires either `totp_code` or `recovery_key` along with username and password.
 
 See also:
-- `docs/ANDROID_API_CONTRACT.md`
+- `docs/CURRENT_BUILD_NOTES.md`

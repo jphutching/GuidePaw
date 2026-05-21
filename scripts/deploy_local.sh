@@ -17,14 +17,9 @@ sudo cp -r api "$LIVE/"
 sudo cp app.js sw.js manifest.json offline.html styles.css "$LIVE/" 2>/dev/null || true
 sudo cp -r includes "$LIVE/"
 sudo cp -r assets "$LIVE/"
-if [ -f android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk ]; then
-  sudo mkdir -p "$LIVE/bridge"
-  sudo cp android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk "$LIVE/bridge/GuidePaw-Bridge-debug.apk"
-fi
-if [ -f android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk ]; then
-  sudo mkdir -p "$LIVE/bridge"
-  sudo cp android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk "$LIVE/bridge/GuidePaw-Bridge-debug.apk"
-fi
+sudo rm -rf "$LIVE/android"
+sudo rm -f "$LIVE/bridge_apk.php" "$LIVE/wearable_bridge.php" "$LIVE/api/wearables.php" "$LIVE/bridge/GuidePaw-Bridge-debug.apk" "$LIVE/bridge/GuidePaw-Companion-debug.apk"
+sudo rmdir "$LIVE/bridge" 2>/dev/null || true
 
 echo "== PHP syntax: live =="
 cd "$LIVE"
@@ -74,7 +69,7 @@ while IFS= read -r target; do
   fi
 done < <(
   find . \
-    \( -path "./.git" -o -path "./.git/*" -o -path "./.env*" -o -path "./node_modules" -o -path "./node_modules/*" -o -path "./vendor" -o -path "./vendor/*" -o -path "./scripts" -o -path "./scripts/*" -o -path "./tests" -o -path "./tests/*" -o -path "./android" -o -path "./android/*" -o -path "./docs" -o -path "./docs/*" -o -path "./android/guidepaw-bridge/.gradle" -o -path "./android/guidepaw-bridge/.gradle/*" \) -prune -o \
+    \( -path "./.git" -o -path "./.git/*" -o -path "./.env*" -o -path "./node_modules" -o -path "./node_modules/*" -o -path "./vendor" -o -path "./vendor/*" -o -path "./scripts" -o -path "./scripts/*" -o -path "./tests" -o -path "./tests/*" -o -path "./docs" -o -path "./docs/*" \) -prune -o \
     -type f \( -name "*.php" -o -name "*.html" -o -name "*.htm" \) \
     -print0 \
     | xargs -0 -r grep -RhoE 'href="[^"]+\.php[^"]*"' \
@@ -88,7 +83,7 @@ echo "== Key HTTP checks =="
 for url in \
   index.php dogs.php training_program.php training_session_log.php \
   training_goal_intake.php goal_builder.php behavior_risk_scoring.php regression_engine.php wearable_integrations.php trainer_marketplace.php candidate_assessment.php candidate_comparison.php community_challenges.php habit_repair.php tactical_training.php \
-  admin.php admin_tactical_requests.php admin_feature_roadmap.php settings.php profile.php api/wearables.php
+  admin.php admin_tactical_requests.php admin_feature_roadmap.php settings.php profile.php
 do
   code=$(curl -k -s -o /tmp/gp_deploy_check.out -w "%{http_code}" "https://10.147.18.184/$url?deploycheck=1")
   echo "$code  $url"
