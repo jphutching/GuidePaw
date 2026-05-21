@@ -339,6 +339,9 @@ function gpWearableCurrentSetup(PDO $pdo, int $userId, int $dogId): ?array
     gpWearableEnsureSetupTable($pdo);
     $stmt = $pdo->prepare("
         SELECT s.*, hd.label AS handler_wearable_label, dd.label AS dog_tracker_label
+            , hd.vendor AS handler_wearable_vendor, dd.vendor AS dog_tracker_vendor
+            , hd.pairing_mode AS handler_wearable_pairing_mode, dd.pairing_mode AS dog_tracker_pairing_mode
+            , hd.data_focus AS handler_wearable_data_focus, dd.data_focus AS dog_tracker_data_focus
         FROM user_wearable_device_setup s
         LEFT JOIN wearable_device_catalog hd ON hd.slug = s.handler_wearable_slug
         LEFT JOIN wearable_device_catalog dd ON dd.slug = s.dog_tracker_slug
@@ -353,6 +356,12 @@ function gpWearableCurrentSetup(PDO $pdo, int $userId, int $dogId): ?array
     $row['sync_mode_label'] = gpWearableSyncModeOptions()[$row['sync_mode']]['label'] ?? ucfirst(str_replace('_', ' ', (string) $row['sync_mode']));
     $row['handler_wearable_label'] = trim((string) ($row['handler_wearable_label'] ?? $row['handler_wearable_slug'] ?? ''));
     $row['dog_tracker_label'] = trim((string) ($row['dog_tracker_label'] ?? $row['dog_tracker_slug'] ?? ''));
+    $row['handler_wearable_pairing_mode'] = trim((string) ($row['handler_wearable_pairing_mode'] ?? ''));
+    $row['dog_tracker_pairing_mode'] = trim((string) ($row['dog_tracker_pairing_mode'] ?? ''));
+    $row['handler_wearable_data_focus'] = trim((string) ($row['handler_wearable_data_focus'] ?? ''));
+    $row['dog_tracker_data_focus'] = trim((string) ($row['dog_tracker_data_focus'] ?? ''));
+    $row['handler_wearable_vendor'] = trim((string) ($row['handler_wearable_vendor'] ?? ''));
+    $row['dog_tracker_vendor'] = trim((string) ($row['dog_tracker_vendor'] ?? ''));
     return $row;
 }
 

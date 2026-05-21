@@ -230,10 +230,14 @@ $csrf = generateCsrfToken();
                 <div class="metric">
                     <div class="small">Handler wearable</div>
                     <strong style="font-size:1rem;line-height:1.25;"><?= h((string) ($currentSetup['handler_wearable_label'] ?? $currentSetup['handler_wearable_slug'] ?? '')) ?></strong>
+                    <?php if (!empty($currentSetup['handler_wearable_pairing_mode'])): ?><div class="small mt-2">Route: <?= h((string) $currentSetup['handler_wearable_pairing_mode']) ?></div><?php endif; ?>
+                    <?php if (!empty($currentSetup['handler_wearable_data_focus'])): ?><div class="small mt-1">Focus: <?= h((string) $currentSetup['handler_wearable_data_focus']) ?></div><?php endif; ?>
                 </div>
                 <div class="metric">
                     <div class="small">Dog tracker</div>
                     <strong style="font-size:1rem;line-height:1.25;"><?= h((string) ($currentSetup['dog_tracker_label'] ?? $currentSetup['dog_tracker_slug'] ?? '')) ?></strong>
+                    <?php if (!empty($currentSetup['dog_tracker_pairing_mode'])): ?><div class="small mt-2">Route: <?= h((string) $currentSetup['dog_tracker_pairing_mode']) ?></div><?php endif; ?>
+                    <?php if (!empty($currentSetup['dog_tracker_data_focus'])): ?><div class="small mt-1">Focus: <?= h((string) $currentSetup['dog_tracker_data_focus']) ?></div><?php endif; ?>
                 </div>
                 <div class="metric">
                     <div class="small">Sync mode</div>

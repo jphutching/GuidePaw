@@ -611,6 +611,12 @@ class GuidePawApiClient {
             handlerWearableLabel = json.optString("handler_wearable_label", ""),
             dogTrackerLabel = json.optString("dog_tracker_label", ""),
             syncModeLabel = json.optString("sync_mode_label", ""),
+            handlerWearableVendor = json.optString("handler_wearable_vendor", ""),
+            dogTrackerVendor = json.optString("dog_tracker_vendor", ""),
+            handlerWearablePairingMode = json.optString("handler_wearable_pairing_mode", ""),
+            dogTrackerPairingMode = json.optString("dog_tracker_pairing_mode", ""),
+            handlerWearableDataFocus = json.optString("handler_wearable_data_focus", ""),
+            dogTrackerDataFocus = json.optString("dog_tracker_data_focus", ""),
         )
     }
 

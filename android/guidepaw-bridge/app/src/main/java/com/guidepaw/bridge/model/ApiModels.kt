@@ -183,6 +183,12 @@ data class WearableDeviceSetup(
     val handlerWearableLabel: String,
     val dogTrackerLabel: String,
     val syncModeLabel: String,
+    val handlerWearableVendor: String,
+    val dogTrackerVendor: String,
+    val handlerWearablePairingMode: String,
+    val dogTrackerPairingMode: String,
+    val handlerWearableDataFocus: String,
+    val dogTrackerDataFocus: String,
 )
 
 data class WearableSyncEvent(

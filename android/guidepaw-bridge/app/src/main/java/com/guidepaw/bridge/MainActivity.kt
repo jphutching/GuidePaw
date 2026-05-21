@@ -1026,6 +1026,22 @@ class MainActivity : AppCompatActivity() {
             append(overview.setup.dogTrackerLabel.ifBlank { overview.setup.dogTrackerSlug.ifBlank { "dog tracker" } })
             append(" • ")
             append(overview.setup.syncModeLabel.ifBlank { overview.setup.syncMode.ifBlank { "sync mode" } })
+            if (overview.setup.handlerWearablePairingMode.isNotBlank() || overview.setup.dogTrackerPairingMode.isNotBlank()) {
+                append("\nRoutes: ")
+                val routes = listOf(
+                    overview.setup.handlerWearablePairingMode.takeIf { it.isNotBlank() },
+                    overview.setup.dogTrackerPairingMode.takeIf { it.isNotBlank() },
+                ).filterNotNull()
+                append(routes.joinToString(" + "))
+            }
+            if (overview.setup.handlerWearableDataFocus.isNotBlank() || overview.setup.dogTrackerDataFocus.isNotBlank()) {
+                append("\nFocus: ")
+                val focus = listOf(
+                    overview.setup.handlerWearableDataFocus.takeIf { it.isNotBlank() },
+                    overview.setup.dogTrackerDataFocus.takeIf { it.isNotBlank() },
+                ).filterNotNull()
+                append(focus.joinToString(" + "))
+            }
             if (overview.setup.notes.isNotBlank()) {
                 append("\n")
                 append(overview.setup.notes)
