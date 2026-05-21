@@ -150,7 +150,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.002"
+        versionView.text = "v0.003"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
@@ -233,12 +233,12 @@ class MainActivity : AppCompatActivity() {
                 val result = api.login(username, password, "GuidePaw Companion", totpCode, recoveryKey)
                 runOnUiThread {
                     if (result.requiresTwoFactor && result.token.isNullOrBlank()) {
-                        showTwoFactorPrompt(result.message ?: "Two-factor authentication is required.")
+                        showTwoFactorPrompt(friendlyMessage(result.message, "Two-factor authentication is required."))
                         setLoading(false, "Two-factor required.")
                         return@runOnUiThread
                     }
                     if (!result.success || result.token.isNullOrBlank()) {
-                        showLoggedOut(result.message ?: "Sign in failed.")
+                        showLoggedOut(friendlyMessage(result.message, "Sign in failed."))
                         setLoading(false, null)
                         return@runOnUiThread
                     }
@@ -252,13 +252,13 @@ class MainActivity : AppCompatActivity() {
                     if (e.statusCode == 401 && payload?.optBoolean("requires_2fa", false) == true) {
                         showTwoFactorPrompt(payload.optString("message") ?: "Two-factor authentication is required.")
                     } else {
-                        loginMessageView.text = e.message ?: "Sign in failed."
+                        loginMessageView.text = friendlyMessage(e.message, "Sign in failed.")
                         setLoading(false, null)
                     }
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
-                    loginMessageView.text = t.message ?: "Sign in failed."
+                    loginMessageView.text = friendlyMessage(t.message, "Sign in failed.")
                     setLoading(false, null)
                 }
             }
@@ -299,24 +299,26 @@ class MainActivity : AppCompatActivity() {
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
                     if (keepSignedInOnFailure) {
-                        showSignedInShell(e.message ?: "Could not load the full dashboard yet.")
+                        showSignedInShell(friendlyMessage(e.message, "Could not load the full dashboard yet."))
                     } else {
                         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
-                        showLoggedOut(e.message ?: "Session expired. Please sign in again.")
+                        showLoggedOut(friendlyMessage(e.message, "Session expired. Please sign in again."))
                     }
-                    setLoading(false, e.message ?: "Could not refresh dashboard.")
-                    statusView.text = e.message ?: "Could not refresh dashboard."
+                    val message = friendlyMessage(e.message, "Could not refresh dashboard.")
+                    setLoading(false, message)
+                    statusView.text = message
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
                     if (keepSignedInOnFailure) {
-                        showSignedInShell(t.message ?: "Could not load the full dashboard yet.")
+                        showSignedInShell(friendlyMessage(t.message, "Could not load the full dashboard yet."))
                     } else {
                         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
-                        showLoggedOut(t.message ?: "Could not refresh dashboard.")
+                        showLoggedOut(friendlyMessage(t.message, "Could not refresh dashboard."))
                     }
-                    setLoading(false, t.message ?: "Could not refresh dashboard.")
-                    statusView.text = t.message ?: "Could not refresh dashboard."
+                    val message = friendlyMessage(t.message, "Could not refresh dashboard.")
+                    setLoading(false, message)
+                    statusView.text = message
                 }
             }
         }
@@ -409,7 +411,7 @@ class MainActivity : AppCompatActivity() {
                     dog.accessRole?.replaceFirstChar { it.uppercase() },
                     dog.lifecycleStatus?.replace('_', ' ')
                 ).joinToString(" • ").ifBlank { "Dog record" }
-                setTextColor(0xFF64748B.toInt())
+                setTextColor(0xFF334155.toInt())
                 textSize = 12f
                 setPadding(0, dp(4), 0, 0)
             })
@@ -431,7 +433,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         } catch (e: Throwable) {
                             runOnUiThread {
-                                setLoading(false, e.message ?: "Could not switch dog.")
+                                setLoading(false, friendlyMessage(e.message, "Could not switch dog."))
                             }
                         }
                     }
@@ -476,7 +478,7 @@ class MainActivity : AppCompatActivity() {
                     log.locationType,
                     "Focus ${log.focusLevel}"
                 ).joinToString(" • ")
-                setTextColor(0xFF64748B.toInt())
+                setTextColor(0xFF334155.toInt())
                 textSize = 12f
                 setPadding(0, dp(4), 0, 0)
             })
@@ -491,7 +493,7 @@ class MainActivity : AppCompatActivity() {
             if (log.handlerNotes.isNotBlank()) {
                 inner.addView(TextView(this).apply {
                     text = log.handlerNotes.take(220)
-                    setTextColor(0xFF475569.toInt())
+                    setTextColor(0xFF334155.toInt())
                     textSize = 12f
                     setPadding(0, dp(8), 0, 0)
                 })
@@ -559,12 +561,12 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
-                    trainMessageView.text = e.message ?: "Could not save training log."
+                    trainMessageView.text = friendlyMessage(e.message, "Could not save training log.")
                     setLoading(false, null)
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
-                    trainMessageView.text = t.message ?: "Could not save training log."
+                    trainMessageView.text = friendlyMessage(t.message, "Could not save training log.")
                     setLoading(false, null)
                 }
             }
@@ -692,7 +694,7 @@ class MainActivity : AppCompatActivity() {
     private fun makePlainText(message: String): TextView {
         return TextView(this).apply {
             text = message
-            setTextColor(0xFF64748B.toInt())
+            setTextColor(0xFF334155.toInt())
             textSize = 12f
         }
     }
@@ -700,10 +702,30 @@ class MainActivity : AppCompatActivity() {
     private fun makeBulletText(message: String): TextView {
         return TextView(this).apply {
             text = "• $message"
-            setTextColor(0xFF0F172A.toInt())
+            setTextColor(0xFF1E293B.toInt())
             textSize = 13f
             setPadding(0, dp(4), 0, dp(4))
         }
+    }
+
+    private fun friendlyMessage(message: String?, fallback: String): String {
+        val raw = message?.trim().orEmpty()
+        if (raw.isBlank()) {
+            return fallback
+        }
+        val suspicious = listOf(
+            "sqlstate",
+            "select ",
+            "insert ",
+            "update ",
+            "delete ",
+            "pdo",
+            "syntax error",
+            "near \"",
+            "column ",
+            "table ",
+        ).any { raw.contains(it, ignoreCase = true) }
+        return if (suspicious) fallback else raw
     }
 
     private fun restoreCachedDashboard() {

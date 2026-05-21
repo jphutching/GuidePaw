@@ -6,6 +6,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 data class GuidePawLoginResult(
@@ -197,7 +198,13 @@ class GuidePawApiClient(
     }
 
     private fun requestJson(path: String, method: String, token: String?, body: JSONObject?): ApiResponse {
-        val endpoint = URL(baseUrl.trimEnd('/') + "/" + path.trimStart('/'))
+        val resolvedPath = if (token.isNullOrBlank()) {
+            path
+        } else {
+            val separator = if (path.contains('?')) '&' else '?'
+            path + separator + "access_token=" + URLEncoder.encode(token, StandardCharsets.UTF_8.name())
+        }
+        val endpoint = URL(baseUrl.trimEnd('/') + "/" + resolvedPath.trimStart('/'))
         val connection = (endpoint.openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 15_000
@@ -234,7 +241,7 @@ class GuidePawApiClient(
         }
         throw GuidePawApiException(
             statusCode = response.statusCode,
-            message = response.json.optString("message", "Request failed"),
+            message = sanitizeMessage(response.json.optString("message", "Request failed"), "Request failed"),
             payload = response.json,
         )
     }
@@ -271,6 +278,26 @@ class GuidePawApiClient(
                 else -> value?.toString()?.takeIf { it.isNotBlank() }
             }
         }
+    }
+
+    private fun sanitizeMessage(message: String?, fallback: String): String {
+        val raw = message?.trim().orEmpty()
+        if (raw.isBlank()) {
+            return fallback
+        }
+        val suspicious = listOf(
+            "sqlstate",
+            "select ",
+            "insert ",
+            "update ",
+            "delete ",
+            "pdo",
+            "syntax error",
+            "near \"",
+            "column ",
+            "table ",
+        ).any { raw.contains(it, ignoreCase = true) }
+        return if (suspicious) fallback else raw
     }
 
     private fun JSONArray.toList(): List<Any?> = (0 until length()).map { opt(it) }

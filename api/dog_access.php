@@ -338,5 +338,6 @@ try {
 
     apiJson(['success' => false, 'message' => 'Unsupported action.'], 422);
 } catch (Throwable $e) {
-    apiJson(['success' => false, 'message' => 'Dog access update failed: ' . $e->getMessage()], 500);
+    error_log('GuidePaw dog access update failed: ' . $e->getMessage());
+    apiJson(['success' => false, 'message' => 'Dog access update failed. Please try again.'], 500);
 }

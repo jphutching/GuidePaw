@@ -188,5 +188,6 @@ try {
 
     apiJson(['success' => false, 'message' => 'Unsupported action.'], 422);
 } catch (Throwable $e) {
-    apiJson(['success' => false, 'message' => $e->getMessage()], 500);
+    error_log('GuidePaw notification API failed: ' . $e->getMessage());
+    apiJson(['success' => false, 'message' => 'Notification update failed. Please try again.'], 500);
 }

@@ -14,7 +14,11 @@ function getBearerToken(): ?string {
         return trim($m[1]);
     }
     $headerToken = $_SERVER['HTTP_X_API_TOKEN'] ?? '';
-    return $headerToken !== '' ? trim($headerToken) : null;
+    if ($headerToken !== '') {
+        return trim($headerToken);
+    }
+    $queryToken = $_GET['access_token'] ?? $_POST['access_token'] ?? $_REQUEST['access_token'] ?? '';
+    return $queryToken !== '' ? trim((string) $queryToken) : null;
 }
 
 function apiTokensColumnExists(PDO $pdo, string $column): bool {
