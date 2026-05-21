@@ -19,6 +19,7 @@ import com.guidepaw.bridge.model.TrainingLogSaveResult
 import com.guidepaw.bridge.model.PublicDogProfile
 import com.guidepaw.bridge.model.PublicProfileOverview
 import com.guidepaw.bridge.model.PublicProfileSupportBadge
+import com.guidepaw.bridge.model.WearableDeviceSetup
 import com.guidepaw.bridge.model.WearableOverview
 import com.guidepaw.bridge.model.WearableSyncEvent
 import com.guidepaw.bridge.model.WearableTrendSummary
@@ -502,6 +503,7 @@ class GuidePawApiClient {
                 WearableOverview(
                     userId = json.optLong("user_id", 0L),
                     dogId = json.optLong("dog_id", dogId ?: 0L),
+                    setup = parseWearableSetup(json.optJSONObject("setup")),
                     summary = parseWearableSummary(json.optJSONObject("summary") ?: JSONObject()),
                     events = parseWearableEvents(json.optJSONArray("events")),
                 )
@@ -594,6 +596,21 @@ class GuidePawApiClient {
             avgDistanceMiles = if (json.isNull("avg_distance_miles")) null else json.optDouble("avg_distance_miles"),
             avgHeartRate = if (json.isNull("avg_heart_rate")) null else json.optDouble("avg_heart_rate"),
             avgSleepHours = if (json.isNull("avg_sleep_hours")) null else json.optDouble("avg_sleep_hours"),
+        )
+    }
+
+    private fun parseWearableSetup(json: JSONObject?): WearableDeviceSetup? {
+        if (json == null || json.length() == 0) {
+            return null
+        }
+        return WearableDeviceSetup(
+            handlerWearableSlug = json.optString("handler_wearable_slug", ""),
+            dogTrackerSlug = json.optString("dog_tracker_slug", ""),
+            syncMode = json.optString("sync_mode", ""),
+            notes = json.optString("notes", ""),
+            handlerWearableLabel = json.optString("handler_wearable_label", ""),
+            dogTrackerLabel = json.optString("dog_tracker_label", ""),
+            syncModeLabel = json.optString("sync_mode_label", ""),
         )
     }
 

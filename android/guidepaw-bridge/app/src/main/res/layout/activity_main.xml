@@ -360,6 +360,14 @@
             android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <TextView
+            android:id="@+id/wearableSetupText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Wearable setup: save the tracker and watch pairing on GuidePaw to see it here."
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <TextView
             android:id="@+id/wearableCatalogText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

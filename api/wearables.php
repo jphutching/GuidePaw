@@ -28,11 +28,13 @@ if ($method === 'GET') {
     $dogId = isset($_GET['dog_id']) ? (int) $_GET['dog_id'] : null;
     $resolvedDogId = gpWearableApiDogId($pdo, $user['id'], $dogId);
     $events = gpWearableRecentEvents($pdo, $user['id'], $resolvedDogId, 12);
+    $setup = gpWearableCurrentSetup($pdo, $user['id'], $resolvedDogId);
 
     apiJson([
         'success' => true,
         'user' => $user,
         'dog_id' => $resolvedDogId,
+        'setup' => $setup,
         'summary' => gpWearableTrendSummary($events),
         'events' => $events,
     ]);
@@ -62,5 +64,6 @@ apiJson([
     'event_id' => $eventId,
     'dog_id' => $resolvedDogId,
     'event' => $events[0] ?? null,
+    'setup' => gpWearableCurrentSetup($pdo, $user['id'], $resolvedDogId),
     'summary' => gpWearableTrendSummary($events),
 ]);

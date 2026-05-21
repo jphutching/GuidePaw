@@ -71,6 +71,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Wearable connection code created.';
     }
 
+    if (isset($_POST['save_device_setup'])) {
+        $selectedDogId = (int) ($_POST['dog_id'] ?? $defaultDogId);
+        if ($selectedDogId <= 0 || !in_array($selectedDogId, array_map(static fn($dog) => (int) $dog['id'], $dogs), true)) {
+            $selectedDogId = $defaultDogId;
+        }
+        gpWearableSaveSetup($pdo, $userId, $selectedDogId, [
+            'handler_wearable_slug' => $_POST['handler_wearable_slug'] ?? '',
+            'dog_tracker_slug' => $_POST['dog_tracker_slug'] ?? '',
+            'sync_mode' => $_POST['sync_mode'] ?? '',
+            'notes' => $_POST['notes'] ?? '',
+        ]);
+        header('Location: wearable_integrations.php?status=setup_saved&dog_id=' . $selectedDogId);
+        exit;
+    }
+
     $payload = trim((string) ($_POST['wearable_payload'] ?? ''));
     if (isset($_POST['save_snapshot'])) {
         $parsed = gpWearableParseSummary($payload);
@@ -102,6 +117,11 @@ if ($selectedDogId > 0) {
         $selectedDogId = $defaultDogId;
     }
 }
+$deviceCatalog = gpWearableCatalogEntries($pdo);
+$handlerWearables = array_values(array_filter($deviceCatalog, static fn(array $row): bool => ($row['device_type'] ?? '') === 'handler_wearable'));
+$dogTrackers = array_values(array_filter($deviceCatalog, static fn(array $row): bool => ($row['device_type'] ?? '') === 'dog_tracker'));
+$syncModes = gpWearableSyncModeOptions();
+$currentSetup = $selectedDogId > 0 ? gpWearableCurrentSetup($pdo, $userId, $selectedDogId) : null;
 $events = gpWearableRecentEvents($pdo, $userId, $selectedDogId > 0 ? $selectedDogId : null, 12);
 $summary = gpWearableTrendSummary($events);
 $csrf = generateCsrfToken();
@@ -140,6 +160,8 @@ $csrf = generateCsrfToken();
 
     <?php if ($status === 'saved'): ?>
         <div class="card">Wearable snapshot saved.</div>
+    <?php elseif ($status === 'setup_saved'): ?>
+        <div class="card">Wearable device setup saved.</div>
     <?php elseif ($status === 'need_dog'): ?>
         <div class="card">Add a dog profile before saving wearable snapshots.</div>
     <?php endif; ?>
@@ -152,6 +174,76 @@ $csrf = generateCsrfToken();
         <div class="metric"><div class="small">Total steps</div><strong><?= (int) $summary['total_steps'] ?></strong></div>
         <div class="metric"><div class="small">Active minutes</div><strong><?= (int) $summary['total_active_minutes'] ?></strong></div>
         <div class="metric"><div class="small">Avg heart rate</div><strong><?= $summary['avg_heart_rate'] === null ? '—' : h(number_format((float) $summary['avg_heart_rate'], 0)) ?></strong></div>
+    </div>
+
+    <div class="card">
+        <h2 class="h5 mb-2">Device setup</h2>
+        <p class="small mb-3">Choose the handler wearable, dog tracker, and sync mode that match the devices you actually use. This is the setup GuidePaw should expect when it pulls meaningful data.</p>
+        <form method="post" class="row g-3 align-items-end">
+            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+            <input type="hidden" name="save_device_setup" value="1">
+            <div class="col-md-6">
+                <label class="form-label">Dog</label>
+                <select class="form-select" name="dog_id">
+                    <?php foreach ($dogs as $dog): ?>
+                        <option value="<?= (int) $dog['id'] ?>" <?= $selectedDogId === (int) $dog['id'] ? 'selected' : '' ?>><?= h($dog['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Handler wearable</label>
+                <select class="form-select" name="handler_wearable_slug">
+                    <option value="">Choose one</option>
+                    <?php foreach ($handlerWearables as $row): ?>
+                        <option value="<?= h((string) $row['slug']) ?>" <?= ($currentSetup['handler_wearable_slug'] ?? '') === $row['slug'] ? 'selected' : '' ?>><?= h((string) $row['label']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Dog tracker</label>
+                <select class="form-select" name="dog_tracker_slug">
+                    <option value="">Choose one</option>
+                    <?php foreach ($dogTrackers as $row): ?>
+                        <option value="<?= h((string) $row['slug']) ?>" <?= ($currentSetup['dog_tracker_slug'] ?? '') === $row['slug'] ? 'selected' : '' ?>><?= h((string) $row['label']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Sync mode</label>
+                <select class="form-select" name="sync_mode">
+                    <option value="">Choose one</option>
+                    <?php foreach ($syncModes as $slug => $mode): ?>
+                        <option value="<?= h((string) $slug) ?>" <?= ($currentSetup['sync_mode'] ?? '') === $slug ? 'selected' : '' ?>><?= h((string) $mode['label']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" name="notes" placeholder="Use this to note what data you want GuidePaw to trust: steps, sleep, heart rate, GPS, battery alerts, or manual bridge import."><?= h((string) ($currentSetup['notes'] ?? '')) ?></textarea>
+            </div>
+            <div class="col-12 d-grid d-md-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save device setup</button>
+            </div>
+        </form>
+        <?php if ($currentSetup): ?>
+            <div class="grid mt-3">
+                <div class="metric">
+                    <div class="small">Handler wearable</div>
+                    <strong style="font-size:1rem;line-height:1.25;"><?= h((string) ($currentSetup['handler_wearable_label'] ?? $currentSetup['handler_wearable_slug'] ?? '')) ?></strong>
+                </div>
+                <div class="metric">
+                    <div class="small">Dog tracker</div>
+                    <strong style="font-size:1rem;line-height:1.25;"><?= h((string) ($currentSetup['dog_tracker_label'] ?? $currentSetup['dog_tracker_slug'] ?? '')) ?></strong>
+                </div>
+                <div class="metric">
+                    <div class="small">Sync mode</div>
+                    <strong style="font-size:1rem;line-height:1.25;"><?= h((string) ($currentSetup['sync_mode_label'] ?? $currentSetup['sync_mode'] ?? '')) ?></strong>
+                </div>
+            </div>
+            <p class="small mt-3 mb-0">GuidePaw should expect the metrics that belong to the selected sync mode, then merge them into the same active dog timeline as snapshots, logs, and alerts.</p>
+        <?php else: ?>
+            <p class="small mt-3 mb-0">Save a setup so GuidePaw knows which vendor data to expect for this dog.</p>
+        <?php endif; ?>
     </div>
 
     <div class="card">

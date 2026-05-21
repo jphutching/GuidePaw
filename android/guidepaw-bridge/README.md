@@ -15,6 +15,7 @@ What it does:
 - can open support and service checkout sessions
 - requests Health Connect permissions
 - loads wearable sync summary and recent wearable snapshots for the active dog
+- shows the saved wearable setup for the active dog
 - reads daily steps and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand
 

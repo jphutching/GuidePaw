@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clearTrainingLogButton: Button
     private lateinit var wearableSummaryText: TextView
     private lateinit var wearableStatusText: TextView
+    private lateinit var wearableSetupText: TextView
     private lateinit var wearableCatalogText: TextView
     private lateinit var wearableRefreshButton: Button
     private lateinit var wearableEventsSummaryText: TextView
@@ -195,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         clearTrainingLogButton = findViewById(R.id.clearTrainingLogButton)
         wearableSummaryText = findViewById(R.id.wearableSummaryText)
         wearableStatusText = findViewById(R.id.wearableStatusText)
+        wearableSetupText = findViewById(R.id.wearableSetupText)
         wearableCatalogText = findViewById(R.id.wearableCatalogText)
         wearableRefreshButton = findViewById(R.id.wearableRefreshButton)
         wearableEventsSummaryText = findViewById(R.id.wearableEventsSummaryText)
@@ -980,6 +982,7 @@ class MainActivity : AppCompatActivity() {
         if (overview == null) {
             wearableSummaryText.text = "Wearable sync: load a dog to see recent Health Connect snapshots."
             wearableStatusText.text = "Status: waiting for wearable data"
+            wearableSetupText.text = "Wearable setup: save the tracker and watch pairing on GuidePaw to see it here."
             wearableEventsSummaryText.text = "Recent syncs: none loaded."
             wearableRefreshButton.isEnabled = false
             return
@@ -1010,6 +1013,22 @@ class MainActivity : AppCompatActivity() {
                 append(" • Avg sleep: ")
                 append(String.format(Locale.US, "%.1f", overview.summary.avgSleepHours))
                 append(" h")
+            }
+        }
+        wearableSetupText.text = buildString {
+            append("Setup: ")
+            if (overview.setup == null) {
+                append("no wearable setup saved yet.")
+                return@buildString
+            }
+            append(overview.setup.handlerWearableLabel.ifBlank { overview.setup.handlerWearableSlug.ifBlank { "handler wearable" } })
+            append(" • ")
+            append(overview.setup.dogTrackerLabel.ifBlank { overview.setup.dogTrackerSlug.ifBlank { "dog tracker" } })
+            append(" • ")
+            append(overview.setup.syncModeLabel.ifBlank { overview.setup.syncMode.ifBlank { "sync mode" } })
+            if (overview.setup.notes.isNotBlank()) {
+                append("\n")
+                append(overview.setup.notes)
             }
         }
         wearableEventsSummaryText.text = if (overview.events.isEmpty()) {

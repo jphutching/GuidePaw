@@ -101,6 +101,7 @@ Must support:
 
 Status:
 - implemented in Android bridge
+- wearable setup summary, compatibility catalog, and recent syncs are now visible for the active dog
 
 ## Phase 5: Support, paywalls, and add-ons
 

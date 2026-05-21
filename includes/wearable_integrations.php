@@ -164,6 +164,224 @@ function gpWearableNormalizeRecordInput(array $input, string $defaultSource = 'm
     ];
 }
 
+function gpWearableCatalogSeed(): array
+{
+    return [
+        ['slug' => 'tractive-gps-tracker', 'device_type' => 'dog_tracker', 'label' => 'Tractive GPS Tracker (Dog 6 / XL)', 'vendor' => 'Tractive', 'pairing_mode' => 'App + GPS', 'data_focus' => 'GPS, activity, geofence alerts', 'notes' => 'Best for location-first tracking.', 'sort_order' => 10],
+        ['slug' => 'fi-series-3-plus', 'device_type' => 'dog_tracker', 'label' => 'Fi Series 3+ Smart Collar', 'vendor' => 'Fi', 'pairing_mode' => 'App + Collar', 'data_focus' => 'GPS, battery, activity', 'notes' => 'Good for daily activity and escape alerts.', 'sort_order' => 20],
+        ['slug' => 'garmin-alpha-tt', 'device_type' => 'dog_tracker', 'label' => 'Garmin Alpha / TT series', 'vendor' => 'Garmin', 'pairing_mode' => 'Field tracking', 'data_focus' => 'GPS, range, location updates', 'notes' => 'Best for working-dog field tracking.', 'sort_order' => 30],
+        ['slug' => 'petpace-2-3', 'device_type' => 'dog_tracker', 'label' => 'PetPace (2.0 / 3.0)', 'vendor' => 'PetPace', 'pairing_mode' => 'App + collar', 'data_focus' => 'Vitals, activity, alerts', 'notes' => 'Best for health-first monitoring.', 'sort_order' => 40],
+        ['slug' => 'invoxia-biotracker', 'device_type' => 'dog_tracker', 'label' => 'Invoxia Biotracker', 'vendor' => 'Invoxia', 'pairing_mode' => 'App + tracker', 'data_focus' => 'GPS, movement, alerts', 'notes' => 'Practical option for compact tracking.', 'sort_order' => 50],
+        ['slug' => 'halo-collar', 'device_type' => 'dog_tracker', 'label' => 'Halo Collar', 'vendor' => 'Halo', 'pairing_mode' => 'App + boundary system', 'data_focus' => 'GPS, boundary, activity', 'notes' => 'Best when containment matters.', 'sort_order' => 60],
+        ['slug' => 'fitbark', 'device_type' => 'dog_tracker', 'label' => 'FitBark', 'vendor' => 'FitBark', 'pairing_mode' => 'App + API', 'data_focus' => 'Activity, sleep, wellness', 'notes' => 'Best for health trends and API access.', 'sort_order' => 70],
+        ['slug' => 'pitpat', 'device_type' => 'dog_tracker', 'label' => 'PitPat', 'vendor' => 'PitPat', 'pairing_mode' => 'App + tracker', 'data_focus' => 'Activity, goals, movement', 'notes' => 'Simple activity-focused tracker.', 'sort_order' => 80],
+        ['slug' => 'whistle', 'device_type' => 'dog_tracker', 'label' => 'Whistle', 'vendor' => 'Whistle', 'pairing_mode' => 'App + tracker', 'data_focus' => 'GPS, activity, behavior', 'notes' => 'Useful if you already have Whistle data.', 'sort_order' => 90],
+        ['slug' => 'garmin-watch', 'device_type' => 'handler_wearable', 'label' => 'Garmin (Vivoactive, Forerunner, Fenix, Instinct)', 'vendor' => 'Garmin', 'pairing_mode' => 'Garmin Health API', 'data_focus' => 'Steps, HR, sleep, stress, battery', 'notes' => 'Best handler pairing with Garmin dog systems.', 'sort_order' => 10],
+        ['slug' => 'apple-watch', 'device_type' => 'handler_wearable', 'label' => 'Apple Watch (Series / Ultra)', 'vendor' => 'Apple', 'pairing_mode' => 'HealthKit', 'data_focus' => 'Steps, HR, sleep, workouts', 'notes' => 'Best if the handler is on iPhone.', 'sort_order' => 20],
+        ['slug' => 'samsung-galaxy-watch', 'device_type' => 'handler_wearable', 'label' => 'Samsung Galaxy Watch (Ultra / 7 / 8)', 'vendor' => 'Samsung', 'pairing_mode' => 'Health Connect / Samsung Health', 'data_focus' => 'Steps, HR, sleep, workouts', 'notes' => 'Best for Android handlers with Samsung devices.', 'sort_order' => 30],
+        ['slug' => 'google-pixel-watch', 'device_type' => 'handler_wearable', 'label' => 'Google Pixel Watch (3 / 4)', 'vendor' => 'Google', 'pairing_mode' => 'Health Connect', 'data_focus' => 'Steps, HR, sleep, workouts', 'notes' => 'Good Android baseline option.', 'sort_order' => 40],
+        ['slug' => 'whoop', 'device_type' => 'handler_wearable', 'label' => 'Whoop (5.0)', 'vendor' => 'Whoop', 'pairing_mode' => 'API / export', 'data_focus' => 'Strain, recovery, sleep', 'notes' => 'Useful if recovery metrics matter.', 'sort_order' => 50],
+        ['slug' => 'oura-ring', 'device_type' => 'handler_wearable', 'label' => 'Oura Ring', 'vendor' => 'Oura', 'pairing_mode' => 'Oura API', 'data_focus' => 'Sleep, readiness, HR', 'notes' => 'Strong for recovery and sleep context.', 'sort_order' => 60],
+        ['slug' => 'fitbit', 'device_type' => 'handler_wearable', 'label' => 'Fitbit', 'vendor' => 'Fitbit', 'pairing_mode' => 'Fitbit Web API', 'data_focus' => 'Steps, HR, sleep, activity', 'notes' => 'Useful if the handler already uses Fitbit.', 'sort_order' => 70],
+        ['slug' => 'polar-suunto', 'device_type' => 'handler_wearable', 'label' => 'Polar / Suunto', 'vendor' => 'Polar', 'pairing_mode' => 'Polar AccessLink / export', 'data_focus' => 'Training, HR, sleep, recovery', 'notes' => 'Good for training and recovery workflows.', 'sort_order' => 80],
+    ];
+}
+
+function gpWearableSyncModeOptions(): array
+{
+    return [
+        'health_connect' => ['label' => 'Health Connect', 'notes' => 'Best default for Android phone sync.'],
+        'healthkit' => ['label' => 'HealthKit', 'notes' => 'Best for iPhone / Apple Watch sync.'],
+        'samsung_health' => ['label' => 'Samsung Health', 'notes' => 'Use when Samsung Health is the data source.'],
+        'garmin_health' => ['label' => 'Garmin Health API', 'notes' => 'Use when Garmin Connect data is available.'],
+        'fitbit_api' => ['label' => 'Fitbit API', 'notes' => 'Use when Fitbit developer access is configured.'],
+        'oura_api' => ['label' => 'Oura API', 'notes' => 'Use for Oura sleep and readiness data.'],
+        'polar_accesslink' => ['label' => 'Polar AccessLink', 'notes' => 'Use when Polar Flow access is connected.'],
+        'fitbark_api' => ['label' => 'FitBark API', 'notes' => 'Use when FitBark API access is configured.'],
+        'petpace_api' => ['label' => 'PetPace API / Portal', 'notes' => 'Use for PetPace health and alert data.'],
+        'bridge_import' => ['label' => 'Bridge Import', 'notes' => 'Use when the phone bridge is carrying the sync.'],
+        'manual' => ['label' => 'Manual Entry', 'notes' => 'Use when the data is pasted or keyed in by hand.'],
+    ];
+}
+
+function gpWearableDeviceCatalogTableReady(PDO $pdo): bool
+{
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = 'wearable_device_catalog'
+            LIMIT 1
+        ");
+        $stmt->execute();
+        $ready = (bool) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
+function gpWearableSetupTableReady(PDO $pdo): bool
+{
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = 'user_wearable_device_setup'
+            LIMIT 1
+        ");
+        $stmt->execute();
+        $ready = (bool) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
+function gpWearableEnsureDeviceCatalog(PDO $pdo): void
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS wearable_device_catalog (
+            slug TEXT PRIMARY KEY,
+            device_type TEXT NOT NULL,
+            label TEXT NOT NULL,
+            vendor TEXT NOT NULL DEFAULT '',
+            pairing_mode TEXT NOT NULL DEFAULT '',
+            data_focus TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0
+        )
+    ");
+
+    $catalog = gpWearableCatalogSeed();
+    $stmt = $pdo->prepare("
+        INSERT INTO wearable_device_catalog
+            (slug, device_type, label, vendor, pairing_mode, data_focus, notes, sort_order)
+        VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (slug) DO UPDATE SET
+            device_type = EXCLUDED.device_type,
+            label = EXCLUDED.label,
+            vendor = EXCLUDED.vendor,
+            pairing_mode = EXCLUDED.pairing_mode,
+            data_focus = EXCLUDED.data_focus,
+            notes = EXCLUDED.notes,
+            sort_order = EXCLUDED.sort_order
+    ");
+    foreach ($catalog as $row) {
+        $stmt->execute([
+            $row['slug'],
+            $row['device_type'],
+            $row['label'],
+            $row['vendor'],
+            $row['pairing_mode'],
+            $row['data_focus'],
+            $row['notes'],
+            (int) $row['sort_order'],
+        ]);
+    }
+}
+
+function gpWearableEnsureSetupTable(PDO $pdo): void
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS user_wearable_device_setup (
+            id BIGSERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            dog_id INTEGER NOT NULL REFERENCES dogs(id) ON DELETE CASCADE,
+            handler_wearable_slug TEXT NOT NULL DEFAULT '',
+            dog_tracker_slug TEXT NOT NULL DEFAULT '',
+            sync_mode TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (user_id, dog_id)
+        )
+    ");
+}
+
+function gpWearableCatalogEntries(PDO $pdo): array
+{
+    gpWearableEnsureDeviceCatalog($pdo);
+    $stmt = $pdo->query("SELECT * FROM wearable_device_catalog ORDER BY device_type, sort_order, label");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
+function gpWearableCatalogEntryBySlug(PDO $pdo, string $slug): ?array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return null;
+    }
+    gpWearableEnsureDeviceCatalog($pdo);
+    $stmt = $pdo->prepare("SELECT * FROM wearable_device_catalog WHERE slug = ? LIMIT 1");
+    $stmt->execute([$slug]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+function gpWearableCurrentSetup(PDO $pdo, int $userId, int $dogId): ?array
+{
+    gpWearableEnsureSetupTable($pdo);
+    $stmt = $pdo->prepare("
+        SELECT s.*, hd.label AS handler_wearable_label, dd.label AS dog_tracker_label
+        FROM user_wearable_device_setup s
+        LEFT JOIN wearable_device_catalog hd ON hd.slug = s.handler_wearable_slug
+        LEFT JOIN wearable_device_catalog dd ON dd.slug = s.dog_tracker_slug
+        WHERE s.user_id = ? AND s.dog_id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$userId, $dogId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (!$row) {
+        return null;
+    }
+    $row['sync_mode_label'] = gpWearableSyncModeOptions()[$row['sync_mode']]['label'] ?? ucfirst(str_replace('_', ' ', (string) $row['sync_mode']));
+    $row['handler_wearable_label'] = trim((string) ($row['handler_wearable_label'] ?? $row['handler_wearable_slug'] ?? ''));
+    $row['dog_tracker_label'] = trim((string) ($row['dog_tracker_label'] ?? $row['dog_tracker_slug'] ?? ''));
+    return $row;
+}
+
+function gpWearableSaveSetup(PDO $pdo, int $userId, int $dogId, array $data): void
+{
+    gpWearableEnsureSetupTable($pdo);
+    gpWearableEnsureDeviceCatalog($pdo);
+    $stmt = $pdo->prepare("
+        INSERT INTO user_wearable_device_setup
+            (user_id, dog_id, handler_wearable_slug, dog_tracker_slug, sync_mode, notes, updated_at)
+        VALUES
+            (?, ?, ?, ?, ?, ?, NOW())
+        ON CONFLICT (user_id, dog_id) DO UPDATE SET
+            handler_wearable_slug = EXCLUDED.handler_wearable_slug,
+            dog_tracker_slug = EXCLUDED.dog_tracker_slug,
+            sync_mode = EXCLUDED.sync_mode,
+            notes = EXCLUDED.notes,
+            updated_at = NOW()
+    ");
+    $stmt->execute([
+        $userId,
+        $dogId,
+        trim((string) ($data['handler_wearable_slug'] ?? '')),
+        trim((string) ($data['dog_tracker_slug'] ?? '')),
+        trim((string) ($data['sync_mode'] ?? '')),
+        trim((string) ($data['notes'] ?? '')),
+    ]);
+}
+
 function gpWearableRecentEvents(PDO $pdo, int $userId, ?int $dogId = null, int $limit = 12): array
 {
     if (!gpWearableIntegrationsTableReady($pdo)) {

@@ -175,6 +175,16 @@ data class WearableTrendSummary(
     val avgSleepHours: Double?,
 )
 
+data class WearableDeviceSetup(
+    val handlerWearableSlug: String,
+    val dogTrackerSlug: String,
+    val syncMode: String,
+    val notes: String,
+    val handlerWearableLabel: String,
+    val dogTrackerLabel: String,
+    val syncModeLabel: String,
+)
+
 data class WearableSyncEvent(
     val id: Long,
     val recordedForDate: String,
@@ -193,6 +203,7 @@ data class WearableSyncEvent(
 data class WearableOverview(
     val userId: Long,
     val dogId: Long,
+    val setup: WearableDeviceSetup?,
     val summary: WearableTrendSummary,
     val events: List<WearableSyncEvent>,
 )
