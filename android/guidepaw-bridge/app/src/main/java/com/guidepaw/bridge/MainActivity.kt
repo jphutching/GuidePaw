@@ -20,8 +20,10 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.lifecycle.lifecycleScope
 import com.guidepaw.bridge.model.BridgeConfig
 import com.guidepaw.bridge.sync.ApiResult
@@ -129,7 +131,9 @@ class MainActivity : AppCompatActivity() {
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.getReadPermission(DistanceRecord::class),
+        HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
+        HealthPermission.getReadPermission(RestingHeartRateRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class),
         HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND,
     )

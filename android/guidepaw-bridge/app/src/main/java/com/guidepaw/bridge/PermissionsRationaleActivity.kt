@@ -14,7 +14,7 @@ class PermissionsRationaleActivity : AppCompatActivity() {
             setPadding(32, 32, 32, 32)
         }
         val message = TextView(this).apply {
-            text = "GuidePaw Bridge needs Health Connect permission to read steps, distance, sleep, and heart rate, then send a daily summary to the handler's chosen dog profile."
+            text = "GuidePaw Bridge needs Health Connect permission to read steps, distance, calories burned, sleep, heart rate, and resting heart rate, then send a daily summary to the handler's chosen dog profile."
         }
         val button = Button(this).apply {
             text = "Back to app"
