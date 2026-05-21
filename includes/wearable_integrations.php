@@ -50,14 +50,15 @@ function gpWearableParseSummary(string $payload): array
             'device_name' => trim((string) ($decoded['device_name'] ?? '')),
             'recorded_for_date' => trim((string) ($decoded['recorded_for_date'] ?? '')),
             'steps' => isset($decoded['steps']) ? (int) $decoded['steps'] : null,
-        'active_minutes' => isset($decoded['active_minutes']) ? (int) $decoded['active_minutes'] : null,
-        'distance_miles' => isset($decoded['distance_miles']) ? (float) $decoded['distance_miles'] : null,
-        'avg_heart_rate' => isset($decoded['avg_heart_rate']) ? (int) $decoded['avg_heart_rate'] : null,
-        'sleep_hours' => isset($decoded['sleep_hours']) ? (float) $decoded['sleep_hours'] : null,
-        'battery_percent' => isset($decoded['battery_percent']) ? (int) $decoded['battery_percent'] : null,
-        'summary_text' => trim((string) ($decoded['summary_text'] ?? '')),
-        'notes' => trim((string) ($decoded['notes'] ?? '')),
-    ];
+            'active_minutes' => isset($decoded['active_minutes']) ? (int) $decoded['active_minutes'] : null,
+            'distance_miles' => isset($decoded['distance_miles']) ? (float) $decoded['distance_miles'] : null,
+            'avg_heart_rate' => isset($decoded['avg_heart_rate']) ? (int) $decoded['avg_heart_rate'] : null,
+            'resting_heart_rate' => isset($decoded['resting_heart_rate']) ? (int) $decoded['resting_heart_rate'] : null,
+            'sleep_hours' => isset($decoded['sleep_hours']) ? (float) $decoded['sleep_hours'] : null,
+            'battery_percent' => isset($decoded['battery_percent']) ? (int) $decoded['battery_percent'] : null,
+            'summary_text' => trim((string) ($decoded['summary_text'] ?? '')),
+            'notes' => trim((string) ($decoded['notes'] ?? '')),
+        ];
     }
 
     $lines = preg_split('/\r\n|\r|\n/', $payload) ?: [];
@@ -117,6 +118,7 @@ function gpWearableParseSummary(string $payload): array
         'play_minutes' => isset($pairs['play_minutes']) && is_numeric($pairs['play_minutes']) ? (int) $pairs['play_minutes'] : null,
         'distance_miles' => isset($pairs['distance_miles']) && is_numeric($pairs['distance_miles']) ? (float) $pairs['distance_miles'] : null,
         'avg_heart_rate' => isset($pairs['avg_heart_rate']) && is_numeric($pairs['avg_heart_rate']) ? (int) $pairs['avg_heart_rate'] : null,
+        'resting_heart_rate' => isset($pairs['resting_heart_rate']) && is_numeric($pairs['resting_heart_rate']) ? (int) $pairs['resting_heart_rate'] : null,
         'sleep_hours' => isset($pairs['sleep_hours']) && is_numeric($pairs['sleep_hours']) ? (float) $pairs['sleep_hours'] : null,
         'summary_text' => trim((string) ($pairs['summary'] ?? '')),
         'notes' => trim((string) ($pairs['notes'] ?? '')),
@@ -208,6 +210,7 @@ function gpWearableNormalizeRecordInput(array $input, string $defaultSource = 'm
         'play_minutes' => gpWearableNumericValue($merged, ['play_minutes', 'playMinutes', 'play_time_minutes'], false),
         'distance_miles' => gpWearableNumericValue($merged, ['distance_miles', 'distanceMiles', 'distance'], true),
         'avg_heart_rate' => gpWearableNumericValue($merged, ['avg_heart_rate', 'avgHeartRate', 'heart_rate', 'heartRate'], false),
+        'resting_heart_rate' => gpWearableNumericValue($merged, ['resting_heart_rate', 'restingHeartRate', 'rest_hr', 'resting_hr'], false),
         'sleep_hours' => gpWearableNumericValue($merged, ['sleep_hours', 'sleepHours'], true),
         'battery_percent' => gpWearableNumericValue($merged, ['battery_percent', 'batteryPercent', 'battery', 'battery_level'], false),
         'summary_text' => $summaryText !== '' ? $summaryText : null,
@@ -479,11 +482,13 @@ function gpWearableTrendSummary(array $events): array
         'avg_battery_percent' => null,
         'avg_distance_miles' => null,
         'avg_heart_rate' => null,
+        'avg_resting_heart_rate' => null,
         'avg_sleep_hours' => null,
     ];
 
     $distance = [];
     $heart = [];
+    $resting = [];
     $sleep = [];
     $battery = [];
     foreach ($events as $event) {
@@ -496,6 +501,9 @@ function gpWearableTrendSummary(array $events): array
         }
         if ($event['avg_heart_rate'] !== null && $event['avg_heart_rate'] !== '') {
             $heart[] = (int) $event['avg_heart_rate'];
+        }
+        if ($event['resting_heart_rate'] !== null && $event['resting_heart_rate'] !== '') {
+            $resting[] = (int) $event['resting_heart_rate'];
         }
         if ($event['sleep_hours'] !== null && $event['sleep_hours'] !== '') {
             $sleep[] = (float) $event['sleep_hours'];
@@ -510,6 +518,9 @@ function gpWearableTrendSummary(array $events): array
     }
     if ($heart) {
         $summary['avg_heart_rate'] = array_sum($heart) / count($heart);
+    }
+    if ($resting) {
+        $summary['avg_resting_heart_rate'] = array_sum($resting) / count($resting);
     }
     if ($sleep) {
         $summary['avg_sleep_hours'] = array_sum($sleep) / count($sleep);
@@ -530,8 +541,8 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
 
     $stmt = $pdo->prepare("
         INSERT INTO wearable_sync_events
-        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, avg_heart_rate, sleep_hours, battery_percent, summary_text, notes, raw_payload)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, dog_id, source, device_name, recorded_for_date, steps, active_minutes, rest_minutes, play_minutes, distance_miles, avg_heart_rate, resting_heart_rate, sleep_hours, battery_percent, summary_text, notes, raw_payload)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING id
     ");
     $stmt->execute([
@@ -546,6 +557,7 @@ function gpWearableRecordEvent(PDO $pdo, int $userId, array $data): int
         isset($data['play_minutes']) && $data['play_minutes'] !== '' ? (int) $data['play_minutes'] : null,
         isset($data['distance_miles']) && $data['distance_miles'] !== '' ? (float) $data['distance_miles'] : null,
         isset($data['avg_heart_rate']) && $data['avg_heart_rate'] !== '' ? (int) $data['avg_heart_rate'] : null,
+        isset($data['resting_heart_rate']) && $data['resting_heart_rate'] !== '' ? (int) $data['resting_heart_rate'] : null,
         isset($data['sleep_hours']) && $data['sleep_hours'] !== '' ? (float) $data['sleep_hours'] : null,
         isset($data['battery_percent']) && $data['battery_percent'] !== '' ? (int) $data['battery_percent'] : null,
         trim((string) ($data['summary_text'] ?? '')) ?: null,

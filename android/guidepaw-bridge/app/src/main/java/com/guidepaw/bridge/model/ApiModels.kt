@@ -175,6 +175,7 @@ data class WearableTrendSummary(
     val avgBatteryPercent: Double?,
     val avgDistanceMiles: Double?,
     val avgHeartRate: Double?,
+    val avgRestingHeartRate: Double?,
     val avgSleepHours: Double?,
 )
 
@@ -208,6 +209,7 @@ data class WearableSyncEvent(
     val batteryPercent: Int?,
     val distanceMiles: Double?,
     val avgHeartRate: Double?,
+    val restingHeartRate: Double?,
     val sleepHours: Double?,
     val summaryText: String,
 )

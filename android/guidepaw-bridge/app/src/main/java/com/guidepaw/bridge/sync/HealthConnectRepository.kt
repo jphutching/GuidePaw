@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
@@ -32,6 +33,7 @@ class HealthConnectRepository(context: Context) {
                     HeartRateRecord.BPM_AVG,
                     HeartRateRecord.BPM_MIN,
                     HeartRateRecord.BPM_MAX,
+                    RestingHeartRateRecord.BPM_AVG,
                 ),
                 timeRangeFilter = TimeRangeFilter.between(activityStart, end),
                 dataOriginFilter = emptySet(),
@@ -50,6 +52,7 @@ class HealthConnectRepository(context: Context) {
         val avgHr = activityResult[HeartRateRecord.BPM_AVG]
         val minHr = activityResult[HeartRateRecord.BPM_MIN]
         val maxHr = activityResult[HeartRateRecord.BPM_MAX]
+        val restingHr = activityResult[RestingHeartRateRecord.BPM_AVG]
         val sleepDuration = sleepResult[SleepSessionRecord.SLEEP_DURATION_TOTAL]
         val sleepHours = sleepDuration?.seconds?.div(3600.0)
         val summary = buildString {
@@ -59,6 +62,7 @@ class HealthConnectRepository(context: Context) {
             if (sleepHours != null) append(" Sleep last 24h: ${String.format(Locale.US, "%.1f", sleepHours)} h.")
             if (avgHr != null) append(" Avg heart rate: $avgHr bpm.")
             if (minHr != null && maxHr != null) append(" Range: $minHr-$maxHr bpm.")
+            if (restingHr != null) append(" Resting heart rate: ${String.format(Locale.US, "%.0f", restingHr)} bpm.")
         }
 
         HealthSnapshot(
@@ -68,6 +72,7 @@ class HealthConnectRepository(context: Context) {
             avgHeartRate = avgHr,
             minHeartRate = minHr,
             maxHeartRate = maxHr,
+            restingHeartRate = restingHr,
             sleepHours = sleepHours,
             summaryText = summary,
         )

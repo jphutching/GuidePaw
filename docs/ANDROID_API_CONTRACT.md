@@ -42,7 +42,7 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 - `POST /api/wearables.php`
 - Returns wearable trend data, current wearable setup, recent sync events, and accepts synced snapshots from the Android bridge
 - The setup payload includes the selected handler wearable, dog tracker, sync mode, route, focus, and notes so the app can show which devices should be feeding GuidePaw and how the data should flow in
-- Health Connect snapshots can include steps, distance, sleep, and heart-rate summaries for the active dog
+- Health Connect snapshots can include steps, distance, sleep, heart-rate, and resting-heart-rate summaries for the active dog
 - FitBark and other tracker imports can store rest, active, play minutes, and battery percentage as the first dedicated dog-tracker connector path
 
 ### Public profile and found-dog reporting

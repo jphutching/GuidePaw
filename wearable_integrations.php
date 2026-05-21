@@ -372,6 +372,7 @@ $csrf = generateCsrfToken();
                 <div><label>Play minutes</label><input type="number" name="play_minutes" min="0" step="1"></div>
                 <div><label>Distance miles</label><input type="number" name="distance_miles" min="0" step="0.01"></div>
                 <div><label>Avg heart rate</label><input type="number" name="avg_heart_rate" min="0" step="1"></div>
+                <div><label>Resting heart rate</label><input type="number" name="resting_heart_rate" min="0" step="1"></div>
                 <div><label>Sleep hours</label><input type="number" name="sleep_hours" min="0" step="0.1"></div>
             </div>
             <label>Summary</label>
@@ -434,9 +435,13 @@ $csrf = generateCsrfToken();
                 <label>Play minutes</label>
                 <input type="number" name="play_minutes" min="0" step="1" placeholder="28">
             </div>
+                <div class="col-md-4">
+                    <label>Battery percent</label>
+                    <input type="number" name="battery_percent" min="0" max="100" step="1" placeholder="88">
+                </div>
             <div class="col-md-4">
-                <label>Battery percent</label>
-                <input type="number" name="battery_percent" min="0" max="100" step="1" placeholder="88">
+                <label>Resting heart rate</label>
+                <input type="number" name="resting_heart_rate" min="0" step="1" placeholder="54">
             </div>
             <div class="col-12">
                 <label>Summary</label>
@@ -472,6 +477,7 @@ $csrf = generateCsrfToken();
                     <th>Play</th>
                     <th>Distance</th>
                     <th>HR</th>
+                    <th>Rest HR</th>
                     <th>Sleep</th>
                     <th>Battery</th>
                     <th>Summary</th>
@@ -487,6 +493,7 @@ $csrf = generateCsrfToken();
                         <td><?= h((string) ($event['play_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['distance_miles'] ?? '')) ?></td>
                         <td><?= h((string) ($event['avg_heart_rate'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['resting_heart_rate'] ?? '')) ?></td>
                         <td><?= h((string) ($event['sleep_hours'] ?? '')) ?></td>
                         <td><?= h((string) ($event['battery_percent'] ?? '')) ?></td>
                         <td><?= h((string) ($event['summary_text'] ?? '')) ?></td>

@@ -471,6 +471,7 @@ class GuidePawApiClient {
             put("steps", snapshot.steps)
             put("distance_miles", snapshot.distanceMiles)
             put("avg_heart_rate", snapshot.avgHeartRate)
+            put("resting_heart_rate", snapshot.restingHeartRate)
             put("sleep_hours", snapshot.sleepHours)
             put("summary_text", snapshot.summaryText)
             put("notes", "Synced automatically from GuidePaw Bridge.")
@@ -600,6 +601,7 @@ class GuidePawApiClient {
             avgBatteryPercent = if (json.isNull("avg_battery_percent")) null else json.optDouble("avg_battery_percent"),
             avgDistanceMiles = if (json.isNull("avg_distance_miles")) null else json.optDouble("avg_distance_miles"),
             avgHeartRate = if (json.isNull("avg_heart_rate")) null else json.optDouble("avg_heart_rate"),
+            avgRestingHeartRate = if (json.isNull("avg_resting_heart_rate")) null else json.optDouble("avg_resting_heart_rate"),
             avgSleepHours = if (json.isNull("avg_sleep_hours")) null else json.optDouble("avg_sleep_hours"),
         )
     }
@@ -640,6 +642,7 @@ class GuidePawApiClient {
             batteryPercent = if (row.isNull("battery_percent")) null else row.optInt("battery_percent"),
             distanceMiles = if (row.isNull("distance_miles")) null else row.optDouble("distance_miles"),
             avgHeartRate = if (row.isNull("avg_heart_rate")) null else row.optDouble("avg_heart_rate"),
+            restingHeartRate = if (row.isNull("resting_heart_rate")) null else row.optDouble("resting_heart_rate"),
             sleepHours = if (row.isNull("sleep_hours")) null else row.optDouble("sleep_hours"),
             summaryText = row.optString("summary_text", ""),
         )

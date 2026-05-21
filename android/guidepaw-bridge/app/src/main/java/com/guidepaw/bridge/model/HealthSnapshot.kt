@@ -7,6 +7,7 @@ data class HealthSnapshot(
     val avgHeartRate: Long?,
     val minHeartRate: Long?,
     val maxHeartRate: Long?,
+    val restingHeartRate: Long?,
     val sleepHours: Double?,
     val summaryText: String,
 )

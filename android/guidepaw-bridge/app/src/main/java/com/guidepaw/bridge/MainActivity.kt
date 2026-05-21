@@ -1021,6 +1021,16 @@ class MainActivity : AppCompatActivity() {
                 append(" • Avg HR: ")
                 append(String.format(Locale.US, "%.0f", overview.summary.avgHeartRate))
             }
+            if (overview.summary.avgRestingHeartRate != null) {
+                append(" • Rest HR: ")
+                append(String.format(Locale.US, "%.0f", overview.summary.avgRestingHeartRate))
+                append(" bpm")
+            }
+            if (overview.summary.avgBatteryPercent != null) {
+                append(" • Avg battery: ")
+                append(String.format(Locale.US, "%.0f", overview.summary.avgBatteryPercent))
+                append("%")
+            }
             if (overview.summary.avgDistanceMiles != null) {
                 append(" • Avg distance: ")
                 append(String.format(Locale.US, "%.2f", overview.summary.avgDistanceMiles))
@@ -1118,6 +1128,11 @@ class MainActivity : AppCompatActivity() {
                     if (event.avgHeartRate != null) {
                         append(" • HR: ")
                         append(String.format(Locale.US, "%.0f", event.avgHeartRate))
+                        append(" bpm")
+                    }
+                    if (event.restingHeartRate != null) {
+                        append(" • Rest HR: ")
+                        append(String.format(Locale.US, "%.0f", event.restingHeartRate))
                         append(" bpm")
                     }
                     if (event.sleepHours != null) {
