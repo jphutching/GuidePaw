@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/smtp_mailer.php';
 
 function betaSetting(PDO $pdo, string $key, string $fallback = ''): string
@@ -87,12 +88,13 @@ function betaCreateRequest(PDO $pdo, string $fullName, string $email, ?string $p
 
 function betaApprovalEmail(string $fullName, string $token): string
 {
+    $baseUrl = rtrim(appUrl() ?: 'https://guidepaw.app', '/');
     return "Hi {$fullName},\n\n" .
         "Your GuidePaw beta access request has been approved.\n\n" .
         "Use this beta access token to create your handler account:\n\n" .
         "{$token}\n\n" .
         "Open this page to validate your token and register:\n" .
-        "https://beta.guidepaw.app/beta_token.php?token=" . rawurlencode($token) . "\n\n" .
+        $baseUrl . "/beta_token.php?token=" . rawurlencode($token) . "\n\n" .
         "After your handler account is created, dog profiles can be added after login.\n\n" .
         "GuidePaw\n";
 }
