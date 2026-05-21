@@ -152,8 +152,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.004"
-        versionBadgeView.text = "v0.004"
+        versionView.text = "v0.005"
+        versionBadgeView.text = "v0.005"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
@@ -345,9 +345,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         accountSummaryView.text = listOfNotNull(
-            me.schemaVersion?.let { "Schema $it" },
             me.dbDriver?.let { "DB $it" },
-        ).joinToString(" • ").ifBlank { "Account details loaded." }
+        ).joinToString(" • ").ifBlank { "Account synced." }
 
         dogsMessageView.text = if (currentDogs.isEmpty()) {
             "No dogs are accessible on this account."
@@ -743,7 +742,7 @@ class MainActivity : AppCompatActivity() {
                     username = it.optString("username", ""),
                     activeDogId = optNullableInt(it, "activeDogId"),
                     dbDriver = it.optText("dbDriver"),
-                    schemaVersion = it.optText("schemaVersion"),
+                    schemaVersion = null,
                 )
             }
             currentDogs = cache.optJSONArray("dogs")?.let { array ->

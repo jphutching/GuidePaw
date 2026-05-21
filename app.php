@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/seo.php';
 
 $title = 'GuidePaw Companion App | Training, Logs, Dogs, and Wearables';
 $description = 'GuidePaw Companion is the Android app for normal handler work: training logs, goals, dogs, profiles, notifications, public read-only pages, and built-in wearable data.';
-$apkVersion = '0.004';
+$apkVersion = '0.005';
 $apkFile = 'downloads/GuidePaw_Companion_v' . $apkVersion . '.apk';
 $schema = [
     [
