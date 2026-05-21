@@ -36,6 +36,7 @@ function gpWearableEnsureEventColumns(PDO $pdo): void
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS battery_percent INTEGER");
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS total_calories_burned DOUBLE PRECISION");
     $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS activity_intensity_minutes INTEGER");
+    $pdo->exec("ALTER TABLE wearable_sync_events ADD COLUMN IF NOT EXISTS resting_heart_rate INTEGER");
 }
 
 function gpWearableParseSummary(string $payload): array
@@ -399,6 +400,7 @@ function gpWearableCatalogEntryBySlug(PDO $pdo, string $slug): ?array
 function gpWearableCurrentSetup(PDO $pdo, int $userId, int $dogId): ?array
 {
     gpWearableEnsureSetupTable($pdo);
+    gpWearableEnsureDeviceCatalog($pdo);
     $stmt = $pdo->prepare("
         SELECT s.*, hd.label AS handler_wearable_label, dd.label AS dog_tracker_label
             , hd.vendor AS handler_wearable_vendor, dd.vendor AS dog_tracker_vendor

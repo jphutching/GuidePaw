@@ -38,6 +38,9 @@
             android:name=".DogAccessActivity"
             android:exported="false" />
         <activity
+            android:name=".NotificationCenterActivity"
+            android:exported="false" />
+        <activity
             android:name=".PermissionsRationaleActivity"
             android:exported="true">
             <intent-filter>

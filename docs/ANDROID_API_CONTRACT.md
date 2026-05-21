@@ -72,6 +72,13 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 - Returns the current plan state, support badge, support receipt history, and a la carte service catalog
 - Starts Stripe Checkout for one-time or monthly support and for eligible add-on services
 
+### Notifications
+
+- `GET /api/notifications.php`
+- `POST /api/notifications.php`
+- Returns the notification inbox, unread counts, notification preferences, and pending dog access invites
+- Supports mark-read, mark-all-read, delete, preference save, and pending dog access invite accept/decline actions from the Android app
+
 ## Current Android bridge flow
 
 1. User logs in through the app or the GuidePaw pairing link.
@@ -83,6 +90,7 @@ The current PHP backend already exposes the endpoints the Android bridge needs.
 7. The app loads and saves the handler profile.
 8. The app manages dog access and invites.
 9. The app loads billing state and can open support or add-on checkout sessions.
+10. The app loads the notification inbox, preferences, and pending invite actions.
 
 ## What is already enough
 
@@ -98,14 +106,13 @@ The current API surface is enough for:
 - handler profile read/write
 - dog access and invite management
 - billing state and checkout initiation
+- notification inbox and preference management
 
 The Android app can also show read-only public GuidePaw pages in a native WebView using the public site base URL derived from the paired endpoint.
 
 ## What to add later only if needed
 
 Add a thin API layer only when the Android app needs:
-
-- push notification inbox
 - public QR profile management
 - offline sync conflict resolution
 

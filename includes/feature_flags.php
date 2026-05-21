@@ -9,12 +9,18 @@ function getFeatureFlags(PDO $pdo): array {
     $stmt = $pdo->query("SELECT flag_key, label, description, is_enabled FROM feature_flags ORDER BY sort_order, label");
     $flags = [];
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (($row['flag_key'] ?? '') === 'wearable_integrations_enabled') {
+            $row['is_enabled'] = 1;
+        }
         $flags[$row['flag_key']] = $row;
     }
     return $flags;
 }
 
 function featureEnabled(PDO $pdo, string $key): bool {
+    if ($key === 'wearable_integrations_enabled') {
+        return true;
+    }
     static $cache = null;
     if ($cache === null) {
         $cache = getFeatureFlags($pdo);

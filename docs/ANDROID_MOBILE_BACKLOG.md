@@ -17,6 +17,7 @@ Current status:
 - Phase 7 support, paywalls, and add-ons are implemented in the Android bridge.
 - Phase 8 wearable sync is implemented in the Android bridge.
 - Phase 9 public read-only content is implemented in the Android bridge.
+- Phase 10 notifications are implemented in the Android bridge.
 - The remaining phases below are the next mobile backlog.
 
 ## Phase 1: Account and auth
@@ -233,6 +234,27 @@ Android screens:
 
 Status:
 - implemented in Android bridge as in-app public guide buttons and web pages
+
+## Phase 10: Notifications
+
+Goal: give the Android app a native notification inbox and invite management.
+
+Backend:
+- `GET /api/notifications.php`
+- `POST /api/notifications.php`
+
+Android screens:
+- notification inbox
+- notification preferences
+- pending invite actions
+
+Must support:
+- unread counts
+- mark all read
+- mark read
+- delete selected notifications
+- save notification preferences
+- accept or decline dog access invites
 
 ## Explicitly out of scope
 

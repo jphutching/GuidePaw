@@ -19,6 +19,9 @@ import com.guidepaw.bridge.model.BillingSupportOption
 import com.guidepaw.bridge.model.HealthSnapshot
 import com.guidepaw.bridge.model.LoginSession
 import com.guidepaw.bridge.model.DogsOverview
+import com.guidepaw.bridge.model.NotificationOverview
+import com.guidepaw.bridge.model.NotificationPreferenceState
+import com.guidepaw.bridge.model.NotificationRow
 import com.guidepaw.bridge.model.FoundDogReportResult
 import com.guidepaw.bridge.model.TrainingLogEntry
 import com.guidepaw.bridge.model.TrainingLogFeed
@@ -736,6 +739,49 @@ class GuidePawApiClient {
         }
     }
 
+    fun fetchNotificationOverview(config: BridgeConfig): ApiResult<NotificationOverview> {
+        val connection = openApiConnection(config, "GET", "/api/notifications.php")
+        return decodeJson(connection) { json -> ApiResult.Success(parseNotificationOverview(json)) }
+    }
+
+    fun markAllNotificationsRead(config: BridgeConfig): ApiResult<NotificationOverview> {
+        return postNotificationAction(config, "mark_all_read")
+    }
+
+    fun markNotificationRead(config: BridgeConfig, notificationId: Long): ApiResult<NotificationOverview> {
+        return postNotificationAction(
+            config = config,
+            action = "mark_read",
+            extras = mapOf("notification_id" to notificationId.toString()),
+        )
+    }
+
+    fun deleteNotifications(config: BridgeConfig, notificationIds: List<Long>): ApiResult<NotificationOverview> {
+        return postNotificationAction(
+            config = config,
+            action = "delete_selected_notifications",
+            extras = mapOf("notification_ids" to notificationIds.joinToString(",")),
+        )
+    }
+
+    fun saveNotificationPreferences(
+        config: BridgeConfig,
+        preferences: NotificationPreferenceState,
+    ): ApiResult<NotificationOverview> {
+        return postNotificationAction(
+            config = config,
+            action = "save_notification_preferences",
+            extras = mapOf(
+                "categories" to listOfNotNull(
+                    if (preferences.access) "access" else null,
+                    if (preferences.care) "care" else null,
+                    if (preferences.admin) "admin" else null,
+                    if (preferences.general) "general" else null,
+                ).joinToString(","),
+            ),
+        )
+    }
+
     fun fetchTrainingLogDetail(config: BridgeConfig, logId: Long): ApiResult<TrainingLogEntry> {
         val connection = openApiConnection(config, "GET", "/api/logs.php?log_id=$logId")
         return decodeJson(connection) { json ->
@@ -784,6 +830,86 @@ class GuidePawApiClient {
                 )
             )
         }
+    }
+
+    private fun postNotificationAction(
+        config: BridgeConfig,
+        action: String,
+        extras: Map<String, String> = emptyMap(),
+    ): ApiResult<NotificationOverview> {
+        val connection = openApiConnection(config, "POST", "/api/notifications.php")
+        val payload = JSONObject().apply {
+            put("action", action)
+            extras.forEach { (key, value) ->
+                if (value.isNotBlank()) put(key, value)
+            }
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json -> ApiResult.Success(parseNotificationOverview(json)) }
+    }
+
+    private fun parseNotificationOverview(json: JSONObject): NotificationOverview {
+        val notificationsJson = json.optJSONArray("notifications") ?: JSONArray()
+        val pendingInvitesJson = json.optJSONArray("pending_invites") ?: JSONArray()
+        return NotificationOverview(
+            userId = json.optLong("user_id", 0L),
+            username = json.optString("username", ""),
+            unreadCount = json.optInt("unread_count", 0),
+            visibleUnreadCount = json.optInt("visible_unread_count", 0),
+            hiddenCount = json.optInt("hidden_count", 0),
+            preferences = parseNotificationPreferences(json.optJSONObject("preferences")),
+            notifications = buildList {
+                for (i in 0 until notificationsJson.length()) {
+                    val row = notificationsJson.optJSONObject(i) ?: continue
+                    add(
+                        NotificationRow(
+                            id = row.optLong("id", 0L),
+                            relatedDogId = row.optLong("related_dog_id", 0L),
+                            dogName = row.optString("dog_name", ""),
+                            notificationType = row.optString("notification_type", "info"),
+                            category = row.optString("category", "general"),
+                            priority = row.optString("priority", "normal"),
+                            title = row.optString("title", ""),
+                            body = row.optString("body", ""),
+                            actionUrl = row.optString("action_url", ""),
+                            isRead = row.optBoolean("is_read", false),
+                            createdAt = row.optString("created_at", ""),
+                            readAt = row.optString("read_at", ""),
+                        )
+                    )
+                }
+            },
+            pendingInvites = buildList {
+                for (i in 0 until pendingInvitesJson.length()) {
+                    val row = pendingInvitesJson.optJSONObject(i) ?: continue
+                    add(
+                        DogAccessPendingInviteRow(
+                            id = row.optLong("id", 0L),
+                            dogId = row.optLong("dog_id", 0L),
+                            dogName = row.optString("dog_name", ""),
+                            ownerUsername = row.optString("owner_username", ""),
+                            ownerDisplayName = row.optString("owner_display_name", ""),
+                            role = row.optString("role", ""),
+                            permissionLevel = row.optString("permission_level", ""),
+                            accessEndsAt = row.optString("access_ends_at", ""),
+                            accessStatus = row.optString("access_status", ""),
+                        )
+                    )
+                }
+            },
+        )
+    }
+
+    private fun parseNotificationPreferences(json: JSONObject?): NotificationPreferenceState {
+        val prefs = json ?: JSONObject()
+        return NotificationPreferenceState(
+            access = prefs.optBoolean("access", true),
+            care = prefs.optBoolean("care", true),
+            admin = prefs.optBoolean("admin", true),
+            general = prefs.optBoolean("general", true),
+        )
     }
 
     fun setActiveDog(config: BridgeConfig, dogId: Long): ApiResult<Long> {

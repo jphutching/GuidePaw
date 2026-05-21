@@ -49,6 +49,7 @@
     <string name="handler_sms_phone_hint">SMS phone</string>
     <string name="handler_sms_enabled">Enable SMS notifications</string>
     <string name="dog_access_title">Dog access &amp; invites</string>
+    <string name="notification_center_title">Notifications</string>
     <string name="dog_access_summary_empty">Dog access: load a dog to manage shared access.</string>
     <string name="dog_access_refresh">Refresh access</string>
     <string name="dog_access_dog_empty">Dog access: no dog loaded.</string>

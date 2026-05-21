@@ -260,6 +260,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.dogAccessButton).setOnClickListener {
             startActivity(Intent(this, DogAccessActivity::class.java))
         }
+        findViewById<Button>(R.id.notificationCenterButton).setOnClickListener {
+            startActivity(Intent(this, NotificationCenterActivity::class.java))
+        }
         findViewById<Button>(R.id.refreshLogsButton).setOnClickListener { refreshTrainingLogs() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }

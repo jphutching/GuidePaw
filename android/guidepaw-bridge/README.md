@@ -16,6 +16,7 @@ What it does:
 - opens the public landing, FAQ, breed, legal, and housing guides inside the app
 - loads billing state, support badge info, and add-on status
 - can open support and service checkout sessions
+- loads the notification inbox, preferences, and pending dog access invites
 - requests Health Connect permissions
 - loads wearable sync summary and recent wearable snapshots for the active dog
 - shows the saved wearable setup for the active dog

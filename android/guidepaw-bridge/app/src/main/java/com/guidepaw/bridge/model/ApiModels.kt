@@ -93,6 +93,39 @@ data class DogAccessOverview(
     val incomingTransfers: List<DogAccessTransferRow>,
 )
 
+data class NotificationPreferenceState(
+    val access: Boolean,
+    val care: Boolean,
+    val admin: Boolean,
+    val general: Boolean,
+)
+
+data class NotificationRow(
+    val id: Long,
+    val relatedDogId: Long,
+    val dogName: String,
+    val notificationType: String,
+    val category: String,
+    val priority: String,
+    val title: String,
+    val body: String,
+    val actionUrl: String,
+    val isRead: Boolean,
+    val createdAt: String,
+    val readAt: String,
+)
+
+data class NotificationOverview(
+    val userId: Long,
+    val username: String,
+    val unreadCount: Int,
+    val visibleUnreadCount: Int,
+    val hiddenCount: Int,
+    val preferences: NotificationPreferenceState,
+    val notifications: List<NotificationRow>,
+    val pendingInvites: List<DogAccessPendingInviteRow>,
+)
+
 data class AccessibleDogSummary(
     val id: Long,
     val name: String,
