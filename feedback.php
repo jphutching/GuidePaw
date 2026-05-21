@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/form_ux.php';
 require_once __DIR__ . '/includes/db_connect.php';
+require_once __DIR__ . '/includes/feedback_submission.php';
 require_once __DIR__ . '/includes/brand_header.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -90,96 +91,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $legacyType = in_array($category, ['feature', 'enhancement'], true) ? 'feature' : 'bug';
-    $legacyTitle = $pageWorkflow !== '' ? $pageWorkflow : ucfirst($category) . ' report';
-    $legacyDescription = $details;
-
-    $stmt = $pdo->prepare("
-        INSERT INTO feedback_reports
-        (
-            user_id,
-            report_type,
-            title,
-            description,
-            category,
-            page_workflow,
-            contact_email,
-            details
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        RETURNING id
-    ");
-    $stmt->execute([
-        $userId,
-        $legacyType,
-        $legacyTitle,
-        $legacyDescription,
-        $category,
-        $pageWorkflow,
-        $contactEmail,
-        $details
+    $feedbackId = gpSaveFeedbackSubmission($pdo, $userId, [
+        'category' => $category,
+        'page_workflow' => $pageWorkflow,
+        'contact_email' => $contactEmail,
+        'details' => $details,
+        'source_platform' => 'web',
+        'source_label' => 'GuidePaw Website',
+        'source_version' => '',
+        'source_device' => $_SERVER['HTTP_USER_AGENT'] ?? '',
     ]);
-    $feedbackId = (int)$stmt->fetchColumn();
 
     $uploadDir = __DIR__ . '/uploads/feedback';
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'log', 'csv', 'json', 'pdf', 'mp4', 'mov', 'webm', 'm4v', '3gp'];
-
-    if ($feedbackId > 0 && !empty($_FILES['attachments']['name'][0])) {
-        foreach ($_FILES['attachments']['name'] as $i => $originalName) {
-            $error = $_FILES['attachments']['error'][$i] ?? UPLOAD_ERR_NO_FILE;
-            if ($error !== UPLOAD_ERR_OK) {
-                $uploadDebug[] = 'Upload error for ' . (string)$originalName . ': code ' . $error;
-                continue;
-            }
-
-            $tmpName = $_FILES['attachments']['tmp_name'][$i];
-            $size = (int)($_FILES['attachments']['size'][$i] ?? 0);
-            $ext = strtolower(pathinfo((string)$originalName, PATHINFO_EXTENSION));
-
-            if ($size <= 0) {
-                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': empty file.';
-                continue;
-            }
-
-            if ($size > 100 * 1024 * 1024) {
-                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': file too large (' . $size . ' bytes).';
-                continue;
-            }
-
-            if (!in_array($ext, $allowedExtensions, true)) {
-                $uploadDebug[] = 'Skipped ' . (string)$originalName . ': extension .' . $ext . ' not allowed.';
-                continue;
-            }
-
-            $mime = function_exists('mime_content_type')
-                ? (mime_content_type($tmpName) ?: 'application/octet-stream')
-                : 'application/octet-stream';
-
-            $safeName = 'feedback_' . $feedbackId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
-            $storedPath = 'uploads/feedback/' . $safeName;
-
-            if (@move_uploaded_file($tmpName, __DIR__ . '/' . $storedPath)) {
-                $att = $pdo->prepare("
-                    INSERT INTO feedback_attachments
-                    (feedback_id, original_name, stored_path, mime_type, file_size)
-                    VALUES (?, ?, ?, ?, ?)
-                ");
-                $att->execute([
-                    $feedbackId,
-                    basename((string)$originalName),
-                    $storedPath,
-                    $mime,
-                    $size
-                ]);
-            } else {
-                $uploadDebug[] = 'Could not move uploaded file: ' . (string)$originalName;
-            }
-        }
-    }
+    gpStoreFeedbackAttachments($pdo, $feedbackId, $_FILES['attachments'] ?? [], $uploadDir, $uploadDebug);
 
     if ($uploadDebug) {
         $_SESSION['feedback_upload_debug'] = $uploadDebug;
@@ -311,7 +235,7 @@ if (($_GET['msg'] ?? '') === 'saved') {
         <a class="btn secondary" href="index.php">Back</a>
     </div>
 
-    <p class="small">Use this page to log issues, enhancements, feature ideas, screenshots, pasted logs, or text files during development and beta testing.</p>
+    <p class="small">Use this page to log issues, enhancements, feature ideas, screenshots, pasted logs, documents, photos, audio, or video during development and beta testing.</p>
 
     <?php if ($fromError && $errorContext): ?>
         <div class="alert warn">GuidePaw attached the application error context automatically. Add what you clicked or expected, then save the report.</div>
@@ -361,10 +285,10 @@ if (($_GET['msg'] ?? '') === 'saved') {
                     type="file"
                     name="attachments[]"
                     multiple
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.txt,.log,.csv,.json,.pdf,.mp4,.mov,.webm,.m4v,.3gp,image/*,video/*,text/plain,application/pdf"
+                    accept="<?= h(gpFeedbackAcceptAttribute()) ?>"
                 >
                 <div class="small" style="margin-top:8px;">
-                    Optional. Attach screenshots, photos, videos, TXT, LOG, CSV, JSON, or PDF files. Max 100 MB each.
+                    Optional. Attach documents, screenshots, photos, videos, or audio files. Max 100 MB each.
                 </div>
                 <ul id="selectedFiles" class="small"></ul>
             </div>

@@ -1,8 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/feedback_submission.php';
+
 function gpFeedbackTriageRows(PDO $pdo, int $limit = 25): array
 {
+    gpEnsureFeedbackSourceColumns($pdo);
+
     $sql = "
         SELECT
             id,
@@ -12,6 +16,10 @@ function gpFeedbackTriageRows(PDO $pdo, int $limit = 25): array
             COALESCE(page_workflow, '') AS page_workflow,
             COALESCE(status, 'new') AS status,
             COALESCE(priority, 'normal') AS priority,
+            COALESCE(source_platform, 'web') AS source_platform,
+            COALESCE(source_label, 'GuidePaw Website') AS source_label,
+            COALESCE(source_version, '') AS source_version,
+            COALESCE(source_device, '') AS source_device,
             created_at
         FROM feedback_reports
         ORDER BY
@@ -47,6 +55,8 @@ function gpFeedbackTriageAnalyze(array $feedback): array
     $description = strtolower(trim((string) ($feedback['description'] ?? '')));
     $workflow = strtolower(trim((string) ($feedback['page_workflow'] ?? '')));
     $category = strtolower(trim((string) ($feedback['category'] ?? 'bug')));
+    $sourcePlatform = strtolower(trim((string) ($feedback['source_platform'] ?? 'web')));
+    $sourceLabel = strtolower(trim((string) ($feedback['source_label'] ?? 'guidepaw website')));
     $text = trim($title . ' ' . $description . ' ' . $workflow);
 
     $signals = [];
@@ -96,6 +106,14 @@ function gpFeedbackTriageAnalyze(array $feedback): array
         if ($recommendedStatus === 'reviewing') {
             $recommendedStatus = 'planned';
         }
+    }
+
+    if ($sourcePlatform === 'android' || str_contains($sourceLabel, 'companion')) {
+        $signals[] = 'Reported from the Android companion app.';
+        if ($area === 'general triage') {
+            $area = 'android companion';
+        }
+        $nextSteps[] = 'Check the Android path, source version, and whether the same issue reproduces in the web app.';
     }
 
     if (!$signals) {

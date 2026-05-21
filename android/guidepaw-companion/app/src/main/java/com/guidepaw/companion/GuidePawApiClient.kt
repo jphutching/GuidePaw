@@ -1,19 +1,34 @@
 package com.guidepaw.companion
 
+import android.content.ContentResolver
+import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedOutputStream
 import java.io.BufferedReader
+import java.io.DataOutputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.UUID
 
 data class GuidePawLoginResult(
     val success: Boolean,
     val token: String? = null,
     val requiresTwoFactor: Boolean = false,
     val message: String? = null,
+)
+
+data class GuidePawAppReleaseResult(
+    val appName: String,
+    val versionName: String,
+    val versionCode: Int,
+    val apkUrl: String,
+    val apkFile: String,
+    val releaseNotes: String?,
+    val publishedAt: String?,
 )
 
 data class GuidePawMeResult(
@@ -54,6 +69,18 @@ data class GuidePawSaveLogResult(
     val logId: Int?,
     val message: String?,
     val trainingSuggestions: List<String>,
+)
+
+data class GuidePawFeedbackAttachmentInput(
+    val uri: Uri,
+    val displayName: String,
+    val mimeType: String,
+)
+
+data class GuidePawFeedbackResult(
+    val feedbackId: Int?,
+    val message: String?,
+    val uploadDebug: List<String>,
 )
 
 data class GuidePawWearableCatalogItem(
@@ -166,6 +193,20 @@ class GuidePawApiClient(
         )
     }
 
+    fun appRelease(): GuidePawAppReleaseResult {
+        val response = requestJson("api/app_release.php", "GET", null, null)
+        ensureSuccess(response)
+        return GuidePawAppReleaseResult(
+            appName = response.json.optString("app_name", "GuidePaw Companion"),
+            versionName = response.json.optString("version_name", "0.000"),
+            versionCode = response.json.optInt("version_code", 0),
+            apkUrl = response.json.optString("apk_url", ""),
+            apkFile = response.json.optString("apk_file", "GuidePaw_Companion.apk"),
+            releaseNotes = response.json.optText("release_notes"),
+            publishedAt = response.json.optText("published_at"),
+        )
+    }
+
     fun me(token: String): GuidePawMeResult {
         val response = requestJson("api/me.php", "GET", token, null)
         ensureSuccess(response)
@@ -268,6 +309,34 @@ class GuidePawApiClient(
         )
     }
 
+    fun submitFeedback(
+        token: String,
+        category: String,
+        pageWorkflow: String,
+        contactEmail: String,
+        details: String,
+        sourceVersion: String,
+        sourceDevice: String,
+        attachments: List<GuidePawFeedbackAttachmentInput>,
+        contentResolver: ContentResolver,
+    ): GuidePawFeedbackResult {
+        val fields = linkedMapOf(
+            "category" to category,
+            "page_workflow" to pageWorkflow,
+            "contact_email" to contactEmail,
+            "details" to details,
+            "source_version" to sourceVersion,
+            "source_device" to sourceDevice,
+        )
+        val response = requestMultipartJson("api/feedback.php", token, fields, attachments, contentResolver)
+        ensureSuccess(response)
+        return GuidePawFeedbackResult(
+            feedbackId = optNullableInt(response.json, "feedback_id"),
+            message = response.json.optText("message"),
+            uploadDebug = response.json.optJSONArray("upload_debug")?.toStringList().orEmpty(),
+        )
+    }
+
     fun wearables(token: String, dogId: Int? = null): GuidePawWearableResult {
         val query = if (dogId != null && dogId > 0) {
             "api/wearables.php?dog_id=$dogId"
@@ -365,6 +434,58 @@ class GuidePawApiClient(
         return ApiResponse(status, json, responseText)
     }
 
+    private fun requestMultipartJson(
+        path: String,
+        token: String?,
+        fields: Map<String, String>,
+        attachments: List<GuidePawFeedbackAttachmentInput>,
+        contentResolver: ContentResolver,
+    ): ApiResponse {
+        val resolvedPath = if (token.isNullOrBlank()) {
+            path
+        } else {
+            val separator = if (path.contains('?')) '&' else '?'
+            path + separator + "access_token=" + URLEncoder.encode(token, StandardCharsets.UTF_8.name())
+        }
+        val endpoint = URL(baseUrl.trimEnd('/') + "/" + resolvedPath.trimStart('/'))
+        val boundary = "----GuidePaw" + UUID.randomUUID().toString().replace("-", "")
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 15_000
+            readTimeout = 20_000
+            doInput = true
+            doOutput = true
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+            if (!token.isNullOrBlank()) {
+                setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("X-API-TOKEN", token)
+            }
+            setChunkedStreamingMode(0)
+        }
+
+        DataOutputStream(BufferedOutputStream(connection.outputStream)).use { out ->
+            fields.forEach { (key, value) ->
+                writeMultipartField(out, boundary, key, value)
+            }
+            attachments.forEachIndexed { index, attachment ->
+                writeMultipartFile(out, boundary, "attachments[$index]", attachment, contentResolver)
+            }
+            out.writeBytes("--$boundary--\r\n")
+            out.flush()
+        }
+
+        val status = connection.responseCode
+        val responseText = connection.responseText()
+        val json = try {
+            if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
+        } catch (_: Throwable) {
+            JSONObject().put("raw", responseText)
+        }
+        connection.disconnect()
+        return ApiResponse(status, json, responseText)
+    }
+
     private fun ensureSuccess(response: ApiResponse) {
         if (response.statusCode in 200..299 && response.json.optBoolean("success", true)) {
             return
@@ -381,6 +502,33 @@ class GuidePawApiClient(
         return stream.use { input ->
             BufferedReader(InputStreamReader(input, StandardCharsets.UTF_8)).use { it.readText() }
         }
+    }
+
+    private fun writeMultipartField(out: DataOutputStream, boundary: String, name: String, value: String) {
+        out.writeBytes("--$boundary\r\n")
+        out.writeBytes("Content-Disposition: form-data; name=\"$name\"\r\n")
+        out.writeBytes("Content-Type: text/plain; charset=utf-8\r\n\r\n")
+        out.write(value.toByteArray(StandardCharsets.UTF_8))
+        out.writeBytes("\r\n")
+    }
+
+    private fun writeMultipartFile(
+        out: DataOutputStream,
+        boundary: String,
+        name: String,
+        attachment: GuidePawFeedbackAttachmentInput,
+        contentResolver: ContentResolver,
+    ) {
+        val mimeType = attachment.mimeType.ifBlank { "application/octet-stream" }
+        out.writeBytes("--$boundary\r\n")
+        out.writeBytes("Content-Disposition: form-data; name=\"$name\"; filename=\"${sanitizeFileName(attachment.displayName)}\"\r\n")
+        out.writeBytes("Content-Type: $mimeType\r\n\r\n")
+        val input = contentResolver.openInputStream(attachment.uri)
+            ?: throw IllegalStateException("Could not open attachment ${attachment.displayName}")
+        input.use { stream ->
+            stream.copyTo(out, 8192)
+        }
+        out.writeBytes("\r\n")
     }
 
     private fun optNullableInt(json: JSONObject, key: String): Int? {
@@ -532,6 +680,10 @@ class GuidePawApiClient(
     }
 
     private fun JSONArray.toList(): List<Any?> = (0 until length()).map { opt(it) }
+
+    private fun sanitizeFileName(name: String): String {
+        return name.trim().ifBlank { "feedback_attachment" }.replace(Regex("[\\r\\n\"]"), "_")
+    }
 
     private data class ApiResponse(
         val statusCode: Int,

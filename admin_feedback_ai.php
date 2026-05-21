@@ -95,7 +95,13 @@ $analysis = $selected ? gpFeedbackTriageAnalyze($selected) : null;
             <div class="card">
                 <div class="badge">#<?= (int) $selected['id'] ?> <?= h(ucfirst((string) $selected['status'])) ?></div>
                 <h2 class="mt-3 mb-2"><?= h((string) $selected['title']) ?></h2>
-                <div class="muted mb-2">Area: <?= h($analysis['area']) ?></div>
+                <div class="muted mb-2">
+                    Area: <?= h($analysis['area']) ?> ·
+                    Source: <?= h(ucfirst((string) ($selected['source_platform'] ?? 'web'))) ?>
+                    <?php if (!empty($selected['source_label'])): ?>
+                        · <?= h((string) $selected['source_label']) ?>
+                    <?php endif; ?>
+                </div>
                 <div><strong>Signals</strong></div>
                 <?php foreach ($analysis['signals'] as $signal): ?>
                     <div class="tip"><?= h($signal) ?></div>

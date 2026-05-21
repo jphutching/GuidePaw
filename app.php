@@ -1,12 +1,14 @@
 <?php
 require_once __DIR__ . '/includes/app_config.php';
 require_once __DIR__ . '/includes/brand_header.php';
+require_once __DIR__ . '/includes/companion_release.php';
 require_once __DIR__ . '/includes/seo.php';
 
 $title = 'GuidePaw Companion App | Training, Logs, Dogs, and Wearables';
 $description = 'GuidePaw Companion is the Android app for normal handler work: training logs, goals, dogs, profiles, notifications, public read-only pages, and built-in wearable data.';
-$apkVersion = '0.007';
-$apkFile = 'downloads/GuidePaw_Companion_v' . $apkVersion . '.apk';
+$release = gpCompanionReleaseInfo();
+$apkVersion = (string) $release['version_name'];
+$apkFile = (string) ($release['apk_url'] ?? '');
 $schema = [
     [
         '@context' => 'https://schema.org',
@@ -105,6 +107,7 @@ $schema = [
                     <a class="btn btn-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
                 </div>
             </div>
+            <p class="small muted mt-3 mb-0">The companion app checks for newer releases and will prompt you to update when a new APK is available.</p>
         </div>
     </section>
 

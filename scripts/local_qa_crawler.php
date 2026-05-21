@@ -963,6 +963,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'feedback reports')
                 || str_contains($body, 'submitted feedback')
                 || str_contains($body, 'bug report')
+                || str_contains($body, 'source')
             ) && $sharedAdminShellReady
             : true;
         $adminFeedbackAiPageLooksReady = $path === 'admin_feedback_ai.php'
@@ -977,6 +978,7 @@ echo 'GuidePaw local QA crawler targeting ' . $baseUrl . ($insecureLocalSsl ? ' 
                 str_contains($body, 'enhancement')
                 || str_contains($body, 'feature request')
                 || str_contains($body, 'bug')
+                || str_contains($body, 'documents, screenshots, photos, videos, and audio')
             )
             : true;
         $adminPageLooksReady = $path === 'admin.php'

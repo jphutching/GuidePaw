@@ -53,7 +53,7 @@
             android:background="#dbeafe"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
-            android:text="v0.007"
+            android:text="v0.009"
             android:textColor="#0f172a"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -75,6 +75,68 @@
             android:indeterminate="true"
             android:visibility="invisible"
             app:indicatorColor="#0d6efd" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/updateCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#eff6ff"
+            app:strokeColor="#bfdbfe"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Update available"
+                    android:textColor="#0f172a"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/updateStatusView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#334155"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUpdateNow"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Update now"
+                        app:cornerRadius="14dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDismissUpdate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Later"
+                        app:cornerRadius="14dp"
+                        app:backgroundTint="#dbeafe"
+                        app:strokeColor="#bfdbfe"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/loginCard"
@@ -106,7 +168,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="v0.007"
+                    android:text="v0.009"
                     android:textColor="#334155"
                     android:textSize="11sp" />
 

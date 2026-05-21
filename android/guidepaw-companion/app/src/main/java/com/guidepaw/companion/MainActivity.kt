@@ -1,8 +1,13 @@
 package com.guidepaw.companion
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -32,6 +37,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var statusView: TextView
     private lateinit var progressView: LinearProgressIndicator
+    private lateinit var updateCard: MaterialCardView
+    private lateinit var updateStatusView: TextView
+    private lateinit var updateNowButton: MaterialButton
+    private lateinit var dismissUpdateButton: MaterialButton
     private lateinit var menuButton: MaterialButton
     private lateinit var versionBadgeView: TextView
     private lateinit var versionView: TextView
@@ -75,6 +84,44 @@ class MainActivity : AppCompatActivity() {
     private var currentActiveDogId: Int? = null
     private var currentEditingLogId: Int? = null
     private var currentSectionButtonId: Int = R.id.btnOverview
+    private var currentRelease: GuidePawAppReleaseResult? = null
+    private var pendingDownloadId: Long = -1L
+    private var updateReceiverRegistered = false
+
+    private val updateDownloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val completedId = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) ?: -1L
+            if (completedId != pendingDownloadId || completedId <= 0L) {
+                return
+            }
+            worker.execute {
+                val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                val query = DownloadManager.Query().setFilterById(completedId)
+                val cursor = manager.query(query)
+                cursor.use {
+                    if (!it.moveToFirst()) {
+                        runOnUiThread { updateStatusView.text = "Update downloaded but not found." }
+                        return@execute
+                    }
+                    val statusIndex = it.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val uriIndex = it.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                    val status = if (statusIndex >= 0) it.getInt(statusIndex) else DownloadManager.STATUS_FAILED
+                    val uriText = if (uriIndex >= 0) it.getString(uriIndex) else null
+                    if (status == DownloadManager.STATUS_SUCCESSFUL && !uriText.isNullOrBlank()) {
+                        val apkUri = Uri.parse(uriText)
+                        runOnUiThread {
+                            updateStatusView.text = "Downloaded. Opening installer..."
+                            launchInstaller(apkUri)
+                        }
+                    } else {
+                        runOnUiThread {
+                            updateStatusView.text = "Download failed. Try again."
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
     private val skillOptions = listOf(
@@ -97,6 +144,7 @@ class MainActivity : AppCompatActivity() {
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         bindViews()
         setupUi()
+        checkForAppUpdate()
 
         val storedToken = prefs.getString(KEY_TOKEN, null)
         if (!storedToken.isNullOrBlank()) {
@@ -110,13 +158,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        unregisterUpdateReceiver()
         super.onDestroy()
         worker.shutdownNow()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkForAppUpdate()
     }
 
     private fun bindViews() {
         statusView = findViewById(R.id.statusView)
         progressView = findViewById(R.id.progressView)
+        updateCard = findViewById(R.id.updateCard)
+        updateStatusView = findViewById(R.id.updateStatusView)
+        updateNowButton = findViewById(R.id.btnUpdateNow)
+        dismissUpdateButton = findViewById(R.id.btnDismissUpdate)
         menuButton = findViewById(R.id.btnMenu)
         versionBadgeView = findViewById(R.id.versionBadgeView)
         versionView = findViewById(R.id.versionView)
@@ -155,8 +213,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.007"
-        versionBadgeView.text = "v0.007"
+        versionView.text = "v${CompanionAppVersion.VERSION_NAME}"
+        versionBadgeView.text = "v${CompanionAppVersion.VERSION_NAME}"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
@@ -188,6 +246,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnSignOut).setOnClickListener { signOut("Signed out.") }
         saveLogButton.setOnClickListener { submitTrainingLog() }
         menuButton.setOnClickListener { showMenuDialog() }
+        updateNowButton.setOnClickListener { startAppUpdate() }
+        dismissUpdateButton.setOnClickListener { hideUpdateNotice() }
 
         findViewById<MaterialButton>(R.id.btnOpenWearablesWeb).setOnClickListener {
             openExternal("https://guidepaw.app/wearable_integrations.php")
@@ -282,6 +342,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         refreshDashboard(token, currentActiveDogId, keepSignedInOnFailure = currentMe != null)
+        checkForAppUpdate()
     }
 
     private fun refreshDashboard(token: String, preferDogId: Int?, keepSignedInOnFailure: Boolean = false) {
@@ -619,6 +680,7 @@ class MainActivity : AppCompatActivity() {
         logsContainer.removeAllViews()
         statusView.text = message
         loginMessageView.text = ""
+        syncUpdateCardVisibility()
     }
 
     private fun showLoggedOut(message: String) {
@@ -634,6 +696,7 @@ class MainActivity : AppCompatActivity() {
         dashboardCard.visibility = View.GONE
         loginMessageView.text = message
         statusView.text = "Signed out"
+        syncUpdateCardVisibility()
         setLoading(false, null)
     }
 
@@ -710,6 +773,7 @@ class MainActivity : AppCompatActivity() {
         content.addView(makeMenuSection("More", listOf(
             MenuAction("Notification Center") { openExternal("https://guidepaw.app/notifications.php") },
             MenuAction("Public guides", R.id.btnPublic),
+            MenuAction("Feedback / Bug Report") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
             MenuAction("GuidePaw app page") { openExternal("https://guidepaw.app/app.php") },
             MenuAction("Breed questionnaire") { openExternal("https://guidepaw.app/breed_questionnaire.php") },
             MenuAction("FAQ") { openExternal("https://guidepaw.app/faq.php") },
@@ -723,6 +787,102 @@ class MainActivity : AppCompatActivity() {
             .setView(content)
             .setNegativeButton("Close", null)
             .show()
+    }
+
+    private fun checkForAppUpdate() {
+        worker.execute {
+            try {
+                val release = api.appRelease()
+                runOnUiThread {
+                    currentRelease = release
+                    val localCode = CompanionAppVersion.VERSION_CODE
+                    val ignoredCode = prefs.getInt(KEY_IGNORED_UPDATE_CODE, 0)
+                    if (release.versionCode > localCode && release.versionCode > ignoredCode) {
+                        updateStatusView.text = "v${release.versionName} is available. Tap update to download ${release.apkFile}."
+                        updateCard.visibility = View.VISIBLE
+                    } else {
+                        hideUpdateNotice()
+                    }
+                }
+            } catch (_: Throwable) {
+                runOnUiThread {
+                    if (currentRelease == null) {
+                        hideUpdateNotice()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun syncUpdateCardVisibility() {
+        val release = currentRelease ?: return
+        val ignoredCode = prefs.getInt(KEY_IGNORED_UPDATE_CODE, 0)
+        if (release.versionCode > CompanionAppVersion.VERSION_CODE && release.versionCode > ignoredCode) {
+            updateCard.visibility = View.VISIBLE
+        } else {
+            updateCard.visibility = View.GONE
+        }
+    }
+
+    private fun hideUpdateNotice() {
+        currentRelease?.let {
+            prefs.edit().putInt(KEY_IGNORED_UPDATE_CODE, it.versionCode).commit()
+        }
+        updateCard.visibility = View.GONE
+    }
+
+    private fun startAppUpdate() {
+        val release = currentRelease
+        if (release == null || release.apkUrl.isBlank()) {
+            updateStatusView.text = "No update package is available yet."
+            return
+        }
+        updateStatusView.text = "Downloading ${release.versionName}..."
+        val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(release.apkUrl))
+            .setTitle("GuidePaw Companion update")
+            .setDescription("Download ${release.apkFile}")
+            .setMimeType("application/vnd.android.package-archive")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
+        pendingDownloadId = manager.enqueue(request)
+        registerUpdateReceiver()
+    }
+
+    private fun launchInstaller(apkUri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(apkUri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            startActivity(intent)
+        } catch (t: Throwable) {
+            updateStatusView.text = friendlyMessage(t.message, "Open the downloaded APK to install the update.")
+        }
+    }
+
+    private fun registerUpdateReceiver() {
+        if (updateReceiverRegistered) {
+            return
+        }
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateDownloadReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(updateDownloadReceiver, filter)
+        }
+        updateReceiverRegistered = true
+    }
+
+    private fun unregisterUpdateReceiver() {
+        if (!updateReceiverRegistered) {
+            return
+        }
+        runCatching { unregisterReceiver(updateDownloadReceiver) }
+        updateReceiverRegistered = false
     }
 
     private fun makeMenuSection(title: String, actions: List<MenuAction>): LinearLayout {
@@ -920,5 +1080,6 @@ class MainActivity : AppCompatActivity() {
         private const val PREFS_NAME = "guidepaw_companion"
         private const val KEY_TOKEN = "auth_token"
         private const val KEY_CACHE = "dashboard_cache"
+        private const val KEY_IGNORED_UPDATE_CODE = "ignored_update_code"
     }
 }

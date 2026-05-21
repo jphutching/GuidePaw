@@ -1,8 +1,11 @@
 <?php
 require_once __DIR__ . '/includes/authz.php';
 require_once __DIR__ . '/includes/db_connect.php';
+require_once __DIR__ . '/includes/feedback_submission.php';
 require_once __DIR__ . '/includes/brand_header.php';
 requireAdmin();
+
+gpEnsureFeedbackSourceColumns($pdo);
 
 function h($value): string {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -40,6 +43,10 @@ $stmt = $pdo->prepare("
         COALESCE(r.contact_email, '') AS contact_email,
         COALESCE(r.details, r.description, '') AS details,
         COALESCE(r.status, 'new') AS status,
+        COALESCE(r.source_platform, 'web') AS source_platform,
+        COALESCE(r.source_label, 'GuidePaw Website') AS source_label,
+        COALESCE(r.source_version, '') AS source_version,
+        COALESCE(r.source_device, '') AS source_device,
         r.created_at,
         a.id AS attachment_id,
         a.original_name,
@@ -141,7 +148,18 @@ function formatBytes($bytes): string {
             <p class="meta">
                 User: <?= h($report['username'] ?: ('User #' . $report['user_id'])) ?> |
                 Created: <?= h($report['created_at']) ?> |
-                Status: <span class="badge"><?= h($report['status']) ?></span>
+                Status: <span class="badge"><?= h($report['status']) ?></span> |
+                Source: <span class="badge"><?= h(ucfirst($report['source_platform'])) ?></span>
+            </p>
+
+            <p class="meta">
+                <?= h($report['source_label']) ?>
+                <?php if (!empty($report['source_version'])): ?>
+                    · v<?= h($report['source_version']) ?>
+                <?php endif; ?>
+                <?php if (!empty($report['source_device'])): ?>
+                    · <?= h($report['source_device']) ?>
+                <?php endif; ?>
             </p>
 
             <?php if (!empty($report['contact_email'])): ?>
