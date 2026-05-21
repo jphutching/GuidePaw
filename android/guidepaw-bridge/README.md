@@ -16,7 +16,7 @@ What it does:
 - requests Health Connect permissions
 - loads wearable sync summary and recent wearable snapshots for the active dog
 - shows the saved wearable setup for the active dog
-- reads daily steps and heart-rate summaries
+- reads daily steps, distance, sleep, and heart-rate summaries
 - posts snapshots back to GuidePaw automatically or on demand
 
 See also:
@@ -33,3 +33,4 @@ Notes:
 - This is a phone-only companion app.
 - The Galaxy Watch itself does not need a GuidePaw app for this flow.
 - The app relies on Samsung Health syncing the watch data to the phone, then Health Connect exposing it to the app.
+- Health Connect reads can include steps, distance, sleep, and heart rate when the phone grants the matching permissions.

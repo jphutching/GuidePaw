@@ -469,7 +469,9 @@ class GuidePawApiClient {
             put("device_name", "Samsung Health / Health Connect")
             put("recorded_for_date", snapshot.recordedForDate)
             put("steps", snapshot.steps)
+            put("distance_miles", snapshot.distanceMiles)
             put("avg_heart_rate", snapshot.avgHeartRate)
+            put("sleep_hours", snapshot.sleepHours)
             put("summary_text", snapshot.summaryText)
             put("notes", "Synced automatically from GuidePaw Bridge.")
         }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">GuidePaw Bridge</string>
-    <string name="bridge_intro">Pair the phone once, grant Health Connect access, and let the app sync the watch summary automatically.</string>
+    <string name="bridge_intro">Pair the phone once, grant Health Connect access, and let the app sync steps, distance, sleep, and heart-rate summaries automatically.</string>
     <string name="login_section_label">Sign in to GuidePaw</string>
     <string name="username_hint">Username or email</string>
     <string name="password_hint">Password</string>

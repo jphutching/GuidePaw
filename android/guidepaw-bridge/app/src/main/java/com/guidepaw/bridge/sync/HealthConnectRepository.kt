@@ -2,7 +2,9 @@ package com.guidepaw.bridge.sync
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -12,34 +14,49 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Locale
 
 class HealthConnectRepository(context: Context) {
     private val client = HealthConnectClient.getOrCreate(context)
 
     suspend fun buildTodaySnapshot(): HealthSnapshot = withContext(Dispatchers.IO) {
         val zoneId = ZoneId.systemDefault()
-        val start = LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant()
+        val activityStart = LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant()
+        val sleepStart = activityStart.minusSeconds(24 * 60 * 60)
         val end = Instant.now()
-        val result = client.aggregate(
+        val activityResult = client.aggregate(
             AggregateRequest(
                 metrics = setOf(
                     StepsRecord.COUNT_TOTAL,
+                    DistanceRecord.DISTANCE_TOTAL,
                     HeartRateRecord.BPM_AVG,
                     HeartRateRecord.BPM_MIN,
                     HeartRateRecord.BPM_MAX,
                 ),
-                timeRangeFilter = TimeRangeFilter.between(start, end),
+                timeRangeFilter = TimeRangeFilter.between(activityStart, end),
+                dataOriginFilter = emptySet(),
+            )
+        )
+        val sleepResult = client.aggregate(
+            AggregateRequest(
+                metrics = setOf(SleepSessionRecord.SLEEP_DURATION_TOTAL),
+                timeRangeFilter = TimeRangeFilter.between(sleepStart, end),
                 dataOriginFilter = emptySet(),
             )
         )
 
-        val steps = result[StepsRecord.COUNT_TOTAL]
-        val avgHr = result[HeartRateRecord.BPM_AVG]
-        val minHr = result[HeartRateRecord.BPM_MIN]
-        val maxHr = result[HeartRateRecord.BPM_MAX]
+        val steps = activityResult[StepsRecord.COUNT_TOTAL]
+        val distance = activityResult[DistanceRecord.DISTANCE_TOTAL]
+        val avgHr = activityResult[HeartRateRecord.BPM_AVG]
+        val minHr = activityResult[HeartRateRecord.BPM_MIN]
+        val maxHr = activityResult[HeartRateRecord.BPM_MAX]
+        val sleepDuration = sleepResult[SleepSessionRecord.SLEEP_DURATION_TOTAL]
+        val sleepHours = sleepDuration?.seconds?.div(3600.0)
         val summary = buildString {
             append("Synced from Samsung Health / Health Connect.")
             if (steps != null) append(" Steps today: $steps.")
+            if (distance != null) append(" Distance today: ${String.format(Locale.US, "%.2f", distance.inMiles)} mi.")
+            if (sleepHours != null) append(" Sleep last 24h: ${String.format(Locale.US, "%.1f", sleepHours)} h.")
             if (avgHr != null) append(" Avg heart rate: $avgHr bpm.")
             if (minHr != null && maxHr != null) append(" Range: $minHr-$maxHr bpm.")
         }
@@ -47,9 +64,11 @@ class HealthConnectRepository(context: Context) {
         HealthSnapshot(
             recordedForDate = LocalDate.now(zoneId).toString(),
             steps = steps,
+            distanceMiles = distance?.inMiles,
             avgHeartRate = avgHr,
             minHeartRate = minHr,
             maxHeartRate = maxHr,
+            sleepHours = sleepHours,
             summaryText = summary,
         )
     }

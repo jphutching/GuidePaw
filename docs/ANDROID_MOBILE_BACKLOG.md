@@ -103,6 +103,7 @@ Status:
 - implemented in Android bridge
 - wearable setup summary, compatibility catalog, and recent syncs are now visible for the active dog
 - setup now shows the expected data route and metric focus for the chosen devices
+- Health Connect sync now pulls steps, distance, sleep, and heart-rate summaries into the wearable timeline
 
 ## Phase 5: Support, paywalls, and add-ons
 
