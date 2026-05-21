@@ -31,6 +31,19 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/versionBadgeView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="#dbeafe"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="v0.004"
+            android:textColor="#0f172a"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:id="@+id/statusView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,7 +90,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="v0.003"
+                    android:text="v0.004"
                     android:textColor="#334155"
                     android:textSize="11sp" />
 

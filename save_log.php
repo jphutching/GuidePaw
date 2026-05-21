@@ -43,6 +43,7 @@ try {
     $stmt->execute([$userId, $dogId, $locationName, $cityState, $locationType, $focusLevel, json_encode($skills), $handlerNotes, $media, $mediaType, $mimeType, $latitude, $longitude]);
     echo json_encode(['success' => true]);
 } catch (Throwable $e) {
+    error_log('GuidePaw save log failed: ' . $e->getMessage());
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Could not save the training log. Please try again.']);
 }

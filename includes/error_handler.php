@@ -77,14 +77,14 @@ set_exception_handler(function (Throwable $e): void {
     ]);
     rememberLastAppError($errorId, $e);
 
-    $message = appDebugEnabled() ? $e->getMessage() : 'Something went wrong. Please try again.';
     if (isApiRequest()) {
         http_response_code(500);
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => $message, 'error_id' => $errorId]);
+        echo json_encode(['success' => false, 'message' => 'Something went wrong. Please try again.', 'error_id' => $errorId]);
         return;
     }
 
+    $message = appDebugEnabled() ? $e->getMessage() : 'Something went wrong. Please try again.';
     $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
     $safeErrorId = htmlspecialchars($errorId, ENT_QUOTES, 'UTF-8');
     $reportUrl = 'feedback.php?from_error=1&error_id=' . rawurlencode($errorId);

@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private lateinit var statusView: TextView
     private lateinit var progressView: LinearProgressIndicator
+    private lateinit var versionBadgeView: TextView
     private lateinit var versionView: TextView
 
     private lateinit var loginCard: MaterialCardView
@@ -114,6 +115,7 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         statusView = findViewById(R.id.statusView)
         progressView = findViewById(R.id.progressView)
+        versionBadgeView = findViewById(R.id.versionBadgeView)
         versionView = findViewById(R.id.versionView)
 
         loginCard = findViewById(R.id.loginCard)
@@ -150,7 +152,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUi() {
-        versionView.text = "v0.003"
+        versionView.text = "v0.004"
+        versionBadgeView.text = "v0.004"
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
         logTypeInput.setAdapter(typeAdapter)
         logTypeInput.setText(locationTypes.first(), false)
