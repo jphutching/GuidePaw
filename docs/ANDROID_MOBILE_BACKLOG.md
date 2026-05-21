@@ -173,6 +173,9 @@ Android screens:
 - read-only webview wrappers or native article views
 - deep links into the public guides
 
+Status:
+- implemented in Android bridge as in-app public guide buttons and web pages
+
 ## Explicitly out of scope
 
 - admin dashboard

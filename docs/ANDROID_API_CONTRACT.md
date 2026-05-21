@@ -81,6 +81,8 @@ The current API surface is enough for:
 - native found-dog reporting
 - billing state and checkout initiation
 
+The Android app can also show read-only public GuidePaw pages in a native WebView using the public site base URL derived from the paired endpoint.
+
 ## What to add later only if needed
 
 Add a thin API layer only when the Android app needs:

@@ -29,6 +29,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".PublicPageActivity"
+            android:exported="false" />
+        <activity
             android:name=".PermissionsRationaleActivity"
             android:exported="true">
             <intent-filter>

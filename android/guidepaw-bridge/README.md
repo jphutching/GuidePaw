@@ -11,6 +11,7 @@ What it does:
 - surfaces training suggestions from the backend
 - loads the public QR profile payload for the active dog
 - shows the QR image, share link, and found-dog report form
+- opens the public landing, FAQ, breed, legal, and housing guides inside the app
 - loads billing state, support badge info, and add-on status
 - can open support and service checkout sessions
 - requests Health Connect permissions

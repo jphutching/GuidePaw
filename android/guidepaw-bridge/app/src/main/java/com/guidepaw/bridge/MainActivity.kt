@@ -91,6 +91,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var foundNameInput: EditText
     private lateinit var foundPhoneInput: EditText
     private lateinit var foundMessageInput: EditText
+    private lateinit var publicGuideLandingButton: Button
+    private lateinit var publicGuideFaqButton: Button
+    private lateinit var publicGuideQuestionnaireButton: Button
+    private lateinit var publicGuideComparisonButton: Button
+    private lateinit var publicGuideFamilyButton: Button
+    private lateinit var publicGuideLegalButton: Button
+    private lateinit var publicGuideHousingButton: Button
     private lateinit var billingSummaryText: TextView
     private lateinit var billingStatusText: TextView
     private lateinit var billingRefreshButton: Button
@@ -224,6 +231,13 @@ class MainActivity : AppCompatActivity() {
         foundNameInput = findViewById(R.id.foundNameInput)
         foundPhoneInput = findViewById(R.id.foundPhoneInput)
         foundMessageInput = findViewById(R.id.foundMessageInput)
+        publicGuideLandingButton = findViewById(R.id.publicGuideLandingButton)
+        publicGuideFaqButton = findViewById(R.id.publicGuideFaqButton)
+        publicGuideQuestionnaireButton = findViewById(R.id.publicGuideQuestionnaireButton)
+        publicGuideComparisonButton = findViewById(R.id.publicGuideComparisonButton)
+        publicGuideFamilyButton = findViewById(R.id.publicGuideFamilyButton)
+        publicGuideLegalButton = findViewById(R.id.publicGuideLegalButton)
+        publicGuideHousingButton = findViewById(R.id.publicGuideHousingButton)
         billingSummaryText = findViewById(R.id.billingSummaryText)
         billingStatusText = findViewById(R.id.billingStatusText)
         billingRefreshButton = findViewById(R.id.billingRefreshButton)
@@ -250,6 +264,13 @@ class MainActivity : AppCompatActivity() {
         publicProfileOpenButton.setOnClickListener { openPublicProfile() }
         publicReportOpenButton.setOnClickListener { openFoundDogReportPage() }
         publicReportSubmitButton.setOnClickListener { submitFoundDogReport() }
+        publicGuideLandingButton.setOnClickListener { openPublicGuide("guidepaw.app", "/", "GuidePaw landing") }
+        publicGuideFaqButton.setOnClickListener { openPublicGuide("guidepaw.app", "/faq.php", "GuidePaw FAQ") }
+        publicGuideQuestionnaireButton.setOnClickListener { openPublicGuide("guidepaw.app", "/breed_questionnaire.php", "Breed questionnaire") }
+        publicGuideComparisonButton.setOnClickListener { openPublicGuide("guidepaw.app", "/breed_comparison_hub.php", "Breed comparison hub") }
+        publicGuideFamilyButton.setOnClickListener { openPublicGuide("guidepaw.app", "/breed_family_guide.php", "Breed family guide") }
+        publicGuideLegalButton.setOnClickListener { openPublicGuide("guidepaw.app", "/service_dog_esa_legal_info.php", "Service dog legal info") }
+        publicGuideHousingButton.setOnClickListener { openPublicGuide("guidepaw.app", "/housing_access_faq.php", "Housing access FAQ") }
         wearableRefreshButton.setOnClickListener { refreshWearableOverview() }
         billingRefreshButton.setOnClickListener { refreshBillingOverview() }
         billingSupportOnceButton.setOnClickListener { startSupportCheckout("one_time") }
@@ -1602,6 +1623,24 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(profile.reportUrl)))
         }.onFailure {
             updateStatus("Could not open the found-dog report link.")
+        }
+    }
+
+    private fun openPublicGuide(domain: String, path: String, title: String) {
+        val config = prefs.load()
+        val siteBase = config?.endpoint
+            ?.substringBefore("/api/", config.endpoint)
+            ?.trimEnd('/')
+            ?.takeIf { it.contains(domain) }
+            ?: "https://$domain"
+        val url = siteBase.trimEnd('/') + path
+        runCatching {
+            startActivity(Intent(this, PublicPageActivity::class.java).apply {
+                putExtra(PublicPageActivity.EXTRA_TITLE, title)
+                putExtra(PublicPageActivity.EXTRA_URL, url)
+            })
+        }.onFailure {
+            updateStatus("Could not open $title.")
         }
     }
 
