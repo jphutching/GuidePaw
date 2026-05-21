@@ -48,4 +48,22 @@
     <string name="handler_public_notes_hint">Public notes</string>
     <string name="handler_sms_phone_hint">SMS phone</string>
     <string name="handler_sms_enabled">Enable SMS notifications</string>
+    <string name="dog_access_title">Dog access &amp; invites</string>
+    <string name="dog_access_summary_empty">Dog access: load a dog to manage shared access.</string>
+    <string name="dog_access_refresh">Refresh access</string>
+    <string name="dog_access_dog_empty">Dog access: no dog loaded.</string>
+    <string name="dog_access_handlers_title">Shared handlers</string>
+    <string name="dog_access_pending_invites_title">Pending invites</string>
+    <string name="dog_access_transfer_requests_title">Incoming transfers</string>
+    <string name="dog_access_invite_title">Invite a handler</string>
+    <string name="dog_access_invite_identity_hint">Username or email</string>
+    <string name="dog_access_invite_role_hint">Role</string>
+    <string name="dog_access_invite_permission_hint">Permission (view or edit)</string>
+    <string name="dog_access_invite_end_date_hint">End date (optional)</string>
+    <string name="dog_access_send_invite">Send invite</string>
+    <string name="dog_access_transfer_title">Transfer ownership</string>
+    <string name="dog_access_transfer_identity_hint">Receiving username or email</string>
+    <string name="dog_access_transfer_note_hint">Transfer note</string>
+    <string name="dog_access_transfer_keep_access">Keep previous owner access</string>
+    <string name="dog_access_send_transfer">Send transfer request</string>
 </resources>

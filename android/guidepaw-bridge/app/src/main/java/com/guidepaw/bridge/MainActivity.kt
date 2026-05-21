@@ -257,6 +257,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.editHandlerProfileButton).setOnClickListener {
             startActivity(Intent(this, HandlerProfileActivity::class.java))
         }
+        findViewById<Button>(R.id.dogAccessButton).setOnClickListener {
+            startActivity(Intent(this, DogAccessActivity::class.java))
+        }
         findViewById<Button>(R.id.refreshLogsButton).setOnClickListener { refreshTrainingLogs() }
         findViewById<Button>(R.id.requestAccessButton).setOnClickListener { requestHealthConnectAccess() }
         findViewById<Button>(R.id.syncNowButton).setOnClickListener { syncNow() }

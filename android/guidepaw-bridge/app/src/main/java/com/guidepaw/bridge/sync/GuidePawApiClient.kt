@@ -5,6 +5,11 @@ import com.guidepaw.bridge.model.AccessibleDogSummary
 import com.guidepaw.bridge.model.AccountOverview
 import com.guidepaw.bridge.model.HandlerProfileOverview
 import com.guidepaw.bridge.model.HandlerProfileSaveResult
+import com.guidepaw.bridge.model.DogAccessDogSummary
+import com.guidepaw.bridge.model.DogAccessHandlerRow
+import com.guidepaw.bridge.model.DogAccessOverview
+import com.guidepaw.bridge.model.DogAccessPendingInviteRow
+import com.guidepaw.bridge.model.DogAccessTransferRow
 import com.guidepaw.bridge.model.BillingCheckoutResult
 import com.guidepaw.bridge.model.BillingEventRow
 import com.guidepaw.bridge.model.BillingOverview
@@ -145,6 +150,277 @@ class GuidePawApiClient {
                     publicEmail = user.optString("public_email", profile.publicEmail),
                     phone = user.optString("phone", profile.phone),
                     profilePhotoUrl = user.optString("profile_photo_url", profilePhotoUrl),
+                )
+            )
+        }
+    }
+
+    fun fetchDogAccessOverview(config: BridgeConfig, dogId: Long? = null): ApiResult<DogAccessOverview> {
+        val path = buildString {
+            append("/api/dog_access.php")
+            val query = mutableListOf<String>()
+            dogId?.takeIf { it > 0L }?.let { query.add("dog_id=$it") }
+            if (query.isNotEmpty()) {
+                append("?")
+                append(query.joinToString("&"))
+            }
+        }
+        val connection = openApiConnection(config, "GET", path)
+        return decodeJson(connection) { json ->
+            val dogJson = json.optJSONObject("dog")
+            val handlersJson = json.optJSONArray("handlers") ?: JSONArray()
+            val pendingInvitesJson = json.optJSONArray("pending_invites") ?: JSONArray()
+            val transfersJson = json.optJSONArray("incoming_transfers") ?: JSONArray()
+            ApiResult.Success(
+                DogAccessOverview(
+                    activeDogId = json.optLong("active_dog_id", 0L),
+                    selectedDogId = json.optLong("selected_dog_id", dogId ?: 0L),
+                    isOwner = json.optBoolean("is_owner", false),
+                    canEdit = json.optBoolean("can_edit", false),
+                    dog = dogJson?.let {
+                        DogAccessDogSummary(
+                            id = it.optLong("id", 0L),
+                            name = it.optString("name", ""),
+                            ownerUsername = it.optString("owner_username", ""),
+                            ownerDisplayName = it.optString("owner_display_name", ""),
+                            lifecycleStatus = it.optString("lifecycle_status", "active"),
+                            lifecycleNote = it.optString("lifecycle_note", ""),
+                        )
+                    },
+                    handlers = buildList {
+                        for (i in 0 until handlersJson.length()) {
+                            val row = handlersJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessHandlerRow(
+                                    id = row.optLong("id", 0L),
+                                    userId = row.optLong("user_id", 0L),
+                                    username = row.optString("username", ""),
+                                    email = row.optString("email", ""),
+                                    displayName = row.optString("display_name", ""),
+                                    role = row.optString("role", ""),
+                                    permissionLevel = row.optString("permission_level", ""),
+                                    accessEndsAt = row.optString("access_ends_at", ""),
+                                    accessStatus = row.optString("access_status", ""),
+                                )
+                            )
+                        }
+                    },
+                    pendingInvites = buildList {
+                        for (i in 0 until pendingInvitesJson.length()) {
+                            val row = pendingInvitesJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessPendingInviteRow(
+                                    id = row.optLong("id", 0L),
+                                    dogId = row.optLong("dog_id", 0L),
+                                    dogName = row.optString("dog_name", ""),
+                                    ownerUsername = row.optString("owner_username", ""),
+                                    ownerDisplayName = row.optString("owner_display_name", ""),
+                                    role = row.optString("role", ""),
+                                    permissionLevel = row.optString("permission_level", ""),
+                                    accessEndsAt = row.optString("access_ends_at", ""),
+                                    accessStatus = row.optString("access_status", ""),
+                                )
+                            )
+                        }
+                    },
+                    incomingTransfers = buildList {
+                        for (i in 0 until transfersJson.length()) {
+                            val row = transfersJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessTransferRow(
+                                    id = row.optLong("id", 0L),
+                                    dogId = row.optLong("dog_id", 0L),
+                                    dogName = row.optString("dog_name", ""),
+                                    fromUsername = row.optString("from_username", ""),
+                                    fromDisplayName = row.optString("from_display_name", ""),
+                                    keepPreviousOwnerAccess = row.optBoolean("keep_previous_owner_access", false),
+                                    note = row.optString("note", ""),
+                                    requestedAt = row.optString("requested_at", ""),
+                                    status = row.optString("status", ""),
+                                )
+                            )
+                        }
+                    },
+                )
+            )
+        }
+    }
+
+    fun sendDogAccessInvite(
+        config: BridgeConfig,
+        dogId: Long,
+        handlerIdentity: String,
+        role: String,
+        permissionLevel: String,
+        accessEndsAt: String,
+    ): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "grant_access",
+            dogId = dogId,
+            extras = mapOf(
+                "handler_identity" to handlerIdentity,
+                "role" to role,
+                "permission_level" to permissionLevel,
+                "access_ends_at" to accessEndsAt,
+            ),
+        )
+    }
+
+    fun revokeDogAccess(config: BridgeConfig, dogId: Long, handlerId: Long): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "revoke_access",
+            dogId = dogId,
+            extras = mapOf("handler_id" to handlerId.toString()),
+        )
+    }
+
+    fun acceptDogAccessInvite(config: BridgeConfig, dogId: Long, handlerId: Long): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "accept_dog_access_invite",
+            dogId = dogId,
+            extras = mapOf("handler_id" to handlerId.toString()),
+        )
+    }
+
+    fun declineDogAccessInvite(config: BridgeConfig, dogId: Long, handlerId: Long): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "decline_dog_access_invite",
+            dogId = dogId,
+            extras = mapOf("handler_id" to handlerId.toString()),
+        )
+    }
+
+    fun requestDogTransfer(
+        config: BridgeConfig,
+        dogId: Long,
+        transferIdentity: String,
+        keepPreviousOwnerAccess: Boolean,
+        transferNote: String,
+    ): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "request_transfer",
+            dogId = dogId,
+            extras = mapOf(
+                "transfer_identity" to transferIdentity,
+                "keep_previous_owner_access" to if (keepPreviousOwnerAccess) "1" else "0",
+                "transfer_note" to transferNote,
+            ),
+        )
+    }
+
+    fun acceptDogTransfer(config: BridgeConfig, requestId: Long): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "accept_transfer",
+            extras = mapOf("request_id" to requestId.toString()),
+        )
+    }
+
+    fun declineDogTransfer(config: BridgeConfig, requestId: Long): ApiResult<DogAccessOverview> {
+        return postDogAccessAction(
+            config = config,
+            action = "decline_transfer",
+            extras = mapOf("request_id" to requestId.toString()),
+        )
+    }
+
+    private fun postDogAccessAction(
+        config: BridgeConfig,
+        action: String,
+        dogId: Long? = null,
+        extras: Map<String, String> = emptyMap(),
+    ): ApiResult<DogAccessOverview> {
+        val connection = openApiConnection(config, "POST", "/api/dog_access.php")
+        val payload = JSONObject().apply {
+            put("action", action)
+            if (dogId != null && dogId > 0L) put("dog_id", dogId)
+            extras.forEach { (key, value) ->
+                if (value.isNotBlank()) put(key, value)
+            }
+        }
+        connection.outputStream.use { stream ->
+            stream.write(payload.toString().toByteArray(Charsets.UTF_8))
+        }
+        return decodeJson(connection) { json ->
+            val dogJson = json.optJSONObject("dog")
+            val handlersJson = json.optJSONArray("handlers") ?: JSONArray()
+            val pendingInvitesJson = json.optJSONArray("pending_invites") ?: JSONArray()
+            val transfersJson = json.optJSONArray("incoming_transfers") ?: JSONArray()
+            ApiResult.Success(
+                DogAccessOverview(
+                    activeDogId = json.optLong("active_dog_id", 0L),
+                    selectedDogId = json.optLong("selected_dog_id", dogId ?: 0L),
+                    isOwner = json.optBoolean("is_owner", false),
+                    canEdit = json.optBoolean("can_edit", false),
+                    dog = dogJson?.let {
+                        DogAccessDogSummary(
+                            id = it.optLong("id", 0L),
+                            name = it.optString("name", ""),
+                            ownerUsername = it.optString("owner_username", ""),
+                            ownerDisplayName = it.optString("owner_display_name", ""),
+                            lifecycleStatus = it.optString("lifecycle_status", "active"),
+                            lifecycleNote = it.optString("lifecycle_note", ""),
+                        )
+                    },
+                    handlers = buildList {
+                        for (i in 0 until handlersJson.length()) {
+                            val row = handlersJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessHandlerRow(
+                                    id = row.optLong("id", 0L),
+                                    userId = row.optLong("user_id", 0L),
+                                    username = row.optString("username", ""),
+                                    email = row.optString("email", ""),
+                                    displayName = row.optString("display_name", ""),
+                                    role = row.optString("role", ""),
+                                    permissionLevel = row.optString("permission_level", ""),
+                                    accessEndsAt = row.optString("access_ends_at", ""),
+                                    accessStatus = row.optString("access_status", ""),
+                                )
+                            )
+                        }
+                    },
+                    pendingInvites = buildList {
+                        for (i in 0 until pendingInvitesJson.length()) {
+                            val row = pendingInvitesJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessPendingInviteRow(
+                                    id = row.optLong("id", 0L),
+                                    dogId = row.optLong("dog_id", 0L),
+                                    dogName = row.optString("dog_name", ""),
+                                    ownerUsername = row.optString("owner_username", ""),
+                                    ownerDisplayName = row.optString("owner_display_name", ""),
+                                    role = row.optString("role", ""),
+                                    permissionLevel = row.optString("permission_level", ""),
+                                    accessEndsAt = row.optString("access_ends_at", ""),
+                                    accessStatus = row.optString("access_status", ""),
+                                )
+                            )
+                        }
+                    },
+                    incomingTransfers = buildList {
+                        for (i in 0 until transfersJson.length()) {
+                            val row = transfersJson.optJSONObject(i) ?: continue
+                            add(
+                                DogAccessTransferRow(
+                                    id = row.optLong("id", 0L),
+                                    dogId = row.optLong("dog_id", 0L),
+                                    dogName = row.optString("dog_name", ""),
+                                    fromUsername = row.optString("from_username", ""),
+                                    fromDisplayName = row.optString("from_display_name", ""),
+                                    keepPreviousOwnerAccess = row.optBoolean("keep_previous_owner_access", false),
+                                    note = row.optString("note", ""),
+                                    requestedAt = row.optString("requested_at", ""),
+                                    status = row.optString("status", ""),
+                                )
+                            )
+                        }
+                    },
                 )
             )
         }

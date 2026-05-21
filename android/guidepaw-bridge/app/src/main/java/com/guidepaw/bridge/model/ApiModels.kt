@@ -37,6 +37,62 @@ data class HandlerProfileSaveResult(
     val profilePhotoUrl: String,
 )
 
+data class DogAccessDogSummary(
+    val id: Long,
+    val name: String,
+    val ownerUsername: String,
+    val ownerDisplayName: String,
+    val lifecycleStatus: String,
+    val lifecycleNote: String,
+)
+
+data class DogAccessHandlerRow(
+    val id: Long,
+    val userId: Long,
+    val username: String,
+    val email: String,
+    val displayName: String,
+    val role: String,
+    val permissionLevel: String,
+    val accessEndsAt: String,
+    val accessStatus: String,
+)
+
+data class DogAccessPendingInviteRow(
+    val id: Long,
+    val dogId: Long,
+    val dogName: String,
+    val ownerUsername: String,
+    val ownerDisplayName: String,
+    val role: String,
+    val permissionLevel: String,
+    val accessEndsAt: String,
+    val accessStatus: String,
+)
+
+data class DogAccessTransferRow(
+    val id: Long,
+    val dogId: Long,
+    val dogName: String,
+    val fromUsername: String,
+    val fromDisplayName: String,
+    val keepPreviousOwnerAccess: Boolean,
+    val note: String,
+    val requestedAt: String,
+    val status: String,
+)
+
+data class DogAccessOverview(
+    val activeDogId: Long,
+    val selectedDogId: Long,
+    val isOwner: Boolean,
+    val canEdit: Boolean,
+    val dog: DogAccessDogSummary?,
+    val handlers: List<DogAccessHandlerRow>,
+    val pendingInvites: List<DogAccessPendingInviteRow>,
+    val incomingTransfers: List<DogAccessTransferRow>,
+)
+
 data class AccessibleDogSummary(
     val id: Long,
     val name: String,

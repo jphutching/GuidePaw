@@ -13,9 +13,10 @@ Current status:
 - Phase 3 logs and training work is implemented in the Android bridge.
 - Phase 4 public QR/profile and found-dog work is implemented in the Android bridge.
 - Phase 5 profile editing is implemented in the Android bridge.
-- Phase 6 support, paywalls, and add-ons are implemented in the Android bridge.
-- Phase 7 wearable sync is implemented in the Android bridge.
-- Phase 8 public read-only content is implemented in the Android bridge.
+- Phase 6 dog access and invite management is implemented in the Android bridge.
+- Phase 7 support, paywalls, and add-ons are implemented in the Android bridge.
+- Phase 8 wearable sync is implemented in the Android bridge.
+- Phase 9 public read-only content is implemented in the Android bridge.
 - The remaining phases below are the next mobile backlog.
 
 ## Phase 1: Account and auth
@@ -135,7 +136,35 @@ Must support:
 Status:
 - implemented in Android bridge
 
-## Phase 6: Support, paywalls, and add-ons
+## Phase 6: Dog access and invite management
+
+Goal: let the Android app manage co-op handlers and transfer flows.
+
+Backend:
+- dog access overview and invite API
+- pending invite accept/decline API
+- transfer request accept/decline API
+
+Android screens:
+- dog access overview
+- shared handlers list
+- invite form
+- pending invites
+- transfer requests
+
+Must support:
+- send invite by username or email
+- role and permission level
+- access end date
+- revoke access
+- accept or decline pending invites
+- request ownership transfer
+- accept or decline transfer requests
+
+Status:
+- implemented in Android bridge
+
+## Phase 7: Support, paywalls, and add-ons
 
 Goal: keep the monetized flows usable in the app.
 
@@ -161,7 +190,7 @@ Must support:
 Status:
 - implemented in Android bridge
 
-## Phase 7: Wearable sync
+## Phase 8: Wearable sync
 
 Goal: keep the Health Connect bridge working.
 
@@ -184,7 +213,7 @@ Must support:
 Status:
 - implemented in Android bridge
 
-## Phase 8: Public read-only content
+## Phase 9: Public read-only content
 
 Goal: let the app show the public site content without needing a browser.
 
@@ -221,9 +250,10 @@ Status:
 3. Logs and training
 4. QR/public profile and found-dog flow
 5. Profile editing
-6. Support/paywalls/add-ons
-7. Wearable sync
-8. Public read-only content
+6. Dog access and invite management
+7. Support/paywalls/add-ons
+8. Wearable sync
+9. Public read-only content
 
 ## Definition of done
 

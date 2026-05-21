@@ -8,6 +8,7 @@ What it does:
 - stores the pairing endpoint and token on the phone
 - loads the connected GuidePaw account and accessible dogs from the API
 - loads and edits the handler profile from the API
+- manages co-op dog access, pending invites, and transfer requests
 - lists, views, and edits training logs for the active dog
 - surfaces training suggestions from the backend
 - loads the public QR profile payload for the active dog
