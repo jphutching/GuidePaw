@@ -1031,6 +1031,11 @@ class MainActivity : AppCompatActivity() {
                 append(String.format(Locale.US, "%.0f", overview.summary.avgBatteryPercent))
                 append("%")
             }
+            if (overview.summary.totalCaloriesBurned != null) {
+                append(" • Calories: ")
+                append(String.format(Locale.US, "%.0f", overview.summary.totalCaloriesBurned))
+                append(" kcal")
+            }
             if (overview.summary.avgDistanceMiles != null) {
                 append(" • Avg distance: ")
                 append(String.format(Locale.US, "%.2f", overview.summary.avgDistanceMiles))
@@ -1124,6 +1129,11 @@ class MainActivity : AppCompatActivity() {
                         append(" • Distance: ")
                         append(String.format(Locale.US, "%.2f", event.distanceMiles))
                         append(" mi")
+                    }
+                    if (event.totalCaloriesBurned != null) {
+                        append(" • Calories: ")
+                        append(String.format(Locale.US, "%.0f", event.totalCaloriesBurned))
+                        append(" kcal")
                     }
                     if (event.avgHeartRate != null) {
                         append(" • HR: ")

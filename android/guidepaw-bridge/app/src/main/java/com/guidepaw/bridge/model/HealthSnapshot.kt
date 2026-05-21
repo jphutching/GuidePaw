@@ -4,6 +4,7 @@ data class HealthSnapshot(
     val recordedForDate: String,
     val steps: Long?,
     val distanceMiles: Double?,
+    val totalCaloriesBurned: Double?,
     val avgHeartRate: Long?,
     val minHeartRate: Long?,
     val maxHeartRate: Long?,

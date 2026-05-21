@@ -470,6 +470,7 @@ class GuidePawApiClient {
             put("recorded_for_date", snapshot.recordedForDate)
             put("steps", snapshot.steps)
             put("distance_miles", snapshot.distanceMiles)
+            put("total_calories_burned", snapshot.totalCaloriesBurned)
             put("avg_heart_rate", snapshot.avgHeartRate)
             put("resting_heart_rate", snapshot.restingHeartRate)
             put("sleep_hours", snapshot.sleepHours)
@@ -600,6 +601,7 @@ class GuidePawApiClient {
             totalPlayMinutes = json.optInt("total_play_minutes", 0),
             avgBatteryPercent = if (json.isNull("avg_battery_percent")) null else json.optDouble("avg_battery_percent"),
             avgDistanceMiles = if (json.isNull("avg_distance_miles")) null else json.optDouble("avg_distance_miles"),
+            totalCaloriesBurned = if (json.isNull("avg_total_calories_burned")) null else json.optDouble("avg_total_calories_burned"),
             avgHeartRate = if (json.isNull("avg_heart_rate")) null else json.optDouble("avg_heart_rate"),
             avgRestingHeartRate = if (json.isNull("avg_resting_heart_rate")) null else json.optDouble("avg_resting_heart_rate"),
             avgSleepHours = if (json.isNull("avg_sleep_hours")) null else json.optDouble("avg_sleep_hours"),
@@ -641,6 +643,7 @@ class GuidePawApiClient {
             playMinutes = if (row.isNull("play_minutes")) null else row.optInt("play_minutes"),
             batteryPercent = if (row.isNull("battery_percent")) null else row.optInt("battery_percent"),
             distanceMiles = if (row.isNull("distance_miles")) null else row.optDouble("distance_miles"),
+            totalCaloriesBurned = if (row.isNull("total_calories_burned")) null else row.optDouble("total_calories_burned"),
             avgHeartRate = if (row.isNull("avg_heart_rate")) null else row.optDouble("avg_heart_rate"),
             restingHeartRate = if (row.isNull("resting_heart_rate")) null else row.optDouble("resting_heart_rate"),
             sleepHours = if (row.isNull("sleep_hours")) null else row.optDouble("sleep_hours"),

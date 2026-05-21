@@ -371,6 +371,7 @@ $csrf = generateCsrfToken();
                 <div><label>Rest minutes</label><input type="number" name="rest_minutes" min="0" step="1"></div>
                 <div><label>Play minutes</label><input type="number" name="play_minutes" min="0" step="1"></div>
                 <div><label>Distance miles</label><input type="number" name="distance_miles" min="0" step="0.01"></div>
+                <div><label>Total calories burned</label><input type="number" name="total_calories_burned" min="0" step="0.1"></div>
                 <div><label>Avg heart rate</label><input type="number" name="avg_heart_rate" min="0" step="1"></div>
                 <div><label>Resting heart rate</label><input type="number" name="resting_heart_rate" min="0" step="1"></div>
                 <div><label>Sleep hours</label><input type="number" name="sleep_hours" min="0" step="0.1"></div>
@@ -380,7 +381,7 @@ $csrf = generateCsrfToken();
             <label>Notes</label>
             <textarea name="notes" placeholder="What happened? Was the dog calmer on rest days, or more active after outings?"></textarea>
             <label>Paste wearable JSON or key/value text</label>
-            <textarea name="wearable_payload" placeholder='{"source":"fitbit","steps":8421,"active_minutes":77,"distance_miles":3.9,"avg_heart_rate":92,"sleep_hours":7.4,"summary_text":"Long walk and calm evening."}'></textarea>
+                <textarea name="wearable_payload" placeholder='{"source":"fitbit","steps":8421,"active_minutes":77,"distance_miles":3.9,"total_calories_burned":512.4,"avg_heart_rate":92,"sleep_hours":7.4,"summary_text":"Long walk and calm evening."}'></textarea>
             <button type="submit">Save Snapshot</button>
         </form>
     </div>
@@ -476,6 +477,7 @@ $csrf = generateCsrfToken();
                     <th>Rest</th>
                     <th>Play</th>
                     <th>Distance</th>
+                    <th>Calories</th>
                     <th>HR</th>
                     <th>Rest HR</th>
                     <th>Sleep</th>
@@ -492,6 +494,7 @@ $csrf = generateCsrfToken();
                         <td><?= h((string) ($event['rest_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['play_minutes'] ?? '')) ?></td>
                         <td><?= h((string) ($event['distance_miles'] ?? '')) ?></td>
+                        <td><?= h((string) ($event['total_calories_burned'] ?? '')) ?></td>
                         <td><?= h((string) ($event['avg_heart_rate'] ?? '')) ?></td>
                         <td><?= h((string) ($event['resting_heart_rate'] ?? '')) ?></td>
                         <td><?= h((string) ($event['sleep_hours'] ?? '')) ?></td>
