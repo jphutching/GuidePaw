@@ -32,7 +32,7 @@ function gpDogAccessDisplayName(array $user): string
 
 function gpDogAccessLink(array $dog): string
 {
-    return rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/dog_access.php?dog_id=' . (int) ($dog['id'] ?? 0);
+    return rtrim((string) gpEnv('APP_URL', 'https://guidepaw.app'), '/') . '/dog_access.php?dog_id=' . (int) ($dog['id'] ?? 0);
 }
 
 function gpDogAccessFetchDogById(PDO $pdo, int $dogId): ?array

@@ -31,7 +31,7 @@ if (!function_exists('gpStripeSiteBaseUrl')) {
             return $scheme . '://' . $host;
         }
 
-        return 'https://beta.guidepaw.app';
+        return 'https://guidepaw.app';
     }
 }
 

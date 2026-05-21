@@ -24,7 +24,7 @@ if (!function_exists('gpStripeWebhookEndpointUrl')) {
         if ($base === '') {
             $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
             $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
-            $base = $host !== '' ? $scheme . '://' . $host : 'https://beta.guidepaw.app';
+            $base = $host !== '' ? $scheme . '://' . $host : 'https://guidepaw.app';
         }
 
         return rtrim($base, '/') . '/stripe_webhook.php';

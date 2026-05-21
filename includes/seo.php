@@ -5,7 +5,7 @@ if (!function_exists('guidepawSeoBaseUrl')) {
     function guidepawSeoBaseUrl(): string
     {
         $base = trim((string) appUrl());
-        return $base !== '' ? rtrim($base, '/') : 'https://beta.guidepaw.app';
+        return $base !== '' ? rtrim($base, '/') : 'https://guidepaw.app';
     }
 }
 

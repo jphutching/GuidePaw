@@ -43,7 +43,9 @@ http_response_code(200);
 <div class="wrap">
     <div class="card">
         <h1>GuidePaw Bridge APK</h1>
-        <p class="small">This is the phone companion for your current Android device. It reads Health Connect and syncs wearable summaries back to GuidePaw.</p>
+        <p class="small">This is the full Android companion build for GuidePaw. It includes the wearable sync bridge plus account, dog access, notifications, public guide viewing, and profile tools.</p>
+        <p class="small"><strong>Disclaimer:</strong> this build is not a final Google Play release. It may or may not work properly yet, and it is meant for testing only.</p>
+        <p class="small">The published APK file is served from <code>/bridge/GuidePaw-Bridge-debug.apk</code> on the site. In the repo, the latest debug output is under <code>android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk</code>.</p>
         <p class="small">
             Prerequisites on the phone:
             <a class="button" style="margin-right:8px;" href="https://play.google.com/store/apps/details?id=com.sec.android.app.shealth" target="_blank" rel="noopener noreferrer">Samsung Health</a>

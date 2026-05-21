@@ -37,7 +37,7 @@ $bridgeLink = '';
 $bridgeTokenLabel = '';
 $bridgeDogName = '';
 $bridgeTokenIssued = false;
-$appBaseUrl = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'), '/');
+$appBaseUrl = rtrim((string) appEnv('APP_URL', 'https://guidepaw.app'), '/');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');

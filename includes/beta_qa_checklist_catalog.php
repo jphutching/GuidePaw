@@ -9,7 +9,7 @@ function gpBetaQaChecklistItems(): array
             'title' => 'Deploy, Render, and Environment',
             'description' => 'Confirm the beta environment is on the right service/database plans and required env vars are still present.',
             'items' => [
-                ['id' => 'render_deploy_complete', 'text' => 'Render redeploy completed successfully after latest GitHub commits.', 'expected' => 'beta.guidepaw.app loads without application error.'],
+                ['id' => 'render_deploy_complete', 'text' => 'Render redeploy completed successfully after latest GitHub commits.', 'expected' => 'guidepaw.app loads without application error.'],
                 ['id' => 'render_web_starter', 'text' => 'Render web service plan is Starter.', 'expected' => 'render.yaml and Render dashboard show the web service on starter.'],
                 ['id' => 'render_db_basic', 'text' => 'Render PostgreSQL database plan is still basic-256mb, not starter.', 'expected' => 'Database plan has not been accidentally downgraded or changed.'],
                 ['id' => 'robots_txt', 'text' => 'robots.txt is present for search engines.', 'expected' => 'robots.txt lists internal disallows and points at the sitemap.'],

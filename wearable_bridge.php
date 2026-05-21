@@ -16,7 +16,7 @@ $bridgeTitle = $valid ? 'Pair GuidePaw on this phone' : 'Wearable pairing link';
 $bridgeMessage = $valid
     ? 'This page opens from the QR code so the phone shows a normal pairing screen instead of a raw text note.'
     : 'Create a connect code from Wearable Integrations first.';
-$bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/api/wearables.php';
+$bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://guidepaw.app'), '/') . '/api/wearables.php';
 $bridgeAppLink = $valid
     ? 'guidepawbridge://pair?endpoint=' . rawurlencode($bridgeEndpoint) . '&token=' . rawurlencode($token) . '&dog_id=' . rawurlencode((string) $dogId) . '&dog_name=' . rawurlencode((string) $tokenRow['token_label']) . '&source=health_connect'
     : '';

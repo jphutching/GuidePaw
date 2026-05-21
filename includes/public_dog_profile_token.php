@@ -23,6 +23,6 @@ function publicDogProfileTokenValid(int $dogId, string $token): bool
 function publicDogProfileUrl(int $dogId): string
 {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'beta.guidepaw.app';
+    $host = $_SERVER['HTTP_HOST'] ?? 'guidepaw.app';
     return $scheme . '://' . $host . '/public_dog_profile.php?dog=' . $dogId . '&token=' . publicDogProfileToken($dogId);
 }

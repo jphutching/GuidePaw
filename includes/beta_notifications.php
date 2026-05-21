@@ -27,7 +27,7 @@ function betaAdminNotificationBody(array $request): string
     $reason = (string) ($request['reason'] ?? 'Not provided');
     $status = (string) ($request['status'] ?? 'pending');
     $createdAt = (string) ($request['created_at'] ?? date('Y-m-d H:i:s'));
-    $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_beta_requests.php';
+    $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://guidepaw.app'), '/') . '/admin_beta_requests.php';
 
     return "A new GuidePaw beta access request was submitted.\n\n" .
         "Name: {$fullName}\n" .
@@ -46,7 +46,7 @@ function betaAdminTelegramMessage(array $request): string
     $email = (string) ($request['email'] ?? 'Not provided');
     $phone = (string) ($request['phone'] ?? 'Not provided');
     $reason = trim((string) ($request['reason'] ?? ''));
-    $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://beta.guidepaw.app'), '/') . '/admin_beta_requests.php';
+    $adminUrl = rtrim((string) gpEnv('APP_URL', 'https://guidepaw.app'), '/') . '/admin_beta_requests.php';
 
     $message = "🐾 New GuidePaw beta request\n\n" .
         "Name: {$fullName}\n" .
