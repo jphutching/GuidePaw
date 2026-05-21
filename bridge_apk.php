@@ -2,6 +2,7 @@
 require_once __DIR__ . '/includes/brand_header.php';
 
 $apkCandidates = [
+    __DIR__ . '/bridge/GuidePaw-Companion-debug.apk',
     __DIR__ . '/android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk',
     __DIR__ . '/android/guidepaw-bridge/app/build/intermediates/apk/debug/app-debug.apk',
     __DIR__ . '/bridge/GuidePaw-Bridge-debug.apk',
@@ -16,7 +17,7 @@ foreach ($apkCandidates as $candidate) {
 
 if ($apkPath !== '' && isset($_GET['download'])) {
     header('Content-Type: application/vnd.android.package-archive');
-    header('Content-Disposition: attachment; filename="GuidePaw-Bridge-debug.apk"');
+    header('Content-Disposition: attachment; filename="GuidePaw-Companion-debug.apk"');
     header('Content-Length: ' . filesize($apkPath));
     readfile($apkPath);
     exit;
@@ -29,7 +30,7 @@ http_response_code(200);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GuidePaw Bridge APK</title>
+    <title>GuidePaw Companion APK</title>
     <style>
         body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
         .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
@@ -42,12 +43,12 @@ http_response_code(200);
 <?php guidepawBrandHeader(); ?>
 <div class="wrap">
     <div class="card">
-        <h1>GuidePaw Bridge APK</h1>
-        <p class="small">This is the full Android companion build for GuidePaw. It includes the wearable sync bridge plus account, dog access, notifications, public guide viewing, and profile tools.</p>
+        <h1>GuidePaw Companion APK</h1>
+        <p class="small">This is the full Android companion build for GuidePaw. It includes account, dogs, logs, public guide viewing, notifications, billing, profile tools, and wearable sync.</p>
         <p class="small"><strong>Disclaimer:</strong> this build is not a final Google Play release. It may or may not work properly yet, and it is meant for testing only.</p>
         <p class="small">
             The published APK file is served from
-            <a href="/bridge/GuidePaw-Bridge-debug.apk">/bridge/GuidePaw-Bridge-debug.apk</a>
+            <a href="/bridge/GuidePaw-Companion-debug.apk">/bridge/GuidePaw-Companion-debug.apk</a>
             on the site. In the repo, the latest debug output is under
             <code>android/guidepaw-bridge/app/build/outputs/apk/debug/app-debug.apk</code>.
         </p>
@@ -57,9 +58,9 @@ http_response_code(200);
             <a class="button" href="https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata" target="_blank" rel="noopener noreferrer">Health Connect</a>
         </p>
         <?php if ($apkPath !== ''): ?>
-            <p><a class="button" href="bridge_apk.php?download=1">Download Bridge APK</a></p>
+            <p><a class="button" href="bridge_apk.php?download=1">Download Companion APK</a></p>
         <?php else: ?>
-            <p class="small">The APK is not published on this server yet. Once it is available, use the download button above to install it on the phone you are pairing.</p>
+            <p class="small">The APK is not published on this server yet. Once it is available, use the download button above to install it on the phone you are connecting.</p>
         <?php endif; ?>
         <p><a class="button" href="wearable_integrations.php">Back to wearable setup</a></p>
     </div>

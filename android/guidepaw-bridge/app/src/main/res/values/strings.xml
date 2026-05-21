@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">GuidePaw Bridge</string>
-    <string name="bridge_intro">Pair the phone once, grant Health Connect access, and let the app sync steps, distance, calories burned, sleep, heart-rate, and resting-heart-rate summaries automatically.</string>
+    <string name="app_name">GuidePaw Companion</string>
+    <string name="bridge_intro">Sign in once, connect Health Connect, and let the app keep GuidePaw in sync with your dogs, logs, profile, notifications, billing, and wearable data.</string>
     <string name="login_section_label">Sign in to GuidePaw</string>
     <string name="username_hint">Username or email</string>
     <string name="password_hint">Password</string>
@@ -13,19 +13,19 @@
     <string name="dog_id_hint">Dog ID</string>
     <string name="dog_name_hint">Dog name</string>
     <string name="source_hint">Source (health_connect)</string>
-    <string name="save_pairing">Save pairing</string>
+    <string name="save_pairing">Save connection</string>
     <string name="refresh_account">Refresh account</string>
-    <string name="open_bridge">Open pairing page</string>
+    <string name="open_bridge">Open GuidePaw</string>
     <string name="request_health_connect">Request Health Connect access</string>
     <string name="sync_now">Sync now</string>
     <string name="manage_access">Open system settings</string>
     <string name="auto_sync">Enable automatic sync every 6 hours</string>
-    <string name="status_idle">Status: waiting for pairing</string>
+    <string name="status_idle">Status: waiting for connection</string>
     <string name="last_sync_never">Last sync: never</string>
-    <string name="account_summary_empty">Account summary: save pairing to load the connected GuidePaw account.</string>
+    <string name="account_summary_empty">Account summary: save connection to load the connected GuidePaw account.</string>
     <string name="account_summary_loaded">Connected to %1$s | DB: %2$s | schema v%3$d</string>
     <string name="account_summary_error">Account summary could not load: %1$s</string>
-    <string name="dogs_summary_empty">Dogs summary: no pairing loaded yet.</string>
+    <string name="dogs_summary_empty">Dogs summary: no connection loaded yet.</string>
     <string name="dogs_summary_none">Dogs summary: no accessible dogs returned by the API.</string>
     <string name="dogs_summary_loaded">Accessible dogs (%1$d):</string>
     <string name="dogs_summary_error">Dogs summary could not load: %1$s</string>

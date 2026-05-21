@@ -242,7 +242,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Training logs: save pairing and choose a dog to load history."
+            android:text="Training logs: save your connection and choose a dog to load history."
             android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <TextView
@@ -385,7 +385,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Wearable setup: save the tracker and watch pairing on GuidePaw to see it here."
+            android:text="Wearable setup: save the tracker and watch setup on GuidePaw to see it here."
             android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <TextView

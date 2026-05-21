@@ -77,8 +77,8 @@ class HandlerProfileActivity : AppCompatActivity() {
 
     private fun loadProfile() {
         val config = prefs.load() ?: run {
-            statusText.text = "Save pairing first."
-            summaryText.text = "Handler profile: no pairing loaded yet."
+            statusText.text = "Save connection first."
+            summaryText.text = "Handler profile: no connection loaded yet."
             return
         }
 
@@ -128,7 +128,7 @@ class HandlerProfileActivity : AppCompatActivity() {
 
     private fun saveProfile() {
         val config = prefs.load() ?: run {
-            statusText.text = "Save pairing first."
+            statusText.text = "Save connection first."
             return
         }
         val baseProfile = loadedProfile ?: HandlerProfileOverview(

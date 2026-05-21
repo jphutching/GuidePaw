@@ -945,7 +945,7 @@ class GuidePawApiClient {
             put("resting_heart_rate", snapshot.restingHeartRate)
             put("sleep_hours", snapshot.sleepHours)
             put("summary_text", snapshot.summaryText)
-            put("notes", "Synced automatically from GuidePaw Bridge.")
+            put("notes", "Synced automatically from GuidePaw Companion.")
         }
 
         connection.outputStream.use { stream ->

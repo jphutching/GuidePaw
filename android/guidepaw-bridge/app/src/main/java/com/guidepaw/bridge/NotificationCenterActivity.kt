@@ -69,7 +69,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         refreshButton.setOnClickListener { loadNotifications() }
         markAllReadButton.setOnClickListener {
             val config = prefs.load() ?: run {
-                updateStatus("Save the pairing code first.")
+                updateStatus("Save the connection first.")
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -87,7 +87,7 @@ class NotificationCenterActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val config = prefs.load() ?: run {
-                updateStatus("Save the pairing code first.")
+                updateStatus("Save the connection first.")
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -100,7 +100,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         }
         savePrefsButton.setOnClickListener {
             val config = prefs.load() ?: run {
-                updateStatus("Save the pairing code first.")
+                updateStatus("Save the connection first.")
                 return@setOnClickListener
             }
             lifecycleScope.launch {
@@ -123,8 +123,8 @@ class NotificationCenterActivity : AppCompatActivity() {
 
     private fun loadNotifications() {
         val config = prefs.load() ?: run {
-            summaryText.text = "Notifications load once you save the pairing code."
-            statusText.text = "Status: save the pairing code first."
+            summaryText.text = "Notifications load once you save the connection."
+            statusText.text = "Status: save the connection first."
             renderOverview(null)
             return
         }
@@ -155,7 +155,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         inboxContainer.removeAllViews()
 
         if (overview == null) {
-            summaryText.text = "Open the notification center after saving your pairing code."
+            summaryText.text = "Open the notification center after saving your connection."
             accessSwitch.isChecked = true
             careSwitch.isChecked = true
             adminSwitch.isChecked = true
@@ -242,7 +242,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         accept: Boolean,
     ) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         val invite = overview.pendingInvites.firstOrNull { it.id == handlerId } ?: return
@@ -350,7 +350,7 @@ class NotificationCenterActivity : AppCompatActivity() {
 
     private fun openNotificationAction(notification: com.guidepaw.bridge.model.NotificationRow) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         val actionUrl = resolveGuidepawUrl(config, notification.actionUrl)
@@ -380,7 +380,7 @@ class NotificationCenterActivity : AppCompatActivity() {
 
     private fun markNotificationRead(notification: com.guidepaw.bridge.model.NotificationRow) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         lifecycleScope.launch {
@@ -394,7 +394,7 @@ class NotificationCenterActivity : AppCompatActivity() {
 
     private fun deleteNotification(notificationId: Long) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         lifecycleScope.launch {

@@ -73,8 +73,8 @@ class DogAccessActivity : AppCompatActivity() {
 
     private fun refreshDogAccess() {
         val config = prefs.load() ?: run {
-            statusText.text = "Save pairing first."
-            summaryText.text = "Dog access: no pairing loaded yet."
+            statusText.text = "Save connection first."
+            summaryText.text = "Dog access: no connection loaded yet."
             return
         }
         lifecycleScope.launch {
@@ -335,7 +335,7 @@ class DogAccessActivity : AppCompatActivity() {
 
     private fun sendInvite() {
         val config = prefs.load() ?: run {
-            statusText.text = "Save pairing first."
+            statusText.text = "Save connection first."
             return
         }
         val overview = currentOverview ?: run {
@@ -384,7 +384,7 @@ class DogAccessActivity : AppCompatActivity() {
 
     private fun requestTransfer() {
         val config = prefs.load() ?: run {
-            statusText.text = "Save pairing first."
+            statusText.text = "Save connection first."
             return
         }
         val overview = currentOverview ?: run {

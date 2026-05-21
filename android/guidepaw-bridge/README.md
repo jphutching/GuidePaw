@@ -1,11 +1,11 @@
-# GuidePaw Bridge
+# GuidePaw Companion
 
-Minimal Android companion app for GuidePaw wearable sync.
+Android companion app for GuidePaw daily-use workflows.
 
 What it does:
-- accepts a pairing link from `wearable_bridge.php`
+- accepts a connection link from `wearable_bridge.php`
 - can sign in directly with username/password and save a token on the phone
-- stores the pairing endpoint and token on the phone
+- stores the connection endpoint and token on the phone
 - loads the connected GuidePaw account and accessible dogs from the API
 - loads and edits the handler profile from the API
 - manages co-op dog access, pending invites, and transfer requests
@@ -32,7 +32,7 @@ Setup:
 1. Open the project in Android Studio.
 2. Let Gradle sync.
 3. Install on an Android phone with Samsung Health and Health Connect.
-4. Pair from the GuidePaw wearable bridge page.
+4. Connect from the GuidePaw wearable bridge page.
 
 Notes:
 - This is a phone-only companion app.

@@ -324,7 +324,7 @@ class MainActivity : AppCompatActivity() {
         if (source.isNotBlank()) sourceInput.setText(source)
 
         saveConfigFromForm(showMessage = false)
-        updateStatus("Pairing link loaded. Save the pairing code, then grant Health Connect access.")
+        updateStatus("Connection link loaded. Save the code, then grant Health Connect access.")
     }
 
     private fun loadStoredConfig() {
@@ -401,7 +401,7 @@ class MainActivity : AppCompatActivity() {
         val source = sourceInput.text.toString().trim().ifBlank { "health_connect" }
 
         if (endpoint.isBlank() || token.isBlank() || dogId <= 0L) {
-            if (showMessage) updateStatus("Enter the endpoint, pairing code, and dog ID.")
+            if (showMessage) updateStatus("Enter the endpoint, connection code, and dog ID.")
             return
         }
 
@@ -415,7 +415,7 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
-        if (showMessage) updateStatus("Pairing saved. You can request access and sync now.")
+        if (showMessage) updateStatus("Connection saved. You can request access and sync now.")
         refreshAccountSummary()
     }
 
@@ -427,7 +427,7 @@ class MainActivity : AppCompatActivity() {
     private fun syncNow() {
         val config = prefs.load()
         if (config == null) {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         if (config.dogId <= 0L) {
@@ -561,11 +561,11 @@ class MainActivity : AppCompatActivity() {
     private fun openBridgeLink() {
         val config = prefs.load()
         if (config == null) {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         if (config.dogId <= 0L) {
-            updateStatus("Choose a dog before opening the pairing page.")
+            updateStatus("Choose a dog before opening the GuidePaw page.")
             return
         }
         val uri = Uri.parse(
@@ -574,7 +574,7 @@ class MainActivity : AppCompatActivity() {
         runCatching {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
         }.onFailure {
-            updateStatus("Open the pairing link from the GuidePaw page instead.")
+            updateStatus("Open the GuidePaw link from the GuidePaw page instead.")
         }
     }
 
@@ -613,7 +613,7 @@ class MainActivity : AppCompatActivity() {
                         updateStatus("Switching active dog...")
                         val config = prefs.load()
                         if (config == null) {
-                            updateStatus("Save the pairing code first.")
+                            updateStatus("Save the connection first.")
                             return@launch
                         }
                         val result = withContext(Dispatchers.IO) {
@@ -709,7 +709,7 @@ class MainActivity : AppCompatActivity() {
         trainingLogsListContainer.removeAllViews()
         if (feed == null) {
             trainingSuggestionsText.text = "Training suggestions: sign in and load a dog to see next-step guidance."
-            trainingLogsSummaryText.text = "Training logs: save pairing and choose a dog to load history."
+            trainingLogsSummaryText.text = "Training logs: save your connection and choose a dog to load history."
             trainingLogDetailText.text = "Select a log to view detail."
             clearTrainingLogEditor()
             return
@@ -787,7 +787,7 @@ class MainActivity : AppCompatActivity() {
                     lifecycleScope.launch {
                         val config = prefs.load()
                         if (config == null) {
-                            updateStatus("Save the pairing code first.")
+                            updateStatus("Save the connection first.")
                             return@launch
                         }
                         updateStatus("Loading log detail...")
@@ -952,7 +952,7 @@ class MainActivity : AppCompatActivity() {
     private fun saveTrainingLogEntry() {
         val config = prefs.load()
         if (config == null) {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
 
@@ -1022,7 +1022,7 @@ class MainActivity : AppCompatActivity() {
         if (overview == null) {
             wearableSummaryText.text = "Wearable sync: load a dog to see recent Health Connect snapshots."
             wearableStatusText.text = "Status: waiting for wearable data"
-            wearableSetupText.text = "Wearable setup: save the tracker and watch pairing on GuidePaw to see it here."
+            wearableSetupText.text = "Wearable setup: save the tracker and watch setup on GuidePaw to see it here."
             wearableEventsSummaryText.text = "Recent syncs: none loaded."
             wearableRefreshButton.isEnabled = false
             return
@@ -1548,7 +1548,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSupportCheckout(supportType: String) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         lifecycleScope.launch {
@@ -1565,7 +1565,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startServiceCheckout(service: com.guidepaw.bridge.model.BillingServiceRow) {
         val config = prefs.load() ?: run {
-            updateStatus("Save the pairing code first.")
+            updateStatus("Save the connection first.")
             return
         }
         if (service.active) {

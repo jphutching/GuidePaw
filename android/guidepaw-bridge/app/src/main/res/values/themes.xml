@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.GuidePawBridge" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.GuidePawCompanion" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">#0d6efd</item>
         <item name="colorPrimaryVariant">#0b5ed7</item>
         <item name="colorOnPrimary">#ffffff</item>
