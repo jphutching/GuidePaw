@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">GuidePaw Companion</string>
-    <string name="bridge_intro">Sign in once, connect Health Connect, and let the app keep GuidePaw in sync with your dogs, logs, profile, notifications, billing, and wearable data.</string>
+    <string name="companion_intro">Sign in once, connect Health Connect, and let the app keep GuidePaw in sync with your dogs, logs, profile, notifications, billing, and wearable data.</string>
     <string name="login_section_label">Sign in to GuidePaw</string>
     <string name="username_hint">Username or email</string>
     <string name="password_hint">Password</string>
@@ -9,13 +9,13 @@
     <string name="token_label_hint">Token label</string>
     <string name="login_button">Sign in and save token</string>
     <string name="endpoint_hint">GuidePaw API endpoint</string>
-    <string name="token_hint">Pairing code</string>
+    <string name="token_hint">Connection code</string>
     <string name="dog_id_hint">Dog ID</string>
     <string name="dog_name_hint">Dog name</string>
     <string name="source_hint">Source (health_connect)</string>
-    <string name="save_pairing">Save connection</string>
+    <string name="save_connection">Save connection</string>
     <string name="refresh_account">Refresh account</string>
-    <string name="open_bridge">Open GuidePaw</string>
+    <string name="open_companion">Open GuidePaw</string>
     <string name="request_health_connect">Request Health Connect access</string>
     <string name="sync_now">Sync now</string>
     <string name="manage_access">Open system settings</string>

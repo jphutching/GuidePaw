@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GuidePawBridge"
+rootProject.name = "GuidePawCompanion"
 include(":app")

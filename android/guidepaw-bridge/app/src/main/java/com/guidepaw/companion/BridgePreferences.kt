@@ -1,7 +1,7 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.content.Context
-import com.guidepaw.bridge.model.BridgeConfig
+import com.guidepaw.companion.model.BridgeConfig
 
 class BridgePreferences(context: Context) {
     private val prefs = context.getSharedPreferences("guidepaw_bridge", Context.MODE_PRIVATE)

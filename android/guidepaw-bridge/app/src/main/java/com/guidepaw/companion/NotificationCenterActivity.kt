@@ -1,4 +1,4 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.content.Intent
 import android.net.Uri
@@ -10,11 +10,11 @@ import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.guidepaw.bridge.model.BridgeConfig
-import com.guidepaw.bridge.model.NotificationOverview
-import com.guidepaw.bridge.model.NotificationPreferenceState
-import com.guidepaw.bridge.sync.ApiResult
-import com.guidepaw.bridge.sync.GuidePawApiClient
+import com.guidepaw.companion.model.BridgeConfig
+import com.guidepaw.companion.model.NotificationOverview
+import com.guidepaw.companion.model.NotificationPreferenceState
+import com.guidepaw.companion.sync.ApiResult
+import com.guidepaw.companion.sync.GuidePawApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -201,7 +201,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         }
     }
 
-    private fun createInviteCard(overview: NotificationOverview, invite: com.guidepaw.bridge.model.DogAccessPendingInviteRow): LinearLayout {
+    private fun createInviteCard(overview: NotificationOverview, invite: com.guidepaw.companion.model.DogAccessPendingInviteRow): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(20, 20, 20, 20)
@@ -278,7 +278,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         }
     }
 
-    private fun createNotificationCard(notification: com.guidepaw.bridge.model.NotificationRow): LinearLayout {
+    private fun createNotificationCard(notification: com.guidepaw.companion.model.NotificationRow): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(20, 20, 20, 20)
@@ -348,7 +348,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         return card
     }
 
-    private fun openNotificationAction(notification: com.guidepaw.bridge.model.NotificationRow) {
+    private fun openNotificationAction(notification: com.guidepaw.companion.model.NotificationRow) {
         val config = prefs.load() ?: run {
             updateStatus("Save the connection first.")
             return
@@ -378,7 +378,7 @@ class NotificationCenterActivity : AppCompatActivity() {
         }
     }
 
-    private fun markNotificationRead(notification: com.guidepaw.bridge.model.NotificationRow) {
+    private fun markNotificationRead(notification: com.guidepaw.companion.model.NotificationRow) {
         val config = prefs.load() ?: run {
             updateStatus("Save the connection first.")
             return

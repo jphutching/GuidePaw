@@ -1,4 +1,4 @@
-package com.guidepaw.bridge.model
+package com.guidepaw.companion.model
 
 data class HealthSnapshot(
     val recordedForDate: String,

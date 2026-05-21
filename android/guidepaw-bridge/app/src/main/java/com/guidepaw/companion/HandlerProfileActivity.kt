@@ -1,4 +1,4 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.os.Bundle
 import android.widget.Button
@@ -7,10 +7,10 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.guidepaw.bridge.model.BridgeConfig
-import com.guidepaw.bridge.model.HandlerProfileOverview
-import com.guidepaw.bridge.sync.ApiResult
-import com.guidepaw.bridge.sync.GuidePawApiClient
+import com.guidepaw.companion.model.BridgeConfig
+import com.guidepaw.companion.model.HandlerProfileOverview
+import com.guidepaw.companion.sync.ApiResult
+import com.guidepaw.companion.sync.GuidePawApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

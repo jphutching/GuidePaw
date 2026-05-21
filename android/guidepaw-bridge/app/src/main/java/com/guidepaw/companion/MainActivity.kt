@@ -1,4 +1,4 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -26,11 +26,11 @@ import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.lifecycle.lifecycleScope
-import com.guidepaw.bridge.model.BridgeConfig
-import com.guidepaw.bridge.sync.ApiResult
-import com.guidepaw.bridge.sync.GuidePawApiClient
-import com.guidepaw.bridge.sync.GuidePawSyncScheduler
-import com.guidepaw.bridge.sync.HealthConnectRepository
+import com.guidepaw.companion.model.BridgeConfig
+import com.guidepaw.companion.sync.ApiResult
+import com.guidepaw.companion.sync.GuidePawApiClient
+import com.guidepaw.companion.sync.GuidePawSyncScheduler
+import com.guidepaw.companion.sync.HealthConnectRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,9 +132,9 @@ class MainActivity : AppCompatActivity() {
     )
     private var selectedTrainingLogId: Long? = null
     private var selectedTrainingSkills: LinkedHashSet<String> = linkedSetOf()
-    private var currentPublicProfile: com.guidepaw.bridge.model.PublicProfileOverview? = null
-    private var currentBillingOverview: com.guidepaw.bridge.model.BillingOverview? = null
-    private var currentWearableOverview: com.guidepaw.bridge.model.WearableOverview? = null
+    private var currentPublicProfile: com.guidepaw.companion.model.PublicProfileOverview? = null
+    private var currentBillingOverview: com.guidepaw.companion.model.BillingOverview? = null
+    private var currentWearableOverview: com.guidepaw.companion.model.WearableOverview? = null
 
     private val requiredPermissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
@@ -309,7 +309,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val data: Uri = intent?.data ?: return
-        if (data.scheme != "guidepawbridge" || data.host != "pair") return
+        if (data.scheme != "guidepawcompanion" || data.host != "pair") return
 
         val endpoint = data.getQueryParameter("endpoint").orEmpty()
         val token = data.getQueryParameter("token").orEmpty()
@@ -457,14 +457,14 @@ class MainActivity : AppCompatActivity() {
                 GuidePawApiClient().postSnapshot(config, snapshot)
             }
             when (uploadResult) {
-                is com.guidepaw.bridge.sync.UploadResult.Success -> {
+                is com.guidepaw.companion.sync.UploadResult.Success -> {
                     prefs.setLastSyncAt(System.currentTimeMillis())
                     refreshLastSync()
                     updateStatus("Synced successfully.")
                     refreshWearableOverview(config.dogId)
                     refreshAccountSummary()
                 }
-                is com.guidepaw.bridge.sync.UploadResult.Failure -> updateStatus("Sync failed: ${uploadResult.message}")
+                is com.guidepaw.companion.sync.UploadResult.Failure -> updateStatus("Sync failed: ${uploadResult.message}")
             }
         }
     }
@@ -569,7 +569,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val uri = Uri.parse(
-            "guidepawbridge://pair?endpoint=${Uri.encode(config.endpoint)}&token=${Uri.encode(config.token)}&dog_id=${config.dogId}&dog_name=${Uri.encode(config.dogName)}&source=${Uri.encode(config.source)}"
+            "guidepawcompanion://pair?endpoint=${Uri.encode(config.endpoint)}&token=${Uri.encode(config.token)}&dog_id=${config.dogId}&dog_name=${Uri.encode(config.dogName)}&source=${Uri.encode(config.source)}"
         )
         runCatching {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
@@ -583,7 +583,7 @@ class MainActivity : AppCompatActivity() {
         runCatching { startActivity(intent) }
     }
 
-    private fun renderDogsList(activeDogId: Long?, dogs: List<com.guidepaw.bridge.model.AccessibleDogSummary>) {
+    private fun renderDogsList(activeDogId: Long?, dogs: List<com.guidepaw.companion.model.AccessibleDogSummary>) {
         dogsListContainer.removeAllViews()
         if (dogs.isEmpty()) {
             return
@@ -682,7 +682,7 @@ class MainActivity : AppCompatActivity() {
         saveTrainingLogButton.text = "Save log"
     }
 
-    private fun populateTrainingLogEditor(log: com.guidepaw.bridge.model.TrainingLogEntry) {
+    private fun populateTrainingLogEditor(log: com.guidepaw.companion.model.TrainingLogEntry) {
         selectedTrainingLogId = log.id
         trainingLogModeText.text = "Editing log #${log.id}"
         trainingLogDateInput.setText(formatTrainingLogDateForEditor(log.logDate))
@@ -705,7 +705,7 @@ class MainActivity : AppCompatActivity() {
         saveTrainingLogButton.text = "Update log"
     }
 
-    private fun renderTrainingLogs(feed: com.guidepaw.bridge.model.TrainingLogFeed?, selectedLog: com.guidepaw.bridge.model.TrainingLogEntry? = null) {
+    private fun renderTrainingLogs(feed: com.guidepaw.companion.model.TrainingLogFeed?, selectedLog: com.guidepaw.companion.model.TrainingLogEntry? = null) {
         trainingLogsListContainer.removeAllViews()
         if (feed == null) {
             trainingSuggestionsText.text = "Training suggestions: sign in and load a dog to see next-step guidance."
@@ -821,7 +821,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderTrainingLogDetail(log: com.guidepaw.bridge.model.TrainingLogEntry, suggestions: List<String>) {
+    private fun renderTrainingLogDetail(log: com.guidepaw.companion.model.TrainingLogEntry, suggestions: List<String>) {
         trainingLogDetailText.text = buildString {
             append("Log #")
             append(log.id)
@@ -1016,7 +1016,7 @@ class MainActivity : AppCompatActivity() {
         }.getOrDefault(value)
     }
 
-    private fun renderWearableOverview(overview: com.guidepaw.bridge.model.WearableOverview?) {
+    private fun renderWearableOverview(overview: com.guidepaw.companion.model.WearableOverview?) {
         currentWearableOverview = overview
         wearableEventsContainer.removeAllViews()
         if (overview == null) {
@@ -1237,7 +1237,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderPublicProfile(profile: com.guidepaw.bridge.model.PublicProfileOverview?) {
+    private fun renderPublicProfile(profile: com.guidepaw.companion.model.PublicProfileOverview?) {
         if (profile == null) {
             publicProfileSummaryText.text = "Public profile: sign in and choose a dog to see QR/share details."
             publicProfileDetailText.text = "Found-dog reporting is disabled until a public profile is loaded."
@@ -1366,7 +1366,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun renderBillingOverview(overview: com.guidepaw.bridge.model.BillingOverview?) {
+    private fun renderBillingOverview(overview: com.guidepaw.companion.model.BillingOverview?) {
         currentBillingOverview = overview
         billingPlanContainer.removeAllViews()
         billingServiceContainer.removeAllViews()
@@ -1563,7 +1563,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startServiceCheckout(service: com.guidepaw.bridge.model.BillingServiceRow) {
+    private fun startServiceCheckout(service: com.guidepaw.companion.model.BillingServiceRow) {
         val config = prefs.load() ?: run {
             updateStatus("Save the connection first.")
             return

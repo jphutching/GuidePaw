@@ -1,4 +1,4 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.annotation.SuppressLint
 import android.content.Intent

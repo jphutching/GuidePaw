@@ -12,13 +12,13 @@ $token = trim((string) ($_GET['token'] ?? ''));
 $dogId = (int) ($_GET['dog_id'] ?? 0);
 $tokenRow = $token !== '' ? findApiTokenByPlainText($pdo, $token) : null;
 $valid = $tokenRow && empty($tokenRow['revoked_at']) && (empty($tokenRow['expires_at']) || strtotime((string) $tokenRow['expires_at']) > time());
-$bridgeTitle = $valid ? 'Pair GuidePaw on this phone' : 'Wearable pairing link';
+$bridgeTitle = $valid ? 'Open GuidePaw Companion on this phone' : 'Wearable pairing link';
 $bridgeMessage = $valid
     ? 'This page opens from the QR code so the phone shows a normal pairing screen instead of a raw text note.'
     : 'Create a connect code from Wearable Integrations first.';
 $bridgeEndpoint = rtrim((string) appEnv('APP_URL', 'https://guidepaw.app'), '/') . '/api/wearables.php';
 $bridgeAppLink = $valid
-    ? 'guidepawbridge://pair?endpoint=' . rawurlencode($bridgeEndpoint) . '&token=' . rawurlencode($token) . '&dog_id=' . rawurlencode((string) $dogId) . '&dog_name=' . rawurlencode((string) $tokenRow['token_label']) . '&source=health_connect'
+    ? 'guidepawcompanion://pair?endpoint=' . rawurlencode($bridgeEndpoint) . '&token=' . rawurlencode($token) . '&dog_id=' . rawurlencode((string) $dogId) . '&dog_name=' . rawurlencode((string) $tokenRow['token_label']) . '&source=health_connect'
     : '';
 ?>
 <!doctype html>
@@ -26,7 +26,7 @@ $bridgeAppLink = $valid
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GuidePaw Wearable Bridge</title>
+    <title>GuidePaw Companion Pairing</title>
     <style>
         body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
         .wrap { max-width: 860px; margin: 0 auto; padding: 24px; }
@@ -48,24 +48,24 @@ $bridgeAppLink = $valid
 
     <?php if ($valid): ?>
         <div class="card">
-            <h2 class="h5">Bridge details</h2>
+            <h2 class="h5">Connection details</h2>
             <p class="small">Use this page on the phone that has Samsung Health or Health Connect. It opens here because the QR code points at a browser page instead of a plain text token.</p>
-            <p class="small"><strong>1.</strong> Tap <strong>Copy pairing code</strong>.<br><strong>2.</strong> Paste it into the phone bridge or companion app.<br><strong>3.</strong> Return to Wearable Integrations to confirm the next sync.</p>
+            <p class="small"><strong>1.</strong> Tap <strong>Copy connection code</strong>.<br><strong>2.</strong> Paste it into the GuidePaw Companion app.<br><strong>3.</strong> Return to Wearable Integrations to confirm the next sync.</p>
             <div class="small muted mb-2">Connected account: <?= h((string) $tokenRow['username']) ?></div>
             <div class="small muted mb-2">Label: <?= h((string) $tokenRow['token_label']) ?></div>
             <div class="small muted mb-2">API endpoint</div>
             <code><?= h($bridgeEndpoint) ?></code>
-            <div class="small muted mt-3 mb-2">Bridge token</div>
+            <div class="small muted mt-3 mb-2">Connection code</div>
             <code id="bridgeToken"><?= h($token) ?></code>
             <div class="row mt-3">
-                <button type="button" id="copyToken">Copy pairing code</button>
-                <?php if ($valid): ?><a class="button" href="<?= h($bridgeAppLink) ?>">Open in GuidePaw Bridge</a><?php endif; ?>
+                <button type="button" id="copyToken">Copy connection code</button>
+                <?php if ($valid): ?><a class="button" href="<?= h($bridgeAppLink) ?>">Open in GuidePaw Companion</a><?php endif; ?>
                 <a class="button" href="wearable_integrations.php">Back to wearable setup</a>
             </div>
         </div>
     <?php else: ?>
         <div class="card">
-            <h2 class="h5">No pairing code yet</h2>
+            <h2 class="h5">No connection code yet</h2>
             <p class="small">Go back to Wearable Integrations and create a connect code first. The QR should open this page once a code exists.</p>
             <a class="button" href="wearable_integrations.php">Open wearable setup</a>
         </div>
@@ -80,7 +80,7 @@ $bridgeAppLink = $valid
     btn.addEventListener('click', function () {
         navigator.clipboard.writeText(token.textContent || '').then(function () {
             btn.textContent = 'Copied';
-            setTimeout(function () { btn.textContent = 'Copy pairing code'; }, 1600);
+            setTimeout(function () { btn.textContent = 'Copy connection code'; }, 1600);
         });
     });
 })();

@@ -1,4 +1,4 @@
-package com.guidepaw.bridge.sync
+package com.guidepaw.companion.sync
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
@@ -11,7 +11,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import com.guidepaw.bridge.model.HealthSnapshot
+import com.guidepaw.companion.model.HealthSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.guidepaw.bridge"
+    namespace = "com.guidepaw.companion"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.guidepaw.bridge"
+        applicationId = "com.guidepaw.companion"
         minSdk = 28
         targetSdk = 35
         versionCode = 1

@@ -32,7 +32,7 @@ Setup:
 1. Open the project in Android Studio.
 2. Let Gradle sync.
 3. Install on an Android phone with Samsung Health and Health Connect.
-4. Connect from the GuidePaw wearable bridge page.
+4. Connect from the GuidePaw Companion pairing page.
 
 Notes:
 - This is a phone-only companion app.

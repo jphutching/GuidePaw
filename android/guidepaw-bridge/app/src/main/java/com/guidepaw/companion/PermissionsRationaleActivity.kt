@@ -1,4 +1,4 @@
-package com.guidepaw.bridge
+package com.guidepaw.companion
 
 import android.content.Intent
 import android.os.Bundle

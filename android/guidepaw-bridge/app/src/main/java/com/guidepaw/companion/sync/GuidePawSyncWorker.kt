@@ -1,9 +1,9 @@
-package com.guidepaw.bridge.sync
+package com.guidepaw.companion.sync
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.guidepaw.bridge.BridgePreferences
+import com.guidepaw.companion.BridgePreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
