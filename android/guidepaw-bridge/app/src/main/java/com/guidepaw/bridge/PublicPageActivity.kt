@@ -1,6 +1,8 @@
 package com.guidepaw.bridge
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,6 +20,7 @@ class PublicPageActivity : AppCompatActivity() {
     private lateinit var urlView: TextView
     private lateinit var statusView: TextView
     private lateinit var webView: WebView
+    private var allowedHost: String = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,10 +31,17 @@ class PublicPageActivity : AppCompatActivity() {
         urlView = findViewById(R.id.publicPageUrl)
         statusView = findViewById(R.id.publicPageStatus)
         webView = findViewById(R.id.publicPageWebView)
-        findViewById<Button>(R.id.publicPageBackButton).setOnClickListener { finish() }
+        findViewById<Button>(R.id.publicPageBackButton).setOnClickListener {
+            if (webView.canGoBack()) {
+                webView.goBack()
+            } else {
+                finish()
+            }
+        }
 
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { "GuidePaw Public Page" }
         val url = intent.getStringExtra(EXTRA_URL).orEmpty()
+        allowedHost = runCatching { Uri.parse(url).host.orEmpty() }.getOrDefault("")
 
         titleView.text = title
         urlView.text = url.ifBlank { "No URL provided." }
@@ -40,6 +50,19 @@ class PublicPageActivity : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                val target = request?.url ?: return false
+                val host = target.host.orEmpty()
+                return if (host.isBlank() || allowedHost.isBlank() || host.endsWith(allowedHost)) {
+                    false
+                } else {
+                    runCatching {
+                        startActivity(Intent(Intent.ACTION_VIEW, target))
+                    }
+                    true
+                }
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 statusView.text = "Public page loaded."
             }
