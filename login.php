@@ -123,6 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="text-muted mb-2">Use the public questionnaire with or without an account to narrow down breed ideas before you sign in.</div>
             <a href="breed_questionnaire.php" class="btn btn-outline-primary btn-sm">Open Breed Questionnaire</a>
         </div>
+        <div class="mt-3 text-center">
+            <a href="feedback.php" class="text-decoration-none small text-muted">Report an issue</a>
+        </div>
     </form>
     <script>
     (function () {

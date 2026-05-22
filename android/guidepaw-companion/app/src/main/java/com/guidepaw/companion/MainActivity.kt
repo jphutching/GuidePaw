@@ -423,6 +423,10 @@ class MainActivity : AppCompatActivity() {
                 onClick  = { attemptLogin() },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign In") }
+            TextButton(
+                onClick = { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Report an issue", fontSize = 13.sp, color = Color(0xFF6B7280)) }
         }
     }
 
