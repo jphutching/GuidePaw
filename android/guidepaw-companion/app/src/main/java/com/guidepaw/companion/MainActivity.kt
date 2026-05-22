@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -51,6 +52,8 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,10 +67,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import com.google.android.material.button.MaterialButton as MdButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -342,6 +351,7 @@ class MainActivity : AppCompatActivity() {
     // ── Login section ───────────────────────────────────────────────────────
     @Composable
     private fun LoginSection() {
+        var showPassword by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -358,34 +368,55 @@ class MainActivity : AppCompatActivity() {
                 Text(loginMessage, color = MaterialTheme.colorScheme.error)
             }
             OutlinedTextField(
-                value         = usernameText,
-                onValueChange = { usernameText = it },
-                label         = { Text("Username") },
-                singleLine    = true,
-                modifier      = Modifier.fillMaxWidth(),
+                value           = usernameText,
+                onValueChange   = { usernameText = it },
+                label           = { Text("Username") },
+                singleLine      = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType    = KeyboardType.Text,
+                    autoCorrect     = false,
+                    capitalization  = KeyboardCapitalization.None,
+                ),
+                modifier        = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
-                value                  = passwordText,
-                onValueChange          = { passwordText = it },
-                label                  = { Text("Password") },
-                singleLine             = true,
-                visualTransformation   = PasswordVisualTransformation(),
-                modifier               = Modifier.fillMaxWidth(),
+                value                = passwordText,
+                onValueChange        = { passwordText = it },
+                label                = { Text("Password") },
+                singleLine           = true,
+                visualTransformation = if (showPassword) VisualTransformation.None
+                                       else PasswordVisualTransformation(),
+                keyboardOptions      = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    autoCorrect  = false,
+                ),
+                trailingIcon         = {
+                    IconButton(onClick = { showPassword = !showPassword }) {
+                        Icon(
+                            imageVector         = if (showPassword) Icons.Filled.VisibilityOff
+                                                  else Icons.Filled.Visibility,
+                            contentDescription  = if (showPassword) "Hide password" else "Show password",
+                        )
+                    }
+                },
+                modifier             = Modifier.fillMaxWidth(),
             )
             if (showTwoFactor) {
                 OutlinedTextField(
-                    value         = twoFactorText,
-                    onValueChange = { twoFactorText = it },
-                    label         = { Text("Two-factor code") },
-                    singleLine    = true,
-                    modifier      = Modifier.fillMaxWidth(),
+                    value           = twoFactorText,
+                    onValueChange   = { twoFactorText = it },
+                    label           = { Text("Two-factor code") },
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier        = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value         = recoveryKeyText,
-                    onValueChange = { recoveryKeyText = it },
-                    label         = { Text("Recovery key (optional)") },
-                    singleLine    = true,
-                    modifier      = Modifier.fillMaxWidth(),
+                    value           = recoveryKeyText,
+                    onValueChange   = { recoveryKeyText = it },
+                    label           = { Text("Recovery key (optional)") },
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(autoCorrect = false),
+                    modifier        = Modifier.fillMaxWidth(),
                 )
             }
             Button(
