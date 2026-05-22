@@ -157,7 +157,7 @@ class FeedbackActivity : AppCompatActivity() {
     }
 
     private fun openAttachmentPicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
@@ -264,8 +264,6 @@ class FeedbackActivity : AppCompatActivity() {
             name ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: "attachment",
             mime
         )
-        val persistFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        runCatching { contentResolver.takePersistableUriPermission(uri, persistFlags) }
         return SelectedAttachment(
             uri = uri,
             displayName = displayName,

@@ -34,8 +34,6 @@ data class GuidePawAppReleaseResult(
 data class GuidePawMeResult(
     val username: String,
     val activeDogId: Int?,
-    val dbDriver: String?,
-    val schemaVersion: String?,
 )
 
 data class GuidePawDogItem(
@@ -251,8 +249,6 @@ class GuidePawApiClient(
         return GuidePawMeResult(
             username = user.optString("username", ""),
             activeDogId = optNullableInt(response.json, "active_dog_id"),
-            dbDriver = response.json.optText("db_driver"),
-            schemaVersion = response.json.optText("schema_version"),
         )
     }
 
@@ -559,7 +555,7 @@ class GuidePawApiClient(
                 writeMultipartField(out, boundary, key, value)
             }
             attachments.forEachIndexed { index, attachment ->
-                writeMultipartFile(out, boundary, "attachments[$index]", attachment, contentResolver)
+                writeMultipartFile(out, boundary, "attachments[]", attachment, contentResolver)
             }
             out.writeBytes("--$boundary--\r\n")
             out.flush()

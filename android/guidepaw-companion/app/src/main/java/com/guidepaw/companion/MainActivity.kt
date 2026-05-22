@@ -419,9 +419,7 @@ class MainActivity : AppCompatActivity() {
                 append(" dogs")
             }
         }
-        accountSummaryView.text = listOfNotNull(
-            me.dbDriver?.let { "DB $it" },
-        ).joinToString(" • ").ifBlank { "Account synced." }
+        accountSummaryView.text = "Account synced. Training, logs, and dog access are up to date."
 
         dogsMessageView.text = if (currentDogs.isEmpty()) {
             "No dogs are accessible on this account."
@@ -985,8 +983,6 @@ class MainActivity : AppCompatActivity() {
                 GuidePawMeResult(
                     username = it.optString("username", ""),
                     activeDogId = optNullableInt(it, "activeDogId"),
-                    dbDriver = it.optText("dbDriver"),
-                    schemaVersion = null,
                 )
             }
             currentDogs = cache.optJSONArray("dogs")?.let { array ->
@@ -1033,9 +1029,7 @@ class MainActivity : AppCompatActivity() {
         val cache = JSONObject()
             .put("me", JSONObject()
                 .put("username", me.username)
-                .put("activeDogId", me.activeDogId ?: JSONObject.NULL)
-                .put("dbDriver", me.dbDriver ?: JSONObject.NULL)
-                .put("schemaVersion", me.schemaVersion ?: JSONObject.NULL))
+                .put("activeDogId", me.activeDogId ?: JSONObject.NULL))
             .put("activeDogId", currentActiveDogId ?: JSONObject.NULL)
             .put("dogs", JSONArray(currentDogs.map { dog ->
                 JSONObject()
