@@ -116,7 +116,7 @@ class FeedbackActivity : AppCompatActivity() {
         }
         submitButton.setOnClickListener { submitFeedback() }
         webFeedbackButton.setOnClickListener {
-            GuidePawNavigation.openUrl(this, "https://guidepaw.app/feedback.php", "Feedback")
+            GuidePawNavigation.openUrl(this, "https://guidepaw.app/feedback.php", "Feedback", currentToken)
         }
     }
 

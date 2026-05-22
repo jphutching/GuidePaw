@@ -5,13 +5,16 @@ import android.content.Intent
 import android.net.Uri
 
 object GuidePawNavigation {
-    fun openUrl(context: Context, url: String, title: String = "GuidePaw") {
+    fun openUrl(context: Context, url: String, title: String = "GuidePaw", accessToken: String? = null) {
         val uri = Uri.parse(url)
         val host = uri.host.orEmpty().lowercase()
         if (host == "guidepaw.app" || host.endsWith(".guidepaw.app")) {
             context.startActivity(Intent(context, GuidePawWebActivity::class.java).apply {
                 putExtra(GuidePawWebActivity.EXTRA_URL, uri.toString())
                 putExtra(GuidePawWebActivity.EXTRA_TITLE, title)
+                if (!accessToken.isNullOrBlank()) {
+                    putExtra(GuidePawWebActivity.EXTRA_ACCESS_TOKEN, accessToken)
+                }
             })
             return
         }

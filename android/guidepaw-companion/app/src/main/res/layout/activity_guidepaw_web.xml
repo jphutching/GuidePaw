@@ -44,7 +44,7 @@
                 android:id="@+id/versionView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="v0.015"
+                android:text="v0.016"
                 android:textColor="#64748b"
                 android:textSize="11sp" />
         </LinearLayout>

@@ -525,7 +525,7 @@ class NotificationCenterActivity : AppCompatActivity() {
     }
 
     private fun openExternal(url: String) {
-        GuidePawNavigation.openUrl(this, url, "GuidePaw")
+        GuidePawNavigation.openUrl(this, url, "GuidePaw", currentToken)
     }
 
     private fun setLoading(isLoading: Boolean, message: String?) {

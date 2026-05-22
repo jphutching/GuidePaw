@@ -43,8 +43,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var updateStatusView: TextView
     private lateinit var updateNowButton: MaterialButton
     private lateinit var dismissUpdateButton: MaterialButton
-    private lateinit var feedbackButton: MaterialButton
-    private lateinit var menuButton: MaterialButton
     private lateinit var versionBadgeView: TextView
     private lateinit var versionView: TextView
 
@@ -180,8 +178,6 @@ class MainActivity : AppCompatActivity() {
         updateStatusView = findViewById(R.id.updateStatusView)
         updateNowButton = findViewById(R.id.btnUpdateNow)
         dismissUpdateButton = findViewById(R.id.btnDismissUpdate)
-        feedbackButton = findViewById(R.id.btnFeedback)
-        menuButton = findViewById(R.id.btnMenu)
         versionBadgeView = findViewById(R.id.versionBadgeView)
         versionView = findViewById(R.id.versionView)
 
@@ -252,8 +248,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnRefresh).setOnClickListener { refreshCurrent() }
         findViewById<MaterialButton>(R.id.btnSignOut).setOnClickListener { signOut("Signed out.") }
         saveLogButton.setOnClickListener { submitTrainingLog() }
-        feedbackButton.setOnClickListener { startActivity(Intent(this, FeedbackActivity::class.java)) }
-        menuButton.setOnClickListener { showMenuDialog() }
         updateNowButton.setOnClickListener { startAppUpdate() }
         dismissUpdateButton.setOnClickListener { hideUpdateNotice() }
 
@@ -784,7 +778,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openExternal(url: String) {
-        GuidePawNavigation.openUrl(this, url)
+        GuidePawNavigation.openUrl(this, url, accessToken = currentToken)
     }
 
     private fun activateBottomSection(sectionButtonId: Int) {

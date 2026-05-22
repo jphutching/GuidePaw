@@ -11,6 +11,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class GuidePawWebActivity : AppCompatActivity() {
     private lateinit var webView: WebView
@@ -19,6 +21,7 @@ class GuidePawWebActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_URL = "guidepaw_url"
         const val EXTRA_TITLE = "guidepaw_title"
+        const val EXTRA_ACCESS_TOKEN = "guidepaw_access_token"
         private const val DEFAULT_URL = "https://guidepaw.app/"
     }
 
@@ -28,6 +31,7 @@ class GuidePawWebActivity : AppCompatActivity() {
 
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { "GuidePaw" }
         val url = intent.getStringExtra(EXTRA_URL).orEmpty().ifBlank { DEFAULT_URL }
+        val accessToken = intent.getStringExtra(EXTRA_ACCESS_TOKEN).orEmpty()
 
         findViewById<TextView>(R.id.titleView).text = title
         findViewById<TextView>(R.id.versionView).text = "v${CompanionAppVersion.VERSION_NAME}"
@@ -59,7 +63,12 @@ class GuidePawWebActivity : AppCompatActivity() {
                 progressView.visibility = View.INVISIBLE
             }
         }
-        webView.loadUrl(Uri.parse(url).toString())
+        if (accessToken.isNotBlank()) {
+            val body = "access_token=${encode(accessToken)}&next=${encode(Uri.parse(url).toString())}"
+            webView.postUrl("https://guidepaw.app/companion_session.php", body.toByteArray(StandardCharsets.UTF_8))
+        } else {
+            webView.loadUrl(Uri.parse(url).toString())
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -69,5 +78,9 @@ class GuidePawWebActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
+    }
+
+    private fun encode(value: String): String {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8.name())
     }
 }
