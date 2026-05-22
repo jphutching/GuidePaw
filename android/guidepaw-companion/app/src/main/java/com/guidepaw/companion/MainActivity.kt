@@ -256,6 +256,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnOpenWearablesWeb).setOnClickListener {
             openExternal("https://guidepaw.app/wearable_integrations.php")
         }
+        findViewById<MaterialButton>(R.id.btnOpenNotificationsNative).setOnClickListener {
+            startActivity(Intent(this, NotificationCenterActivity::class.java))
+        }
         findViewById<MaterialButton>(R.id.btnOpenNotificationsWeb).setOnClickListener {
             openExternal("https://guidepaw.app/notifications.php")
         }
@@ -775,7 +778,7 @@ class MainActivity : AppCompatActivity() {
             MenuAction("Wearables", R.id.btnWearables),
         )))
         content.addView(makeMenuSection("More", listOf(
-            MenuAction("Notification Center") { openExternal("https://guidepaw.app/notifications.php") },
+            MenuAction("Notification Center") { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
             MenuAction("Public guides", R.id.btnPublic),
             MenuAction("Feedback / Bug Report") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
             MenuAction("GuidePaw app page") { openExternal("https://guidepaw.app/app.php") },

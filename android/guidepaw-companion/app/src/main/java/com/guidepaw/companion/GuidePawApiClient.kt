@@ -83,6 +83,43 @@ data class GuidePawFeedbackResult(
     val uploadDebug: List<String>,
 )
 
+data class GuidePawNotificationItem(
+    val id: Int,
+    val relatedDogId: Int,
+    val dogName: String,
+    val notificationType: String,
+    val category: String,
+    val priority: String,
+    val title: String,
+    val body: String,
+    val actionUrl: String,
+    val isRead: Boolean,
+    val createdAt: String,
+    val readAt: String,
+)
+
+data class GuidePawNotificationInviteItem(
+    val handlerId: Int,
+    val dogId: Int,
+    val dogName: String,
+    val role: String,
+    val permissionLevel: String,
+    val accessEndsAt: String,
+    val ownerUsername: String,
+    val ownerDisplayName: String,
+)
+
+data class GuidePawNotificationsResult(
+    val username: String,
+    val activeDogId: Int?,
+    val unreadCount: Int,
+    val visibleUnreadCount: Int,
+    val hiddenCount: Int,
+    val preferences: Map<String, Boolean>,
+    val notifications: List<GuidePawNotificationItem>,
+    val pendingInvites: List<GuidePawNotificationInviteItem>,
+)
+
 data class GuidePawWearableCatalogItem(
     val slug: String,
     val label: String,
@@ -337,6 +374,59 @@ class GuidePawApiClient(
         )
     }
 
+    fun notifications(token: String): GuidePawNotificationsResult {
+        val response = requestJson("api/notifications.php", "GET", token, null)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
+    fun saveNotificationPreferences(token: String, categories: Map<String, Boolean>): GuidePawNotificationsResult {
+        val payload = JSONObject()
+            .put("action", "save_notification_preferences")
+            .put("categories", JSONObject(categories))
+        val response = requestJson("api/notifications.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
+    fun markNotificationsRead(token: String, notificationIds: List<Int> = emptyList()): GuidePawNotificationsResult {
+        val payload = JSONObject().put("action", "mark_all_read")
+        if (notificationIds.isNotEmpty()) {
+            payload.put("action", "mark_read")
+            payload.put("notification_ids", JSONArray(notificationIds))
+        }
+        val response = requestJson("api/notifications.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
+    fun deleteNotifications(token: String, notificationIds: List<Int>): GuidePawNotificationsResult {
+        val payload = JSONObject()
+            .put("action", "delete_selected_notifications")
+            .put("notification_ids", JSONArray(notificationIds))
+        val response = requestJson("api/notifications.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
+    fun acceptDogAccessInvite(token: String, handlerId: Int): GuidePawNotificationsResult {
+        val payload = JSONObject()
+            .put("action", "accept_dog_access_invite")
+            .put("handler_id", handlerId)
+        val response = requestJson("api/notifications.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
+    fun declineDogAccessInvite(token: String, handlerId: Int): GuidePawNotificationsResult {
+        val payload = JSONObject()
+            .put("action", "decline_dog_access_invite")
+            .put("handler_id", handlerId)
+        val response = requestJson("api/notifications.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseNotificationsResult(response.json)
+    }
+
     fun wearables(token: String, dogId: Int? = null): GuidePawWearableResult {
         val query = if (dogId != null && dogId > 0) {
             "api/wearables.php?dog_id=$dogId"
@@ -574,6 +664,22 @@ class GuidePawApiClient(
         return map
     }
 
+    private fun parseNotificationsResult(json: JSONObject): GuidePawNotificationsResult {
+        val prefs = json.optJSONObject("preferences")?.toBooleanMap().orEmpty()
+        val notifications = json.optJSONArray("notifications")?.toNotificationList().orEmpty()
+        val invites = json.optJSONArray("pending_invites")?.toInviteList().orEmpty()
+        return GuidePawNotificationsResult(
+            username = json.optString("username", ""),
+            activeDogId = optNullableInt(json, "active_dog_id"),
+            unreadCount = json.optInt("unread_count", 0),
+            visibleUnreadCount = json.optInt("visible_unread_count", 0),
+            hiddenCount = json.optInt("hidden_count", 0),
+            preferences = prefs,
+            notifications = notifications,
+            pendingInvites = invites,
+        )
+    }
+
     private fun JSONArray.toWearableCatalogList(): List<GuidePawWearableCatalogItem> {
         return (0 until length()).mapNotNull { idx ->
             val obj = optJSONObject(idx) ?: return@mapNotNull null
@@ -629,6 +735,52 @@ class GuidePawApiClient(
                 createdAt = obj.optString("created_at", ""),
             )
         }
+    }
+
+    private fun JSONArray.toNotificationList(): List<GuidePawNotificationItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GuidePawNotificationItem(
+                id = obj.optInt("id", 0),
+                relatedDogId = obj.optInt("related_dog_id", 0),
+                dogName = obj.optString("dog_name", ""),
+                notificationType = obj.optString("notification_type", ""),
+                category = obj.optString("category", "general"),
+                priority = obj.optString("priority", "normal"),
+                title = obj.optString("title", ""),
+                body = obj.optString("body", ""),
+                actionUrl = obj.optString("action_url", ""),
+                isRead = obj.optBoolean("is_read", false),
+                createdAt = obj.optString("created_at", ""),
+                readAt = obj.optString("read_at", ""),
+            )
+        }
+    }
+
+    private fun JSONArray.toInviteList(): List<GuidePawNotificationInviteItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GuidePawNotificationInviteItem(
+                handlerId = obj.optInt("id", 0),
+                dogId = obj.optInt("dog_id", 0),
+                dogName = obj.optString("dog_name", ""),
+                role = obj.optText("role") ?: "",
+                permissionLevel = obj.optText("permission_level") ?: "",
+                accessEndsAt = obj.optText("access_ends_at") ?: "",
+                ownerUsername = obj.optText("owner_username") ?: "",
+                ownerDisplayName = obj.optText("owner_display_name") ?: "",
+            )
+        }
+    }
+
+    private fun JSONObject.toBooleanMap(): Map<String, Boolean> {
+        val map = linkedMapOf<String, Boolean>()
+        val keys = keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            map[key] = optBoolean(key, true)
+        }
+        return map
     }
 
     private fun JSONArray.toDogList(): List<GuidePawDogItem> {

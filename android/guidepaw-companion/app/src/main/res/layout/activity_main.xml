@@ -73,7 +73,7 @@
             android:background="#dbeafe"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
-            android:text="v0.010"
+            android:text="v0.011"
             android:textColor="#0f172a"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -188,7 +188,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="v0.010"
+                    android:text="v0.011"
                     android:textColor="#334155"
                     android:textSize="11sp" />
 
@@ -665,11 +665,19 @@
                                 app:cornerRadius="14dp" />
 
                             <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnOpenNotificationsNative"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="Open notification center"
+                                app:cornerRadius="14dp" />
+
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/btnOpenNotificationsWeb"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                android:text="Open notifications"
+                                android:text="Open web notifications"
                                 app:cornerRadius="14dp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
