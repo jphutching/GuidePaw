@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/api_auth.php';
 require_once __DIR__ . '/../includes/feedback_submission.php';
 
-$user = requireApiUser($pdo);
+$user = optionalApiUser($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     apiJson(['success' => false, 'message' => 'POST required.'], 405);
@@ -19,7 +19,7 @@ if ($details === '') {
     apiJson(['success' => false, 'message' => 'Please add details before saving.'], 400);
 }
 
-$feedbackId = gpSaveFeedbackSubmission($pdo, (int) $user['id'], [
+$feedbackId = gpSaveFeedbackSubmission($pdo, $user !== null ? (int) $user['id'] : null, [
     'category' => $category,
     'page_workflow' => $pageWorkflow,
     'contact_email' => $contactEmail,

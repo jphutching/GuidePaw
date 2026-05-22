@@ -343,7 +343,7 @@ class GuidePawApiClient(
     }
 
     fun submitFeedback(
-        token: String,
+        token: String?,
         category: String,
         pageWorkflow: String,
         contactEmail: String,

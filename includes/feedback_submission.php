@@ -116,7 +116,7 @@ if (!function_exists('gpFeedbackAcceptAttribute')) {
 }
 
 if (!function_exists('gpSaveFeedbackSubmission')) {
-    function gpSaveFeedbackSubmission(PDO $pdo, int $userId, array $input): int
+    function gpSaveFeedbackSubmission(PDO $pdo, ?int $userId, array $input): int
     {
         gpEnsureFeedbackSourceColumns($pdo);
 
@@ -137,6 +137,8 @@ if (!function_exists('gpSaveFeedbackSubmission')) {
         $legacyTitle = $pageWorkflow !== '' ? $pageWorkflow : ucfirst($category) . ' report';
         $legacyDescription = $details;
 
+        $resolvedUserId = ($userId !== null && $userId > 0) ? $userId : null;
+
         $columns = [
             'user_id',
             'report_type',
@@ -148,7 +150,7 @@ if (!function_exists('gpSaveFeedbackSubmission')) {
             'details',
         ];
         $values = [
-            $userId,
+            $resolvedUserId,
             $legacyType,
             $legacyTitle,
             $legacyDescription,

@@ -125,12 +125,7 @@ class FeedbackActivity : AppCompatActivity() {
     }
 
     private fun updateAuthState() {
-        val token = currentToken
-        if (token.isNullOrBlank()) {
-            tokenNoticeView.text = "Sign in first to send a feedback report from the Android app."
-        } else {
-            tokenNoticeView.text = "Your submission will be labeled as Android automatically."
-        }
+        tokenNoticeView.text = "Your submission will be labeled as Android automatically."
         setLoading(false, null)
         refreshAttachmentList()
     }
@@ -183,10 +178,6 @@ class FeedbackActivity : AppCompatActivity() {
 
     private fun submitFeedback() {
         val token = currentToken
-        if (token.isNullOrBlank()) {
-            statusView.text = "Sign in first to submit a report from the Android app."
-            return
-        }
 
         val category = when (categoryToggle.checkedButtonId) {
             R.id.btnFeature -> "feature"
@@ -379,10 +370,9 @@ class FeedbackActivity : AppCompatActivity() {
 
     private fun setLoading(isLoading: Boolean, message: String?) {
         progressView.visibility = if (isLoading) View.VISIBLE else View.INVISIBLE
-        val signedIn = !currentToken.isNullOrBlank()
-        submitButton.isEnabled = signedIn && !isLoading
-        addAttachmentsButton.isEnabled = signedIn && !isLoading
-        clearAttachmentsButton.isEnabled = signedIn && !isLoading
+        submitButton.isEnabled = !isLoading
+        addAttachmentsButton.isEnabled = !isLoading
+        clearAttachmentsButton.isEnabled = !isLoading
         webFeedbackButton.isEnabled = !isLoading
         if (message != null) {
             statusView.text = message

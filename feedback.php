@@ -9,10 +9,6 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 $userId = (int)($_SESSION['user_id'] ?? 0);
-if ($userId <= 0) {
-    header('Location: login.php?msg=login_required');
-    exit;
-}
 
 function h($value): string {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
@@ -91,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $feedbackId = gpSaveFeedbackSubmission($pdo, $userId, [
+    $feedbackId = gpSaveFeedbackSubmission($pdo, $userId > 0 ? $userId : null, [
         'category' => $category,
         'page_workflow' => $pageWorkflow,
         'contact_email' => $contactEmail,

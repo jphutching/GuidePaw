@@ -95,6 +95,24 @@ function findApiTokenByPlainText(PDO $pdo, string $token): ?array {
     return $row ?: null;
 }
 
+function optionalApiUser(PDO $pdo): ?array {
+    $token = getBearerToken();
+    if (!$token) {
+        return null;
+    }
+    $hash = hash('sha256', $token);
+    $activeDogSelect = apiTokensColumnExists($pdo, 'active_dog_id') ? 't.active_dog_id,' : 'NULL AS active_dog_id,';
+    $stmt = $pdo->prepare('SELECT t.id, t.user_id, ' . $activeDogSelect . ' u.username FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ? AND t.revoked_at IS NULL AND (t.expires_at IS NULL OR t.expires_at > CURRENT_TIMESTAMP) LIMIT 1');
+    $stmt->execute([$hash]);
+    $row = $stmt->fetch();
+    if (!$row) {
+        return null;
+    }
+    $update = $pdo->prepare('UPDATE api_tokens SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
+    $update->execute([(int) $row['id']]);
+    return ['id' => (int) $row['user_id'], 'username' => $row['username'], 'token_id' => (int) $row['id'], 'active_dog_id' => isset($row['active_dog_id']) ? (int) $row['active_dog_id'] : null];
+}
+
 function requireApiUser(PDO $pdo): array {
     $token = getBearerToken();
     if (!$token) {
