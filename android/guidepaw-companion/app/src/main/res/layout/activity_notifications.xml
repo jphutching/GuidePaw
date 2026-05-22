@@ -16,15 +16,26 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:background="@drawable/companion_brand_header"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingBottom="18dp"
+            android:paddingTop="18dp">
+
+            <ImageView
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_launcher_foreground" />
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
                 android:text="Notification Center"
-                android:textColor="#0f172a"
+                android:textColor="#ffffff"
                 android:textSize="25sp"
                 android:textStyle="bold" />
 
@@ -32,6 +43,7 @@
                 android:id="@+id/btnBack"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:text="Back"
                 app:cornerRadius="14dp" />
         </LinearLayout>
