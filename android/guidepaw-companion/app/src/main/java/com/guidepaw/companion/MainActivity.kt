@@ -22,7 +22,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
@@ -51,7 +50,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var loginCard: MaterialCardView
     private lateinit var dashboardCard: MaterialCardView
-    private lateinit var sectionToggle: MaterialButtonToggleGroup
+    private lateinit var sectionToggle: LinearLayout
+    private lateinit var alertsBadgeView: TextView
     private lateinit var loginMessageView: TextView
     private lateinit var twoFactorLayout: TextInputLayout
     private lateinit var recoveryKeyLayout: TextInputLayout
@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private var currentActiveDogId: Int? = null
     private var currentEditingLogId: Int? = null
     private var currentSectionButtonId: Int = R.id.btnOverview
-    private var restoringBottomSelection = false
+    private var currentUnreadCount: Int = 0
     private var currentRelease: GuidePawAppReleaseResult? = null
     private var pendingDownloadId: Long = -1L
     private var updateReceiverRegistered = false
@@ -188,6 +188,7 @@ class MainActivity : AppCompatActivity() {
         loginCard = findViewById(R.id.loginCard)
         dashboardCard = findViewById(R.id.dashboardCard)
         sectionToggle = findViewById(R.id.sectionToggle)
+        alertsBadgeView = findViewById(R.id.alertsBadgeView)
         loginMessageView = findViewById(R.id.loginMessageView)
 
         twoFactorLayout = findViewById(R.id.twoFactorLayout)
@@ -284,25 +285,40 @@ class MainActivity : AppCompatActivity() {
             openExternal("https://guidepaw.app/service_dog_esa_legal_info.php")
         }
 
-        sectionToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked || restoringBottomSelection) {
-                return@addOnButtonCheckedListener
-            }
-            when (checkedId) {
-                R.id.btnPublic -> {
-                    restoreBottomSelection()
+        setupBottomNav()
+        activateBottomSection(R.id.btnOverview)
+    }
+
+    private fun setupBottomNav() {
+        bottomNavButtons().forEach { (buttonId, button) ->
+            button.isAllCaps = false
+            button.textAlignment = View.TEXT_ALIGNMENT_CENTER
+            button.textSize = 12f
+            button.minHeight = dp(48)
+            button.minimumHeight = dp(48)
+            button.cornerRadius = dp(14)
+            button.strokeWidth = 0
+            button.setPadding(0, dp(5), 0, dp(5))
+            button.setOnClickListener {
+                if (buttonId == R.id.btnPublic) {
+                    updateBottomNavState()
                     showMenuDialog()
-                }
-                else -> {
-                    currentSectionButtonId = checkedId
-                    showSection(checkedId)
+                } else {
+                    activateBottomSection(buttonId)
                 }
             }
         }
+        updateAlertsBadge()
+    }
 
-        currentSectionButtonId = R.id.btnOverview
-        sectionToggle.check(R.id.btnOverview)
-        showSection(R.id.btnOverview)
+    private fun bottomNavButtons(): Map<Int, MaterialButton> {
+        return linkedMapOf(
+            R.id.btnOverview to findViewById(R.id.btnOverview),
+            R.id.btnTraining to findViewById(R.id.btnTraining),
+            R.id.btnDogs to findViewById(R.id.btnDogs),
+            R.id.btnWearables to findViewById(R.id.btnWearables),
+            R.id.btnPublic to findViewById(R.id.btnPublic),
+        )
     }
 
     private fun attemptLogin() {
@@ -375,6 +391,7 @@ class MainActivity : AppCompatActivity() {
                     activeDogId = api.setActiveDog(token, activeDogId) ?: activeDogId
                 }
                 val logsResult = api.logs(token, activeDogId)
+                val unreadCount = runCatching { api.notifications(token).visibleUnreadCount }.getOrDefault(0)
                 runOnUiThread {
                     currentToken = token
                     currentMe = me
@@ -382,6 +399,7 @@ class MainActivity : AppCompatActivity() {
                     currentActiveDogId = activeDogId ?: logsResult.activeDogId
                     currentLogs = logsResult.logs
                     currentSuggestions = logsResult.trainingSuggestions
+                    currentUnreadCount = unreadCount
                     saveCachedDashboard()
                     renderDashboard()
                     setLoading(false, "Dashboard updated.")
@@ -708,6 +726,7 @@ class MainActivity : AppCompatActivity() {
         currentSuggestions = emptyList()
         currentActiveDogId = null
         currentEditingLogId = null
+        currentUnreadCount = 0
         prefs.edit().remove(KEY_CACHE).commit()
         loginCard.visibility = View.VISIBLE
         dashboardCard.visibility = View.GONE
@@ -770,16 +789,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun activateBottomSection(sectionButtonId: Int) {
         currentSectionButtonId = sectionButtonId
-        restoringBottomSelection = true
-        sectionToggle.check(sectionButtonId)
-        restoringBottomSelection = false
+        updateBottomNavState()
         showSection(sectionButtonId)
     }
 
-    private fun restoreBottomSelection() {
-        restoringBottomSelection = true
-        sectionToggle.check(currentSectionButtonId)
-        restoringBottomSelection = false
+    private fun updateBottomNavState() {
+        bottomNavButtons().forEach { (buttonId, button) ->
+            val active = buttonId == currentSectionButtonId
+            button.backgroundTintList = ColorStateList.valueOf(
+                if (active) 0xFFE8F1FF.toInt() else 0x00FFFFFF
+            )
+            button.setTextColor(if (active) 0xFF0D6EFD.toInt() else 0xFF1F2937.toInt())
+        }
+        updateAlertsBadge()
+    }
+
+    private fun updateAlertsBadge() {
+        alertsBadgeView.text = currentUnreadCount.coerceAtLeast(0).toString()
+        alertsBadgeView.backgroundTintList = ColorStateList.valueOf(
+            if (currentUnreadCount > 0) 0xFF0D6EFD.toInt() else 0xFF94A3B8.toInt()
+        )
     }
 
     private fun showMenuDialog() {

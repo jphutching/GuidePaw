@@ -5,8 +5,8 @@ require_once __DIR__ . '/seo.php';
 if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.014'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '14');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.015'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '15');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
