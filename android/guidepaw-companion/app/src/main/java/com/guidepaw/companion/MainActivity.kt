@@ -3,160 +3,206 @@ package com.guidepaw.companion
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.IntentFilter
 import android.content.Intent
-import android.content.res.ColorStateList
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.AutoCompleteTextView
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.SeekBar
 import android.widget.TextView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.android.material.button.MaterialButton as MdButton
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
+// ── Brand colours ──────────────────────────────────────────────────────────
+private val GpPrimary          = Color(0xFF0D6EFD)
+private val GpPrimaryContainer = Color(0xFFE8F1FF)
+private val GpOnSurface        = Color(0xFF0F172A)
+private val GpOnSurfaceVariant = Color(0xFF334155)
+private val GpOutline          = Color(0xFFE2E8F0)
+
+private val GpColorScheme = lightColorScheme(
+    primary             = GpPrimary,
+    onPrimary           = Color.White,
+    primaryContainer    = GpPrimaryContainer,
+    onPrimaryContainer  = GpPrimary,
+    surface             = Color.White,
+    onSurface           = GpOnSurface,
+    onSurfaceVariant    = GpOnSurfaceVariant,
+    outline             = GpOutline,
+)
+
+@Composable
+private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
+    MaterialTheme(colorScheme = GpColorScheme, content = content)
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE }
+
+private val NAV_ITEMS = listOf(
+    NavSection.OVERVIEW  to "🏠\nHome",
+    NavSection.TRAINING  to "⚡\nLog",
+    NavSection.DOGS      to "📋\nHistory",
+    NavSection.WEARABLES to "🔔\nAlerts",
+    NavSection.MORE      to "☰\nMenu",
+)
+
+// ── MainActivity ───────────────────────────────────────────────────────────
 class MainActivity : AppCompatActivity() {
-    private val api = GuidePawApiClient()
+
+    // ── Non-UI fields ──────────────────────────────────────────────────────
+    private val api    = GuidePawApiClient()
     private val worker = Executors.newSingleThreadExecutor()
-
     private lateinit var prefs: SharedPreferences
-    private lateinit var statusView: TextView
-    private lateinit var progressView: LinearProgressIndicator
-    private lateinit var updateCard: MaterialCardView
-    private lateinit var updateStatusView: TextView
-    private lateinit var updateNowButton: MaterialButton
-    private lateinit var dismissUpdateButton: MaterialButton
-    private lateinit var versionBadgeView: TextView
-    private lateinit var versionView: TextView
-
-    private lateinit var loginCard: MaterialCardView
-    private lateinit var dashboardCard: MaterialCardView
-    private lateinit var sectionToggle: LinearLayout
-    private lateinit var alertsBadgeView: TextView
-    private lateinit var loginMessageView: TextView
-    private lateinit var twoFactorLayout: TextInputLayout
-    private lateinit var recoveryKeyLayout: TextInputLayout
-    private lateinit var usernameInput: TextInputEditText
-    private lateinit var passwordInput: TextInputEditText
-    private lateinit var twoFactorInput: TextInputEditText
-    private lateinit var recoveryKeyInput: TextInputEditText
-
-    private lateinit var dashboardSummaryView: TextView
-    private lateinit var activeDogSummaryView: TextView
-    private lateinit var accountSummaryView: TextView
-    private lateinit var suggestionsContainer: LinearLayout
-    private lateinit var dogsContainer: LinearLayout
-    private lateinit var logsContainer: LinearLayout
-    private lateinit var dogsMessageView: TextView
-    private lateinit var trainMessageView: TextView
-    private lateinit var wearablesBodyView: TextView
-
-    private lateinit var logLocationInput: TextInputEditText
-    private lateinit var logCityStateInput: TextInputEditText
-    private lateinit var logTypeInput: AutoCompleteTextView
-    private lateinit var logTypeLayout: TextInputLayout
-    private lateinit var logNotesInput: TextInputEditText
-    private lateinit var focusSeekBar: SeekBar
-    private lateinit var focusValueView: TextView
-    private lateinit var skillChipGroup: ChipGroup
-    private lateinit var saveLogButton: MaterialButton
-
-    private var currentToken: String? = null
-    private var currentMe: GuidePawMeResult? = null
-    private var currentDogs: List<GuidePawDogItem> = emptyList()
-    private var currentLogs: List<GuidePawLogItem> = emptyList()
-    private var currentSuggestions: List<String> = emptyList()
-    private var currentActiveDogId: Int? = null
-    private var currentEditingLogId: Int? = null
-    private var currentSectionButtonId: Int = R.id.btnOverview
-    private var currentUnreadCount: Int = 0
-    private var currentRelease: GuidePawAppReleaseResult? = null
     private var pendingDownloadId: Long = -1L
     private var updateReceiverRegistered = false
 
+    // ── Compose-observed state ─────────────────────────────────────────────
+    private var currentToken       by mutableStateOf<String?>(null)
+    private var currentMe          by mutableStateOf<GuidePawMeResult?>(null)
+    private var currentDogs        by mutableStateOf<List<GuidePawDogItem>>(emptyList())
+    private var currentLogs        by mutableStateOf<List<GuidePawLogItem>>(emptyList())
+    private var currentSuggestions by mutableStateOf<List<String>>(emptyList())
+    private var currentActiveDogId by mutableStateOf<Int?>(null)
+    private var currentEditingLogId by mutableStateOf<Int?>(null)
+    private var currentSection     by mutableStateOf(NavSection.OVERVIEW)
+    private var currentUnreadCount by mutableStateOf(0)
+    private var currentRelease     by mutableStateOf<GuidePawAppReleaseResult?>(null)
+
+    private var isLoading        by mutableStateOf(false)
+    private var statusMessage    by mutableStateOf("")
+    private var loginMessage     by mutableStateOf("")
+    private var usernameText     by mutableStateOf("")
+    private var passwordText     by mutableStateOf("")
+    private var twoFactorText    by mutableStateOf("")
+    private var recoveryKeyText  by mutableStateOf("")
+    private var showTwoFactor    by mutableStateOf(false)
+    private var showUpdateCard   by mutableStateOf(false)
+    private var updateStatusText by mutableStateOf("")
+
+    private var logLocation    by mutableStateOf("")
+    private var logCityState   by mutableStateOf("")
+    private var logType        by mutableStateOf(locationTypes.first())
+    private var focusLevel     by mutableStateOf(3)
+    private var logNotes       by mutableStateOf("")
+    private var selectedSkills by mutableStateOf<Set<String>>(emptySet())
+    private var trainMessage   by mutableStateOf("")
+    private var saveLogLabel   by mutableStateOf("Save training log")
+    private var wearablesBody  by mutableStateOf(
+        "Wearable data will feed the active dog timeline once a dog is selected."
+    )
+
+    // ── Download receiver (unchanged) ───────────────────────────────────────
     private val updateDownloadReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val completedId = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) ?: -1L
-            if (completedId != pendingDownloadId || completedId <= 0L) {
-                return
-            }
+            if (completedId != pendingDownloadId || completedId <= 0L) return
             worker.execute {
                 val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-                val query = DownloadManager.Query().setFilterById(completedId)
-                val cursor = manager.query(query)
+                val cursor  = manager.query(DownloadManager.Query().setFilterById(completedId))
                 cursor.use {
                     if (!it.moveToFirst()) {
-                        runOnUiThread { updateStatusView.text = "Update downloaded but not found." }
+                        runOnUiThread { updateStatusText = "Update downloaded but not found." }
                         return@execute
                     }
-                    val statusIndex = it.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    val uriIndex = it.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                    val status = if (statusIndex >= 0) it.getInt(statusIndex) else DownloadManager.STATUS_FAILED
-                    val uriText = if (uriIndex >= 0) it.getString(uriIndex) else null
+                    val statusIdx = it.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val uriIdx    = it.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                    val status    = if (statusIdx >= 0) it.getInt(statusIdx) else DownloadManager.STATUS_FAILED
+                    val uriText   = if (uriIdx >= 0) it.getString(uriIdx) else null
                     if (status == DownloadManager.STATUS_SUCCESSFUL && !uriText.isNullOrBlank()) {
                         val apkUri = Uri.parse(uriText)
                         runOnUiThread {
-                            updateStatusView.text = "Downloaded. Opening installer..."
+                            updateStatusText = "Downloaded. Opening installer..."
                             launchInstaller(apkUri)
                         }
                     } else {
-                        runOnUiThread {
-                            updateStatusView.text = "Download failed. Try again."
-                        }
+                        runOnUiThread { updateStatusText = "Download failed. Try again." }
                     }
                 }
             }
         }
     }
 
-    private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
-    private val skillOptions = listOf(
-        "Focus / Watch me",
-        "Loose leash",
-        "Settle",
-        "Recall",
-        "Task work",
-        "Sit/Stay",
-        "Heel",
-        "Leave It",
-        "Under Tuck",
-        "DPT Task",
-        "PA Focus",
-    )
-
+    // ── Lifecycle ───────────────────────────────────────────────────────────
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        bindViews()
-        setupUi()
         checkForAppUpdate()
 
         val storedToken = prefs.getString(KEY_TOKEN, null)
         if (!storedToken.isNullOrBlank()) {
             currentToken = storedToken
-            showSignedInShell("Restoring saved session...")
+            statusMessage = "Restoring saved session..."
             restoreCachedDashboard()
             refreshDashboard(storedToken, null)
         } else {
             showLoggedOut("Sign in to load your dogs, logs, and training dashboard.")
+        }
+
+        setContent {
+            GuidePawCompanionTheme { MainScreen() }
         }
     }
 
@@ -171,158 +217,498 @@ class MainActivity : AppCompatActivity() {
         checkForAppUpdate()
     }
 
-    private fun bindViews() {
-        statusView = findViewById(R.id.statusView)
-        progressView = findViewById(R.id.progressView)
-        updateCard = findViewById(R.id.updateCard)
-        updateStatusView = findViewById(R.id.updateStatusView)
-        updateNowButton = findViewById(R.id.btnUpdateNow)
-        dismissUpdateButton = findViewById(R.id.btnDismissUpdate)
-        versionBadgeView = findViewById(R.id.versionBadgeView)
-        versionView = findViewById(R.id.versionView)
-
-        loginCard = findViewById(R.id.loginCard)
-        dashboardCard = findViewById(R.id.dashboardCard)
-        sectionToggle = findViewById(R.id.sectionToggle)
-        alertsBadgeView = findViewById(R.id.alertsBadgeView)
-        loginMessageView = findViewById(R.id.loginMessageView)
-
-        twoFactorLayout = findViewById(R.id.twoFactorLayout)
-        recoveryKeyLayout = findViewById(R.id.recoveryKeyLayout)
-        usernameInput = findViewById(R.id.usernameInput)
-        passwordInput = findViewById(R.id.passwordInput)
-        twoFactorInput = findViewById(R.id.twoFactorInput)
-        recoveryKeyInput = findViewById(R.id.recoveryKeyInput)
-
-        dashboardSummaryView = findViewById(R.id.dashboardSummaryView)
-        activeDogSummaryView = findViewById(R.id.activeDogSummaryView)
-        accountSummaryView = findViewById(R.id.accountSummaryView)
-        suggestionsContainer = findViewById(R.id.suggestionsContainer)
-        dogsContainer = findViewById(R.id.dogsContainer)
-        logsContainer = findViewById(R.id.recentLogsContainer)
-        dogsMessageView = findViewById(R.id.dogsMessageView)
-        trainMessageView = findViewById(R.id.trainMessageView)
-        wearablesBodyView = findViewById(R.id.wearablesBodyView)
-
-        logLocationInput = findViewById(R.id.logLocationInput)
-        logCityStateInput = findViewById(R.id.logCityStateInput)
-        logTypeInput = findViewById<AutoCompleteTextView>(R.id.logTypeInput)
-        logTypeLayout = findViewById(R.id.logTypeLayout)
-        logNotesInput = findViewById(R.id.logNotesInput)
-        focusSeekBar = findViewById(R.id.focusSeekBar)
-        focusValueView = findViewById(R.id.focusValueView)
-        skillChipGroup = findViewById(R.id.skillChipGroup)
-        saveLogButton = findViewById(R.id.btnSaveLog)
+    // ── Root composable ─────────────────────────────────────────────────────
+    @Composable
+    private fun MainScreen() {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.surface,
+            bottomBar      = { BottomNav() },
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                if (showUpdateCard) UpdateBanner()
+                if (isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                if (statusMessage.isNotBlank()) {
+                    Text(
+                        text     = statusMessage,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                        style    = MaterialTheme.typography.bodySmall,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (currentToken == null) {
+                    LoginSection()
+                } else {
+                    when (currentSection) {
+                        NavSection.OVERVIEW  -> OverviewSection()
+                        NavSection.TRAINING  -> TrainingSection()
+                        NavSection.DOGS      -> DogsSection()
+                        NavSection.WEARABLES -> WearablesSection()
+                        NavSection.MORE      -> OverviewSection()
+                    }
+                }
+            }
+        }
     }
 
-    private fun setupUi() {
-        versionView.text = "v${CompanionAppVersion.VERSION_NAME}"
-        versionBadgeView.text = "v${CompanionAppVersion.VERSION_NAME}"
-        val typeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, locationTypes)
-        logTypeInput.setAdapter(typeAdapter)
-        logTypeInput.setText(locationTypes.first(), false)
+    // ── Bottom navigation — matches v0.016 MaterialButton row exactly ──────
+    @Composable
+    private fun BottomNav() {
+        Surface(
+            modifier        = Modifier.fillMaxWidth(),
+            color           = Color.White,
+            shadowElevation = 4.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            ) {
+                NAV_ITEMS.forEach { (section, label) ->
+                    val selected = section != NavSection.MORE && currentSection == section
+                    val bgColor  = if (selected) GpPrimaryContainer else Color.Transparent
+                    val txtColor = if (selected) GpPrimary else Color(0xFF1F2937)
+                    Box(modifier = Modifier.weight(1f)) {
+                        TextButton(
+                            onClick        = {
+                                if (section == NavSection.MORE) showMenuDialog()
+                                else currentSection = section
+                            },
+                            modifier       = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp),
+                            shape          = RoundedCornerShape(14.dp),
+                            colors         = ButtonDefaults.textButtonColors(
+                                containerColor = bgColor,
+                                contentColor   = txtColor,
+                            ),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 5.dp),
+                        ) {
+                            Text(
+                                text      = label,
+                                fontSize  = 12.sp,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 16.sp,
+                                color     = txtColor,
+                            )
+                        }
+                        if (section == NavSection.WEARABLES && currentUnreadCount > 0) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(top = 4.dp, end = 4.dp)
+                                    .background(GpPrimary, RoundedCornerShape(50))
+                                    .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                                    .padding(horizontal = 5.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text       = currentUnreadCount.toString(),
+                                    color      = Color.White,
+                                    fontSize   = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-        focusSeekBar.progress = 2
-        updateFocusLabel(3)
-        focusSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                updateFocusLabel(progress + 1)
+    // ── Update banner ───────────────────────────────────────────────────────
+    @Composable
+    private fun UpdateBanner() {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(updateStatusText, style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { startAppUpdate() })     { Text("Update Now") }
+                    OutlinedButton(onClick = { hideUpdateNotice() }) { Text("Dismiss") }
+                }
+            }
+        }
+    }
+
+    // ── Login section ───────────────────────────────────────────────────────
+    @Composable
+    private fun LoginSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                "Sign in to GuidePaw",
+                style      = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            if (loginMessage.isNotBlank()) {
+                Text(loginMessage, color = MaterialTheme.colorScheme.error)
+            }
+            OutlinedTextField(
+                value         = usernameText,
+                onValueChange = { usernameText = it },
+                label         = { Text("Username") },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value                  = passwordText,
+                onValueChange          = { passwordText = it },
+                label                  = { Text("Password") },
+                singleLine             = true,
+                visualTransformation   = PasswordVisualTransformation(),
+                modifier               = Modifier.fillMaxWidth(),
+            )
+            if (showTwoFactor) {
+                OutlinedTextField(
+                    value         = twoFactorText,
+                    onValueChange = { twoFactorText = it },
+                    label         = { Text("Two-factor code") },
+                    singleLine    = true,
+                    modifier      = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value         = recoveryKeyText,
+                    onValueChange = { recoveryKeyText = it },
+                    label         = { Text("Recovery key (optional)") },
+                    singleLine    = true,
+                    modifier      = Modifier.fillMaxWidth(),
+                )
+            }
+            Button(
+                onClick  = { attemptLogin() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Sign In") }
+        }
+    }
+
+    // ── Overview section ────────────────────────────────────────────────────
+    @Composable
+    private fun OverviewSection() {
+        val me        = currentMe
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (me != null) {
+                SummaryCard {
+                    Text("Signed in as ${me.username}", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        buildString {
+                            append("Active dog: ")
+                            append(activeDog?.name ?: "None selected")
+                            activeDog?.breed?.let { append(" • $it") }
+                            if (currentDogs.isNotEmpty()) append(" • ${currentDogs.size} dogs")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    Text(
+                        "Account synced. Training, logs, and dog access are up to date.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+            }
+            if (currentSuggestions.isNotEmpty()) {
+                SummaryCard {
+                    Text("Training Suggestions", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(4.dp))
+                    currentSuggestions.forEach { s ->
+                        Text("• $s", modifier = Modifier.padding(vertical = 2.dp))
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick   = { refreshCurrent() },
+                    modifier  = Modifier.weight(1f),
+                ) { Text("Refresh") }
+                OutlinedButton(
+                    onClick  = { signOut("Signed out.") },
+                    modifier = Modifier.weight(1f),
+                    colors   = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) { Text("Sign Out") }
+            }
+        }
+    }
+
+    // ── Training section ────────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+    @Composable
+    private fun TrainingSection() {
+        var dropdownExpanded by remember { mutableStateOf(false) }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (trainMessage.isNotBlank()) {
+                Text(trainMessage, color = GpOnSurfaceVariant)
+            }
+            OutlinedTextField(
+                value         = logLocation,
+                onValueChange = { logLocation = it },
+                label         = { Text("Location name") },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value         = logCityState,
+                onValueChange = { logCityState = it },
+                label         = { Text("City, State") },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+            ExposedDropdownMenuBox(
+                expanded        = dropdownExpanded,
+                onExpandedChange = { dropdownExpanded = it },
+            ) {
+                OutlinedTextField(
+                    value         = logType,
+                    onValueChange = {},
+                    readOnly      = true,
+                    label         = { Text("Location type") },
+                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(dropdownExpanded) },
+                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                )
+                ExposedDropdownMenu(
+                    expanded         = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false },
+                ) {
+                    locationTypes.forEach { type ->
+                        DropdownMenuItem(
+                            text    = { Text(type) },
+                            onClick = { logType = type; dropdownExpanded = false },
+                        )
+                    }
+                }
+            }
+            Text("Focus level: $focusLevel", fontWeight = FontWeight.Medium)
+            Slider(
+                value         = focusLevel.toFloat(),
+                onValueChange = { focusLevel = it.roundToInt() },
+                valueRange    = 1f..5f,
+                steps         = 3,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+            Text("Skills practiced", fontWeight = FontWeight.Medium)
+            FlowRow(
+                modifier             = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement   = Arrangement.spacedBy(4.dp),
+            ) {
+                skillOptions.forEach { skill ->
+                    FilterChip(
+                        selected = skill in selectedSkills,
+                        onClick  = {
+                            selectedSkills = if (skill in selectedSkills)
+                                selectedSkills - skill else selectedSkills + skill
+                        },
+                        label    = { Text(skill, fontSize = 12.sp) },
+                    )
+                }
+            }
+            OutlinedTextField(
+                value         = logNotes,
+                onValueChange = { logNotes = it },
+                label         = { Text("Handler notes") },
+                minLines      = 3,
+                modifier      = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick  = { submitTrainingLog() },
+                enabled  = currentActiveDogId != null,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(saveLogLabel) }
+        }
+    }
+
+    // ── Dogs section ────────────────────────────────────────────────────────
+    @Composable
+    private fun DogsSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Your Dogs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (currentDogs.isEmpty()) {
+                Text("No dogs are accessible on this account.", color = GpOnSurfaceVariant)
+            } else {
+                Text(
+                    "Tap a dog to make it active. The app uses the active dog for logs and daily tracking.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                currentDogs.forEach { DogCard(it) }
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-        })
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            Text("Recent Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (currentLogs.isEmpty()) {
+                Text("No training logs yet for the active dog.", color = GpOnSurfaceVariant)
+            } else {
+                currentLogs.take(8).forEach { LogCard(it) }
+            }
+        }
+    }
 
-        skillOptions.forEach { label ->
-            skillChipGroup.addView(
-                Chip(this).apply {
-                    text = label
-                    isCheckable = true
-                    isClickable = true
-                    isChipIconVisible = false
+    @Composable
+    private fun DogCard(dog: GuidePawDogItem) {
+        val active = dog.id == currentActiveDogId
+        OutlinedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors   = CardDefaults.outlinedCardColors(
+                containerColor = if (active) GpPrimaryContainer else MaterialTheme.colorScheme.surface,
+            ),
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(dog.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    listOfNotNull(
+                        dog.breed,
+                        dog.accessRole?.replaceFirstChar { it.uppercase() },
+                        dog.lifecycleStatus?.replace('_', ' '),
+                    ).joinToString(" • ").ifBlank { "Dog record" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick  = {
+                        if (!active) {
+                            setLoading(true, "Switching active dog...")
+                            worker.execute {
+                                try {
+                                    val newId = api.setActiveDog(currentToken ?: return@execute, dog.id)
+                                    runOnUiThread {
+                                        currentActiveDogId = newId ?: dog.id
+                                        refreshDashboard(currentToken ?: "", currentActiveDogId)
+                                    }
+                                } catch (e: Throwable) {
+                                    runOnUiThread { setLoading(false, friendlyMessage(e.message, "Could not switch dog.")) }
+                                }
+                            }
+                        }
+                    },
+                    enabled  = !active,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (active) "Active dog" else "Use this dog") }
+            }
+        }
+    }
+
+    @Composable
+    private fun LogCard(log: GuidePawLogItem) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    log.locationName.ifBlank { "Training session" },
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    listOfNotNull(
+                        log.logDate.takeIf { it.isNotBlank() },
+                        log.locationCityState,
+                        log.locationType,
+                        "Focus ${log.focusLevel}",
+                    ).joinToString(" • "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                if (log.skillsPracticed.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(log.skillsPracticed.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
                 }
+                if (log.handlerNotes.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(log.handlerNotes.take(220), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick  = { beginEditLog(log) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Edit") }
+            }
+        }
+    }
+
+    // ── Wearables section ───────────────────────────────────────────────────
+    @Composable
+    private fun WearablesSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "Wearables & Notifications",
+                style      = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            SummaryCard { Text(wearablesBody) }
+            Button(
+                onClick  = { openWebPage("https://guidepaw.app/wearable_integrations.php") },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Wearables Setup") }
+            OutlinedButton(
+                onClick  = { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Notification Center") }
+            OutlinedButton(
+                onClick  = { openWebPage("https://guidepaw.app/notifications.php") },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Notification Settings (Web)") }
+        }
+    }
+
+    // ── Shared composable ───────────────────────────────────────────────────
+    @Composable
+    private fun SummaryCard(content: @Composable ColumnScope.() -> Unit) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier            = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                content             = content,
             )
         }
-
-        findViewById<MaterialButton>(R.id.btnSignIn).setOnClickListener { attemptLogin() }
-        findViewById<MaterialButton>(R.id.btnRefresh).setOnClickListener { refreshCurrent() }
-        findViewById<MaterialButton>(R.id.btnSignOut).setOnClickListener { signOut("Signed out.") }
-        saveLogButton.setOnClickListener { submitTrainingLog() }
-        updateNowButton.setOnClickListener { startAppUpdate() }
-        dismissUpdateButton.setOnClickListener { hideUpdateNotice() }
-
-        findViewById<MaterialButton>(R.id.btnOpenWearablesWeb).setOnClickListener {
-            openExternal("https://guidepaw.app/wearable_integrations.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenNotificationsNative).setOnClickListener {
-            startActivity(Intent(this, NotificationCenterActivity::class.java))
-        }
-        findViewById<MaterialButton>(R.id.btnOpenNotificationsWeb).setOnClickListener {
-            openExternal("https://guidepaw.app/notifications.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenAppPage).setOnClickListener {
-            openExternal("https://guidepaw.app/app.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenBreedQuestionnaire).setOnClickListener {
-            openExternal("https://guidepaw.app/breed_questionnaire.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenFaq).setOnClickListener {
-            openExternal("https://guidepaw.app/faq.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenComparisonHub).setOnClickListener {
-            openExternal("https://guidepaw.app/breed_comparison_hub.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenFamilyGuide).setOnClickListener {
-            openExternal("https://guidepaw.app/breed_family_guide.php")
-        }
-        findViewById<MaterialButton>(R.id.btnOpenLegalInfo).setOnClickListener {
-            openExternal("https://guidepaw.app/service_dog_esa_legal_info.php")
-        }
-
-        setupBottomNav()
-        activateBottomSection(R.id.btnOverview)
     }
 
-    private fun setupBottomNav() {
-        bottomNavButtons().forEach { (buttonId, button) ->
-            button.isAllCaps = false
-            button.textAlignment = View.TEXT_ALIGNMENT_CENTER
-            button.textSize = 12f
-            button.minHeight = dp(48)
-            button.minimumHeight = dp(48)
-            button.cornerRadius = dp(14)
-            button.strokeWidth = 0
-            button.setPadding(0, dp(5), 0, dp(5))
-            button.setOnClickListener {
-                if (buttonId == R.id.btnPublic) {
-                    updateBottomNavState()
-                    showMenuDialog()
-                } else {
-                    activateBottomSection(buttonId)
-                }
-            }
-        }
-        updateAlertsBadge()
-    }
-
-    private fun bottomNavButtons(): Map<Int, MaterialButton> {
-        return linkedMapOf(
-            R.id.btnOverview to findViewById(R.id.btnOverview),
-            R.id.btnTraining to findViewById(R.id.btnTraining),
-            R.id.btnDogs to findViewById(R.id.btnDogs),
-            R.id.btnWearables to findViewById(R.id.btnWearables),
-            R.id.btnPublic to findViewById(R.id.btnPublic),
-        )
-    }
-
+    // ── Business logic (minimal changes from original) ──────────────────────
     private fun attemptLogin() {
-        val username = usernameInput.text?.toString()?.trim().orEmpty()
-        val password = passwordInput.text?.toString().orEmpty()
-        val totpCode = twoFactorInput.text?.toString()?.trim().orEmpty()
-        val recoveryKey = recoveryKeyInput.text?.toString()?.trim().orEmpty()
+        val username    = usernameText.trim()
+        val password    = passwordText
+        val totpCode    = twoFactorText.trim()
+        val recoveryKey = recoveryKeyText.trim()
 
         if (username.isBlank() || password.isBlank()) {
-            loginMessageView.text = "Username and password are required."
+            loginMessage = "Username and password are required."
             return
         }
 
@@ -337,12 +723,12 @@ class MainActivity : AppCompatActivity() {
                         return@runOnUiThread
                     }
                     if (!result.success || result.token.isNullOrBlank()) {
-                        showLoggedOut(friendlyMessage(result.message, "Sign in failed."))
+                        loginMessage = friendlyMessage(result.message, "Sign in failed.")
                         setLoading(false, null)
                         return@runOnUiThread
                     }
                     saveToken(result.token)
-                    showSignedInShell("Signed in. Loading dashboard...")
+                    statusMessage = "Signed in. Loading dashboard..."
                     refreshDashboard(result.token, null)
                 }
             } catch (e: GuidePawApiException) {
@@ -351,13 +737,13 @@ class MainActivity : AppCompatActivity() {
                     if (e.statusCode == 401 && payload?.optBoolean("requires_2fa", false) == true) {
                         showTwoFactorPrompt(payload.optString("message") ?: "Two-factor authentication is required.")
                     } else {
-                        loginMessageView.text = friendlyMessage(e.message, "Sign in failed.")
+                        loginMessage = friendlyMessage(e.message, "Sign in failed.")
                         setLoading(false, null)
                     }
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
-                    loginMessageView.text = friendlyMessage(t.message, "Sign in failed.")
+                    loginMessage = friendlyMessage(t.message, "Sign in failed.")
                     setLoading(false, null)
                 }
             }
@@ -366,10 +752,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshCurrent() {
         val token = currentToken ?: prefs.getString(KEY_TOKEN, null)
-        if (token.isNullOrBlank()) {
-            showLoggedOut("Sign in to load the dashboard.")
-            return
-        }
+        if (token.isNullOrBlank()) { showLoggedOut("Sign in to load the dashboard."); return }
         refreshDashboard(token, currentActiveDogId, keepSignedInOnFailure = currentMe != null)
         checkForAppUpdate()
     }
@@ -378,362 +761,133 @@ class MainActivity : AppCompatActivity() {
         setLoading(true, "Refreshing dashboard...")
         worker.execute {
             try {
-                val me = api.me(token)
-                val dogs = api.dogs(token)
-                var activeDogId = preferDogId ?: me.activeDogId ?: dogs.firstOrNull()?.id
-                if (activeDogId != null && activeDogId > 0 && activeDogId != me.activeDogId) {
-                    activeDogId = api.setActiveDog(token, activeDogId) ?: activeDogId
+                val me    = api.me(token)
+                val dogs  = api.dogs(token)
+                var dogId = preferDogId ?: me.activeDogId ?: dogs.firstOrNull()?.id
+                if (dogId != null && dogId > 0 && dogId != me.activeDogId) {
+                    dogId = api.setActiveDog(token, dogId) ?: dogId
                 }
-                val logsResult = api.logs(token, activeDogId)
-                val unreadCount = runCatching { api.notifications(token).visibleUnreadCount }.getOrDefault(0)
+                val logsResult   = api.logs(token, dogId)
+                val unreadCount  = runCatching { api.notifications(token).visibleUnreadCount }.getOrDefault(0)
                 runOnUiThread {
-                    currentToken = token
-                    currentMe = me
-                    currentDogs = dogs
-                    currentActiveDogId = activeDogId ?: logsResult.activeDogId
-                    currentLogs = logsResult.logs
-                    currentSuggestions = logsResult.trainingSuggestions
-                    currentUnreadCount = unreadCount
+                    currentToken        = token
+                    currentMe           = me
+                    currentDogs         = dogs
+                    currentActiveDogId  = dogId ?: logsResult.activeDogId
+                    currentLogs         = logsResult.logs
+                    currentSuggestions  = logsResult.trainingSuggestions
+                    currentUnreadCount  = unreadCount
                     saveCachedDashboard()
                     renderDashboard()
                     setLoading(false, "Dashboard updated.")
                 }
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
-                    if (keepSignedInOnFailure) {
-                        showSignedInShell(friendlyMessage(e.message, "Could not load the full dashboard yet."))
-                    } else {
+                    val msg = friendlyMessage(e.message, "Could not refresh dashboard.")
+                    if (keepSignedInOnFailure) { statusMessage = msg }
+                    else {
                         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
                         showLoggedOut(friendlyMessage(e.message, "Session expired. Please sign in again."))
                     }
-                    val message = friendlyMessage(e.message, "Could not refresh dashboard.")
-                    setLoading(false, message)
-                    statusView.text = message
+                    setLoading(false, msg)
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
-                    if (keepSignedInOnFailure) {
-                        showSignedInShell(friendlyMessage(t.message, "Could not load the full dashboard yet."))
-                    } else {
+                    val msg = friendlyMessage(t.message, "Could not refresh dashboard.")
+                    if (keepSignedInOnFailure) { statusMessage = msg }
+                    else {
                         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
-                        showLoggedOut(friendlyMessage(t.message, "Could not refresh dashboard."))
+                        showLoggedOut(msg)
                     }
-                    val message = friendlyMessage(t.message, "Could not refresh dashboard.")
-                    setLoading(false, message)
-                    statusView.text = message
+                    setLoading(false, msg)
                 }
             }
         }
     }
 
     private fun renderDashboard() {
-        val me = currentMe ?: return
         val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
-
-        loginCard.visibility = View.GONE
-        dashboardCard.visibility = View.VISIBLE
-        dashboardSummaryView.text = "Signed in as ${me.username}"
-        activeDogSummaryView.text = buildString {
-            append("Active dog: ")
-            append(activeDog?.name ?: "None selected")
-            activeDog?.breed?.let { append(" • ").append(it) }
-            if (currentDogs.isNotEmpty()) {
-                append(" • ")
-                append(currentDogs.size)
-                append(" dogs")
-            }
-        }
-        accountSummaryView.text = "Account synced. Training, logs, and dog access are up to date."
-
-        dogsMessageView.text = if (currentDogs.isEmpty()) {
-            "No dogs are accessible on this account."
-        } else {
-            "Tap a dog to make it active. The app uses the active dog for logs and daily tracking."
-        }
-        wearablesBodyView.text = if (activeDog == null) {
+        wearablesBody = if (activeDog == null)
             "Wearable data will feed the active dog timeline once a dog is selected."
-        } else {
+        else
             "Wearable data is tied to ${activeDog.name} and will flow into the same handler timeline."
-        }
-
-        renderSuggestions()
-        renderDogs()
-        renderLogs()
-        updateTrainingForm(activeDog)
-        showSection(currentSectionButtonId)
-        statusView.text = "Signed in as ${me.username}"
-        loginMessageView.text = ""
-    }
-
-    private fun renderSuggestions() {
-        suggestionsContainer.removeAllViews()
-        if (currentSuggestions.isEmpty()) {
-            suggestionsContainer.addView(makePlainText("No training suggestions right now."))
-            return
-        }
-        currentSuggestions.forEach { suggestion ->
-            suggestionsContainer.addView(makeBulletText(suggestion))
-        }
-    }
-
-    private fun renderDogs() {
-        dogsContainer.removeAllViews()
-        if (currentDogs.isEmpty()) {
-            dogsContainer.addView(makePlainText("No dogs available on this account."))
-            return
-        }
-        currentDogs.forEach { dog ->
-            val active = dog.id == currentActiveDogId
-            val card = MaterialCardView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = 12 }
-                radius = 18f
-                cardElevation = 0f
-                strokeWidth = 1
-                strokeColor = 0xFFE2E8F0.toInt()
-            }
-            val inner = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(14), dp(14), dp(14), dp(14))
-            }
-            inner.addView(TextView(this).apply {
-                text = dog.name
-                setTextColor(0xFF0F172A.toInt())
-                textSize = 15f
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            })
-            inner.addView(TextView(this).apply {
-                text = listOfNotNull(
-                    dog.breed,
-                    dog.accessRole?.replaceFirstChar { it.uppercase() },
-                    dog.lifecycleStatus?.replace('_', ' ')
-                ).joinToString(" • ").ifBlank { "Dog record" }
-                setTextColor(0xFF334155.toInt())
-                textSize = 12f
-                setPadding(0, dp(4), 0, 0)
-            })
-            inner.addView(MaterialButton(this).apply {
-                text = if (active) "Active dog" else "Use this dog"
-                isEnabled = !active
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(10) }
-                setOnClickListener {
-                    setLoading(true, "Switching active dog...")
-                    worker.execute {
-                        try {
-                            val activeDogId = api.setActiveDog(currentToken ?: return@execute, dog.id)
-                            runOnUiThread {
-                                currentActiveDogId = activeDogId ?: dog.id
-                                refreshDashboard(currentToken ?: "", currentActiveDogId)
-                            }
-                        } catch (e: Throwable) {
-                            runOnUiThread {
-                                setLoading(false, friendlyMessage(e.message, "Could not switch dog."))
-                            }
-                        }
-                    }
-                }
-            })
-            card.addView(inner)
-            dogsContainer.addView(card)
-        }
-    }
-
-    private fun renderLogs() {
-        logsContainer.removeAllViews()
-        if (currentLogs.isEmpty()) {
-            logsContainer.addView(makePlainText("No training logs yet for the active dog."))
-            return
-        }
-        currentLogs.take(8).forEach { log ->
-            val card = MaterialCardView(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(12) }
-                radius = 18f
-                cardElevation = 0f
-                strokeWidth = 1
-                strokeColor = 0xFFE2E8F0.toInt()
-            }
-            val inner = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(14), dp(14), dp(14), dp(14))
-            }
-            inner.addView(TextView(this).apply {
-                text = log.locationName.ifBlank { "Training session" }
-                setTextColor(0xFF0F172A.toInt())
-                textSize = 15f
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            })
-            inner.addView(TextView(this).apply {
-                text = listOfNotNull(
-                    log.logDate.takeIf { it.isNotBlank() },
-                    log.locationCityState,
-                    log.locationType,
-                    "Focus ${log.focusLevel}"
-                ).joinToString(" • ")
-                setTextColor(0xFF334155.toInt())
-                textSize = 12f
-                setPadding(0, dp(4), 0, 0)
-            })
-            if (log.skillsPracticed.isNotEmpty()) {
-                inner.addView(TextView(this).apply {
-                    text = log.skillsPracticed.joinToString(" · ")
-                    setTextColor(0xFF0F172A.toInt())
-                    textSize = 13f
-                    setPadding(0, dp(8), 0, 0)
-                })
-            }
-            if (log.handlerNotes.isNotBlank()) {
-                inner.addView(TextView(this).apply {
-                    text = log.handlerNotes.take(220)
-                    setTextColor(0xFF334155.toInt())
-                    textSize = 12f
-                    setPadding(0, dp(8), 0, 0)
-                })
-            }
-            inner.addView(MaterialButton(this).apply {
-                text = "Edit"
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { topMargin = dp(10) }
-                setOnClickListener {
-                    beginEditLog(log)
-                }
-            })
-            card.addView(inner)
-            logsContainer.addView(card)
-        }
-    }
-
-    private fun updateTrainingForm(activeDog: GuidePawDogItem?) {
-        trainMessageView.text = if (activeDog == null) {
+        trainMessage = if (activeDog == null)
             "Pick an active dog before saving a training log."
-        } else {
+        else
             "Training log will save to ${activeDog.name}."
-        }
-        findViewById<MaterialButton>(R.id.btnSaveLog).isEnabled = activeDog != null
+        statusMessage = "Signed in as ${currentMe?.username.orEmpty()}"
+        loginMessage  = ""
     }
 
     private fun submitTrainingLog() {
         val token = currentToken ?: return
         val dogId = currentActiveDogId ?: return
-        val locationName = logLocationInput.text?.toString()?.trim().orEmpty()
-        if (locationName.isBlank()) {
-            trainMessageView.text = "Location name is required."
-            return
-        }
-        val cityState = logCityStateInput.text?.toString()?.trim().orEmpty()
-        val locationType = logTypeInput.text?.toString()?.trim().orEmpty().ifBlank { locationTypes.first() }
-        val notes = logNotesInput.text?.toString()?.trim().orEmpty()
-        val focus = focusSeekBar.progress + 1
-        val skills = skillChipGroup.checkedChipIds.mapNotNull { id ->
-            findViewById<Chip>(id)?.text?.toString()?.trim()?.takeIf { it.isNotBlank() }
-        }
+        if (logLocation.isBlank()) { trainMessage = "Location name is required."; return }
 
         setLoading(true, "Saving training log...")
         worker.execute {
             try {
                 val response = api.saveLog(
-                    token = token,
-                    dogId = dogId,
-                    logId = currentEditingLogId,
-                    locationName = locationName,
-                    cityState = cityState,
-                    locationType = locationType,
-                    focusLevel = focus,
-                    skills = skills,
-                    notes = notes,
+                    token        = token,
+                    dogId        = dogId,
+                    logId        = currentEditingLogId,
+                    locationName = logLocation,
+                    cityState    = logCityState,
+                    locationType = logType,
+                    focusLevel   = focusLevel,
+                    skills       = selectedSkills.toList(),
+                    notes        = logNotes,
                 )
                 runOnUiThread {
-                    trainMessageView.text = response.message ?: "Training log saved."
-                    logNotesInput.setText("")
-                    skillChipGroup.clearCheck()
+                    trainMessage   = response.message ?: "Training log saved."
+                    logNotes       = ""
+                    selectedSkills = emptySet()
                     clearEditLog()
                     refreshDashboard(token, dogId)
                 }
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
-                    trainMessageView.text = friendlyMessage(e.message, "Could not save training log.")
+                    trainMessage = friendlyMessage(e.message, "Could not save training log.")
                     setLoading(false, null)
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
-                    trainMessageView.text = friendlyMessage(t.message, "Could not save training log.")
+                    trainMessage = friendlyMessage(t.message, "Could not save training log.")
                     setLoading(false, null)
                 }
             }
         }
     }
 
-    private fun showSection(sectionButtonId: Int) {
-        val overview = findViewById<View>(R.id.sectionOverview)
-        val training = findViewById<View>(R.id.sectionTraining)
-        val dogs = findViewById<View>(R.id.sectionDogs)
-        val wearables = findViewById<View>(R.id.sectionWearables)
-        val publicPages = findViewById<View>(R.id.sectionPublic)
-
-        overview.visibility = if (sectionButtonId == R.id.btnOverview) View.VISIBLE else View.GONE
-        training.visibility = if (sectionButtonId == R.id.btnTraining) View.VISIBLE else View.GONE
-        dogs.visibility = if (sectionButtonId == R.id.btnDogs) View.VISIBLE else View.GONE
-        wearables.visibility = if (sectionButtonId == R.id.btnWearables) View.VISIBLE else View.GONE
-        publicPages.visibility = if (sectionButtonId == R.id.btnPublic) View.VISIBLE else View.GONE
-    }
-
     private fun showTwoFactorPrompt(message: String) {
-        loginCard.visibility = View.VISIBLE
-        dashboardCard.visibility = View.GONE
-        twoFactorLayout.visibility = View.VISIBLE
-        recoveryKeyLayout.visibility = View.VISIBLE
-        loginMessageView.text = message
-        setLoading(false, null)
-    }
-
-    private fun showSignedInShell(message: String) {
-        loginCard.visibility = View.GONE
-        dashboardCard.visibility = View.VISIBLE
-        dashboardSummaryView.text = "Signed in"
-        activeDogSummaryView.text = "Loading account details..."
-        accountSummaryView.text = "Loading..."
-        dogsMessageView.text = "Loading dogs..."
-        wearablesBodyView.text = "Loading wearable data..."
-        suggestionsContainer.removeAllViews()
-        suggestionsContainer.addView(makePlainText("Loading training suggestions..."))
-        dogsContainer.removeAllViews()
-        logsContainer.removeAllViews()
-        statusView.text = message
-        loginMessageView.text = ""
-        syncUpdateCardVisibility()
+        currentToken = null
+        currentMe    = null
+        showTwoFactor = true
+        loginMessage  = message
+        isLoading     = false
     }
 
     private fun showLoggedOut(message: String) {
-        currentToken = null
-        currentMe = null
-        currentDogs = emptyList()
-        currentLogs = emptyList()
-        currentSuggestions = emptyList()
-        currentActiveDogId = null
+        currentToken        = null
+        currentMe           = null
+        currentDogs         = emptyList()
+        currentLogs         = emptyList()
+        currentSuggestions  = emptyList()
+        currentActiveDogId  = null
         currentEditingLogId = null
-        currentUnreadCount = 0
+        currentUnreadCount  = 0
         prefs.edit().remove(KEY_CACHE).commit()
-        loginCard.visibility = View.VISIBLE
-        dashboardCard.visibility = View.GONE
-        loginMessageView.text = message
-        statusView.text = "Signed out"
+        loginMessage  = message
+        statusMessage = "Signed out"
+        isLoading     = false
         syncUpdateCardVisibility()
-        setLoading(false, null)
     }
 
     private fun signOut(message: String) {
         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
-        twoFactorInput.setText("")
-        recoveryKeyInput.setText("")
+        twoFactorText   = ""
+        recoveryKeyText = ""
+        showTwoFactor   = false
         showLoggedOut(message)
     }
 
@@ -744,149 +898,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun beginEditLog(log: GuidePawLogItem) {
         currentEditingLogId = log.id
-        logLocationInput.setText(log.locationName)
-        logCityStateInput.setText(log.locationCityState ?: "")
-        logTypeInput.setText(log.locationType ?: locationTypes.first(), false)
-        focusSeekBar.progress = (log.focusLevel.coerceIn(1, 6) - 1)
-        updateFocusLabel(log.focusLevel.coerceIn(1, 6))
-        logNotesInput.setText(log.handlerNotes)
-        skillChipGroup.clearCheck()
-        log.skillsPracticed.forEach { skill ->
-            val chip = findSkillChip(skill)
-            if (chip != null) {
-                chip.isChecked = true
-            }
-        }
-        saveLogButton.text = "Update training log"
-        activateBottomSection(R.id.btnTraining)
-        trainMessageView.text = "Editing log from ${log.logDate.takeIf { it.isNotBlank() } ?: "recent session"}."
+        logLocation         = log.locationName
+        logCityState        = log.locationCityState ?: ""
+        logType             = log.locationType ?: locationTypes.first()
+        focusLevel          = log.focusLevel.coerceIn(1, 5)
+        logNotes            = log.handlerNotes
+        selectedSkills      = log.skillsPracticed.toSet()
+        saveLogLabel        = "Update training log"
+        currentSection      = NavSection.TRAINING
+        trainMessage        = "Editing log from ${log.logDate.takeIf { it.isNotBlank() } ?: "recent session"}."
     }
 
     private fun clearEditLog() {
         currentEditingLogId = null
-        saveLogButton.text = "Save training log"
+        saveLogLabel        = "Save training log"
     }
 
-    private fun findSkillChip(label: String): Chip? {
-        for (idx in 0 until skillChipGroup.childCount) {
-            val child = skillChipGroup.getChildAt(idx)
-            if (child is Chip && child.text.toString().equals(label, ignoreCase = true)) {
-                return child
-            }
-        }
-        return null
-    }
-
-    private fun openExternal(url: String) {
+    private fun openWebPage(url: String) =
         GuidePawNavigation.openUrl(this, url, accessToken = currentToken)
-    }
 
-    private fun activateBottomSection(sectionButtonId: Int) {
-        currentSectionButtonId = sectionButtonId
-        updateBottomNavState()
-        showSection(sectionButtonId)
-    }
-
-    private fun updateBottomNavState() {
-        bottomNavButtons().forEach { (buttonId, button) ->
-            val active = buttonId == currentSectionButtonId
-            button.backgroundTintList = ColorStateList.valueOf(
-                if (active) 0xFFE8F1FF.toInt() else 0x00FFFFFF
-            )
-            button.setTextColor(if (active) 0xFF0D6EFD.toInt() else 0xFF1F2937.toInt())
-        }
-        updateAlertsBadge()
-    }
-
-    private fun updateAlertsBadge() {
-        alertsBadgeView.text = currentUnreadCount.coerceAtLeast(0).toString()
-        alertsBadgeView.backgroundTintList = ColorStateList.valueOf(
-            if (currentUnreadCount > 0) 0xFF0D6EFD.toInt() else 0xFF94A3B8.toInt()
-        )
-    }
-
-    private fun showMenuDialog() {
-        val content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(8))
-        }
-
-        val rootActions = GridLayout(this).apply {
-            columnCount = 2
-            setPadding(0, 0, 0, dp(8))
-            addView(makeMenuButton(MenuAction("Settings", icon = "gear") { openExternal("https://guidepaw.app/settings.php") }, true))
-            addView(makeMenuButton(MenuAction("Logout", icon = "logout") { signOut("Signed out.") }, true))
-        }
-        content.addView(rootActions)
-
-        content.addView(makeMenuSection("Dog", listOf(
-            MenuAction("Handler Profile", icon = "profile") { openExternal("https://guidepaw.app/handler_profile.php") },
-            MenuAction("Dogs", R.id.btnDogs, "dog"),
-            MenuAction("Dog Profile", icon = "id") { openExternal("https://guidepaw.app/dog_profile.php") },
-            MenuAction("QR Tracking", icon = "qr") { openExternal("https://guidepaw.app/qr_tracking.php") },
-            MenuAction("Dog Access", icon = "access") { openExternal("https://guidepaw.app/dog_access.php") },
-            MenuAction("Dog Audit", icon = "audit") { openExternal("https://guidepaw.app/dog_access_audit.php") },
-            MenuAction("Stats", icon = "stats") { openExternal("https://guidepaw.app/stats.php") },
-        )))
-        content.addView(makeMenuSection("Logs", listOf(
-            MenuAction("Quick Session", R.id.btnTraining, "quick"),
-            MenuAction("Detailed Log", R.id.btnTraining, "log"),
-            MenuAction("History", R.id.btnDogs, "history"),
-            MenuAction("Media Review", icon = "media") { openExternal("https://guidepaw.app/media_review.php") },
-            MenuAction("Video Review", icon = "video") { openExternal("https://guidepaw.app/video_review.php") },
-        )))
-        content.addView(makeMenuSection("Training", listOf(
-            MenuAction("Training Program", R.id.btnTraining, "training"),
-            MenuAction("Candidate Assessment", icon = "candidate") { openExternal("https://guidepaw.app/candidate_assessment.php") },
-            MenuAction("Candidate Comparison", icon = "compare") { openExternal("https://guidepaw.app/candidate_comparison.php") },
-            MenuAction("Behavior Risk", icon = "risk") { openExternal("https://guidepaw.app/behavior_risk_scoring.php") },
-            MenuAction("Regression Engine", icon = "regression") { openExternal("https://guidepaw.app/regression_engine.php") },
-            MenuAction("Goal Builder", icon = "goal") { openExternal("https://guidepaw.app/goal_builder.php") },
-            MenuAction("Community Challenges", icon = "challenge") { openExternal("https://guidepaw.app/community_challenges.php") },
-            MenuAction("Trucking Mode", icon = "truck") { openExternal("https://guidepaw.app/trucking_mode.php") },
-            MenuAction("Tactical Training", icon = "shield") { openExternal("https://guidepaw.app/tactical_training.php") },
-            MenuAction("Goal Intake", icon = "target") { openExternal("https://guidepaw.app/training_goal_intake.php") },
-            MenuAction("Habit Repair", icon = "repair") { openExternal("https://guidepaw.app/habit_repair.php") },
-            MenuAction("Session Log", R.id.btnTraining, "session"),
-            MenuAction("Training History", R.id.btnDogs, "book"),
-            MenuAction("Coach Review", icon = "coach") { openExternal("https://guidepaw.app/coach_review.php") },
-        )))
-        content.addView(makeMenuSection("Care", listOf(
-            MenuAction("Health Docs", icon = "health") { openExternal("https://guidepaw.app/dog_health.php") },
-            MenuAction("Vet Appointments", icon = "calendar") { openExternal("https://guidepaw.app/appointments.php") },
-            MenuAction("Medications", icon = "meds") { openExternal("https://guidepaw.app/medications.php") },
-            MenuAction("Wearable Sync", icon = "watch") { openExternal("https://guidepaw.app/wearable_integrations.php") },
-        )))
-        content.addView(makeMenuSection("More", listOf(
-            MenuAction("Notification Center", icon = "bell") { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
-            MenuAction("Smart Alerts", icon = "alerts") { openExternal("https://guidepaw.app/alerts.php") },
-            MenuAction("Breed Finder", icon = "question") { openExternal("https://guidepaw.app/breed_questionnaire.php") },
-            MenuAction("Community", icon = "community") { openExternal("https://guidepaw.app/community.php") },
-            MenuAction("Support Funding", icon = "support") { openExternal("https://guidepaw.app/support_funding.php") },
-            MenuAction("Plans", icon = "plans") { openExternal("https://guidepaw.app/paywalls.php") },
-            MenuAction("Contact Us", icon = "contact") { openExternal("https://guidepaw.app/contact_us.php") },
-            MenuAction("ADA Access Card", icon = "card") { openExternal("https://guidepaw.app/ada_access_card.php") },
-            MenuAction("Detailed ADA Notes", icon = "legal") { openExternal("https://guidepaw.app/service_dog_rights.php") },
-            MenuAction("Air Travel Rights", icon = "plane") { openExternal("https://guidepaw.app/air_travel_rights.php") },
-            MenuAction("Certification", icon = "cert") { openExternal("https://guidepaw.app/certification.php") },
-            MenuAction("Feedback / Bug Report", icon = "feedback") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-            MenuAction("Public Guides", icon = "guide") { openExternal("https://guidepaw.app/app.php") },
-            MenuAction("FAQ") { openExternal("https://guidepaw.app/faq.php") },
-            MenuAction("Breed comparisons") { openExternal("https://guidepaw.app/breed_comparison_hub.php") },
-            MenuAction("Breed family guide") { openExternal("https://guidepaw.app/breed_family_guide.php") },
-            MenuAction("Legal info") { openExternal("https://guidepaw.app/service_dog_esa_legal_info.php") },
-        )))
-
-        val scrollView = ScrollView(this).apply {
-            isFillViewport = true
-            addView(content)
-        }
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("GuidePaw Menu")
-            .setView(scrollView)
-            .setNegativeButton("Close", null)
-            .show()
+    private fun setLoading(loading: Boolean, message: String?) {
+        isLoading = loading
+        if (message != null) statusMessage = message
     }
 
     private fun checkForAppUpdate() {
@@ -895,58 +928,50 @@ class MainActivity : AppCompatActivity() {
                 val release = api.appRelease()
                 runOnUiThread {
                     currentRelease = release
-                    val localCode = CompanionAppVersion.VERSION_CODE
-                    val ignoredCode = prefs.getInt(KEY_IGNORED_UPDATE_CODE, 0)
-                    if (release.versionCode > localCode && release.versionCode > ignoredCode) {
-                        updateStatusView.text = "v${release.versionName} is available. Tap update to download ${release.apkFile}."
-                        updateCard.visibility = View.VISIBLE
+                    val local   = CompanionAppVersion.VERSION_CODE
+                    val ignored = prefs.getInt(KEY_IGNORED_UPDATE_CODE, -1)
+                    if (release.versionCode != local && release.versionCode != ignored) {
+                        val direction = if (release.versionCode < local) "downgrade to" else "update to"
+                        updateStatusText = "v${release.versionName} available — tap to $direction it. (${release.apkFile})"
+                        showUpdateCard   = true
                     } else {
                         hideUpdateNotice()
                     }
                 }
             } catch (_: Throwable) {
-                runOnUiThread {
-                    if (currentRelease == null) {
-                        hideUpdateNotice()
-                    }
-                }
+                runOnUiThread { if (currentRelease == null) showUpdateCard = false }
             }
         }
     }
 
     private fun syncUpdateCardVisibility() {
         val release = currentRelease ?: return
-        val ignoredCode = prefs.getInt(KEY_IGNORED_UPDATE_CODE, 0)
-        if (release.versionCode > CompanionAppVersion.VERSION_CODE && release.versionCode > ignoredCode) {
-            updateCard.visibility = View.VISIBLE
-        } else {
-            updateCard.visibility = View.GONE
-        }
+        val local   = CompanionAppVersion.VERSION_CODE
+        val ignored = prefs.getInt(KEY_IGNORED_UPDATE_CODE, -1)
+        showUpdateCard = release.versionCode != local && release.versionCode != ignored
     }
 
     private fun hideUpdateNotice() {
-        currentRelease?.let {
-            prefs.edit().putInt(KEY_IGNORED_UPDATE_CODE, it.versionCode).commit()
-        }
-        updateCard.visibility = View.GONE
+        currentRelease?.let { prefs.edit().putInt(KEY_IGNORED_UPDATE_CODE, it.versionCode).commit() }
+        showUpdateCard = false
     }
 
     private fun startAppUpdate() {
         val release = currentRelease
         if (release == null || release.apkUrl.isBlank()) {
-            updateStatusView.text = "No update package is available yet."
+            updateStatusText = "No update package is available yet."
             return
         }
-        updateStatusView.text = "Downloading ${release.versionName}..."
-        val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-        val request = DownloadManager.Request(Uri.parse(release.apkUrl))
+        updateStatusText   = "Downloading ${release.versionName}..."
+        val manager        = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val request        = DownloadManager.Request(Uri.parse(release.apkUrl))
             .setTitle("GuidePaw Companion update")
             .setDescription("Download ${release.apkFile}")
             .setMimeType("application/vnd.android.package-archive")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
-        pendingDownloadId = manager.enqueue(request)
+        pendingDownloadId  = manager.enqueue(request)
         registerUpdateReceiver()
     }
 
@@ -956,17 +981,12 @@ class MainActivity : AppCompatActivity() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        try {
-            startActivity(intent)
-        } catch (t: Throwable) {
-            updateStatusView.text = friendlyMessage(t.message, "Open the downloaded APK to install the update.")
-        }
+        try { startActivity(intent) }
+        catch (t: Throwable) { updateStatusText = friendlyMessage(t.message, "Open the downloaded APK to install the update.") }
     }
 
     private fun registerUpdateReceiver() {
-        if (updateReceiverRegistered) {
-            return
-        }
+        if (updateReceiverRegistered) return
         val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(updateDownloadReceiver, filter, Context.RECEIVER_EXPORTED)
@@ -978,18 +998,93 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun unregisterUpdateReceiver() {
-        if (!updateReceiverRegistered) {
-            return
-        }
+        if (!updateReceiverRegistered) return
         runCatching { unregisterReceiver(updateDownloadReceiver) }
         updateReceiverRegistered = false
+    }
+
+    // ── Menu dialog (View-based, Phase 2 will port to Compose bottom sheet) ─
+    private fun showMenuDialog() {
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(12), dp(12), dp(8))
+        }
+        val rootGrid = GridLayout(this).apply {
+            columnCount = 2
+            setPadding(0, 0, 0, dp(8))
+            addView(makeMenuButton(MenuAction("Settings", icon = "gear") { openWebPage("https://guidepaw.app/settings.php") }, root = true))
+            addView(makeMenuButton(MenuAction("Logout",   icon = "logout") { signOut("Signed out.") }, root = true))
+        }
+        content.addView(rootGrid)
+        content.addView(makeMenuSection("Dog", listOf(
+            MenuAction("Handler Profile", icon = "profile") { openWebPage("https://guidepaw.app/handler_profile.php") },
+            MenuAction("Dogs",            NavSection.DOGS,      "dog"),
+            MenuAction("Dog Profile",     icon = "id")        { openWebPage("https://guidepaw.app/dog_profile.php") },
+            MenuAction("QR Tracking",     icon = "qr")        { openWebPage("https://guidepaw.app/qr_tracking.php") },
+            MenuAction("Dog Access",      icon = "access")    { openWebPage("https://guidepaw.app/dog_access.php") },
+            MenuAction("Dog Audit",       icon = "audit")     { openWebPage("https://guidepaw.app/dog_access_audit.php") },
+            MenuAction("Stats",           icon = "stats")     { openWebPage("https://guidepaw.app/stats.php") },
+        )))
+        content.addView(makeMenuSection("Logs", listOf(
+            MenuAction("Quick Session",  NavSection.TRAINING, "quick"),
+            MenuAction("Detailed Log",   NavSection.TRAINING, "log"),
+            MenuAction("History",        NavSection.DOGS,     "history"),
+            MenuAction("Media Review",   icon = "media")  { openWebPage("https://guidepaw.app/media_review.php") },
+            MenuAction("Video Review",   icon = "video")  { openWebPage("https://guidepaw.app/video_review.php") },
+        )))
+        content.addView(makeMenuSection("Training", listOf(
+            MenuAction("Training Program",     NavSection.TRAINING, "training"),
+            MenuAction("Candidate Assessment", icon = "candidate")  { openWebPage("https://guidepaw.app/candidate_assessment.php") },
+            MenuAction("Candidate Comparison", icon = "compare")    { openWebPage("https://guidepaw.app/candidate_comparison.php") },
+            MenuAction("Behavior Risk",        icon = "risk")       { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
+            MenuAction("Regression Engine",    icon = "regression") { openWebPage("https://guidepaw.app/regression_engine.php") },
+            MenuAction("Goal Builder",         icon = "goal")       { openWebPage("https://guidepaw.app/goal_builder.php") },
+            MenuAction("Community Challenges", icon = "challenge")  { openWebPage("https://guidepaw.app/community_challenges.php") },
+            MenuAction("Trucking Mode",        icon = "truck")      { openWebPage("https://guidepaw.app/trucking_mode.php") },
+            MenuAction("Tactical Training",    icon = "shield")     { openWebPage("https://guidepaw.app/tactical_training.php") },
+            MenuAction("Goal Intake",          icon = "target")     { openWebPage("https://guidepaw.app/training_goal_intake.php") },
+            MenuAction("Habit Repair",         icon = "repair")     { openWebPage("https://guidepaw.app/habit_repair.php") },
+            MenuAction("Session Log",          NavSection.TRAINING, "session"),
+            MenuAction("Training History",     NavSection.DOGS,     "book"),
+            MenuAction("Coach Review",         icon = "coach")      { openWebPage("https://guidepaw.app/coach_review.php") },
+        )))
+        content.addView(makeMenuSection("Care", listOf(
+            MenuAction("Health Docs",       icon = "health")    { openWebPage("https://guidepaw.app/dog_health.php") },
+            MenuAction("Vet Appointments",  icon = "calendar")  { openWebPage("https://guidepaw.app/appointments.php") },
+            MenuAction("Medications",       icon = "meds")      { openWebPage("https://guidepaw.app/medications.php") },
+            MenuAction("Wearable Sync",     icon = "watch")     { openWebPage("https://guidepaw.app/wearable_integrations.php") },
+        )))
+        content.addView(makeMenuSection("More", listOf(
+            MenuAction("Notification Center", icon = "bell")      { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+            MenuAction("Smart Alerts",        icon = "alerts")    { openWebPage("https://guidepaw.app/alerts.php") },
+            MenuAction("Breed Finder",        icon = "question")  { openWebPage("https://guidepaw.app/breed_questionnaire.php") },
+            MenuAction("Community",           icon = "community") { openWebPage("https://guidepaw.app/community.php") },
+            MenuAction("Support Funding",     icon = "support")   { openWebPage("https://guidepaw.app/support_funding.php") },
+            MenuAction("Plans",               icon = "plans")     { openWebPage("https://guidepaw.app/paywalls.php") },
+            MenuAction("Contact Us",          icon = "contact")   { openWebPage("https://guidepaw.app/contact_us.php") },
+            MenuAction("ADA Access Card",     icon = "card")      { openWebPage("https://guidepaw.app/ada_access_card.php") },
+            MenuAction("Detailed ADA Notes",  icon = "legal")     { openWebPage("https://guidepaw.app/service_dog_rights.php") },
+            MenuAction("Air Travel Rights",   icon = "plane")     { openWebPage("https://guidepaw.app/air_travel_rights.php") },
+            MenuAction("Certification",       icon = "cert")      { openWebPage("https://guidepaw.app/certification.php") },
+            MenuAction("Feedback / Bug Report", icon = "feedback") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+            MenuAction("Public Guides",       icon = "guide")     { openWebPage("https://guidepaw.app/app.php") },
+            MenuAction("FAQ")                                     { openWebPage("https://guidepaw.app/faq.php") },
+            MenuAction("Breed comparisons")                       { openWebPage("https://guidepaw.app/breed_comparison_hub.php") },
+            MenuAction("Breed family guide")                      { openWebPage("https://guidepaw.app/breed_family_guide.php") },
+            MenuAction("Legal info")                              { openWebPage("https://guidepaw.app/service_dog_esa_legal_info.php") },
+        )))
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("GuidePaw Menu")
+            .setView(ScrollView(this).apply { isFillViewport = true; addView(content) })
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun makeMenuSection(title: String, actions: List<MenuAction>): LinearLayout {
         val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(12), dp(12), dp(10))
-
             addView(TextView(this@MainActivity).apply {
                 text = title
                 setTextColor(0xFF111827.toInt())
@@ -997,17 +1092,12 @@ class MainActivity : AppCompatActivity() {
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
                 setPadding(0, 0, 0, dp(8))
             })
-
             val grid = GridLayout(this@MainActivity).apply {
                 columnCount = 2
-                setPadding(0, 0, 0, 0)
-            }
-            actions.forEach { action ->
-                grid.addView(makeMenuButton(action, false))
+                actions.forEach { addView(makeMenuButton(it, root = false)) }
             }
             addView(grid)
         }
-
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 0, 0, dp(10))
@@ -1022,179 +1112,91 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun makeMenuButton(action: MenuAction, rootAction: Boolean): MaterialButton {
-        return MaterialButton(this).apply {
+    private fun makeMenuButton(action: MenuAction, root: Boolean): MdButton {
+        return MdButton(this).apply {
             text = "${menuIcon(action.icon)} ${action.label}"
             isAllCaps = false
-            textSize = 12f
+            textSize  = 12f
             setTextColor(0xFF1F2937.toInt())
-            backgroundTintList = ColorStateList.valueOf(
-                if (rootAction && action.label == "Logout") 0xFFFEE2E2.toInt() else 0xFFF8FAFC.toInt()
+            backgroundTintList = android.content.res.ColorStateList.valueOf(
+                if (root && action.label == "Logout") 0xFFFEE2E2.toInt() else 0xFFF8FAFC.toInt()
             )
-            strokeColor = ColorStateList.valueOf(
-                if (rootAction && action.label == "Logout") 0xFFFECACA.toInt() else 0xFFE2E8F0.toInt()
+            strokeColor = android.content.res.ColorStateList.valueOf(
+                if (root && action.label == "Logout") 0xFFFECACA.toInt() else 0xFFE2E8F0.toInt()
             )
-            strokeWidth = dp(1)
+            strokeWidth  = dp(1)
             cornerRadius = dp(14)
-            minHeight = dp(48)
+            minHeight    = dp(48)
             layoutParams = GridLayout.LayoutParams().apply {
-                width = 0
+                width  = 0
                 height = GridLayout.LayoutParams.WRAP_CONTENT
                 columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
                 setMargins(dp(3), dp(3), dp(3), dp(3))
             }
             setOnClickListener {
-                action.onClick?.invoke()
-                    ?: activateBottomSection(action.sectionButtonId ?: R.id.btnOverview)
+                action.onClick?.invoke() ?: action.section?.let { currentSection = it }
             }
         }
     }
 
-    private fun menuIcon(icon: String): String {
-        return when (icon) {
-            "profile" -> "👤"
-            "dog" -> "🐕"
-            "id" -> "🪪"
-            "qr" -> "📡"
-            "access" -> "🤝"
-            "audit" -> "🧾"
-            "stats" -> "📊"
-            "quick" -> "⚡"
-            "log" -> "📝"
-            "history" -> "📋"
-            "media" -> "🎥"
-            "video" -> "🎞️"
-            "training" -> "🎓"
-            "candidate" -> "🐾"
-            "compare" -> "🔎"
-            "risk" -> "⚠️"
-            "regression" -> "♻️"
-            "goal" -> "🧩"
-            "challenge" -> "🏅"
-            "truck" -> "🚚"
-            "shield" -> "🛡️"
-            "target" -> "🎯"
-            "repair" -> "🛠️"
-            "session" -> "✅"
-            "book" -> "📚"
-            "coach" -> "🧭"
-            "health" -> "🩺"
-            "calendar" -> "📅"
-            "meds" -> "💊"
-            "watch" -> "⌚"
-            "bell" -> "🔔"
-            "alerts" -> "🧠"
-            "question" -> "❓"
-            "community" -> "🤝"
-            "support" -> "💙"
-            "plans" -> "🏷️"
-            "contact" -> "📇"
-            "card" -> "🪪"
-            "legal" -> "⚖️"
-            "plane" -> "✈️"
-            "cert" -> "✅"
-            "feedback" -> "💬"
-            "guide" -> "📖"
-            "gear" -> "⚙️"
-            "logout" -> "↩️"
-            else -> ""
-        }
+    private fun menuIcon(icon: String): String = when (icon) {
+        "profile"    -> "👤"; "dog"       -> "🐕"; "id"       -> "🪪"; "qr"      -> "📡"
+        "access"     -> "🤝"; "audit"     -> "🧾"; "stats"    -> "📊"; "quick"   -> "⚡"
+        "log"        -> "📝"; "history"   -> "📋"; "media"    -> "🎥"; "video"   -> "🎞️"
+        "training"   -> "🎓"; "candidate" -> "🐾"; "compare"  -> "🔎"; "risk"    -> "⚠️"
+        "regression" -> "♻️"; "goal"      -> "🧩"; "challenge"-> "🏅"; "truck"   -> "🚚"
+        "shield"     -> "🛡️"; "target"    -> "🎯"; "repair"   -> "🛠️"; "session" -> "✅"
+        "book"       -> "📚"; "coach"     -> "🧭"; "health"   -> "🩺"; "calendar"-> "📅"
+        "meds"       -> "💊"; "watch"     -> "⌚"; "bell"     -> "🔔"; "alerts"  -> "🧠"
+        "question"   -> "❓"; "community" -> "🤝"; "support"  -> "💙"; "plans"   -> "🏷️"
+        "contact"    -> "📇"; "card"      -> "🪪"; "legal"    -> "⚖️"; "plane"   -> "✈️"
+        "cert"       -> "✅"; "feedback"  -> "💬"; "guide"    -> "📖"; "gear"    -> "⚙️"
+        "logout"     -> "↩️"; else        -> ""
     }
 
-    private fun setLoading(isLoading: Boolean, message: String?) {
-        progressView.visibility = if (isLoading) View.VISIBLE else View.INVISIBLE
-        if (message != null) {
-            statusView.text = message
-        }
-    }
-
-    private fun updateFocusLabel(level: Int) {
-        focusValueView.text = "Focus level: $level"
-    }
-
-    private fun makePlainText(message: String): TextView {
-        return TextView(this).apply {
-            text = message
-            setTextColor(0xFF334155.toInt())
-            textSize = 12f
-        }
-    }
-
-    private fun makeBulletText(message: String): TextView {
-        return TextView(this).apply {
-            text = "• $message"
-            setTextColor(0xFF1E293B.toInt())
-            textSize = 13f
-            setPadding(0, dp(4), 0, dp(4))
-        }
-    }
-
-    private fun friendlyMessage(message: String?, fallback: String): String {
-        val raw = message?.trim().orEmpty()
-        if (raw.isBlank()) {
-            return fallback
-        }
-        val suspicious = listOf(
-            "sqlstate",
-            "select ",
-            "insert ",
-            "update ",
-            "delete ",
-            "pdo",
-            "syntax error",
-            "near \"",
-            "column ",
-            "table ",
-        ).any { raw.contains(it, ignoreCase = true) }
-        return if (suspicious) fallback else raw
-    }
-
+    // ── Cache helpers (unchanged) ───────────────────────────────────────────
     private fun restoreCachedDashboard() {
         val raw = prefs.getString(KEY_CACHE, null).orEmpty()
-        if (raw.isBlank()) {
-            return
-        }
+        if (raw.isBlank()) return
         runCatching {
             val cache = JSONObject(raw)
             currentMe = cache.optJSONObject("me")?.let {
                 GuidePawMeResult(
-                    username = it.optString("username", ""),
+                    username    = it.optString("username", ""),
                     activeDogId = optNullableInt(it, "activeDogId"),
                 )
             }
-            currentDogs = cache.optJSONArray("dogs")?.let { array ->
-                (0 until array.length()).mapNotNull { idx ->
-                    val obj = array.optJSONObject(idx) ?: return@mapNotNull null
+            currentDogs = cache.optJSONArray("dogs")?.let { arr ->
+                (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.optJSONObject(i) ?: return@mapNotNull null
                     GuidePawDogItem(
-                        id = obj.optInt("id", 0),
-                        name = obj.optString("name", "Dog"),
-                        breed = obj.optText("breed"),
-                        ownerUsername = obj.optText("ownerUsername"),
-                        accessRole = obj.optText("accessRole"),
-                        lifecycleStatus = obj.optText("lifecycleStatus"),
+                        id              = o.optInt("id", 0),
+                        name            = o.optString("name", "Dog"),
+                        breed           = o.optText("breed"),
+                        ownerUsername   = o.optText("ownerUsername"),
+                        accessRole      = o.optText("accessRole"),
+                        lifecycleStatus = o.optText("lifecycleStatus"),
                     )
                 }
             }.orEmpty()
-            currentLogs = cache.optJSONArray("logs")?.let { array ->
-                (0 until array.length()).mapNotNull { idx ->
-                    val obj = array.optJSONObject(idx) ?: return@mapNotNull null
+            currentLogs = cache.optJSONArray("logs")?.let { arr ->
+                (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.optJSONObject(i) ?: return@mapNotNull null
                     GuidePawLogItem(
-                        id = obj.optInt("id", 0),
-                        logDate = obj.optString("logDate", ""),
-                        locationName = obj.optString("locationName", ""),
-                        locationCityState = obj.optText("locationCityState"),
-                        locationType = obj.optText("locationType"),
-                        focusLevel = obj.optInt("focusLevel", 3),
-                        skillsPracticed = obj.optJSONArray("skillsPracticed")?.toStringList().orEmpty(),
-                        handlerNotes = obj.optString("handlerNotes", ""),
+                        id                = o.optInt("id", 0),
+                        logDate           = o.optString("logDate", ""),
+                        locationName      = o.optString("locationName", ""),
+                        locationCityState = o.optText("locationCityState"),
+                        locationType      = o.optText("locationType"),
+                        focusLevel        = o.optInt("focusLevel", 3),
+                        skillsPracticed   = o.optJSONArray("skillsPracticed")?.toStringList().orEmpty(),
+                        handlerNotes      = o.optString("handlerNotes", ""),
                     )
                 }
             }.orEmpty()
             currentSuggestions = cache.optJSONArray("suggestions")?.toStringList().orEmpty()
             currentActiveDogId = optNullableInt(cache, "activeDogId")
             if (currentMe != null || currentDogs.isNotEmpty() || currentLogs.isNotEmpty()) {
-                loginCard.visibility = View.GONE
-                dashboardCard.visibility = View.VISIBLE
                 renderDashboard()
                 setLoading(false, "Loaded saved dashboard state.")
             }
@@ -1232,38 +1234,46 @@ class MainActivity : AppCompatActivity() {
         prefs.edit().putString(KEY_CACHE, cache.toString()).commit()
     }
 
+    private fun friendlyMessage(message: String?, fallback: String): String {
+        val raw = message?.trim().orEmpty()
+        if (raw.isBlank()) return fallback
+        val suspicious = listOf("sqlstate", "select ", "insert ", "update ", "delete ",
+            "pdo", "syntax error", "near \"", "column ", "table ")
+            .any { raw.contains(it, ignoreCase = true) }
+        return if (suspicious) fallback else raw
+    }
+
     private fun optNullableInt(json: JSONObject, key: String): Int? {
-        return if (json.has(key) && !json.isNull(key)) {
-            val value = json.optString(key, "").trim()
-            if (value.isNotBlank()) value.toIntOrNull() ?: json.optInt(key, 0).takeIf { it > 0 } else null
-        } else {
-            null
-        }
+        if (!json.has(key) || json.isNull(key)) return null
+        val value = json.optString(key, "").trim()
+        return if (value.isNotBlank()) value.toIntOrNull() ?: json.optInt(key, 0).takeIf { it > 0 } else null
     }
 
-    private fun JSONObject.optText(key: String): String? {
-        return optString(key, "").trim().takeIf { it.isNotBlank() }
-    }
+    private fun JSONObject.optText(key: String): String? =
+        optString(key, "").trim().takeIf { it.isNotBlank() }
 
-    private fun JSONArray.toStringList(): List<String> {
-        return (0 until length()).mapNotNull { idx ->
-            optString(idx, "").trim().takeIf { it.isNotBlank() }
-        }
-    }
+    private fun JSONArray.toStringList(): List<String> =
+        (0 until length()).mapNotNull { optString(it, "").trim().takeIf { s -> s.isNotBlank() } }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
+    // ── MenuAction ──────────────────────────────────────────────────────────
     private data class MenuAction(
-        val label: String,
-        val sectionButtonId: Int? = null,
-        val icon: String = "",
-        val onClick: (() -> Unit)? = null,
+        val label   : String,
+        val section : NavSection? = null,
+        val icon    : String      = "",
+        val onClick : (() -> Unit)? = null,
     )
 
     companion object {
-        private const val PREFS_NAME = "guidepaw_companion"
-        private const val KEY_TOKEN = "auth_token"
-        private const val KEY_CACHE = "dashboard_cache"
+        private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
+        private val skillOptions  = listOf(
+            "Focus / Watch me", "Loose leash", "Settle", "Recall", "Task work",
+            "Sit/Stay", "Heel", "Leave It", "Under Tuck", "DPT Task", "PA Focus",
+        )
+        private const val PREFS_NAME              = "guidepaw_companion"
+        private const val KEY_TOKEN               = "auth_token"
+        private const val KEY_CACHE               = "dashboard_cache"
         private const val KEY_IGNORED_UPDATE_CODE = "ignored_update_code"
     }
 }
