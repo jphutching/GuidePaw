@@ -525,7 +525,7 @@ class NotificationCenterActivity : AppCompatActivity() {
     }
 
     private fun openExternal(url: String) {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        GuidePawNavigation.openUrl(this, url, "GuidePaw")
     }
 
     private fun setLoading(isLoading: Boolean, message: String?) {

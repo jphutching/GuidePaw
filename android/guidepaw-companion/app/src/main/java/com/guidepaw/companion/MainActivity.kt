@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
     private var currentActiveDogId: Int? = null
     private var currentEditingLogId: Int? = null
     private var currentSectionButtonId: Int = R.id.btnOverview
+    private var restoringBottomSelection = false
     private var currentRelease: GuidePawAppReleaseResult? = null
     private var pendingDownloadId: Long = -1L
     private var updateReceiverRegistered = false
@@ -284,9 +285,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         sectionToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (isChecked) {
-                currentSectionButtonId = checkedId
-                showSection(checkedId)
+            if (!isChecked || restoringBottomSelection) {
+                return@addOnButtonCheckedListener
+            }
+            when (checkedId) {
+                R.id.btnPublic -> {
+                    restoreBottomSelection()
+                    showMenuDialog()
+                }
+                else -> {
+                    currentSectionButtonId = checkedId
+                    showSection(checkedId)
+                }
             }
         }
 
@@ -735,8 +745,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         saveLogButton.text = "Update training log"
-        sectionToggle.check(R.id.btnTraining)
-        showSection(R.id.btnTraining)
+        activateBottomSection(R.id.btnTraining)
         trainMessageView.text = "Editing log from ${log.logDate.takeIf { it.isNotBlank() } ?: "recent session"}."
     }
 
@@ -756,7 +765,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openExternal(url: String) {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        GuidePawNavigation.openUrl(this, url)
+    }
+
+    private fun activateBottomSection(sectionButtonId: Int) {
+        currentSectionButtonId = sectionButtonId
+        restoringBottomSelection = true
+        sectionToggle.check(sectionButtonId)
+        restoringBottomSelection = false
+        showSection(sectionButtonId)
+    }
+
+    private fun restoreBottomSelection() {
+        restoringBottomSelection = true
+        sectionToggle.check(currentSectionButtonId)
+        restoringBottomSelection = false
     }
 
     private fun showMenuDialog() {
@@ -809,7 +832,7 @@ class MainActivity : AppCompatActivity() {
             MenuAction("Health Docs", icon = "health") { openExternal("https://guidepaw.app/dog_health.php") },
             MenuAction("Vet Appointments", icon = "calendar") { openExternal("https://guidepaw.app/appointments.php") },
             MenuAction("Medications", icon = "meds") { openExternal("https://guidepaw.app/medications.php") },
-            MenuAction("Wearable Sync", R.id.btnWearables, "watch"),
+            MenuAction("Wearable Sync", icon = "watch") { openExternal("https://guidepaw.app/wearable_integrations.php") },
         )))
         content.addView(makeMenuSection("More", listOf(
             MenuAction("Notification Center", icon = "bell") { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
@@ -824,7 +847,7 @@ class MainActivity : AppCompatActivity() {
             MenuAction("Air Travel Rights", icon = "plane") { openExternal("https://guidepaw.app/air_travel_rights.php") },
             MenuAction("Certification", icon = "cert") { openExternal("https://guidepaw.app/certification.php") },
             MenuAction("Feedback / Bug Report", icon = "feedback") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-            MenuAction("Public Guides", R.id.btnPublic, "guide"),
+            MenuAction("Public Guides", icon = "guide") { openExternal("https://guidepaw.app/app.php") },
             MenuAction("FAQ") { openExternal("https://guidepaw.app/faq.php") },
             MenuAction("Breed comparisons") { openExternal("https://guidepaw.app/breed_comparison_hub.php") },
             MenuAction("Breed family guide") { openExternal("https://guidepaw.app/breed_family_guide.php") },
@@ -999,7 +1022,7 @@ class MainActivity : AppCompatActivity() {
             }
             setOnClickListener {
                 action.onClick?.invoke()
-                    ?: sectionToggle.check(action.sectionButtonId ?: R.id.btnOverview)
+                    ?: activateBottomSection(action.sectionButtonId ?: R.id.btnOverview)
             }
         }
     }

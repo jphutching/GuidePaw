@@ -18,6 +18,9 @@
             android:name=".NotificationCenterActivity"
             android:exported="false" />
         <activity
+            android:name=".GuidePawWebActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

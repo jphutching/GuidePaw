@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#eef2f7"
-    android:fillViewport="true"
-    android:padding="12dp"
-    android:scrollbars="none">
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:padding="12dp"
+        android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -91,7 +97,7 @@
             android:background="#dbeafe"
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
-            android:text="v0.013"
+            android:text="v0.014"
             android:textColor="#0f172a"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -206,7 +212,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="v0.013"
+                    android:text="v0.014"
                     android:textColor="#334155"
                     android:textSize="11sp" />
 
@@ -316,51 +322,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
-
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:scrollbars="none"
-                    android:fillViewport="true">
-
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/sectionToggle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:singleSelection="true"
-                        app:selectionRequired="true">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnOverview"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Home" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTraining"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Log" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnDogs"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="History" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnWearables"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Alerts" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnPublic"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Menu" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
-                </HorizontalScrollView>
 
                 <TextView
                     android:id="@+id/dashboardSummaryView"
@@ -853,4 +814,63 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
-</ScrollView>
+    </ScrollView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="4dp"
+        app:cardBackgroundColor="#ffffff"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#e2e8f0"
+        app:strokeWidth="1dp">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fillViewport="true"
+            android:padding="8dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/sectionToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOverview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Home" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTraining"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Log" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDogs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="History" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWearables"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Alerts" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPublic"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Menu" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </HorizontalScrollView>
+    </com.google.android.material.card.MaterialCardView>
+</LinearLayout>

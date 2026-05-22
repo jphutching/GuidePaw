@@ -116,7 +116,7 @@ class FeedbackActivity : AppCompatActivity() {
         }
         submitButton.setOnClickListener { submitFeedback() }
         webFeedbackButton.setOnClickListener {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://guidepaw.app/feedback.php")))
+            GuidePawNavigation.openUrl(this, "https://guidepaw.app/feedback.php", "Feedback")
         }
     }
 
