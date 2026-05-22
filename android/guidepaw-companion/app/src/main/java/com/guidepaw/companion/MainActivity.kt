@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.IntentFilter
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
@@ -13,6 +14,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.AutoCompleteTextView
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.SeekBar
@@ -760,27 +762,69 @@ class MainActivity : AppCompatActivity() {
     private fun showMenuDialog() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(18), dp(18), dp(8))
+            setPadding(dp(12), dp(12), dp(12), dp(8))
         }
+
+        val rootActions = GridLayout(this).apply {
+            columnCount = 2
+            setPadding(0, 0, 0, dp(8))
+            addView(makeMenuButton(MenuAction("Settings", icon = "gear") { openExternal("https://guidepaw.app/settings.php") }, true))
+            addView(makeMenuButton(MenuAction("Logout", icon = "logout") { signOut("Signed out.") }, true))
+        }
+        content.addView(rootActions)
+
         content.addView(makeMenuSection("Dog", listOf(
-            MenuAction("Dogs", R.id.btnDogs),
+            MenuAction("Handler Profile", icon = "profile") { openExternal("https://guidepaw.app/handler_profile.php") },
+            MenuAction("Dogs", R.id.btnDogs, "dog"),
+            MenuAction("Dog Profile", icon = "id") { openExternal("https://guidepaw.app/dog_profile.php") },
+            MenuAction("QR Tracking", icon = "qr") { openExternal("https://guidepaw.app/qr_tracking.php") },
+            MenuAction("Dog Access", icon = "access") { openExternal("https://guidepaw.app/dog_access.php") },
+            MenuAction("Dog Audit", icon = "audit") { openExternal("https://guidepaw.app/dog_access_audit.php") },
+            MenuAction("Stats", icon = "stats") { openExternal("https://guidepaw.app/stats.php") },
         )))
         content.addView(makeMenuSection("Logs", listOf(
-            MenuAction("Overview", R.id.btnOverview),
-            MenuAction("Training logs", R.id.btnTraining),
+            MenuAction("Quick Session", R.id.btnTraining, "quick"),
+            MenuAction("Detailed Log", R.id.btnTraining, "log"),
+            MenuAction("History", R.id.btnDogs, "history"),
+            MenuAction("Media Review", icon = "media") { openExternal("https://guidepaw.app/media_review.php") },
+            MenuAction("Video Review", icon = "video") { openExternal("https://guidepaw.app/video_review.php") },
         )))
         content.addView(makeMenuSection("Training", listOf(
-            MenuAction("Training", R.id.btnTraining),
+            MenuAction("Training Program", R.id.btnTraining, "training"),
+            MenuAction("Candidate Assessment", icon = "candidate") { openExternal("https://guidepaw.app/candidate_assessment.php") },
+            MenuAction("Candidate Comparison", icon = "compare") { openExternal("https://guidepaw.app/candidate_comparison.php") },
+            MenuAction("Behavior Risk", icon = "risk") { openExternal("https://guidepaw.app/behavior_risk_scoring.php") },
+            MenuAction("Regression Engine", icon = "regression") { openExternal("https://guidepaw.app/regression_engine.php") },
+            MenuAction("Goal Builder", icon = "goal") { openExternal("https://guidepaw.app/goal_builder.php") },
+            MenuAction("Community Challenges", icon = "challenge") { openExternal("https://guidepaw.app/community_challenges.php") },
+            MenuAction("Trucking Mode", icon = "truck") { openExternal("https://guidepaw.app/trucking_mode.php") },
+            MenuAction("Tactical Training", icon = "shield") { openExternal("https://guidepaw.app/tactical_training.php") },
+            MenuAction("Goal Intake", icon = "target") { openExternal("https://guidepaw.app/training_goal_intake.php") },
+            MenuAction("Habit Repair", icon = "repair") { openExternal("https://guidepaw.app/habit_repair.php") },
+            MenuAction("Session Log", R.id.btnTraining, "session"),
+            MenuAction("Training History", R.id.btnDogs, "book"),
+            MenuAction("Coach Review", icon = "coach") { openExternal("https://guidepaw.app/coach_review.php") },
         )))
         content.addView(makeMenuSection("Care", listOf(
-            MenuAction("Wearables", R.id.btnWearables),
+            MenuAction("Health Docs", icon = "health") { openExternal("https://guidepaw.app/dog_health.php") },
+            MenuAction("Vet Appointments", icon = "calendar") { openExternal("https://guidepaw.app/appointments.php") },
+            MenuAction("Medications", icon = "meds") { openExternal("https://guidepaw.app/medications.php") },
+            MenuAction("Wearable Sync", R.id.btnWearables, "watch"),
         )))
         content.addView(makeMenuSection("More", listOf(
-            MenuAction("Notification Center") { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
-            MenuAction("Public guides", R.id.btnPublic),
-            MenuAction("Feedback / Bug Report") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-            MenuAction("GuidePaw app page") { openExternal("https://guidepaw.app/app.php") },
-            MenuAction("Breed questionnaire") { openExternal("https://guidepaw.app/breed_questionnaire.php") },
+            MenuAction("Notification Center", icon = "bell") { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+            MenuAction("Smart Alerts", icon = "alerts") { openExternal("https://guidepaw.app/alerts.php") },
+            MenuAction("Breed Finder", icon = "question") { openExternal("https://guidepaw.app/breed_questionnaire.php") },
+            MenuAction("Community", icon = "community") { openExternal("https://guidepaw.app/community.php") },
+            MenuAction("Support Funding", icon = "support") { openExternal("https://guidepaw.app/support_funding.php") },
+            MenuAction("Plans", icon = "plans") { openExternal("https://guidepaw.app/paywalls.php") },
+            MenuAction("Contact Us", icon = "contact") { openExternal("https://guidepaw.app/contact_us.php") },
+            MenuAction("ADA Access Card", icon = "card") { openExternal("https://guidepaw.app/ada_access_card.php") },
+            MenuAction("Detailed ADA Notes", icon = "legal") { openExternal("https://guidepaw.app/service_dog_rights.php") },
+            MenuAction("Air Travel Rights", icon = "plane") { openExternal("https://guidepaw.app/air_travel_rights.php") },
+            MenuAction("Certification", icon = "cert") { openExternal("https://guidepaw.app/certification.php") },
+            MenuAction("Feedback / Bug Report", icon = "feedback") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+            MenuAction("Public Guides", R.id.btnPublic, "guide"),
             MenuAction("FAQ") { openExternal("https://guidepaw.app/faq.php") },
             MenuAction("Breed comparisons") { openExternal("https://guidepaw.app/breed_comparison_hub.php") },
             MenuAction("Breed family guide") { openExternal("https://guidepaw.app/breed_family_guide.php") },
@@ -793,7 +837,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("GuidePaw")
+            .setTitle("GuidePaw Menu")
             .setView(scrollView)
             .setNegativeButton("Close", null)
             .show()
@@ -896,31 +940,118 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun makeMenuSection(title: String, actions: List<MenuAction>): LinearLayout {
-        return LinearLayout(this).apply {
+        val section = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(10), 0, dp(2))
+            setPadding(dp(12), dp(12), dp(12), dp(10))
 
             addView(TextView(this@MainActivity).apply {
                 text = title
-                setTextColor(0xFF0F172A.toInt())
+                setTextColor(0xFF111827.toInt())
                 textSize = 14f
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
-                setPadding(0, 0, 0, dp(6))
+                setPadding(0, 0, 0, dp(8))
             })
 
-            actions.forEach { action ->
-                addView(MaterialButton(this@MainActivity).apply {
-                    text = action.label
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply { topMargin = dp(6) }
-                    setOnClickListener {
-                        action.onClick?.invoke()
-                            ?: sectionToggle.check(action.sectionButtonId ?: R.id.btnOverview)
-                    }
-                })
+            val grid = GridLayout(this@MainActivity).apply {
+                columnCount = 2
+                setPadding(0, 0, 0, 0)
             }
+            actions.forEach { action ->
+                grid.addView(makeMenuButton(action, false))
+            }
+            addView(grid)
+        }
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, dp(10))
+            addView(MaterialCardView(this@MainActivity).apply {
+                radius = dp(18).toFloat()
+                cardElevation = 0f
+                setCardBackgroundColor(0xFFFFFFFF.toInt())
+                strokeColor = 0xFFE2E8F0.toInt()
+                strokeWidth = dp(1)
+                addView(section)
+            })
+        }
+    }
+
+    private fun makeMenuButton(action: MenuAction, rootAction: Boolean): MaterialButton {
+        return MaterialButton(this).apply {
+            text = "${menuIcon(action.icon)} ${action.label}"
+            isAllCaps = false
+            textSize = 12f
+            setTextColor(0xFF1F2937.toInt())
+            backgroundTintList = ColorStateList.valueOf(
+                if (rootAction && action.label == "Logout") 0xFFFEE2E2.toInt() else 0xFFF8FAFC.toInt()
+            )
+            strokeColor = ColorStateList.valueOf(
+                if (rootAction && action.label == "Logout") 0xFFFECACA.toInt() else 0xFFE2E8F0.toInt()
+            )
+            strokeWidth = dp(1)
+            cornerRadius = dp(14)
+            minHeight = dp(48)
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = 0
+                height = GridLayout.LayoutParams.WRAP_CONTENT
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(3), dp(3), dp(3), dp(3))
+            }
+            setOnClickListener {
+                action.onClick?.invoke()
+                    ?: sectionToggle.check(action.sectionButtonId ?: R.id.btnOverview)
+            }
+        }
+    }
+
+    private fun menuIcon(icon: String): String {
+        return when (icon) {
+            "profile" -> "👤"
+            "dog" -> "🐕"
+            "id" -> "🪪"
+            "qr" -> "📡"
+            "access" -> "🤝"
+            "audit" -> "🧾"
+            "stats" -> "📊"
+            "quick" -> "⚡"
+            "log" -> "📝"
+            "history" -> "📋"
+            "media" -> "🎥"
+            "video" -> "🎞️"
+            "training" -> "🎓"
+            "candidate" -> "🐾"
+            "compare" -> "🔎"
+            "risk" -> "⚠️"
+            "regression" -> "♻️"
+            "goal" -> "🧩"
+            "challenge" -> "🏅"
+            "truck" -> "🚚"
+            "shield" -> "🛡️"
+            "target" -> "🎯"
+            "repair" -> "🛠️"
+            "session" -> "✅"
+            "book" -> "📚"
+            "coach" -> "🧭"
+            "health" -> "🩺"
+            "calendar" -> "📅"
+            "meds" -> "💊"
+            "watch" -> "⌚"
+            "bell" -> "🔔"
+            "alerts" -> "🧠"
+            "question" -> "❓"
+            "community" -> "🤝"
+            "support" -> "💙"
+            "plans" -> "🏷️"
+            "contact" -> "📇"
+            "card" -> "🪪"
+            "legal" -> "⚖️"
+            "plane" -> "✈️"
+            "cert" -> "✅"
+            "feedback" -> "💬"
+            "guide" -> "📖"
+            "gear" -> "⚙️"
+            "logout" -> "↩️"
+            else -> ""
         }
     }
 
@@ -1079,6 +1210,7 @@ class MainActivity : AppCompatActivity() {
     private data class MenuAction(
         val label: String,
         val sectionButtonId: Int? = null,
+        val icon: String = "",
         val onClick: (() -> Unit)? = null,
     )
 
