@@ -1943,9 +1943,21 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+                Button(onClick = { loadRegressionEvents() }, modifier = Modifier.fillMaxWidth()) { Text("Refresh") }
+            } else if (regressionMessage.isBlank()) {
+                SummaryCard {
+                    Text(
+                        "No regression data loaded yet. Pull down to refresh, or tap below.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick  = { loadRegressionEvents() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Load Events") }
+                }
             }
-
-            Button(onClick = { loadRegressionEvents() }, modifier = Modifier.fillMaxWidth()) { Text("Refresh") }
         }
         }
     }

@@ -1,3 +1,7 @@
+## v0.034 (2026-05-24)
+- Android: Regression Engine empty-state hint card — shown when no data is loaded and no message is pending; includes a "Load Events" button
+- Android: Refresh button moved inside the loaded-result block so it no longer appears alongside the hint card or error message
+
 ## v0.033 (2026-05-24)
 - Android: Pull-to-refresh on Goal Intake, Habit Repair, Behavior Risk, Regression Engine, and Candidate Assessment sections
 - Android: Global LinearProgressIndicator suppressed during pull-to-refresh (PTR spinner shown instead)
