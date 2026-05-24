@@ -914,6 +914,7 @@ class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun MenuBottomSheet(onDismiss: () -> Unit) {
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState       = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -926,11 +927,17 @@ class MainActivity : AppCompatActivity() {
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
-                    "GuidePaw Menu",
-                    style      = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                // Identity
+                SummaryCard {
+                    if (activeDog != null) Text(activeDog.name, fontWeight = FontWeight.SemiBold)
+                    currentMe?.let {
+                        Text(
+                            "Signed in as ${it.username}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                    }
+                }
                 Row(
                     modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -946,36 +953,21 @@ class MainActivity : AppCompatActivity() {
                     ) { Text("↩️ Sign Out") }
                 }
                 MenuSheetSection("Dog", listOf(
-                    "👤 Handler Profile"   to { openWebPage("https://guidepaw.app/handler_profile.php") },
-                    "🐕 Dogs"              to { currentSection = NavSection.DOGS },
-                    "🪪 Dog Profile"       to { openWebPage("https://guidepaw.app/dog_profile.php") },
-                    "📡 QR Tracking"       to { openWebPage("https://guidepaw.app/qr_tracking.php") },
-                    "🤝 Dog Access"        to { openWebPage("https://guidepaw.app/dog_access.php") },
-                    "🧾 Dog Audit"         to { openWebPage("https://guidepaw.app/dog_access_audit.php") },
-                    "📊 Stats"             to { openWebPage("https://guidepaw.app/stats.php") },
-                ), onDismiss)
-                MenuSheetSection("Logs", listOf(
-                    "⚡ Quick Session"    to { currentSection = NavSection.TRAINING },
-                    "📝 Detailed Log"     to { currentSection = NavSection.TRAINING },
-                    "📋 History"          to { currentSection = NavSection.DOGS },
-                    "🎥 Media Review"     to { openWebPage("https://guidepaw.app/media_review.php") },
-                    "🎞️ Video Review"    to { openWebPage("https://guidepaw.app/video_review.php") },
+                    "👤 Handler Profile" to { openWebPage("https://guidepaw.app/handler_profile.php") },
+                    "🐕 Dogs"            to { currentSection = NavSection.DOGS },
+                    "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
+                    "🤝 Dog Access"      to { openWebPage("https://guidepaw.app/dog_access.php") },
+                    "📡 QR Tracking"     to { openWebPage("https://guidepaw.app/qr_tracking.php") },
+                    "📊 Stats"           to { openWebPage("https://guidepaw.app/stats.php") },
                 ), onDismiss)
                 MenuSheetSection("Training", listOf(
-                    "🎓 Training Program"      to { currentSection = NavSection.TRAINING },
-                    "🐾 Candidate Assessment"  to { openWebPage("https://guidepaw.app/candidate_assessment.php") },
-                    "🔎 Candidate Comparison"  to { openWebPage("https://guidepaw.app/candidate_comparison.php") },
-                    "⚠️ Behavior Risk"         to { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
-                    "♻️ Regression Engine"     to { openWebPage("https://guidepaw.app/regression_engine.php") },
-                    "🧩 Goal Builder"          to { openWebPage("https://guidepaw.app/goal_builder.php") },
-                    "🏅 Community Challenges"  to { openWebPage("https://guidepaw.app/community_challenges.php") },
-                    "🚚 Trucking Mode"         to { openWebPage("https://guidepaw.app/trucking_mode.php") },
-                    "🛡️ Tactical Training"    to { openWebPage("https://guidepaw.app/tactical_training.php") },
-                    "🎯 Goal Intake"           to { openWebPage("https://guidepaw.app/training_goal_intake.php") },
-                    "🛠️ Habit Repair"         to { openWebPage("https://guidepaw.app/habit_repair.php") },
-                    "✅ Session Log"            to { currentSection = NavSection.TRAINING },
-                    "📚 Training History"      to { currentSection = NavSection.DOGS },
-                    "🧭 Coach Review"          to { openWebPage("https://guidepaw.app/coach_review.php") },
+                    "⚡ Log Training"         to { currentSection = NavSection.TRAINING },
+                    "🎯 Goal Intake"          to { openWebPage("https://guidepaw.app/training_goal_intake.php") },
+                    "🛠️ Habit Repair"        to { openWebPage("https://guidepaw.app/habit_repair.php") },
+                    "⚠️ Behavior Risk"        to { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
+                    "♻️ Regression Engine"   to { openWebPage("https://guidepaw.app/regression_engine.php") },
+                    "🐾 Candidate Assessment" to { openWebPage("https://guidepaw.app/candidate_assessment.php") },
+                    "🧩 Goal Builder"         to { openWebPage("https://guidepaw.app/goal_builder.php") },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
                     "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
@@ -984,23 +976,13 @@ class MainActivity : AppCompatActivity() {
                     "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
-                    "🔔 Notification Center"    to { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
-                    "🧠 Smart Alerts"           to { openWebPage("https://guidepaw.app/alerts.php") },
-                    "❓ Breed Finder"           to { openWebPage("https://guidepaw.app/breed_questionnaire.php") },
-                    "🤝 Community"              to { openWebPage("https://guidepaw.app/community.php") },
-                    "💙 Support Funding"        to { openWebPage("https://guidepaw.app/support_funding.php") },
-                    "🏷️ Plans"                 to { openWebPage("https://guidepaw.app/paywalls.php") },
-                    "📇 Contact Us"             to { openWebPage("https://guidepaw.app/contact_us.php") },
-                    "🪪 ADA Access Card"        to { openWebPage("https://guidepaw.app/ada_access_card.php") },
-                    "⚖️ Detailed ADA Notes"    to { openWebPage("https://guidepaw.app/service_dog_rights.php") },
-                    "✈️ Air Travel Rights"     to { openWebPage("https://guidepaw.app/air_travel_rights.php") },
-                    "✅ Certification"           to { openWebPage("https://guidepaw.app/certification.php") },
-                    "💬 Feedback / Bug Report"  to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-                    "📖 Public Guides"          to { openWebPage("https://guidepaw.app/app.php") },
-                    "❓ FAQ"                    to { openWebPage("https://guidepaw.app/faq.php") },
-                    "🔎 Breed Comparisons"      to { openWebPage("https://guidepaw.app/breed_comparison_hub.php") },
-                    "🌿 Breed Family Guide"     to { openWebPage("https://guidepaw.app/breed_family_guide.php") },
-                    "⚖️ Legal Info"             to { openWebPage("https://guidepaw.app/service_dog_esa_legal_info.php") },
+                    "🔔 Notifications"     to { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+                    "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
+                    "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+                    "🪪 ADA Access Card"   to { openWebPage("https://guidepaw.app/ada_access_card.php") },
+                    "✅ Certification"      to { openWebPage("https://guidepaw.app/certification.php") },
+                    "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
+                    "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
                 ), onDismiss)
             }
         }
