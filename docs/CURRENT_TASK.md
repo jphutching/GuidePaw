@@ -7,16 +7,14 @@ Make the Android companion app feel truly native and fluid (Jetpack Compose + Ma
 
 - [x] Clean up `index.php` landing page — hero copy, Public Dog Profile link, removed redundant nav hint
 - [x] Replace Android bottom nav with Material 3 `NavigationBar` + vector icons + `BadgedBox` (v0.024)
+- [x] Update `app.php` — reflect actual shipped features, note native Compose build
+- [x] Redesign `OverviewSection` — active dog as hero, compact recent-activity summary, quick Log Training / View History buttons (v0.025)
+- [x] Declutter `DogsSection` — compact active-dog header, collapsible Switch picker, logs labelled with dog name (v0.026)
 
-## Phase 1 — In Progress
+## Phase 2 — Next Up
 
-- [ ] Improve `OverviewSection` — surface active dog, recent log summary, and quick-action buttons more usefully
-- [ ] Review `DogsSection` — dogs and logs on same screen is cramped; consider splitting or tabbing
-- [ ] Update `app.php` (companion landing page) for v0.024 release notes
-
-## Phase 2 — Queued
-
-- [ ] Review remaining sections (Training, Wearables) for UX improvements now that nav is native
+- [ ] Review `TrainingSection` for UX improvements now that nav and overview are native
+- [ ] Review `WearablesSection` for UX improvements
 - [ ] Improve information hierarchy across web so users don't get lost
 
 **Rules**:
