@@ -9,10 +9,8 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.widget.GridLayout
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
@@ -77,9 +75,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import com.google.android.material.button.MaterialButton as MdButton
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
@@ -150,6 +145,7 @@ class MainActivity : AppCompatActivity() {
     private var showTwoFactor    by mutableStateOf(false)
     private var showUpdateCard   by mutableStateOf(false)
     private var updateStatusText by mutableStateOf("")
+    private var showMenu         by mutableStateOf(false)
 
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
@@ -261,6 +257,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        if (showMenu) {
+            MenuBottomSheet(onDismiss = { showMenu = false })
+        }
     }
 
     // ── Bottom navigation — matches v0.016 MaterialButton row exactly ──────
@@ -283,7 +282,7 @@ class MainActivity : AppCompatActivity() {
                     Box(modifier = Modifier.weight(1f)) {
                         TextButton(
                             onClick        = {
-                                if (section == NavSection.MORE) showMenuDialog()
+                                if (section == NavSection.MORE) showMenu = true
                                 else currentSection = section
                             },
                             modifier       = Modifier
@@ -723,6 +722,136 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Menu bottom sheet ───────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun MenuBottomSheet(onDismiss: () -> Unit) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState       = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    "GuidePaw Menu",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedButton(
+                        onClick  = { onDismiss(); openWebPage("https://guidepaw.app/settings.php") },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("⚙️ Settings") }
+                    OutlinedButton(
+                        onClick  = { onDismiss(); signOut("Signed out.") },
+                        modifier = Modifier.weight(1f),
+                        colors   = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) { Text("↩️ Sign Out") }
+                }
+                MenuSheetSection("Dog", listOf(
+                    "👤 Handler Profile"   to { openWebPage("https://guidepaw.app/handler_profile.php") },
+                    "🐕 Dogs"              to { currentSection = NavSection.DOGS },
+                    "🪪 Dog Profile"       to { openWebPage("https://guidepaw.app/dog_profile.php") },
+                    "📡 QR Tracking"       to { openWebPage("https://guidepaw.app/qr_tracking.php") },
+                    "🤝 Dog Access"        to { openWebPage("https://guidepaw.app/dog_access.php") },
+                    "🧾 Dog Audit"         to { openWebPage("https://guidepaw.app/dog_access_audit.php") },
+                    "📊 Stats"             to { openWebPage("https://guidepaw.app/stats.php") },
+                ), onDismiss)
+                MenuSheetSection("Logs", listOf(
+                    "⚡ Quick Session"    to { currentSection = NavSection.TRAINING },
+                    "📝 Detailed Log"     to { currentSection = NavSection.TRAINING },
+                    "📋 History"          to { currentSection = NavSection.DOGS },
+                    "🎥 Media Review"     to { openWebPage("https://guidepaw.app/media_review.php") },
+                    "🎞️ Video Review"    to { openWebPage("https://guidepaw.app/video_review.php") },
+                ), onDismiss)
+                MenuSheetSection("Training", listOf(
+                    "🎓 Training Program"      to { currentSection = NavSection.TRAINING },
+                    "🐾 Candidate Assessment"  to { openWebPage("https://guidepaw.app/candidate_assessment.php") },
+                    "🔎 Candidate Comparison"  to { openWebPage("https://guidepaw.app/candidate_comparison.php") },
+                    "⚠️ Behavior Risk"         to { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
+                    "♻️ Regression Engine"     to { openWebPage("https://guidepaw.app/regression_engine.php") },
+                    "🧩 Goal Builder"          to { openWebPage("https://guidepaw.app/goal_builder.php") },
+                    "🏅 Community Challenges"  to { openWebPage("https://guidepaw.app/community_challenges.php") },
+                    "🚚 Trucking Mode"         to { openWebPage("https://guidepaw.app/trucking_mode.php") },
+                    "🛡️ Tactical Training"    to { openWebPage("https://guidepaw.app/tactical_training.php") },
+                    "🎯 Goal Intake"           to { openWebPage("https://guidepaw.app/training_goal_intake.php") },
+                    "🛠️ Habit Repair"         to { openWebPage("https://guidepaw.app/habit_repair.php") },
+                    "✅ Session Log"            to { currentSection = NavSection.TRAINING },
+                    "📚 Training History"      to { currentSection = NavSection.DOGS },
+                    "🧭 Coach Review"          to { openWebPage("https://guidepaw.app/coach_review.php") },
+                ), onDismiss)
+                MenuSheetSection("Care", listOf(
+                    "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
+                    "📅 Vet Appointments" to { openWebPage("https://guidepaw.app/appointments.php") },
+                    "💊 Medications"      to { openWebPage("https://guidepaw.app/medications.php") },
+                    "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
+                ), onDismiss)
+                MenuSheetSection("More", listOf(
+                    "🔔 Notification Center"    to { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+                    "🧠 Smart Alerts"           to { openWebPage("https://guidepaw.app/alerts.php") },
+                    "❓ Breed Finder"           to { openWebPage("https://guidepaw.app/breed_questionnaire.php") },
+                    "🤝 Community"              to { openWebPage("https://guidepaw.app/community.php") },
+                    "💙 Support Funding"        to { openWebPage("https://guidepaw.app/support_funding.php") },
+                    "🏷️ Plans"                 to { openWebPage("https://guidepaw.app/paywalls.php") },
+                    "📇 Contact Us"             to { openWebPage("https://guidepaw.app/contact_us.php") },
+                    "🪪 ADA Access Card"        to { openWebPage("https://guidepaw.app/ada_access_card.php") },
+                    "⚖️ Detailed ADA Notes"    to { openWebPage("https://guidepaw.app/service_dog_rights.php") },
+                    "✈️ Air Travel Rights"     to { openWebPage("https://guidepaw.app/air_travel_rights.php") },
+                    "✅ Certification"           to { openWebPage("https://guidepaw.app/certification.php") },
+                    "💬 Feedback / Bug Report"  to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+                    "📖 Public Guides"          to { openWebPage("https://guidepaw.app/app.php") },
+                    "❓ FAQ"                    to { openWebPage("https://guidepaw.app/faq.php") },
+                    "🔎 Breed Comparisons"      to { openWebPage("https://guidepaw.app/breed_comparison_hub.php") },
+                    "🌿 Breed Family Guide"     to { openWebPage("https://guidepaw.app/breed_family_guide.php") },
+                    "⚖️ Legal Info"             to { openWebPage("https://guidepaw.app/service_dog_esa_legal_info.php") },
+                ), onDismiss)
+            }
+        }
+    }
+
+    @Composable
+    private fun MenuSheetSection(title: String, items: List<Pair<String, () -> Unit>>, onDismiss: () -> Unit) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    title,
+                    style      = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color      = GpOnSurfaceVariant,
+                    modifier   = Modifier.padding(bottom = 8.dp),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items.chunked(2).forEach { pair ->
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            pair.forEach { (label, action) ->
+                                OutlinedButton(
+                                    onClick        = { onDismiss(); action() },
+                                    modifier       = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                ) {
+                                    Text(label, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2)
+                                }
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Shared composable ───────────────────────────────────────────────────
     @Composable
     private fun SummaryCard(content: @Composable ColumnScope.() -> Unit) {
@@ -1038,156 +1167,6 @@ class MainActivity : AppCompatActivity() {
         updateReceiverRegistered = false
     }
 
-    // ── Menu dialog (View-based, Phase 2 will port to Compose bottom sheet) ─
-    private fun showMenuDialog() {
-        val content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(8))
-        }
-        val rootGrid = GridLayout(this).apply {
-            columnCount = 2
-            setPadding(0, 0, 0, dp(8))
-            addView(makeMenuButton(MenuAction("Settings", icon = "gear") { openWebPage("https://guidepaw.app/settings.php") }, root = true))
-            addView(makeMenuButton(MenuAction("Logout",   icon = "logout") { signOut("Signed out.") }, root = true))
-        }
-        content.addView(rootGrid)
-        content.addView(makeMenuSection("Dog", listOf(
-            MenuAction("Handler Profile", icon = "profile") { openWebPage("https://guidepaw.app/handler_profile.php") },
-            MenuAction("Dogs",            NavSection.DOGS,      "dog"),
-            MenuAction("Dog Profile",     icon = "id")        { openWebPage("https://guidepaw.app/dog_profile.php") },
-            MenuAction("QR Tracking",     icon = "qr")        { openWebPage("https://guidepaw.app/qr_tracking.php") },
-            MenuAction("Dog Access",      icon = "access")    { openWebPage("https://guidepaw.app/dog_access.php") },
-            MenuAction("Dog Audit",       icon = "audit")     { openWebPage("https://guidepaw.app/dog_access_audit.php") },
-            MenuAction("Stats",           icon = "stats")     { openWebPage("https://guidepaw.app/stats.php") },
-        )))
-        content.addView(makeMenuSection("Logs", listOf(
-            MenuAction("Quick Session",  NavSection.TRAINING, "quick"),
-            MenuAction("Detailed Log",   NavSection.TRAINING, "log"),
-            MenuAction("History",        NavSection.DOGS,     "history"),
-            MenuAction("Media Review",   icon = "media")  { openWebPage("https://guidepaw.app/media_review.php") },
-            MenuAction("Video Review",   icon = "video")  { openWebPage("https://guidepaw.app/video_review.php") },
-        )))
-        content.addView(makeMenuSection("Training", listOf(
-            MenuAction("Training Program",     NavSection.TRAINING, "training"),
-            MenuAction("Candidate Assessment", icon = "candidate")  { openWebPage("https://guidepaw.app/candidate_assessment.php") },
-            MenuAction("Candidate Comparison", icon = "compare")    { openWebPage("https://guidepaw.app/candidate_comparison.php") },
-            MenuAction("Behavior Risk",        icon = "risk")       { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
-            MenuAction("Regression Engine",    icon = "regression") { openWebPage("https://guidepaw.app/regression_engine.php") },
-            MenuAction("Goal Builder",         icon = "goal")       { openWebPage("https://guidepaw.app/goal_builder.php") },
-            MenuAction("Community Challenges", icon = "challenge")  { openWebPage("https://guidepaw.app/community_challenges.php") },
-            MenuAction("Trucking Mode",        icon = "truck")      { openWebPage("https://guidepaw.app/trucking_mode.php") },
-            MenuAction("Tactical Training",    icon = "shield")     { openWebPage("https://guidepaw.app/tactical_training.php") },
-            MenuAction("Goal Intake",          icon = "target")     { openWebPage("https://guidepaw.app/training_goal_intake.php") },
-            MenuAction("Habit Repair",         icon = "repair")     { openWebPage("https://guidepaw.app/habit_repair.php") },
-            MenuAction("Session Log",          NavSection.TRAINING, "session"),
-            MenuAction("Training History",     NavSection.DOGS,     "book"),
-            MenuAction("Coach Review",         icon = "coach")      { openWebPage("https://guidepaw.app/coach_review.php") },
-        )))
-        content.addView(makeMenuSection("Care", listOf(
-            MenuAction("Health Docs",       icon = "health")    { openWebPage("https://guidepaw.app/dog_health.php") },
-            MenuAction("Vet Appointments",  icon = "calendar")  { openWebPage("https://guidepaw.app/appointments.php") },
-            MenuAction("Medications",       icon = "meds")      { openWebPage("https://guidepaw.app/medications.php") },
-            MenuAction("Wearable Sync",     icon = "watch")     { openWebPage("https://guidepaw.app/wearable_integrations.php") },
-        )))
-        content.addView(makeMenuSection("More", listOf(
-            MenuAction("Notification Center", icon = "bell")      { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
-            MenuAction("Smart Alerts",        icon = "alerts")    { openWebPage("https://guidepaw.app/alerts.php") },
-            MenuAction("Breed Finder",        icon = "question")  { openWebPage("https://guidepaw.app/breed_questionnaire.php") },
-            MenuAction("Community",           icon = "community") { openWebPage("https://guidepaw.app/community.php") },
-            MenuAction("Support Funding",     icon = "support")   { openWebPage("https://guidepaw.app/support_funding.php") },
-            MenuAction("Plans",               icon = "plans")     { openWebPage("https://guidepaw.app/paywalls.php") },
-            MenuAction("Contact Us",          icon = "contact")   { openWebPage("https://guidepaw.app/contact_us.php") },
-            MenuAction("ADA Access Card",     icon = "card")      { openWebPage("https://guidepaw.app/ada_access_card.php") },
-            MenuAction("Detailed ADA Notes",  icon = "legal")     { openWebPage("https://guidepaw.app/service_dog_rights.php") },
-            MenuAction("Air Travel Rights",   icon = "plane")     { openWebPage("https://guidepaw.app/air_travel_rights.php") },
-            MenuAction("Certification",       icon = "cert")      { openWebPage("https://guidepaw.app/certification.php") },
-            MenuAction("Feedback / Bug Report", icon = "feedback") { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-            MenuAction("Public Guides",       icon = "guide")     { openWebPage("https://guidepaw.app/app.php") },
-            MenuAction("FAQ")                                     { openWebPage("https://guidepaw.app/faq.php") },
-            MenuAction("Breed comparisons")                       { openWebPage("https://guidepaw.app/breed_comparison_hub.php") },
-            MenuAction("Breed family guide")                      { openWebPage("https://guidepaw.app/breed_family_guide.php") },
-            MenuAction("Legal info")                              { openWebPage("https://guidepaw.app/service_dog_esa_legal_info.php") },
-        )))
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("GuidePaw Menu")
-            .setView(ScrollView(this).apply { isFillViewport = true; addView(content) })
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
-    private fun makeMenuSection(title: String, actions: List<MenuAction>): LinearLayout {
-        val section = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(10))
-            addView(TextView(this@MainActivity).apply {
-                text = title
-                setTextColor(0xFF111827.toInt())
-                textSize = 14f
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-                setPadding(0, 0, 0, dp(8))
-            })
-            val grid = GridLayout(this@MainActivity).apply {
-                columnCount = 2
-                actions.forEach { addView(makeMenuButton(it, root = false)) }
-            }
-            addView(grid)
-        }
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, 0, 0, dp(10))
-            addView(MaterialCardView(this@MainActivity).apply {
-                radius = dp(18).toFloat()
-                cardElevation = 0f
-                setCardBackgroundColor(0xFFFFFFFF.toInt())
-                strokeColor = 0xFFE2E8F0.toInt()
-                strokeWidth = dp(1)
-                addView(section)
-            })
-        }
-    }
-
-    private fun makeMenuButton(action: MenuAction, root: Boolean): MdButton {
-        return MdButton(this).apply {
-            text = "${menuIcon(action.icon)} ${action.label}"
-            isAllCaps = false
-            textSize  = 12f
-            setTextColor(0xFF1F2937.toInt())
-            backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (root && action.label == "Logout") 0xFFFEE2E2.toInt() else 0xFFF8FAFC.toInt()
-            )
-            strokeColor = android.content.res.ColorStateList.valueOf(
-                if (root && action.label == "Logout") 0xFFFECACA.toInt() else 0xFFE2E8F0.toInt()
-            )
-            strokeWidth  = dp(1)
-            cornerRadius = dp(14)
-            minHeight    = dp(48)
-            layoutParams = GridLayout.LayoutParams().apply {
-                width  = 0
-                height = GridLayout.LayoutParams.WRAP_CONTENT
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                setMargins(dp(3), dp(3), dp(3), dp(3))
-            }
-            setOnClickListener {
-                action.onClick?.invoke() ?: action.section?.let { currentSection = it }
-            }
-        }
-    }
-
-    private fun menuIcon(icon: String): String = when (icon) {
-        "profile"    -> "👤"; "dog"       -> "🐕"; "id"       -> "🪪"; "qr"      -> "📡"
-        "access"     -> "🤝"; "audit"     -> "🧾"; "stats"    -> "📊"; "quick"   -> "⚡"
-        "log"        -> "📝"; "history"   -> "📋"; "media"    -> "🎥"; "video"   -> "🎞️"
-        "training"   -> "🎓"; "candidate" -> "🐾"; "compare"  -> "🔎"; "risk"    -> "⚠️"
-        "regression" -> "♻️"; "goal"      -> "🧩"; "challenge"-> "🏅"; "truck"   -> "🚚"
-        "shield"     -> "🛡️"; "target"    -> "🎯"; "repair"   -> "🛠️"; "session" -> "✅"
-        "book"       -> "📚"; "coach"     -> "🧭"; "health"   -> "🩺"; "calendar"-> "📅"
-        "meds"       -> "💊"; "watch"     -> "⌚"; "bell"     -> "🔔"; "alerts"  -> "🧠"
-        "question"   -> "❓"; "community" -> "🤝"; "support"  -> "💙"; "plans"   -> "🏷️"
-        "contact"    -> "📇"; "card"      -> "🪪"; "legal"    -> "⚖️"; "plane"   -> "✈️"
-        "cert"       -> "✅"; "feedback"  -> "💬"; "guide"    -> "📖"; "gear"    -> "⚙️"
-        "logout"     -> "↩️"; else        -> ""
-    }
 
     // ── Cache helpers (unchanged) ───────────────────────────────────────────
     private fun restoreCachedDashboard() {
@@ -1289,16 +1268,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun JSONArray.toStringList(): List<String> =
         (0 until length()).mapNotNull { optString(it, "").trim().takeIf { s -> s.isNotBlank() } }
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
-    // ── MenuAction ──────────────────────────────────────────────────────────
-    private data class MenuAction(
-        val label   : String,
-        val section : NavSection? = null,
-        val icon    : String      = "",
-        val onClick : (() -> Unit)? = null,
-    )
 
     companion object {
         private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
