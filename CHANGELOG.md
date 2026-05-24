@@ -1,3 +1,7 @@
+## v0.021 (2026-05-24)
+- Android: Ported FeedbackActivity to Compose — deleted activity_feedback.xml, replaced 9 lateinit var Views with mutableStateOf, converted deprecated onActivityResult to registerForActivityResult
+- Android: All activities are now pure Compose — no remaining View-based or XML layout code in the companion app
+
 ## v0.020 (2026-05-24)
 - Android: Ported the Menu tab from a View-based AlertDialog to a native Compose ModalBottomSheet — all hybrid View/Compose code removed from MainActivity
 - Web: Consolidated landing page public sections into one grid, fixed three unlinked cards (Breed Questionnaire, Support Options, Service Dog Notes), removed duplicate Housing & Access FAQ entry
