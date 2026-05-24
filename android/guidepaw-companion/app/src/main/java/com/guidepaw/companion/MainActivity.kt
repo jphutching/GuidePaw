@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -342,6 +342,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
+                        NavSection.HOUSING_FAQ          -> HousingFAQSection()
                     }
                 }
             }
@@ -1794,6 +1795,123 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Housing & Access FAQ section ────────────────────────────────────────
+    @Composable
+    private fun HousingFAQSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Housing & Access FAQ",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            // Public access
+            SummaryCard {
+                Text("Public access", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(2.dp))
+                Text("Businesses can ask only limited questions", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "For public access, businesses may ask whether the dog is required because of a disability.",
+                    "They may also ask what work or task the dog has been trained to perform.",
+                    "They should not require certification, registration, or proof of training as a condition of entry.",
+                    "If the dog is out of control or not housebroken, the business may remove the dog.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Housing
+            SummaryCard {
+                Text("Housing", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(2.dp))
+                Text("Housing questions follow a different rule set", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Housing providers are not asking the same questions as a store or restaurant.",
+                    "Fair Housing Act requests may involve reliable disability-related information when a need is not obvious.",
+                    "HUD guidance is the right place to check when a housing provider wants documentation.",
+                    "ESAs can matter in housing even though they do not have ADA public-access rights.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Common disputes
+            SummaryCard {
+                Text("Common disputes", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+
+                Text("A business wants a vest, card, or certificate.", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(2.dp))
+                Text("That is not required by the ADA. The business should be guided by the two permitted questions and the dog's actual behavior.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(10.dp))
+
+                Text("A landlord wants something different from a store.", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(2.dp))
+                Text("Housing requests use Fair Housing Act rules. The right response depends on whether the animal is a service dog or an assistance animal in housing.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(10.dp))
+
+                Text("A public place says the dog is too disruptive.", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(2.dp))
+                Text("If the dog is out of control and the handler does not correct it, or if the dog is not housebroken, removal can be allowed under ADA rules.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            // Keep the category straight
+            SummaryCard {
+                Text("Keep the category straight", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Public access follows ADA service-animal rules.",
+                    "Housing follows Fair Housing Act assistance-animal rules.",
+                    "Air travel follows DOT / ACAA service-animal rules.",
+                    "ESAs are not service dogs — do not treat them as the same thing in public access or on flights.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Official sources
+            SummaryCard {
+                Text("Official sources", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                listOf(
+                    "ADA Service Animals FAQ" to "https://www.ada.gov/resources/service-animals-faqs/",
+                    "ADA Service Animals" to "https://www.ada.gov/topics/service-animals/",
+                    "HUD Assistance Animals" to "https://www.hud.gov/program_offices/fair_housing_equal_opp/assistance_animals",
+                ).forEach { (label, url) ->
+                    TextButton(
+                        onClick        = { openWebPage(url) },
+                        contentPadding = PaddingValues(0.dp),
+                    ) { Text(label, style = MaterialTheme.typography.bodySmall) }
+                }
+            }
+
+            // Cross-links to companion screens
+            SummaryCard {
+                Text("Related screens", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { currentSection = NavSection.ADA_ACCESS_CARD }, modifier = Modifier.weight(1f)) { Text("ADA Card") }
+                    OutlinedButton(onClick = { currentSection = NavSection.AIR_TRAVEL }, modifier = Modifier.weight(1f)) { Text("Air Travel") }
+                }
+            }
+        }
+    }
+
     // ── Habit Repair section ────────────────────────────────────────────────
     @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
@@ -2197,6 +2315,7 @@ class MainActivity : AppCompatActivity() {
                     "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
+                    "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "✅ Certification"      to { openWebPage("https://guidepaw.app/certification.php") },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },

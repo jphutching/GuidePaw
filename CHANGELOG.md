@@ -1,3 +1,6 @@
+## v0.039 (2026-05-24)
+- Android: Native Housing & Access FAQ screen — public access rules, FHA housing rules, three common disputes, category guide (ADA/FHA/ACAA), official source links (open in browser), cross-links to ADA Card and Air Travel screens; added to menu as "🏠 Housing & Access"
+
 ## v0.038 (2026-05-24)
 - Android: Native Air Travel Rights screen — ACAA coverage, DOT form requirements, denial grounds, SDIT note, practical reminders, and cross-link to ADA Access Card; added to menu as "✈️ Air Travel Rights"
 
