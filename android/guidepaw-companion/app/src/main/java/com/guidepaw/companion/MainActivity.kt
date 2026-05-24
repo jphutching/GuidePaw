@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -343,6 +343,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
+                        NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
                     }
                 }
             }
@@ -1912,6 +1913,153 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Tactical Training section ───────────────────────────────────────────
+    @Composable
+    private fun TacticalTrainingSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Tactical Training",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            // Who this is for
+            SummaryCard {
+                Text("Who this is for", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Security and executive protection handlers",
+                    "Police K9 handlers in training",
+                    "Fire and EMS teams with detection dogs",
+                    "Military working dog handlers",
+                    "Search and rescue (SAR) teams",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Module 1
+            SummaryCard {
+                Text("1. Operational foundation", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Assess the dog's readiness and review structured training programs before moving to field work.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick   = { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Candidate Assessment") }
+                    OutlinedButton(
+                        onClick   = { openWebPage("https://guidepaw.app/training_program.php") },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Training Programs") }
+                }
+            }
+
+            // Module 2
+            SummaryCard {
+                Text("2. Search and response", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Build precise task goals and log every field session to track consistency across environments.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick   = { currentSection = NavSection.GOAL_BUILDER },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Goal Builder") }
+                    OutlinedButton(
+                        onClick   = { currentSection = NavSection.TRAINING },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Log Training") }
+                }
+            }
+
+            // Module 3
+            SummaryCard {
+                Text("3. Distraction resilience", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Score current behavior risks and use structured distraction protocols to raise the threshold.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick   = { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Behavior Risk") }
+                    OutlinedButton(
+                        onClick   = { openWebPage("https://guidepaw.app/trucking_mode.php") },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Trucking Mode") }
+                }
+            }
+
+            // Module 4
+            SummaryCard {
+                Text("4. Team proofing", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Review full training history and regression events to confirm readiness before operational deployment.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick   = { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Regression Engine") }
+                    OutlinedButton(
+                        onClick   = { currentSection = NavSection.DOGS },
+                        modifier  = Modifier.weight(1f),
+                    ) { Text("Training History") }
+                }
+            }
+
+            // Suggested tactical focus
+            SummaryCard {
+                Text("Suggested tactical focus", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Focus on task reliability under distraction before expanding to new environments.",
+                    "Use short, high-value training sessions in each new environment.",
+                    "Log every session — regression triggers appear in the pattern over time.",
+                    "Reassess candidate readiness every 4–6 weeks during active training phases.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Web version for access management
+            OutlinedButton(
+                onClick   = { openWebPage("https://guidepaw.app/tactical_training.php") },
+                modifier  = Modifier.fillMaxWidth(),
+            ) { Text("Manage tactical access on web") }
+        }
+    }
+
     // ── Habit Repair section ────────────────────────────────────────────────
     @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
@@ -2302,6 +2450,7 @@ class MainActivity : AppCompatActivity() {
                     "♻️ Regression Engine"   to { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
                     "🐾 Candidate Assessment" to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
                     "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
+                    "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
                     "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },

@@ -5,8 +5,8 @@ require_once __DIR__ . '/seo.php';
 if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.039'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '39');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.040'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '40');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
@@ -17,7 +17,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Native Housing & Access FAQ screen — public access rules, housing FHA rules, common disputes, category guide, official source links; added to menu.',
+            'release_notes' => 'Native Tactical Training screen — 4 module cards (Operational Foundation, Search/Response, Distraction Resilience, Team Proofing) with native nav buttons; added to Training menu.',
             'published_at' => gmdate('c'),
         ];
     }

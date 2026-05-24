@@ -1,3 +1,6 @@
+## v0.040 (2026-05-24)
+- Android: Native Tactical Training screen — 4 module cards (Operational Foundation → Candidate Assessment + Training Programs; Search/Response → Goal Builder + Log Training; Distraction Resilience → Behavior Risk + Trucking Mode; Team Proofing → Regression Engine + Training History); suggested tactical focus bullets; link to web version for access management; added to Training menu as "🎖️ Tactical Training"
+
 ## v0.039 (2026-05-24)
 - Android: Native Housing & Access FAQ screen — public access rules, FHA housing rules, three common disputes, category guide (ADA/FHA/ACAA), official source links (open in browser), cross-links to ADA Card and Air Travel screens; added to menu as "🏠 Housing & Access"
 
