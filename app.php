@@ -59,9 +59,9 @@ $schema = [
                 <p class="lead mb-0">The native mobile app for normal handler work: training first, with wearables baked in so the app sees the dog, the activity, and the rest cycle together.</p>
             </div>
             <div class="panel p-3 text-dark" style="min-width:280px; max-width:320px;">
-                <div class="small text-uppercase text-muted fw-semibold">What it replaces</div>
-                <h2 class="h5 mb-2">Daily handler tasks</h2>
-                <p class="muted mb-3">The companion app is a native build, not a browser wrapper. It covers the training work you already do on the website, without admin screens.</p>
+                <div class="small text-uppercase text-muted fw-semibold">What it is</div>
+                <h2 class="h5 mb-2">Native Android — no browser wrappers</h2>
+                <p class="muted mb-3">All screens are pure Compose. Training tools, risk assessment, regression tracking, and candidate scoring are fully native — no web views for handler work.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Start with breed research</a>
                     <a class="btn btn-outline-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download debug APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
@@ -76,10 +76,15 @@ $schema = [
         <div class="col-lg-7">
             <div class="panel p-4 h-100">
                 <div class="text-uppercase text-muted fw-semibold small mb-2">What's in the app</div>
-                <h2 class="h3">Core handler workflow</h2>
-                <p>The app already covers the daily handler loop. Goal intake, habit repair, and behavior risk views are next in line.</p>
+                <h2 class="h3">Full handler workflow — native</h2>
+                <p>All five training-tool screens are native Compose. Pull down to refresh any list.</p>
                 <ul class="checklist mb-0">
                     <li>Training logs — submit and review session history</li>
+                    <li>Goal Intake — define training goals by category with success criteria and reinforcement plan</li>
+                    <li>Habit Repair — protocol lookup and behavior incident log</li>
+                    <li>Behavior Risk — risk band assessment with per-dog scoring</li>
+                    <li>Regression Engine — open event tracking with inline status updates and reset plan editor</li>
+                    <li>Candidate Assessment — 10-factor scoring tool for prospect dogs</li>
                     <li>Dogs — switch active dog, view profiles and public notes</li>
                     <li>Wearable summaries and device setup</li>
                     <li>Notifications and dog-access invite management</li>
@@ -102,7 +107,7 @@ $schema = [
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div style="min-width:260px; max-width:720px;">
                     <h2 class="h3 mb-2">GuidePaw Companion debug APK</h2>
-                    <p class="mb-0">This is the current test build. It is not a Google Play release — sideloading is required. The app is fully native Compose with no XML layouts and no View-based code.</p>
+                    <p class="mb-0">This is the current test build. It is not a Google Play release — sideloading is required. The app is fully native Compose: training logs, all five training-tool screens, wearables, notifications, and feedback — no XML layouts and no web views.</p>
                 </div>
                 <div>
                     <a class="btn btn-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
