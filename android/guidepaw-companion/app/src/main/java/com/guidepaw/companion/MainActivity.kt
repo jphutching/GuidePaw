@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -340,6 +340,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.BEHAVIOR_RISK        -> BehaviorRiskSection()
                         NavSection.REGRESSION           -> RegressionSection()
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
+                        NavSection.CANDIDATE_COMPARISON -> CandidateComparisonSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -2392,6 +2393,124 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Candidate Comparison section ────────────────────────────────────────
+    @Composable
+    private fun CandidateComparisonSection() {
+        val result = candidateResult
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Compare Dogs",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            if (result == null) {
+                SummaryCard {
+                    Text("Load candidate data to compare your dogs.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { loadCandidateAssessments() }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Load Comparison")
+                    }
+                }
+            } else {
+                val dogs = result.dogs
+                val latestByDog = result.assessments.groupBy { it.dogId }.mapValues { (_, list) -> list.first() }
+                val dogsWithAssessments = dogs.count { latestByDog.containsKey(it.id) }
+                val scores = dogs.mapNotNull { latestByDog[it.id]?.averageScore }
+                val overallAvg = if (scores.isNotEmpty()) scores.average() else null
+
+                // Summary stats
+                SummaryCard {
+                    Text("Summary", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        StatChip("Dogs", dogs.size.toString(), Modifier.weight(1f))
+                        StatChip("Assessed", dogsWithAssessments.toString(), Modifier.weight(1f))
+                        StatChip("Avg score", overallAvg?.let { String.format("%.1f", it) } ?: "—", Modifier.weight(1f))
+                    }
+                }
+
+                if (dogs.isEmpty()) {
+                    SummaryCard {
+                        Text("No dogs found. Add a dog profile first.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                } else {
+                    dogs.forEach { dog ->
+                        val assessment = latestByDog[dog.id]
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(dog.name, fontWeight = FontWeight.Bold)
+                                if (assessment == null) {
+                                    Text("No assessment yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                } else {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            "Focus Level ${assessment.focusLevelRecommended}",
+                                            style      = MaterialTheme.typography.labelSmall,
+                                            color      = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                        Text(
+                                            "Avg ${String.format("%.1f", assessment.averageScore)}/5",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = GpOnSurfaceVariant,
+                                        )
+                                    }
+                                    Text(assessment.recommendation, style = MaterialTheme.typography.bodySmall)
+                                    if (assessment.safetyFlags.isNotBlank()) {
+                                        Text(
+                                            "Safety: ${assessment.safetyFlags}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                    Text(
+                                        "Assessed ${formatAssessmentDate(assessment.createdAt)}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = GpOnSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick  = { openWebPage("https://guidepaw.app/candidate_comparison.php") },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Full score table on web") }
+            }
+        }
+    }
+
+    @Composable
+    private fun StatChip(label: String, value: String, modifier: Modifier = Modifier) {
+        OutlinedCard(modifier = modifier) {
+            Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(label, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+            }
+        }
+    }
+
+    private fun formatAssessmentDate(createdAt: String): String {
+        return try {
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            val out = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.US)
+            out.format(sdf.parse(createdAt.take(10)) ?: return createdAt)
+        } catch (_: Exception) { createdAt }
+    }
+
     // ── Menu bottom sheet ───────────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -2449,6 +2568,7 @@ class MainActivity : AppCompatActivity() {
                     "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
                     "♻️ Regression Engine"   to { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
                     "🐾 Candidate Assessment" to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
+                    "📊 Compare Dogs"         to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_COMPARISON },
                     "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                 ), onDismiss)

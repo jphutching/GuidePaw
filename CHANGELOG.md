@@ -1,3 +1,6 @@
+## v0.041 (2026-05-24)
+- Android: Native Candidate Comparison screen — summary stats (dogs, assessed count, overall avg score), per-dog cards (focus level, avg score, recommendation, safety flags, assessment date), empty-state load button, link to full score table on web; added to Training menu as "📊 Compare Dogs"; no new API endpoint — reuses data already loaded by Candidate Assessment
+
 ## v0.040 (2026-05-24)
 - Android: Native Tactical Training screen — 4 module cards (Operational Foundation → Candidate Assessment + Training Programs; Search/Response → Goal Builder + Log Training; Distraction Resilience → Behavior Risk + Trucking Mode; Team Proofing → Regression Engine + Training History); suggested tactical focus bullets; link to web version for access management; added to Training menu as "🎖️ Tactical Training"
 
