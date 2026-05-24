@@ -108,7 +108,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, HABIT_REPAIR, BEHAVIOR_RISK }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -151,6 +151,36 @@ class MainActivity : AppCompatActivity() {
     private var showUpdateCard   by mutableStateOf(false)
     private var updateStatusText by mutableStateOf("")
     private var showMenu         by mutableStateOf(false)
+
+    // ── Goal Intake state ──────────────────────────────────────────────────
+    private var goalIntakeGoals       by mutableStateOf<List<GpTrainingGoalItem>>(emptyList())
+    private var goalIntakeFilter      by mutableStateOf("active")
+    private var goalIntakeMessage     by mutableStateOf("")
+    private var goalIntakeDogId       by mutableStateOf(0)
+    private var goalIntakeCategory    by mutableStateOf("potty")
+    private var goalIntakeProblem     by mutableStateOf("")
+    private var goalIntakeDesired     by mutableStateOf("")
+    private var goalIntakeContext     by mutableStateOf("")
+    private var goalIntakeTrigger     by mutableStateOf("")
+    private var goalIntakeBudget      by mutableStateOf("3")
+    private var goalIntakeReinforcer  by mutableStateOf("")
+    private var goalIntakeSafetyRisk  by mutableStateOf(false)
+    private var goalIntakeCriteria    by mutableStateOf("")
+    private var goalIntakeMaintenance by mutableStateOf("")
+
+    // ── Habit Repair state ─────────────────────────────────────────────────
+    private var habitRepairProtocols   by mutableStateOf<List<GpHabitRepairProtocol>>(emptyList())
+    private var habitRepairIncidents   by mutableStateOf<List<GpBehaviorIncidentItem>>(emptyList())
+    private var habitRepairProtocolKey by mutableStateOf("potty_accidents")
+    private var habitRepairMessage     by mutableStateOf("")
+    private var habitRepairContext     by mutableStateOf("")
+    private var habitRepairTrigger     by mutableStateOf("")
+    private var habitRepairSeverity    by mutableStateOf(2)
+    private var habitRepairNotes       by mutableStateOf("")
+
+    // ── Behavior Risk state ────────────────────────────────────────────────
+    private var behaviorRiskResult  by mutableStateOf<GpBehaviorRiskResult?>(null)
+    private var behaviorRiskMessage by mutableStateOf("")
 
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
@@ -250,11 +280,14 @@ class MainActivity : AppCompatActivity() {
                     LoginSection()
                 } else {
                     when (currentSection) {
-                        NavSection.OVERVIEW  -> OverviewSection()
-                        NavSection.TRAINING  -> TrainingSection()
-                        NavSection.DOGS      -> DogsSection()
-                        NavSection.WEARABLES -> WearablesSection()
-                        NavSection.MORE      -> OverviewSection()
+                        NavSection.OVERVIEW      -> OverviewSection()
+                        NavSection.TRAINING      -> TrainingSection()
+                        NavSection.DOGS          -> DogsSection()
+                        NavSection.WEARABLES     -> WearablesSection()
+                        NavSection.MORE          -> OverviewSection()
+                        NavSection.GOAL_INTAKE   -> GoalIntakeSection()
+                        NavSection.HABIT_REPAIR  -> HabitRepairSection()
+                        NavSection.BEHAVIOR_RISK -> BehaviorRiskSection()
                     }
                 }
             }
@@ -274,14 +307,14 @@ class MainActivity : AppCompatActivity() {
                     NavSection.TRAINING  -> Icons.Filled.Bolt
                     NavSection.DOGS      -> Icons.Filled.Pets
                     NavSection.WEARABLES -> Icons.Filled.Notifications
-                    NavSection.MORE      -> Icons.Filled.Menu
+                    else                 -> Icons.Filled.Menu
                 }
                 val title = when (section) {
                     NavSection.OVERVIEW  -> "Home"
                     NavSection.TRAINING  -> "Log"
                     NavSection.DOGS      -> "History"
                     NavSection.WEARABLES -> "Alerts"
-                    NavSection.MORE      -> "Menu"
+                    else                 -> "Menu"
                 }
                 NavigationBarItem(
                     selected = section != NavSection.MORE && currentSection == section,
@@ -910,6 +943,550 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Goal Intake section ─────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+    @Composable
+    private fun GoalIntakeSection() {
+        var catExpanded by remember { mutableStateOf(false) }
+        var dogExpanded by remember { mutableStateOf(false) }
+        val categoryLabels = mapOf(
+            "potty"          to "Potty routine",
+            "leash"          to "Loose leash / pulling",
+            "barking"        to "Barking",
+            "cab_calm"       to "Cab calm / settling",
+            "jumping"        to "Jumping",
+            "public_manners" to "Public manners",
+            "psd_foundation" to "PSD/PTSD foundation",
+            "other"          to "Other",
+        )
+        val activeDog = currentDogs.firstOrNull { it.id == (goalIntakeDogId.takeIf { it > 0 } ?: currentActiveDogId) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Goal Intake",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            // Filter tabs
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("active", "archived", "all").forEach { f ->
+                    FilterChip(
+                        selected = goalIntakeFilter == f,
+                        onClick  = { goalIntakeFilter = f; loadGoalIntake(f) },
+                        label    = { Text(f.replaceFirstChar { it.uppercase() }) },
+                    )
+                }
+            }
+
+            if (goalIntakeMessage.isNotBlank()) {
+                Text(goalIntakeMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+            }
+
+            // New goal form
+            SummaryCard {
+                Text("New Training Goal", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                if (currentDogs.isEmpty()) {
+                    Text("No dogs on this account. Add a dog profile first.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                } else {
+                    // Dog selector
+                    ExposedDropdownMenuBox(expanded = dogExpanded, onExpandedChange = { dogExpanded = it }) {
+                        OutlinedTextField(
+                            value         = activeDog?.name ?: "Select dog",
+                            onValueChange = {},
+                            readOnly      = true,
+                            label         = { Text("Dog") },
+                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(dogExpanded) },
+                            modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(expanded = dogExpanded, onDismissRequest = { dogExpanded = false }) {
+                            currentDogs.forEach { dog ->
+                                DropdownMenuItem(
+                                    text    = { Text(dog.name) },
+                                    onClick = { goalIntakeDogId = dog.id; dogExpanded = false },
+                                )
+                            }
+                        }
+                    }
+                    // Category selector
+                    ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = it }) {
+                        OutlinedTextField(
+                            value         = categoryLabels[goalIntakeCategory] ?: goalIntakeCategory,
+                            onValueChange = {},
+                            readOnly      = true,
+                            label         = { Text("Goal category") },
+                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(catExpanded) },
+                            modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(expanded = catExpanded, onDismissRequest = { catExpanded = false }) {
+                            categoryLabels.forEach { (key, label) ->
+                                DropdownMenuItem(
+                                    text    = { Text(label) },
+                                    onClick = { goalIntakeCategory = key; catExpanded = false },
+                                )
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value         = goalIntakeProblem,
+                        onValueChange = { goalIntakeProblem = it },
+                        label         = { Text("What problem are you trying to solve? *") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeDesired,
+                        onValueChange = { goalIntakeDesired = it },
+                        label         = { Text("What should the dog do instead?") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeContext,
+                        onValueChange = { goalIntakeContext = it },
+                        label         = { Text("Where does it happen?") },
+                        singleLine    = true,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeTrigger,
+                        onValueChange = { goalIntakeTrigger = it },
+                        label         = { Text("What triggers it?") },
+                        singleLine    = true,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeBudget,
+                        onValueChange = { goalIntakeBudget = it },
+                        label         = { Text("Daily training time budget (minutes)") },
+                        singleLine    = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeReinforcer,
+                        onValueChange = { goalIntakeReinforcer = it },
+                        label         = { Text("Best rewards") },
+                        singleLine    = true,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier          = Modifier.fillMaxWidth(),
+                    ) {
+                        FilterChip(
+                            selected = goalIntakeSafetyRisk,
+                            onClick  = { goalIntakeSafetyRisk = !goalIntakeSafetyRisk },
+                            label    = { Text("⚠️ This may be a safety issue") },
+                        )
+                    }
+                    OutlinedTextField(
+                        value         = goalIntakeCriteria,
+                        onValueChange = { goalIntakeCriteria = it },
+                        label         = { Text("Success criteria *") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = goalIntakeMaintenance,
+                        onValueChange = { goalIntakeMaintenance = it },
+                        label         = { Text("Maintenance plan") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    Button(
+                        onClick  = { submitTrainingGoal() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Save Goal") }
+                }
+            }
+
+            // Recent goals
+            if (goalIntakeGoals.isNotEmpty()) {
+                Text("Recent Goals (${goalIntakeFilter})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                goalIntakeGoals.forEach { goal ->
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment     = Alignment.Top,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(goal.dogName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        categoryLabels[goal.goalCategory] ?: goal.goalCategory,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = GpOnSurfaceVariant,
+                                    )
+                                }
+                                Text(goal.status, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                            }
+                            if (goal.currentProblem.isNotBlank()) {
+                                Text(goal.currentProblem, style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (goal.successCriteria.isNotBlank()) {
+                                Text(
+                                    "→ ${goal.successCriteria}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = GpOnSurfaceVariant,
+                                )
+                            }
+                            if (goal.status == "active") {
+                                TextButton(
+                                    onClick  = { archiveGoal(goal.id) },
+                                    modifier = Modifier.align(Alignment.End),
+                                ) { Text("Archive", fontSize = 12.sp) }
+                            }
+                        }
+                    }
+                }
+            } else if (!isLoading) {
+                SummaryCard {
+                    Text(
+                        "No ${goalIntakeFilter} goals found.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+
+    // ── Habit Repair section ────────────────────────────────────────────────
+    @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+    @Composable
+    private fun HabitRepairSection() {
+        var dogExpanded by remember { mutableStateOf(false) }
+        var logDogId    by remember { mutableStateOf(currentActiveDogId ?: currentDogs.firstOrNull()?.id ?: 0) }
+        val activeProtocol = habitRepairProtocols.firstOrNull { it.key == habitRepairProtocolKey }
+            ?: habitRepairProtocols.firstOrNull()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Habit Repair",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            if (habitRepairMessage.isNotBlank()) {
+                Text(habitRepairMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+            }
+
+            // Protocol selector
+            if (habitRepairProtocols.isNotEmpty()) {
+                FlowRow(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement   = Arrangement.spacedBy(4.dp),
+                ) {
+                    habitRepairProtocols.forEach { protocol ->
+                        FilterChip(
+                            selected = habitRepairProtocolKey == protocol.key,
+                            onClick  = { habitRepairProtocolKey = protocol.key },
+                            label    = { Text(protocol.title, fontSize = 12.sp) },
+                        )
+                    }
+                }
+            }
+
+            // Protocol detail
+            if (activeProtocol != null) {
+                SummaryCard {
+                    Text(activeProtocol.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                    Text(activeProtocol.time, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    activeProtocol.steps.forEachIndexed { i, step ->
+                        Text(
+                            "${i + 1}. $step",
+                            style   = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                    }
+                }
+            } else if (isLoading) {
+                SummaryCard { Text("Loading protocols...", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+            }
+
+            // Log form
+            SummaryCard {
+                Text("Log this issue", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                if (currentDogs.isEmpty()) {
+                    Text("No dogs on this account.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                } else {
+                    val logDog = currentDogs.firstOrNull { it.id == logDogId }
+                    ExposedDropdownMenuBox(expanded = dogExpanded, onExpandedChange = { dogExpanded = it }) {
+                        OutlinedTextField(
+                            value         = logDog?.name ?: "Select dog",
+                            onValueChange = {},
+                            readOnly      = true,
+                            label         = { Text("Dog") },
+                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(dogExpanded) },
+                            modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(expanded = dogExpanded, onDismissRequest = { dogExpanded = false }) {
+                            currentDogs.forEach { dog ->
+                                DropdownMenuItem(
+                                    text    = { Text(dog.name) },
+                                    onClick = { logDogId = dog.id; dogExpanded = false },
+                                )
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value         = habitRepairContext,
+                        onValueChange = { habitRepairContext = it },
+                        label         = { Text("Where did it happen?") },
+                        singleLine    = true,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = habitRepairTrigger,
+                        onValueChange = { habitRepairTrigger = it },
+                        label         = { Text("What triggered it?") },
+                        singleLine    = true,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "Severity: $habitRepairSeverity",
+                        style      = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Slider(
+                        value         = habitRepairSeverity.toFloat(),
+                        onValueChange = { habitRepairSeverity = it.roundToInt() },
+                        valueRange    = 1f..5f,
+                        steps         = 3,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "1 minor · 2 mild · 3 moderate · 4 serious · 5 safety concern",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    OutlinedTextField(
+                        value         = habitRepairNotes,
+                        onValueChange = { habitRepairNotes = it },
+                        label         = { Text("Notes") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    Button(
+                        onClick  = { submitBehaviorIncident(logDogId, activeProtocol?.key ?: "potty_accidents") },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Save Incident") }
+                }
+            }
+
+            // Recent incidents
+            if (habitRepairIncidents.isNotEmpty()) {
+                Text("Recent Incidents", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                habitRepairIncidents.forEach { incident ->
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(incident.dogName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                Text("Severity ${incident.severity}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                            }
+                            Text(incident.incidentType.replace('_', ' '), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            if (incident.contextEnvironment.isNotBlank()) Text(incident.contextEnvironment, style = MaterialTheme.typography.bodySmall)
+                            TextButton(
+                                onClick  = { archiveBehaviorIncident(incident.id) },
+                                modifier = Modifier.align(Alignment.End),
+                            ) { Text("Archive", fontSize = 12.sp) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Behavior Risk section ───────────────────────────────────────────────
+    @Composable
+    private fun BehaviorRiskSection() {
+        val result = behaviorRiskResult
+        val bandColor = when (result?.band) {
+            "high"     -> Color(0xFFB91C1C)
+            "moderate" -> Color(0xFFB45309)
+            else       -> Color(0xFF0F766E)
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Behavior Risk",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            if (behaviorRiskMessage.isNotBlank()) {
+                Text(behaviorRiskMessage, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            }
+
+            // Dog selector
+            if (currentDogs.size > 1) {
+                SummaryCard {
+                    Text("Score for dog", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick  = { loadBehaviorRisk(null) },
+                            colors   = if (result?.dogId == null) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                        ) { Text("All dogs", fontSize = 12.sp) }
+                        currentDogs.forEach { dog ->
+                            OutlinedButton(
+                                onClick  = { loadBehaviorRisk(dog.id) },
+                                colors   = if (result?.dogId == dog.id) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                            ) { Text(dog.name, fontSize = 12.sp) }
+                        }
+                    }
+                }
+            }
+
+            if (result == null) {
+                SummaryCard {
+                    Text(
+                        if (isLoading) "Loading risk assessment..." else "No assessment loaded.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    if (!isLoading) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { loadBehaviorRisk(currentActiveDogId) }) { Text("Load Assessment") }
+                    }
+                }
+            } else {
+                // Score card
+                SummaryCard {
+                    Text("Current Risk", style = MaterialTheme.typography.labelLarge, color = GpOnSurfaceVariant)
+                    Text(
+                        result.score.toString(),
+                        style      = MaterialTheme.typography.displayMedium,
+                        fontWeight = FontWeight.Black,
+                        color      = bandColor,
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = bandColor.copy(alpha = 0.12f),
+                    ) {
+                        Text(
+                            result.band.replaceFirstChar { it.uppercase() },
+                            modifier   = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style      = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color      = bandColor,
+                        )
+                    }
+                    if (result.openRegressions > 0) {
+                        Text(
+                            "Open regressions: ${result.openRegressions}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                    }
+                }
+
+                // What drove the score
+                if (result.reasons.isNotEmpty()) {
+                    SummaryCard {
+                        Text("What drove the score", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        result.reasons.forEach { reason ->
+                            Text("• $reason", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
+                        }
+                    }
+                }
+
+                // Recommendations
+                if (result.recommendations.isNotEmpty()) {
+                    SummaryCard {
+                        Text("Recommended next steps", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        result.recommendations.forEach { rec ->
+                            Text("• $rec", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 2.dp))
+                        }
+                    }
+                }
+
+                // Recent incidents
+                if (result.incidents.isNotEmpty()) {
+                    Text("Recent Behavior Incidents", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    result.incidents.forEach { incident ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(incident.dogName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall)
+                                    Text("Sev ${incident.severity}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                }
+                                Text(incident.incidentType.replace('_', ' '), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                if (incident.triggerDescription.isNotBlank()) Text(incident.triggerDescription, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+
+                // Candidate assessment
+                val candidate = result.candidate
+                if (candidate != null) {
+                    SummaryCard {
+                        Text("Latest Candidate Assessment", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        Text("Dog: ${candidate.dogName}", style = MaterialTheme.typography.bodySmall)
+                        Text("Focus level: ${candidate.focusLevelRecommended}", style = MaterialTheme.typography.bodySmall)
+                        if (candidate.recommendation.isNotBlank()) {
+                            Text(candidate.recommendation, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        }
+                        if (candidate.safetyFlags.isNotBlank()) {
+                            Text("Safety flags: ${candidate.safetyFlags}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB91C1C))
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick  = { loadBehaviorRisk(result.dogId) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Refresh") }
+            }
+        }
+    }
+
     // ── Menu bottom sheet ───────────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -962,9 +1539,9 @@ class MainActivity : AppCompatActivity() {
                 ), onDismiss)
                 MenuSheetSection("Training", listOf(
                     "⚡ Log Training"         to { currentSection = NavSection.TRAINING },
-                    "🎯 Goal Intake"          to { openWebPage("https://guidepaw.app/training_goal_intake.php") },
-                    "🛠️ Habit Repair"        to { openWebPage("https://guidepaw.app/habit_repair.php") },
-                    "⚠️ Behavior Risk"        to { openWebPage("https://guidepaw.app/behavior_risk_scoring.php") },
+                    "🎯 Goal Intake"          to { loadGoalIntake(goalIntakeFilter); currentSection = NavSection.GOAL_INTAKE },
+                    "🛠️ Habit Repair"        to { loadHabitRepair(); currentSection = NavSection.HABIT_REPAIR },
+                    "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
                     "♻️ Regression Engine"   to { openWebPage("https://guidepaw.app/regression_engine.php") },
                     "🐾 Candidate Assessment" to { openWebPage("https://guidepaw.app/candidate_assessment.php") },
                     "🧩 Goal Builder"         to { openWebPage("https://guidepaw.app/goal_builder.php") },
@@ -1143,6 +1720,174 @@ class MainActivity : AppCompatActivity() {
         trainMessage  = ""
         statusMessage = "Signed in as ${currentMe?.username.orEmpty()}"
         loginMessage  = ""
+    }
+
+    private fun loadGoalIntake(filter: String = "active") {
+        val token = currentToken ?: return
+        goalIntakeFilter = filter
+        setLoading(true, "Loading goals...")
+        worker.execute {
+            try {
+                val result = api.trainingGoals(token, filter)
+                runOnUiThread {
+                    goalIntakeGoals   = result.goals
+                    goalIntakeMessage = if (result.goals.isEmpty()) "No ${filter} goals." else ""
+                    setLoading(false, null)
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    goalIntakeMessage = friendlyMessage(t.message, "Could not load goals.")
+                    setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun submitTrainingGoal() {
+        val token  = currentToken ?: return
+        val dogId  = goalIntakeDogId.takeIf { it > 0 } ?: currentActiveDogId ?: return
+        if (goalIntakeProblem.isBlank()) { goalIntakeMessage = "Problem description is required."; return }
+        if (goalIntakeCriteria.isBlank()) { goalIntakeMessage = "Success criteria is required."; return }
+        setLoading(true, "Saving goal...")
+        worker.execute {
+            try {
+                api.createTrainingGoal(
+                    token                    = token,
+                    dogId                    = dogId,
+                    goalCategory             = goalIntakeCategory,
+                    currentProblem           = goalIntakeProblem,
+                    desiredBehavior          = goalIntakeDesired,
+                    contextEnvironment       = goalIntakeContext,
+                    triggerDescription       = goalIntakeTrigger,
+                    handlerTimeBudgetMinutes = goalIntakeBudget.trim().toIntOrNull()?.coerceIn(1, 30) ?: 3,
+                    reinforcerPreference     = goalIntakeReinforcer,
+                    safetyRisk               = goalIntakeSafetyRisk,
+                    successCriteria          = goalIntakeCriteria,
+                    maintenancePlan          = goalIntakeMaintenance,
+                )
+                runOnUiThread {
+                    goalIntakeProblem     = ""
+                    goalIntakeDesired     = ""
+                    goalIntakeContext     = ""
+                    goalIntakeTrigger     = ""
+                    goalIntakeBudget      = "3"
+                    goalIntakeReinforcer  = ""
+                    goalIntakeSafetyRisk  = false
+                    goalIntakeCriteria    = ""
+                    goalIntakeMaintenance = ""
+                    goalIntakeMessage     = "Training goal saved."
+                    loadGoalIntake("active")
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    goalIntakeMessage = friendlyMessage(t.message, "Could not save goal.")
+                    setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun archiveGoal(goalId: Int) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.archiveTrainingGoal(token, goalId)
+                runOnUiThread { loadGoalIntake(goalIntakeFilter) }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    goalIntakeMessage = friendlyMessage(t.message, "Could not archive goal.")
+                }
+            }
+        }
+    }
+
+    private fun loadHabitRepair() {
+        val token = currentToken ?: return
+        setLoading(true, "Loading habit repair...")
+        worker.execute {
+            try {
+                val result = api.habitRepair(token)
+                runOnUiThread {
+                    habitRepairProtocols = result.protocols
+                    habitRepairIncidents = result.incidents
+                    if (habitRepairProtocolKey.isBlank() || result.protocols.none { it.key == habitRepairProtocolKey }) {
+                        habitRepairProtocolKey = result.protocols.firstOrNull()?.key ?: "potty_accidents"
+                    }
+                    setLoading(false, null)
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    habitRepairMessage = friendlyMessage(t.message, "Could not load habit repair data.")
+                    setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun submitBehaviorIncident(dogId: Int, incidentType: String) {
+        val token = currentToken ?: return
+        if (dogId <= 0) { habitRepairMessage = "Select a dog first."; return }
+        setLoading(true, "Saving incident...")
+        worker.execute {
+            try {
+                api.createBehaviorIncident(
+                    token              = token,
+                    dogId              = dogId,
+                    incidentType       = incidentType,
+                    contextEnvironment = habitRepairContext,
+                    triggerDescription = habitRepairTrigger,
+                    severity           = habitRepairSeverity,
+                    notes              = habitRepairNotes,
+                )
+                runOnUiThread {
+                    habitRepairContext  = ""
+                    habitRepairTrigger  = ""
+                    habitRepairSeverity = 2
+                    habitRepairNotes    = ""
+                    habitRepairMessage  = "Incident logged."
+                    loadHabitRepair()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    habitRepairMessage = friendlyMessage(t.message, "Could not save incident.")
+                    setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun archiveBehaviorIncident(incidentId: Int) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.archiveBehaviorIncident(token, incidentId)
+                runOnUiThread { loadHabitRepair() }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    habitRepairMessage = friendlyMessage(t.message, "Could not archive incident.")
+                }
+            }
+        }
+    }
+
+    private fun loadBehaviorRisk(dogId: Int?) {
+        val token = currentToken ?: return
+        setLoading(true, "Loading risk assessment...")
+        worker.execute {
+            try {
+                val result = api.behaviorRisk(token, dogId)
+                runOnUiThread {
+                    behaviorRiskResult  = result
+                    behaviorRiskMessage = ""
+                    setLoading(false, null)
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    behaviorRiskMessage = friendlyMessage(t.message, "Could not load risk assessment.")
+                    setLoading(false, null)
+                }
+            }
+        }
     }
 
     private fun submitTrainingLog() {

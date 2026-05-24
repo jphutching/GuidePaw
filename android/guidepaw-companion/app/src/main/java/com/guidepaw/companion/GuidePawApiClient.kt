@@ -189,6 +189,72 @@ data class GuidePawWearableSaveResult(
     val eventId: Int? = null,
 )
 
+data class GpTrainingGoalItem(
+    val id: Int,
+    val dogId: Int,
+    val dogName: String,
+    val goalCategory: String,
+    val currentProblem: String,
+    val desiredBehavior: String,
+    val contextEnvironment: String,
+    val triggerDescription: String,
+    val handlerTimeBudgetMinutes: Int,
+    val reinforcerPreference: String,
+    val safetyRisk: Boolean,
+    val successCriteria: String,
+    val maintenancePlan: String,
+    val status: String,
+    val createdAt: String,
+)
+
+data class GpTrainingGoalsResult(
+    val statusFilter: String,
+    val goals: List<GpTrainingGoalItem>,
+)
+
+data class GpHabitRepairProtocol(
+    val key: String,
+    val title: String,
+    val time: String,
+    val steps: List<String>,
+)
+
+data class GpBehaviorIncidentItem(
+    val id: Int,
+    val dogId: Int,
+    val dogName: String,
+    val incidentType: String,
+    val contextEnvironment: String,
+    val triggerDescription: String,
+    val severity: Int,
+    val notes: String,
+    val status: String,
+    val createdAt: String,
+)
+
+data class GpHabitRepairResult(
+    val protocols: List<GpHabitRepairProtocol>,
+    val incidents: List<GpBehaviorIncidentItem>,
+)
+
+data class GpCandidateSummary(
+    val dogName: String,
+    val focusLevelRecommended: Int,
+    val recommendation: String,
+    val safetyFlags: String,
+)
+
+data class GpBehaviorRiskResult(
+    val dogId: Int?,
+    val score: Int,
+    val band: String,
+    val openRegressions: Int,
+    val reasons: List<String>,
+    val recommendations: List<String>,
+    val incidents: List<GpBehaviorIncidentItem>,
+    val candidate: GpCandidateSummary?,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -479,6 +545,119 @@ class GuidePawApiClient(
         ensureSuccess(response)
         return GuidePawWearableSaveResult(
             message = response.json.optText("message"),
+        )
+    }
+
+    fun trainingGoals(token: String, status: String = "active"): GpTrainingGoalsResult {
+        val response = requestJson(
+            "api/training_goals.php?status=${URLEncoder.encode(status, StandardCharsets.UTF_8.name())}",
+            "GET", token, null,
+        )
+        ensureSuccess(response)
+        return GpTrainingGoalsResult(
+            statusFilter = response.json.optString("status_filter", status),
+            goals        = response.json.optJSONArray("goals")?.toTrainingGoalList().orEmpty(),
+        )
+    }
+
+    fun createTrainingGoal(
+        token: String,
+        dogId: Int,
+        goalCategory: String,
+        currentProblem: String,
+        desiredBehavior: String,
+        contextEnvironment: String,
+        triggerDescription: String,
+        handlerTimeBudgetMinutes: Int,
+        reinforcerPreference: String,
+        safetyRisk: Boolean,
+        successCriteria: String,
+        maintenancePlan: String,
+    ): Int {
+        val payload = JSONObject()
+            .put("action", "create")
+            .put("dog_id", dogId)
+            .put("goal_category", goalCategory)
+            .put("current_problem", currentProblem)
+            .put("desired_behavior", desiredBehavior)
+            .put("context_environment", contextEnvironment)
+            .put("trigger_description", triggerDescription)
+            .put("handler_time_budget_minutes", handlerTimeBudgetMinutes)
+            .put("reinforcer_preference", reinforcerPreference)
+            .put("safety_risk", if (safetyRisk) 1 else 0)
+            .put("success_criteria", successCriteria)
+            .put("maintenance_plan", maintenancePlan)
+        val response = requestJson("api/training_goals.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optInt("goal_id", 0)
+    }
+
+    fun archiveTrainingGoal(token: String, goalId: Int): Boolean {
+        val payload  = JSONObject().put("action", "archive").put("goal_id", goalId)
+        val response = requestJson("api/training_goals.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optBoolean("success", false)
+    }
+
+    fun habitRepair(token: String): GpHabitRepairResult {
+        val response = requestJson("api/habit_repair.php", "GET", token, null)
+        ensureSuccess(response)
+        return GpHabitRepairResult(
+            protocols = response.json.optJSONArray("protocols")?.toHabitRepairProtocolList().orEmpty(),
+            incidents = response.json.optJSONArray("incidents")?.toBehaviorIncidentList().orEmpty(),
+        )
+    }
+
+    fun createBehaviorIncident(
+        token: String,
+        dogId: Int,
+        incidentType: String,
+        contextEnvironment: String,
+        triggerDescription: String,
+        severity: Int,
+        notes: String,
+    ): Int {
+        val payload = JSONObject()
+            .put("action", "create")
+            .put("dog_id", dogId)
+            .put("incident_type", incidentType)
+            .put("context_environment", contextEnvironment)
+            .put("trigger_description", triggerDescription)
+            .put("severity", severity)
+            .put("notes", notes)
+        val response = requestJson("api/habit_repair.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optInt("incident_id", 0)
+    }
+
+    fun archiveBehaviorIncident(token: String, incidentId: Int): Boolean {
+        val payload  = JSONObject().put("action", "archive").put("incident_id", incidentId)
+        val response = requestJson("api/habit_repair.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optBoolean("success", false)
+    }
+
+    fun behaviorRisk(token: String, dogId: Int? = null): GpBehaviorRiskResult {
+        val query    = if (dogId != null && dogId > 0) "api/behavior_risk.php?dog_id=$dogId" else "api/behavior_risk.php"
+        val response = requestJson(query, "GET", token, null)
+        ensureSuccess(response)
+        val candidate = response.json.optJSONObject("candidate")?.let { c ->
+            GpCandidateSummary(
+                dogName              = c.optString("dog_name", ""),
+                focusLevelRecommended = c.optInt("focus_level_recommended", 0),
+                recommendation       = c.optString("recommendation", ""),
+                safetyFlags          = c.optString("safety_flags", ""),
+            )
+        }
+        return GpBehaviorRiskResult(
+            dogId           = optNullableInt(response.json, "dog_id"),
+            score           = response.json.optInt("score", 0),
+            band            = response.json.optString("band", "low"),
+            openRegressions = response.json.optInt("open_regressions", 0),
+            reasons         = response.json.optJSONArray("reasons")?.toStringList().orEmpty(),
+            recommendations = response.json.optJSONArray("recommendations")?.toStringList().orEmpty(),
+            incidents       = response.json.optJSONArray("incidents")?.toBehaviorIncidentList().orEmpty(),
+            candidate       = candidate,
         )
     }
 
@@ -789,6 +968,59 @@ class GuidePawApiClient(
                 ownerUsername = obj.optText("owner_username"),
                 accessRole = obj.optText("access_role"),
                 lifecycleStatus = obj.optText("lifecycle_status"),
+            )
+        }
+    }
+
+    private fun JSONArray.toTrainingGoalList(): List<GpTrainingGoalItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GpTrainingGoalItem(
+                id                        = obj.optInt("id", 0),
+                dogId                     = obj.optInt("dog_id", 0),
+                dogName                   = obj.optString("dog_name", ""),
+                goalCategory              = obj.optString("goal_category", ""),
+                currentProblem            = obj.optString("current_problem", ""),
+                desiredBehavior           = obj.optString("desired_behavior", ""),
+                contextEnvironment        = obj.optString("context_environment", ""),
+                triggerDescription        = obj.optString("trigger_description", ""),
+                handlerTimeBudgetMinutes  = obj.optInt("handler_time_budget_minutes", 3),
+                reinforcerPreference      = obj.optString("reinforcer_preference", ""),
+                safetyRisk                = obj.optBoolean("safety_risk", false),
+                successCriteria           = obj.optString("success_criteria", ""),
+                maintenancePlan           = obj.optString("maintenance_plan", ""),
+                status                    = obj.optString("status", "active"),
+                createdAt                 = obj.optString("created_at", ""),
+            )
+        }
+    }
+
+    private fun JSONArray.toHabitRepairProtocolList(): List<GpHabitRepairProtocol> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GpHabitRepairProtocol(
+                key   = obj.optString("key", ""),
+                title = obj.optString("title", ""),
+                time  = obj.optString("time", ""),
+                steps = obj.optJSONArray("steps")?.toStringList().orEmpty(),
+            )
+        }
+    }
+
+    private fun JSONArray.toBehaviorIncidentList(): List<GpBehaviorIncidentItem> {
+        return (0 until length()).mapNotNull { idx ->
+            val obj = optJSONObject(idx) ?: return@mapNotNull null
+            GpBehaviorIncidentItem(
+                id                  = obj.optInt("id", 0),
+                dogId               = obj.optInt("dog_id", 0),
+                dogName             = obj.optString("dog_name", ""),
+                incidentType        = obj.optString("incident_type", ""),
+                contextEnvironment  = obj.optString("context_environment", ""),
+                triggerDescription  = obj.optString("trigger_description", ""),
+                severity            = obj.optInt("severity", 2),
+                notes               = obj.optString("notes", ""),
+                status              = obj.optString("status", "active"),
+                createdAt           = obj.optString("created_at", ""),
             )
         }
     }
