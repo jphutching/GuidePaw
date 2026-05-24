@@ -1,3 +1,6 @@
+## v0.044 (2026-05-24)
+- Android: Native Health & Docs screen — vet contacts list (clinic, vet name, tappable phone, address, notes, Primary badge), add vet form (clinic, vet, phone, address, notes, primary checkbox), document list (type chip, title, provider, date, open file link), "Upload on web" footer button; new `api/health_docs.php` (GET vets+docs, POST add_vet); pull-to-refresh; added to Care menu as "🩺 Health Docs"
+
 ## v0.043 (2026-05-24)
 - Android: Native Vet Appointments screen — appointment list (sorted by time) with status-coloured badges, vet/clinic picker from saved vets, add form (title, vet, appointment time, reminder time, location, notes), Complete/Cancel buttons per scheduled appointment, pull-to-refresh; new `api/appointments.php` (GET list+vets, POST add/mark_status); added to Care menu as "📅 Vet Appointments"
 

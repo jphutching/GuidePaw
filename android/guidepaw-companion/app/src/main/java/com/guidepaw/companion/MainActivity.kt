@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -230,6 +230,17 @@ class MainActivity : AppCompatActivity() {
     private var candidateHealthNotes  by mutableStateOf("")
     private var candidateSafetyFlags  by mutableStateOf("")
     private var candidateDogExpanded  by mutableStateOf(false)
+
+    // ── Health Docs state ──────────────────────────────────────────────────
+    private var healthDocsResult   by mutableStateOf<GpHealthDocsResult?>(null)
+    private var healthDocsMessage  by mutableStateOf("")
+    private var vetClinic          by mutableStateOf("")
+    private var vetName            by mutableStateOf("")
+    private var vetPhone           by mutableStateOf("")
+    private var vetAddress         by mutableStateOf("")
+    private var vetNotes           by mutableStateOf("")
+    private var vetIsPrimary       by mutableStateOf(false)
+    private var vetShowForm        by mutableStateOf(false)
 
     // ── Appointments state ─────────────────────────────────────────────────
     private var appointmentsResult  by mutableStateOf<GpAppointmentsResult?>(null)
@@ -368,6 +379,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.CANDIDATE_COMPARISON -> CandidateComparisonSection()
                         NavSection.MEDICATIONS          -> MedicationsSection()
                         NavSection.APPOINTMENTS         -> VetAppointmentsSection()
+                        NavSection.HEALTH_DOCS          -> HealthDocsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -2420,6 +2432,168 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Health Docs section ─────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun HealthDocsSection() {
+        val result = healthDocsResult
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadHealthDocs(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (result != null) "🩺 ${result.dogName}" else "🩺 Health & Docs",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(healthDocsMessage, onRetry = { loadHealthDocs() })
+
+                // ── Vet contacts ──────────────────────────────────────────
+                Text("Vet Contacts", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+
+                if (result != null && result.vets.isNotEmpty()) {
+                    result.vets.forEach { vet ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(vet.clinicName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                    if (vet.isPrimary) {
+                                        Text(
+                                            "Primary",
+                                            style      = MaterialTheme.typography.labelSmall,
+                                            color      = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                }
+                                if (vet.vetName.isNotBlank()) {
+                                    Text(vet.vetName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (vet.phone.isNotBlank()) {
+                                    val context = LocalContext.current
+                                    TextButton(
+                                        onClick        = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${vet.phone}"))) },
+                                        contentPadding = PaddingValues(0.dp),
+                                    ) { Text(vet.phone, style = MaterialTheme.typography.bodySmall) }
+                                }
+                                if (vet.address.isNotBlank()) {
+                                    Text(vet.address, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (vet.notes.isNotBlank()) {
+                                    Text(vet.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                } else if (result != null) {
+                    SummaryCard { Text("No vets saved yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                }
+
+                // Add vet form
+                OutlinedButton(onClick = { vetShowForm = !vetShowForm }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (vetShowForm) "Cancel" else "+ Add Vet Contact")
+                }
+                if (vetShowForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("New vet contact", fontWeight = FontWeight.SemiBold)
+                            OutlinedTextField(
+                                value = vetClinic, onValueChange = { vetClinic = it },
+                                label = { Text("Clinic name *") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                            )
+                            OutlinedTextField(
+                                value = vetName, onValueChange = { vetName = it },
+                                label = { Text("Vet doctor name") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                            )
+                            OutlinedTextField(
+                                value = vetPhone, onValueChange = { vetPhone = it },
+                                label = { Text("Phone") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            )
+                            OutlinedTextField(
+                                value = vetAddress, onValueChange = { vetAddress = it },
+                                label = { Text("Address") }, modifier = Modifier.fillMaxWidth(), minLines = 2,
+                            )
+                            OutlinedTextField(
+                                value = vetNotes, onValueChange = { vetNotes = it },
+                                label = { Text("Hours / notes") }, modifier = Modifier.fillMaxWidth(), minLines = 2,
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                androidx.compose.material3.Checkbox(checked = vetIsPrimary, onCheckedChange = { vetIsPrimary = it })
+                                Text("Primary / home vet", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Button(onClick = { submitAddVet() }, modifier = Modifier.fillMaxWidth()) { Text("Save Vet") }
+                        }
+                    }
+                }
+
+                // ── Documents ─────────────────────────────────────────────
+                Spacer(Modifier.height(4.dp))
+                Text("Documents", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+
+                if (result != null && result.documents.isNotEmpty()) {
+                    result.documents.forEach { doc ->
+                        val typeLabel = when (doc.docType) {
+                            "esa_letter"          -> "ESA Letter"
+                            "service_dog_letter"  -> "Service Dog Letter"
+                            else                  -> "Vet Record"
+                        }
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.Top,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(doc.title, fontWeight = FontWeight.SemiBold)
+                                        Text(typeLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    Text(
+                                        formatAssessmentDate(doc.createdAt),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = GpOnSurfaceVariant,
+                                        modifier = Modifier.padding(start = 8.dp),
+                                    )
+                                }
+                                if (doc.providerName.isNotBlank()) {
+                                    Text(doc.providerName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (doc.fileUrl.isNotBlank()) {
+                                    TextButton(
+                                        onClick        = { openWebPage(doc.fileUrl) },
+                                        contentPadding = PaddingValues(0.dp),
+                                    ) { Text("Open file", style = MaterialTheme.typography.bodySmall) }
+                                }
+                            }
+                        }
+                    }
+                } else if (result != null) {
+                    SummaryCard { Text("No documents uploaded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                }
+
+                OutlinedButton(
+                    onClick  = { openWebPage("https://guidepaw.app/dog_health.php") },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Upload documents on web") }
+            }
+        }
+    }
+
     // ── Vet Appointments section ────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -3008,7 +3182,7 @@ class MainActivity : AppCompatActivity() {
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
-                    "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
+                    "🩺 Health Docs"      to { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                     "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
                     "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
@@ -3587,6 +3761,52 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (t: Throwable) {
                 runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not archive assessment.") }
+            }
+        }
+    }
+
+    private fun loadHealthDocs() {
+        val token = currentToken ?: return
+        healthDocsMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.healthDocs(token)
+                runOnUiThread {
+                    healthDocsResult  = result
+                    healthDocsMessage = ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { healthDocsMessage = friendlyMessage(t.message, "Could not load health records.") }
+            }
+        }
+    }
+
+    private fun submitAddVet() {
+        val token = currentToken ?: return
+        if (vetClinic.isBlank()) { healthDocsMessage = "Clinic name is required."; return }
+        setLoading(true, "Saving vet...")
+        worker.execute {
+            try {
+                api.addVet(
+                    token      = token,
+                    clinicName = vetClinic.trim(),
+                    vetName    = vetName.trim(),
+                    phone      = vetPhone.trim(),
+                    address    = vetAddress.trim(),
+                    notes      = vetNotes.trim(),
+                    isPrimary  = vetIsPrimary,
+                )
+                runOnUiThread {
+                    vetClinic = ""; vetName = ""; vetPhone = ""; vetAddress = ""; vetNotes = ""; vetIsPrimary = false
+                    vetShowForm = false
+                    setLoading(false, "Vet saved.")
+                    loadHealthDocs()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    setLoading(false, "")
+                    healthDocsMessage = friendlyMessage(t.message, "Could not save vet.")
+                }
             }
         }
     }

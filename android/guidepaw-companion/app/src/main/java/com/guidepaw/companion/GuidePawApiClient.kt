@@ -300,6 +300,25 @@ data class GpVetItem(
     val clinicName: String,
     val vetName: String,
     val phone: String,
+    val address: String = "",
+    val notes: String = "",
+    val isPrimary: Boolean = false,
+)
+
+data class GpHealthDocItem(
+    val id: Int,
+    val docType: String,
+    val title: String,
+    val providerName: String,
+    val notes: String,
+    val fileUrl: String,
+    val createdAt: String,
+)
+
+data class GpHealthDocsResult(
+    val dogName: String,
+    val vets: List<GpVetItem>,
+    val documents: List<GpHealthDocItem>,
 )
 
 data class GpAppointmentItem(
@@ -885,11 +904,61 @@ class GuidePawApiClient(
         ensureSuccess(response)
     }
 
+    fun healthDocs(token: String): GpHealthDocsResult {
+        val response = requestJson("api/health_docs.php", "GET", token, null)
+        ensureSuccess(response)
+        val vets = response.json.optJSONArray("vets")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toVetItem() } }
+            .orEmpty()
+        val docs = response.json.optJSONArray("documents")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toHealthDocItem() } }
+            .orEmpty()
+        return GpHealthDocsResult(
+            dogName   = response.json.optString("dog_name", ""),
+            vets      = vets,
+            documents = docs,
+        )
+    }
+
+    fun addVet(
+        token: String,
+        clinicName: String,
+        vetName: String,
+        phone: String,
+        address: String,
+        notes: String,
+        isPrimary: Boolean,
+    ) {
+        val payload = JSONObject()
+            .put("action", "add_vet")
+            .put("clinic_name", clinicName)
+            .put("vet_name", vetName)
+            .put("phone", phone)
+            .put("address", address)
+            .put("notes", notes)
+            .put("is_primary", isPrimary)
+        val response = requestJson("api/health_docs.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    private fun JSONObject.toHealthDocItem() = GpHealthDocItem(
+        id           = optInt("id", 0),
+        docType      = optString("doc_type", "vet_record"),
+        title        = optString("title", ""),
+        providerName = optString("provider_name", ""),
+        notes        = optString("notes", ""),
+        fileUrl      = optString("file_url", ""),
+        createdAt    = optString("created_at", ""),
+    )
+
     private fun JSONObject.toVetItem() = GpVetItem(
         id          = optInt("id", 0),
         clinicName  = optString("clinic_name", ""),
         vetName     = optString("vet_name", ""),
         phone       = optString("phone", ""),
+        address     = optString("address", ""),
+        notes       = optString("notes", ""),
+        isPrimary   = optBoolean("is_primary", false),
     )
 
     private fun JSONObject.toAppointmentItem() = GpAppointmentItem(
