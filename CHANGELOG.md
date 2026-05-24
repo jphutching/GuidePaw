@@ -1,3 +1,6 @@
+## v0.037 (2026-05-24)
+- Android: Native ADA Access Card screen — calm script (large text, Copy and Share buttons), two permissible questions, what staff may not require, service dog/SDIT/ESA definitions, scam warning, when access can be denied, tappable DOJ ADA Information Line, state law note with link to web version; menu item no longer opens a WebView
+
 ## v0.036 (2026-05-24)
 - Android: Native Goal Builder screen — category-aware hint text on all fields, Build Draft fills blanks with category defaults and shows a draft preview card, Save Goal posts to API; menu item no longer opens WebView
 

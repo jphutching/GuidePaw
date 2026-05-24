@@ -2,6 +2,8 @@ package com.guidepaw.companion
 
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -71,6 +73,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -337,6 +340,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.BEHAVIOR_RISK        -> BehaviorRiskSection()
                         NavSection.REGRESSION           -> RegressionSection()
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
+                        NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                     }
                 }
             }
@@ -1498,6 +1502,166 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── ADA Access Card section ─────────────────────────────────────────────
+    @Composable
+    private fun ADAAccessCardSection() {
+        val context    = LocalContext.current
+        val activeDog  = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        val handlerName = currentMe?.username ?: "Handler"
+        val dogName     = activeDog?.name ?: "your dog"
+        val calmScript  = "This is my service dog. You may ask whether the dog is required because of a disability and what work or task the dog is trained to perform."
+        var copied by remember { mutableStateOf(false) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "ADA Access Card",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            // Handler / dog identity
+            SummaryCard {
+                Text(
+                    "Handler: $handlerName  ·  Dog: $dogName",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+            }
+
+            // Calm script — most prominent card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Calm Script", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(
+                        "\"$calmScript\"",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color      = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                cb.setPrimaryClip(ClipData.newPlainText("ADA calm script", calmScript))
+                                copied = true
+                            },
+                        ) { Text(if (copied) "Copied!" else "Copy") }
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, calmScript)
+                                }
+                                context.startActivity(Intent.createChooser(intent, "Share ADA calm script"))
+                            },
+                        ) { Text("Share") }
+                    }
+                }
+            }
+
+            // Two permitted questions
+            SummaryCard {
+                Text("Only two questions staff may ask", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text("1. Is the dog required because of a disability?", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(4.dp))
+                Text("2. What work or task has the dog been trained to perform?", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            // What's not required
+            SummaryCard {
+                Text("What staff may NOT require", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Certification, registration papers, or an ID card",
+                    "Medical records or diagnosis details",
+                    "A task demonstration on demand",
+                    "A vest, special harness, or any identifying equipment",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // Definitions
+            SummaryCard {
+                Text("Definitions", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text("Service dog", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Text("Individually trained to do work or perform tasks related to a person's disability. Training may be done by a professional or the handler.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                Text("SDIT (service dog in training)", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Text("Not a service animal under the ADA until training is complete. State law may provide separate public access for training teams.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                Text("ESA (emotional support animal)", fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                Text("Comfort-only animals — not task-trained service dogs. No ADA public-access rights. Housing and airline rules are separate.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            // Scam warning
+            SummaryCard {
+                Text("Scam warning", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Online registrations, certificates, ID cards, and vests do not create ADA rights. The ADA does not require certification, registration, a vest, or a special harness.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            // When access can be denied
+            SummaryCard {
+                Text("When access can be denied", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text("• The dog is out of control and the handler does not take effective action.", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(2.dp))
+                Text("• The dog is not housebroken.", style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(6.dp))
+                Text("Fear of dogs or allergies alone are not valid reasons to deny access.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            // DOJ phone
+            SummaryCard {
+                Text("DOJ ADA Information Line", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                TextButton(
+                    onClick  = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:8005140301"))) },
+                    contentPadding = PaddingValues(0.dp),
+                ) {
+                    Text("800-514-0301", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                Text("TTY: 800-514-0383", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            // State law note
+            SummaryCard {
+                Text("State law notes", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "This screen shows federal ADA guidance only. For state-specific law notes and GPS state detection, use the web version.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick  = { openWebPage("https://guidepaw.app/ada_access_card.php") },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Open web version for state law") }
+            }
+        }
+    }
+
     // ── Habit Repair section ────────────────────────────────────────────────
     @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
@@ -1899,7 +2063,7 @@ class MainActivity : AppCompatActivity() {
                     "🔔 Notifications"     to { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
                     "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
                     "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
-                    "🪪 ADA Access Card"   to { openWebPage("https://guidepaw.app/ada_access_card.php") },
+                    "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✅ Certification"      to { openWebPage("https://guidepaw.app/certification.php") },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
