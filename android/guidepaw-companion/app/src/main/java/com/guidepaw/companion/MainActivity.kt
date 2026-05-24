@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -231,6 +231,19 @@ class MainActivity : AppCompatActivity() {
     private var candidateSafetyFlags  by mutableStateOf("")
     private var candidateDogExpanded  by mutableStateOf(false)
 
+    // ── Medications state ──────────────────────────────────────────────────
+    private var medicationsResult  by mutableStateOf<GpMedicationsResult?>(null)
+    private var medicationsMessage by mutableStateOf("")
+    private var medName            by mutableStateOf("")
+    private var medDosage          by mutableStateOf("")
+    private var medSchedule        by mutableStateOf("")
+    private var medStatus          by mutableStateOf("active")
+    private var medRefillDate      by mutableStateOf("")
+    private var medProvider        by mutableStateOf("")
+    private var medInstructions    by mutableStateOf("")
+    private var medNotes           by mutableStateOf("")
+    private var medShowForm        by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -341,6 +354,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.REGRESSION           -> RegressionSection()
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
                         NavSection.CANDIDATE_COMPARISON -> CandidateComparisonSection()
+                        NavSection.MEDICATIONS          -> MedicationsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -2393,6 +2407,216 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Medications section ─────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun MedicationsSection() {
+        val result = medicationsResult
+        val statusOptions = listOf("active", "paused", "completed")
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadMedications(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (result != null) "💊 ${result.dogName}" else "💊 Medications",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(medicationsMessage, onRetry = { loadMedications() })
+
+                // Add medication toggle
+                OutlinedButton(
+                    onClick  = { medShowForm = !medShowForm },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (medShowForm) "Cancel" else "+ Add Medication") }
+
+                // Add medication form
+                if (medShowForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("New medication", fontWeight = FontWeight.SemiBold)
+
+                            OutlinedTextField(
+                                value         = medName,
+                                onValueChange = { medName = it },
+                                label         = { Text("Medication name *") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+                            OutlinedTextField(
+                                value         = medDosage,
+                                onValueChange = { medDosage = it },
+                                label         = { Text("Dosage") },
+                                placeholder   = { Text("e.g. 25 mg") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+                            OutlinedTextField(
+                                value         = medSchedule,
+                                onValueChange = { medSchedule = it },
+                                label         = { Text("Schedule") },
+                                placeholder   = { Text("e.g. Twice daily with food") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+
+                            // Status picker
+                            var statusExpanded by remember { mutableStateOf(false) }
+                            ExposedDropdownMenuBox(
+                                expanded         = statusExpanded,
+                                onExpandedChange = { statusExpanded = it },
+                            ) {
+                                OutlinedTextField(
+                                    value         = medStatus.replaceFirstChar { it.uppercase() },
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Status") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(statusExpanded) },
+                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                )
+                                ExposedDropdownMenu(
+                                    expanded         = statusExpanded,
+                                    onDismissRequest = { statusExpanded = false },
+                                ) {
+                                    statusOptions.forEach { s ->
+                                        DropdownMenuItem(
+                                            text    = { Text(s.replaceFirstChar { it.uppercase() }) },
+                                            onClick = { medStatus = s; statusExpanded = false },
+                                        )
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value         = medRefillDate,
+                                onValueChange = { medRefillDate = it },
+                                label         = { Text("Refill date") },
+                                placeholder   = { Text("YYYY-MM-DD") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            OutlinedTextField(
+                                value         = medProvider,
+                                onValueChange = { medProvider = it },
+                                label         = { Text("Prescribing provider") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+                            OutlinedTextField(
+                                value         = medInstructions,
+                                onValueChange = { medInstructions = it },
+                                label         = { Text("Instructions") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                minLines      = 2,
+                            )
+                            OutlinedTextField(
+                                value         = medNotes,
+                                onValueChange = { medNotes = it },
+                                label         = { Text("Notes") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                minLines      = 2,
+                            )
+                            Button(onClick = { submitAddMedication() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Save Medication")
+                            }
+                        }
+                    }
+                }
+
+                // Medication list
+                if (result != null && result.medications.isNotEmpty()) {
+                    result.medications.forEach { med ->
+                        val statusColor = when (med.status) {
+                            "active"    -> Color(0xFF16A34A)
+                            "paused"    -> Color(0xFFCA8A04)
+                            else        -> GpOnSurfaceVariant
+                        }
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.Top,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(med.medicationName, fontWeight = FontWeight.SemiBold)
+                                        if (med.dosage.isNotBlank() || med.scheduleText.isNotBlank()) {
+                                            Text(
+                                                listOf(med.dosage, med.scheduleText).filter { it.isNotBlank() }.joinToString(" • "),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = GpOnSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        med.status.replaceFirstChar { it.uppercase() },
+                                        style      = MaterialTheme.typography.labelSmall,
+                                        color      = statusColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier   = Modifier.padding(start = 8.dp),
+                                    )
+                                }
+                                if (med.refillDate.isNotBlank()) {
+                                    Text("Refill: ${formatAssessmentDate(med.refillDate)}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (med.prescribingProvider.isNotBlank()) {
+                                    Text("Provider: ${med.prescribingProvider}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (med.instructions.isNotBlank()) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(med.instructions, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (med.notes.isNotBlank()) {
+                                    Text(med.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+
+                                // Status update
+                                Spacer(Modifier.height(6.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    statusOptions.forEach { s ->
+                                        if (s == med.status) {
+                                            Button(
+                                                onClick        = {},
+                                                modifier       = Modifier.weight(1f),
+                                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                                            ) { Text(s.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall) }
+                                        } else {
+                                            OutlinedButton(
+                                                onClick        = { updateMedicationStatus(med.id, s) },
+                                                modifier       = Modifier.weight(1f),
+                                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                                            ) { Text(s.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick  = { openWebPage("https://guidepaw.app/medications.php") },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Full medication form on web") }
+            }
+        }
+    }
+
     // ── Candidate Comparison section ────────────────────────────────────────
     @Composable
     private fun CandidateComparisonSection() {
@@ -2575,7 +2799,7 @@ class MainActivity : AppCompatActivity() {
                 MenuSheetSection("Care", listOf(
                     "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
                     "📅 Vet Appointments" to { openWebPage("https://guidepaw.app/appointments.php") },
-                    "💊 Medications"      to { openWebPage("https://guidepaw.app/medications.php") },
+                    "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
                     "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
@@ -3152,6 +3376,67 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (t: Throwable) {
                 runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not archive assessment.") }
+            }
+        }
+    }
+
+    private fun loadMedications() {
+        val token = currentToken ?: return
+        medicationsMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.medications(token)
+                runOnUiThread {
+                    medicationsResult  = result
+                    medicationsMessage = if (result.medications.isEmpty()) "No medications tracked for ${result.dogName} yet." else ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not load medications.") }
+            }
+        }
+    }
+
+    private fun submitAddMedication() {
+        val token = currentToken ?: return
+        if (medName.isBlank()) { medicationsMessage = "Medication name is required."; return }
+        setLoading(true, "Saving medication...")
+        worker.execute {
+            try {
+                api.addMedication(
+                    token               = token,
+                    medicationName      = medName.trim(),
+                    dosage              = medDosage.trim(),
+                    scheduleText        = medSchedule.trim(),
+                    status              = medStatus,
+                    refillDate          = medRefillDate.trim(),
+                    prescribingProvider = medProvider.trim(),
+                    instructions        = medInstructions.trim(),
+                    notes               = medNotes.trim(),
+                )
+                runOnUiThread {
+                    medName = ""; medDosage = ""; medSchedule = ""; medStatus = "active"
+                    medRefillDate = ""; medProvider = ""; medInstructions = ""; medNotes = ""
+                    medShowForm = false
+                    setLoading(false, "Medication saved.")
+                    loadMedications()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    setLoading(false, "")
+                    medicationsMessage = friendlyMessage(t.message, "Could not save medication.")
+                }
+            }
+        }
+    }
+
+    private fun updateMedicationStatus(medId: Int, status: String) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.setMedicationStatus(token, medId, status)
+                runOnUiThread { loadMedications() }
+            } catch (t: Throwable) {
+                runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not update status.") }
             }
         }
     }

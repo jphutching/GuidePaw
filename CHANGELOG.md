@@ -1,3 +1,6 @@
+## v0.042 (2026-05-24)
+- Android: Native Medications screen — medication list with status-coloured badges (active/paused/completed), add form (name, dosage, schedule, status, refill date, provider, instructions, notes), inline three-button status update per medication, pull-to-refresh, footer link to full form on web; new `api/medications.php` (GET list, POST add/set_status); added to Care menu as "💊 Medications"
+
 ## v0.041 (2026-05-24)
 - Android: Native Candidate Comparison screen — summary stats (dogs, assessed count, overall avg score), per-dog cards (focus level, avg score, recommendation, safety flags, assessment date), empty-state load button, link to full score table on web; added to Training menu as "📊 Compare Dogs"; no new API endpoint — reuses data already loaded by Candidate Assessment
 

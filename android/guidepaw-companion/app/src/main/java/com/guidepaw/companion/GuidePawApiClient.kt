@@ -295,6 +295,24 @@ data class GpCandidateAssessmentsResult(
     val scoreLabels: Map<String, String>,
 )
 
+data class GpMedicationItem(
+    val id: Int,
+    val medicationName: String,
+    val dosage: String,
+    val status: String,
+    val scheduleText: String,
+    val refillDate: String,
+    val prescribingProvider: String,
+    val instructions: String,
+    val notes: String,
+    val createdAt: String,
+)
+
+data class GpMedicationsResult(
+    val dogName: String,
+    val medications: List<GpMedicationItem>,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -755,6 +773,62 @@ class GuidePawApiClient(
         ensureSuccess(response)
         return response.json.optBoolean("success", false)
     }
+
+    fun medications(token: String): GpMedicationsResult {
+        val response = requestJson("api/medications.php", "GET", token, null)
+        ensureSuccess(response)
+        val meds = response.json.optJSONArray("medications")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toMedicationItem() } }
+            .orEmpty()
+        return GpMedicationsResult(
+            dogName     = response.json.optString("dog_name", ""),
+            medications = meds,
+        )
+    }
+
+    fun addMedication(
+        token: String,
+        medicationName: String,
+        dosage: String,
+        scheduleText: String,
+        status: String,
+        refillDate: String,
+        prescribingProvider: String,
+        instructions: String,
+        notes: String,
+    ) {
+        val payload = JSONObject()
+            .put("action", "add_medication")
+            .put("medication_name", medicationName)
+            .put("dosage", dosage)
+            .put("schedule_text", scheduleText)
+            .put("status", status)
+            .put("refill_date", refillDate)
+            .put("prescribing_provider", prescribingProvider)
+            .put("instructions", instructions)
+            .put("notes", notes)
+        val response = requestJson("api/medications.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    fun setMedicationStatus(token: String, medId: Int, status: String) {
+        val payload  = JSONObject().put("action", "set_status").put("med_id", medId).put("status", status)
+        val response = requestJson("api/medications.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    private fun JSONObject.toMedicationItem() = GpMedicationItem(
+        id                   = optInt("id", 0),
+        medicationName       = optString("medication_name", ""),
+        dosage               = optString("dosage", ""),
+        status               = optString("status", "active"),
+        scheduleText         = optString("schedule_text", ""),
+        refillDate           = optString("refill_date", ""),
+        prescribingProvider  = optString("prescribing_provider", ""),
+        instructions         = optString("instructions", ""),
+        notes                = optString("notes", ""),
+        createdAt            = optString("created_at", ""),
+    )
 
     private fun requestJson(path: String, method: String, token: String?, body: JSONObject?): ApiResponse {
         val resolvedPath = if (token.isNullOrBlank()) {
