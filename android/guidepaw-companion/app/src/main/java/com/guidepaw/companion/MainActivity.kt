@@ -110,7 +110,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -171,6 +171,21 @@ class MainActivity : AppCompatActivity() {
     private var goalIntakeSafetyRisk  by mutableStateOf(false)
     private var goalIntakeCriteria    by mutableStateOf("")
     private var goalIntakeMaintenance by mutableStateOf("")
+
+    // ── Goal Builder state ─────────────────────────────────────────────────
+    private var goalBuilderDogId       by mutableStateOf(0)
+    private var goalBuilderCategory    by mutableStateOf("other")
+    private var goalBuilderProblem     by mutableStateOf("")
+    private var goalBuilderDesired     by mutableStateOf("")
+    private var goalBuilderContext     by mutableStateOf("")
+    private var goalBuilderTrigger     by mutableStateOf("")
+    private var goalBuilderBudget      by mutableStateOf("3")
+    private var goalBuilderReinforcer  by mutableStateOf("")
+    private var goalBuilderSafetyRisk  by mutableStateOf(false)
+    private var goalBuilderCriteria    by mutableStateOf("")
+    private var goalBuilderMaintenance by mutableStateOf("")
+    private var goalBuilderShowDraft   by mutableStateOf(false)
+    private var goalBuilderMessage     by mutableStateOf("")
 
     // ── Habit Repair state ─────────────────────────────────────────────────
     private var habitRepairProtocols   by mutableStateOf<List<GpHabitRepairProtocol>>(emptyList())
@@ -317,6 +332,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.WEARABLES     -> WearablesSection()
                         NavSection.MORE          -> OverviewSection()
                         NavSection.GOAL_INTAKE          -> GoalIntakeSection()
+                        NavSection.GOAL_BUILDER         -> GoalBuilderSection()
                         NavSection.HABIT_REPAIR         -> HabitRepairSection()
                         NavSection.BEHAVIOR_RISK        -> BehaviorRiskSection()
                         NavSection.REGRESSION           -> RegressionSection()
@@ -1212,6 +1228,276 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Goal Builder section ────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun GoalBuilderSection() {
+        data class GbCat(
+            val label: String, val icon: String,
+            val problemHint: String, val desiredHint: String, val contextHint: String,
+            val successHint: String, val maintenanceHint: String, val rewardHint: String,
+            val pathTitle: String, val pathSummary: String,
+        )
+        val cats = remember {
+            mapOf(
+                "potty" to GbCat("Potty routine", "🚻",
+                    "Accidents, schedule drift, or unclear potty habits.",
+                    "Dog eliminates on schedule with clean routines.",
+                    "Home, yard, truck stop, rest area, or hotel.",
+                    "Potty happens promptly after wake-up, meals, and breaks.",
+                    "Keep the routine consistent and reduce freedom only after success.",
+                    "Use a fast food reward, praise, and immediate release.",
+                    "Potty routine path", "Log the reps, keep timing tight, and reinforce the same potty cue."),
+                "leash" to GbCat("Loose leash / pulling", "🐾",
+                    "Pulling, forging, or hard leash pressure on walks.",
+                    "Dog walks with a loose leash and checks in voluntarily.",
+                    "Sidewalks, parking lots, truck stops, and quiet neighborhoods.",
+                    "Walk 20 steps with loose leash and at least 2 check-ins.",
+                    "Short routes, quick resets, and reward before the leash tightens.",
+                    "Reward position, eye contact, and calm movement.",
+                    "Loose leash path", "Build this through the training ladder first, then log sessions to keep the work short and repeatable."),
+                "barking" to GbCat("Barking", "🔇",
+                    "Barking at triggers, doors, windows, or social excitement.",
+                    "Dog notices the trigger and chooses quiet recovery.",
+                    "Cab, home, yard, or public threshold areas.",
+                    "Dog can see the trigger and recover without repeated barking.",
+                    "Lower the difficulty, manage distance, and reward quiet check-ins.",
+                    "Use calm praise, food, and distance from the trigger.",
+                    "Quiet recovery path", "Focus on calm recovery, distance management, and a short follow-up session after each trigger."),
+                "cab_calm" to GbCat("Cab calm / settling", "🚚",
+                    "Restlessness, whining, pacing, or difficulty settling in the truck.",
+                    "Dog settles quietly in the cab or crate.",
+                    "Truck cab, sleeper, crate, or resting mat.",
+                    "Dog settles within 60 seconds and holds calm for the target time.",
+                    "Start after potty and short movement, then slowly lengthen duration.",
+                    "Use a chew, mat reward, and quiet reinforcement.",
+                    "Cab calm path", "Record the settle reps so you can see what works in-cab."),
+                "jumping" to GbCat("Jumping", "⬇️",
+                    "Jumping on people during greetings or excitement.",
+                    "Dog keeps four paws on the floor and offers a sit or settle.",
+                    "Doorway, home greeting, store entrance, or truck stop.",
+                    "Dog greets with four paws down in 3 repeated opportunities.",
+                    "Prevent rehearsals, reward the floor, and keep greetings brief.",
+                    "Use food, access, and calm greeting praise.",
+                    "Greeting control path", "Keep the reward timing tied to four paws on the floor."),
+                "public_manners" to GbCat("Public manners", "🏪",
+                    "Over-arousal, scanning, or difficulty staying focused in public.",
+                    "Dog stays neutral and responsive in public spaces.",
+                    "Stores, lobbies, rest areas, sidewalks, and waiting rooms.",
+                    "Dog completes one short outing without threshold blowups.",
+                    "Use easier outings first, then add duration or distractions slowly.",
+                    "Reward calm focus, loose leash, and clean exits.",
+                    "Public manners path", "Use the training program so public access work and proofing stay aligned."),
+                "psd_foundation" to GbCat("PSD foundation", "🎓",
+                    "Need a structured foundation for service-dog work.",
+                    "Dog builds neutrality, recovery, and handler engagement.",
+                    "Low-distraction home setups, planned field trips, and controlled public reps.",
+                    "Dog can complete the foundation behavior with stable recovery.",
+                    "Keep the work short, clear, and repeatable.",
+                    "Use high-value food and quick release.",
+                    "PSD foundation path", "Start with Candidate Assessment, then use the training ladder for neutrality, recovery, and core service work."),
+                "other" to GbCat("Other", "🧩",
+                    "A different behavior or routine that needs a measurable plan.",
+                    "A clear observable behavior the dog can repeat.",
+                    "The environment where the issue happens most often.",
+                    "One behavior the handler can measure without guessing.",
+                    "Short sessions, clear cue, and predictable reinforcement.",
+                    "Pick the reinforcer the dog works for most reliably.",
+                    "Custom path", "Refine the problem, then attach the goal to the most relevant training page before saving."),
+            )
+        }
+
+        var catExpanded by remember { mutableStateOf(false) }
+        var dogExpanded by remember { mutableStateOf(false) }
+        val activeDog = currentDogs.firstOrNull { it.id == (goalBuilderDogId.takeIf { it > 0 } ?: currentActiveDogId) }
+        val cat = cats[goalBuilderCategory] ?: cats["other"]!!
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Goal Builder",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            SectionMessage(goalBuilderMessage)
+
+            if (!goalBuilderShowDraft) {
+                SummaryCard {
+                    Text("${cat.icon} ${cat.label}", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Fill in what you know — blanks will be filled with category hints when you tap Build Draft.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (currentDogs.isEmpty()) {
+                        Text("No dogs on this account. Add a dog profile first.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    } else {
+                        ExposedDropdownMenuBox(expanded = dogExpanded, onExpandedChange = { dogExpanded = it }) {
+                            OutlinedTextField(
+                                value         = activeDog?.name ?: "Select dog",
+                                onValueChange = {},
+                                readOnly      = true,
+                                label         = { Text("Dog") },
+                                trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(dogExpanded) },
+                                modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                            )
+                            ExposedDropdownMenu(expanded = dogExpanded, onDismissRequest = { dogExpanded = false }) {
+                                currentDogs.forEach { dog ->
+                                    DropdownMenuItem(text = { Text(dog.name) }, onClick = { goalBuilderDogId = dog.id; dogExpanded = false })
+                                }
+                            }
+                        }
+                        ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = it }) {
+                            OutlinedTextField(
+                                value         = "${cat.icon} ${cat.label}",
+                                onValueChange = {},
+                                readOnly      = true,
+                                label         = { Text("Goal category") },
+                                trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(catExpanded) },
+                                modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                            )
+                            ExposedDropdownMenu(expanded = catExpanded, onDismissRequest = { catExpanded = false }) {
+                                cats.forEach { (key, c) ->
+                                    DropdownMenuItem(text = { Text("${c.icon} ${c.label}") }, onClick = { goalBuilderCategory = key; catExpanded = false })
+                                }
+                            }
+                        }
+                        OutlinedTextField(
+                            value         = goalBuilderProblem,
+                            onValueChange = { goalBuilderProblem = it },
+                            label         = { Text("What problem are you trying to solve?") },
+                            placeholder   = { Text(cat.problemHint, style = MaterialTheme.typography.bodySmall) },
+                            minLines      = 2,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value         = goalBuilderDesired,
+                            onValueChange = { goalBuilderDesired = it },
+                            label         = { Text("What should the dog do instead?") },
+                            placeholder   = { Text(cat.desiredHint, style = MaterialTheme.typography.bodySmall) },
+                            minLines      = 2,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value         = goalBuilderContext,
+                            onValueChange = { goalBuilderContext = it },
+                            label         = { Text("Where does it happen?") },
+                            placeholder   = { Text(cat.contextHint, style = MaterialTheme.typography.bodySmall) },
+                            singleLine    = true,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value         = goalBuilderTrigger,
+                            onValueChange = { goalBuilderTrigger = it },
+                            label         = { Text("What triggers it?") },
+                            placeholder   = { Text("The most common trigger or context that causes the behavior.") },
+                            singleLine    = true,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value           = goalBuilderBudget,
+                            onValueChange   = { goalBuilderBudget = it },
+                            label           = { Text("Daily training time budget (minutes)") },
+                            singleLine      = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier        = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value         = goalBuilderReinforcer,
+                            onValueChange = { goalBuilderReinforcer = it },
+                            label         = { Text("Best rewards") },
+                            placeholder   = { Text(cat.rewardHint, style = MaterialTheme.typography.bodySmall) },
+                            singleLine    = true,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            FilterChip(
+                                selected = goalBuilderSafetyRisk,
+                                onClick  = { goalBuilderSafetyRisk = !goalBuilderSafetyRisk },
+                                label    = { Text("⚠️ This may be a safety issue") },
+                            )
+                        }
+                        OutlinedTextField(
+                            value         = goalBuilderCriteria,
+                            onValueChange = { goalBuilderCriteria = it },
+                            label         = { Text("Success criteria") },
+                            placeholder   = { Text(cat.successHint, style = MaterialTheme.typography.bodySmall) },
+                            minLines      = 2,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value         = goalBuilderMaintenance,
+                            onValueChange = { goalBuilderMaintenance = it },
+                            label         = { Text("Maintenance plan") },
+                            placeholder   = { Text(cat.maintenanceHint, style = MaterialTheme.typography.bodySmall) },
+                            minLines      = 2,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                        Button(
+                            onClick = {
+                                if (goalBuilderProblem.isBlank())     goalBuilderProblem    = cat.problemHint
+                                if (goalBuilderDesired.isBlank())     goalBuilderDesired    = cat.desiredHint
+                                if (goalBuilderContext.isBlank())     goalBuilderContext    = cat.contextHint
+                                if (goalBuilderTrigger.isBlank())     goalBuilderTrigger    = "The most common trigger or context that causes the behavior."
+                                if (goalBuilderReinforcer.isBlank())  goalBuilderReinforcer = cat.rewardHint
+                                if (goalBuilderCriteria.isBlank())    goalBuilderCriteria   = cat.successHint
+                                if (goalBuilderMaintenance.isBlank()) goalBuilderMaintenance = cat.maintenanceHint
+                                goalBuilderShowDraft = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Build Draft") }
+                    }
+                }
+            } else {
+                SummaryCard {
+                    Text("${cat.icon} Draft Preview", fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+                    GoalBuilderDraftRow("Problem", goalBuilderProblem)
+                    GoalBuilderDraftRow("Desired behavior", goalBuilderDesired)
+                    GoalBuilderDraftRow("Context", goalBuilderContext)
+                    GoalBuilderDraftRow("Trigger", goalBuilderTrigger)
+                    GoalBuilderDraftRow("Success criteria", goalBuilderCriteria)
+                    GoalBuilderDraftRow("Maintenance plan", goalBuilderMaintenance)
+                    GoalBuilderDraftRow("Rewards", goalBuilderReinforcer)
+                    GoalBuilderDraftRow("Time budget", "${goalBuilderBudget} min")
+                    if (goalBuilderSafetyRisk) {
+                        Text("⚠️ Safety risk flagged", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(cat.pathTitle, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                    Text(cat.pathSummary, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Spacer(Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { goalBuilderShowDraft = false }, modifier = Modifier.weight(1f)) { Text("Edit") }
+                        Button(onClick = { submitGoalBuilderGoal() }, modifier = Modifier.weight(1f)) { Text("Save Goal") }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun GoalBuilderDraftRow(label: String, value: String) {
+        if (value.isBlank()) return
+        Column(modifier = Modifier.padding(bottom = 6.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+
     // ── Habit Repair section ────────────────────────────────────────────────
     @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
@@ -1601,7 +1887,7 @@ class MainActivity : AppCompatActivity() {
                     "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
                     "♻️ Regression Engine"   to { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
                     "🐾 Candidate Assessment" to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
-                    "🧩 Goal Builder"         to { openWebPage("https://guidepaw.app/goal_builder.php") },
+                    "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
                     "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
@@ -2245,6 +2531,53 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     goalIntakeMessage = friendlyMessage(t.message, "Could not save goal.")
                     setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun submitGoalBuilderGoal() {
+        val token = currentToken ?: return
+        val dogId = goalBuilderDogId.takeIf { it > 0 } ?: currentActiveDogId ?: run {
+            goalBuilderMessage = "Select a dog first."; return
+        }
+        if (goalBuilderProblem.isBlank()) { goalBuilderMessage = "Problem description is required."; return }
+        if (goalBuilderCriteria.isBlank()) { goalBuilderMessage = "Success criteria is required."; return }
+        setLoading(true, "Saving goal...")
+        worker.execute {
+            try {
+                api.createTrainingGoal(
+                    token                    = token,
+                    dogId                    = dogId,
+                    goalCategory             = goalBuilderCategory,
+                    currentProblem           = goalBuilderProblem,
+                    desiredBehavior          = goalBuilderDesired,
+                    contextEnvironment       = goalBuilderContext,
+                    triggerDescription       = goalBuilderTrigger,
+                    handlerTimeBudgetMinutes = goalBuilderBudget.trim().toIntOrNull()?.coerceIn(1, 30) ?: 3,
+                    reinforcerPreference     = goalBuilderReinforcer,
+                    safetyRisk               = goalBuilderSafetyRisk,
+                    successCriteria          = goalBuilderCriteria,
+                    maintenancePlan          = goalBuilderMaintenance,
+                )
+                runOnUiThread {
+                    goalBuilderProblem     = ""
+                    goalBuilderDesired     = ""
+                    goalBuilderContext     = ""
+                    goalBuilderTrigger     = ""
+                    goalBuilderBudget      = "3"
+                    goalBuilderReinforcer  = ""
+                    goalBuilderSafetyRisk  = false
+                    goalBuilderCriteria    = ""
+                    goalBuilderMaintenance = ""
+                    goalBuilderShowDraft   = false
+                    setLoading(false, "Goal saved.")
+                    goalBuilderMessage     = "Goal saved. Ready to build another."
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    setLoading(false, friendlyMessage(t.message, "Could not save goal."))
+                    goalBuilderMessage = friendlyMessage(t.message, "Could not save goal.")
                 }
             }
         }

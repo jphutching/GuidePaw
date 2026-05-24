@@ -1,3 +1,6 @@
+## v0.036 (2026-05-24)
+- Android: Native Goal Builder screen — category-aware hint text on all fields, Build Draft fills blanks with category defaults and shows a draft preview card, Save Goal posts to API; menu item no longer opens WebView
+
 ## v0.035 (2026-05-24)
 - Android: Pull-to-refresh on Overview screen — pull down triggers the same full dashboard refresh as the Refresh button; PTR spinner replaces the global LinearProgressIndicator during the reload
 
