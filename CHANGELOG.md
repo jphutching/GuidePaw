@@ -1,3 +1,9 @@
+## v0.033 (2026-05-24)
+- Android: Pull-to-refresh on Goal Intake, Habit Repair, Behavior Risk, Regression Engine, and Candidate Assessment sections
+- Android: Global LinearProgressIndicator suppressed during pull-to-refresh (PTR spinner shown instead)
+- Android: isPullingToRefresh state clears via setLoading() for the three setLoading-based sections; explicitly in runOnUiThread for Regression and Candidate Assessment
+- Android: Compose BOM bumped from 2024.06.00 to 2024.09.03 (Material3 1.2.1 → 1.3.1); adds PullToRefreshBox
+
 ## v0.032 (2026-05-24)
 - Android: Added `SectionMessage` composable — errors display in an `errorContainer` card with a Retry button; success/info stays as plain primary-colored text
 - Android: Global status bar message now colors red when the message is an error (detected via `isErrorText()`)

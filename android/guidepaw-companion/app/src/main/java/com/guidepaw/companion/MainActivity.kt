@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -141,8 +142,9 @@ class MainActivity : AppCompatActivity() {
     private var currentUnreadCount by mutableStateOf(0)
     private var currentRelease     by mutableStateOf<GuidePawAppReleaseResult?>(null)
 
-    private var isLoading        by mutableStateOf(false)
-    private var isStatusError    by mutableStateOf(false)
+    private var isLoading          by mutableStateOf(false)
+    private var isStatusError      by mutableStateOf(false)
+    private var isPullingToRefresh by mutableStateOf(false)
     private var statusMessage    by mutableStateOf("")
     private var loginMessage     by mutableStateOf("")
     private var usernameText     by mutableStateOf("")
@@ -296,7 +298,7 @@ class MainActivity : AppCompatActivity() {
                     .padding(padding),
             ) {
                 if (showUpdateCard) UpdateBanner()
-                if (isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
                     Text(
                         text     = statusMessage,
@@ -992,6 +994,11 @@ class MainActivity : AppCompatActivity() {
         )
         val activeDog = currentDogs.firstOrNull { it.id == (goalIntakeDogId.takeIf { it > 0 } ?: currentActiveDogId) }
 
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadGoalIntake(goalIntakeFilter) },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1195,6 +1202,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        }
     }
 
     // ── Habit Repair section ────────────────────────────────────────────────
@@ -1206,6 +1214,11 @@ class MainActivity : AppCompatActivity() {
         val activeProtocol = habitRepairProtocols.firstOrNull { it.key == habitRepairProtocolKey }
             ?: habitRepairProtocols.firstOrNull()
 
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadHabitRepair() },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1355,9 +1368,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        }
     }
 
     // ── Behavior Risk section ───────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun BehaviorRiskSection() {
         val result = behaviorRiskResult
@@ -1367,6 +1382,11 @@ class MainActivity : AppCompatActivity() {
             else       -> Color(0xFF0F766E)
         }
 
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadBehaviorRisk(behaviorRiskResult?.dogId) },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1513,6 +1533,7 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Refresh") }
             }
+        }
         }
     }
 
@@ -1786,6 +1807,7 @@ class MainActivity : AppCompatActivity() {
         loginMessage  = ""
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun RegressionSection() {
         val statusLabels = linkedMapOf(
@@ -1795,6 +1817,11 @@ class MainActivity : AppCompatActivity() {
             "resolved"         to "Resolved",
             "closed"           to "Closed",
         )
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadRegressionEvents() },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1920,6 +1947,7 @@ class MainActivity : AppCompatActivity() {
 
             Button(onClick = { loadRegressionEvents() }, modifier = Modifier.fillMaxWidth()) { Text("Refresh") }
         }
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -1930,6 +1958,11 @@ class MainActivity : AppCompatActivity() {
         val scoreLabels = result?.scoreLabels ?: emptyMap()
         val activeDog   = dogs.firstOrNull { it.id == candidateDogId.takeIf { it > 0 } } ?: dogs.firstOrNull()
 
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadCandidateAssessments() },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -2038,6 +2071,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        }
     }
 
     private fun loadRegressionEvents() {
@@ -2050,9 +2084,13 @@ class MainActivity : AppCompatActivity() {
                     regressionResult          = result
                     regressionMessage         = ""
                     regressionExpandedEventId = -1
+                    isPullingToRefresh        = false
                 }
             } catch (t: Throwable) {
-                runOnUiThread { regressionMessage = friendlyMessage(t.message, "Could not load regression events.") }
+                runOnUiThread {
+                    regressionMessage  = friendlyMessage(t.message, "Could not load regression events.")
+                    isPullingToRefresh = false
+                }
             }
         }
     }
@@ -2080,12 +2118,16 @@ class MainActivity : AppCompatActivity() {
             try {
                 val result = api.candidateAssessments(token)
                 runOnUiThread {
-                    candidateResult  = result
-                    candidateMessage = ""
+                    candidateResult    = result
+                    candidateMessage   = ""
+                    isPullingToRefresh = false
                     if (candidateDogId == 0) candidateDogId = result.dogs.firstOrNull()?.id ?: 0
                 }
             } catch (t: Throwable) {
-                runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not load assessments.") }
+                runOnUiThread {
+                    candidateMessage   = friendlyMessage(t.message, "Could not load assessments.")
+                    isPullingToRefresh = false
+                }
             }
         }
     }
@@ -2392,6 +2434,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean, message: String?) {
         isLoading = loading
+        if (!loading) isPullingToRefresh = false
         if (message != null) {
             statusMessage = message
             isStatusError = !loading && isErrorText(message)
