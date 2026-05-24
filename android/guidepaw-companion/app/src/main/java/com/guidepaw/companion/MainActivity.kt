@@ -633,6 +633,9 @@ class MainActivity : AppCompatActivity() {
     // ── Dogs section ────────────────────────────────────────────────────────
     @Composable
     private fun DogsSection() {
+        var showDogPicker by remember { mutableStateOf(false) }
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -640,22 +643,63 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Your Dogs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (currentDogs.isEmpty()) {
-                Text("No dogs are accessible on this account.", color = GpOnSurfaceVariant)
-            } else {
-                Text(
-                    "Tap a dog to make it active. The app uses the active dog for logs and daily tracking.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = GpOnSurfaceVariant,
-                )
-                currentDogs.forEach { DogCard(it) }
+            // Compact active-dog header with optional Switch toggle
+            SummaryCard {
+                if (activeDog != null) {
+                    Row(
+                        modifier             = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment    = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(activeDog.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                listOfNotNull(
+                                    activeDog.breed,
+                                    activeDog.lifecycleStatus?.replace('_', ' '),
+                                ).joinToString(" • ").ifBlank { "Active dog" },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+                        }
+                        if (currentDogs.size > 1) {
+                            TextButton(onClick = { showDogPicker = !showDogPicker }) {
+                                Text(if (showDogPicker) "Done" else "Switch")
+                            }
+                        }
+                    }
+                } else {
+                    Text("No active dog", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (currentDogs.isEmpty()) "No dogs are accessible on this account."
+                        else "Select a dog below.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Text("Recent Logs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            // Dog picker — visible when Switch is tapped or no dog is active
+            if (showDogPicker || activeDog == null) {
+                currentDogs.forEach { dog ->
+                    DogCard(dog, onSelected = { showDogPicker = false })
+                }
+            }
+
+            // Log history for the active dog
+            Text(
+                if (activeDog != null) "${activeDog.name}'s Logs" else "Recent Logs",
+                style      = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
             if (currentLogs.isEmpty()) {
-                Text("No training logs yet for the active dog.", color = GpOnSurfaceVariant)
+                SummaryCard {
+                    Text(
+                        "No training logs yet for this dog.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
             } else {
                 currentLogs.take(8).forEach { LogCard(it) }
             }
@@ -663,7 +707,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun DogCard(dog: GuidePawDogItem) {
+    private fun DogCard(dog: GuidePawDogItem, onSelected: () -> Unit = {}) {
         val active = dog.id == currentActiveDogId
         OutlinedCard(
             modifier = Modifier.fillMaxWidth(),
@@ -693,6 +737,7 @@ class MainActivity : AppCompatActivity() {
                                     runOnUiThread {
                                         currentActiveDogId = newId ?: dog.id
                                         refreshDashboard(currentToken ?: "", currentActiveDogId)
+                                        onSelected()
                                     }
                                 } catch (e: Throwable) {
                                     runOnUiThread { setLoading(false, friendlyMessage(e.message, "Could not switch dog.")) }
