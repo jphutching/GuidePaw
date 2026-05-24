@@ -140,32 +140,31 @@ if (empty($_SESSION['user_id'])) {
         <section class="mb-4">
             <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
                 <div>
-                    <div class="text-uppercase text-muted fw-semibold small">Examples</div>
-                    <h2 class="h3 mb-0">Public examples people can browse</h2>
+                    <div class="text-uppercase text-muted fw-semibold small">Public tools &amp; guides</div>
+                    <h2 class="h3 mb-0">Browse without an account</h2>
                 </div>
-                <div class="text-muted">These are read-only entry points, not editable marketing filler.</div>
             </div>
             <div class="landing-grid">
-                <div class="landing-example">
+                <a class="landing-example text-decoration-none text-dark" href="breed_questionnaire.php">
                     <div class="fw-bold mb-1">Breed Questionnaire</div>
                     <div class="text-muted small">Size, focus, family, and nickname matching to help narrow breeds worth researching.</div>
-                </div>
+                </a>
                 <div class="landing-example">
                     <div class="fw-bold mb-1">Public Dog Profile</div>
-                    <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes.</div>
+                    <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes. Shared via QR or direct link.</div>
                 </div>
-                <div class="landing-example">
+                <a class="landing-example text-decoration-none text-dark" href="support_funding.php">
                     <div class="fw-bold mb-1">Support Options</div>
                     <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
-                </div>
+                </a>
                 <a class="landing-example text-decoration-none text-dark" href="app.php">
                     <div class="fw-bold mb-1">GuidePaw Companion App</div>
                     <div class="text-muted small">Training-first mobile access with wearable data built in.</div>
                 </a>
-                <div class="landing-example">
+                <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php">
                     <div class="fw-bold mb-1">Service Dog Notes</div>
                     <div class="text-muted small">Practical ADA and travel notes for handlers who need a quick reference.</div>
-                </div>
+                </a>
                 <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php">
                     <div class="fw-bold mb-1">Service Dog &amp; ESA Legal Info</div>
                     <div class="text-muted small">Plain-language guide for service dogs, ESAs, housing, and air travel basics.</div>
@@ -174,18 +173,6 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Housing &amp; Access FAQ</div>
                     <div class="text-muted small">What to do when a business, landlord, or policy asks for paperwork.</div>
                 </a>
-            </div>
-        </section>
-
-        <section class="mb-4">
-            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
-                <div>
-                    <div class="text-uppercase text-muted fw-semibold small">Public guides</div>
-                    <h2 class="h3 mb-0">Search-friendly pages with real answers</h2>
-                </div>
-                <div class="text-muted">Built for public search intent, not keyword stuffing.</div>
-            </div>
-            <div class="landing-grid">
                 <a class="landing-example text-decoration-none text-dark" href="breed_comparison_hub.php">
                     <div class="fw-bold mb-1">Breed Comparison Hub</div>
                     <div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div>
@@ -197,10 +184,6 @@ if (empty($_SESSION['user_id'])) {
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
                     <div class="fw-bold mb-1">GuidePaw FAQ</div>
                     <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php">
-                    <div class="fw-bold mb-1">Housing &amp; Access FAQ</div>
-                    <div class="text-muted small">Public answers for access disputes, housing requests, and paperwork questions.</div>
                 </a>
             </div>
         </section>
