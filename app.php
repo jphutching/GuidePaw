@@ -75,15 +75,15 @@ $schema = [
     <section class="row g-3 mb-4">
         <div class="col-lg-7">
             <div class="panel p-4 h-100">
-                <div class="text-uppercase text-muted fw-semibold small mb-2">Minimum parity</div>
-                <h2 class="h3">Training is the floor</h2>
-                <p>When the companion app is ready, it should let a normal handler do the same training work they can already do on the website.</p>
+                <div class="text-uppercase text-muted fw-semibold small mb-2">What's in the app</div>
+                <h2 class="h3">Core handler workflow</h2>
+                <p>The app already covers the daily handler loop. Goal intake, habit repair, and behavior risk views are next in line.</p>
                 <ul class="checklist mb-0">
-                    <li>Training logs and session history</li>
-                    <li>Goal intake and goal builder</li>
-                    <li>Habit repair and tactical training</li>
-                    <li>Behavior risk and regression views</li>
-                    <li>Dog switching, profiles, and public notes</li>
+                    <li>Training logs — submit and review session history</li>
+                    <li>Dogs — switch active dog, view profiles and public notes</li>
+                    <li>Wearable summaries and device setup</li>
+                    <li>Notifications and dog-access invite management</li>
+                    <li>Feedback submission and in-app update checks</li>
                 </ul>
             </div>
         </div>
@@ -91,18 +91,18 @@ $schema = [
             <div class="panel p-4 h-100">
                 <div class="text-uppercase text-muted fw-semibold small mb-2">Wearables baked in</div>
                 <h2 class="h4">One device layer, not a separate bridge</h2>
-                <p class="mb-0">Health Connect, tracker imports, and vendor feeds should roll into the same timeline as training. The app should use the data, not force the handler to manage a separate wearable page.</p>
+                <p class="mb-0">Health Connect, tracker imports, and vendor feeds roll into the same timeline as training. The app uses the data alongside logs — the handler does not manage a separate wearable page.</p>
             </div>
         </div>
     </section>
 
     <section class="mb-4">
-        <div class="landing-card p-4">
+        <div class="panel p-4">
             <div class="text-uppercase text-muted fw-semibold small mb-2">Download</div>
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div style="min-width:260px; max-width:720px;">
                     <h2 class="h3 mb-2">GuidePaw Companion debug APK</h2>
-                    <p class="mb-0">This is the current test build for the companion app. It is not a final Google Play release, and it may change while the Android side is still being filled out.</p>
+                    <p class="mb-0">This is the current test build. It is not a Google Play release — sideloading is required. The app is fully native Compose with no XML layouts and no View-based code.</p>
                 </div>
                 <div>
                     <a class="btn btn-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
