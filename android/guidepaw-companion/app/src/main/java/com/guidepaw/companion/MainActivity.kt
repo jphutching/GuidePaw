@@ -27,12 +27,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -43,15 +41,17 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -73,6 +73,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import kotlin.math.roundToInt
@@ -106,11 +111,11 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
 private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE }
 
 private val NAV_ITEMS = listOf(
-    NavSection.OVERVIEW  to "🏠\nHome",
-    NavSection.TRAINING  to "⚡\nLog",
-    NavSection.DOGS      to "📋\nHistory",
-    NavSection.WEARABLES to "🔔\nAlerts",
-    NavSection.MORE      to "☰\nMenu",
+    NavSection.OVERVIEW,
+    NavSection.TRAINING,
+    NavSection.DOGS,
+    NavSection.WEARABLES,
+    NavSection.MORE,
 )
 
 // ── MainActivity ───────────────────────────────────────────────────────────
@@ -262,67 +267,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Bottom navigation — matches v0.016 MaterialButton row exactly ──────
+    // ── Bottom navigation ───────────────────────────────────────────────────
     @Composable
     private fun BottomNav() {
-        Surface(
-            modifier        = Modifier.fillMaxWidth(),
-            color           = Color.White,
-            shadowElevation = 4.dp,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-            ) {
-                NAV_ITEMS.forEach { (section, label) ->
-                    val selected = section != NavSection.MORE && currentSection == section
-                    val bgColor  = if (selected) GpPrimaryContainer else Color.Transparent
-                    val txtColor = if (selected) GpPrimary else Color(0xFF1F2937)
-                    Box(modifier = Modifier.weight(1f)) {
-                        TextButton(
-                            onClick        = {
-                                if (section == NavSection.MORE) showMenu = true
-                                else currentSection = section
-                            },
-                            modifier       = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp),
-                            shape          = RoundedCornerShape(14.dp),
-                            colors         = ButtonDefaults.textButtonColors(
-                                containerColor = bgColor,
-                                contentColor   = txtColor,
-                            ),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 5.dp),
-                        ) {
-                            Text(
-                                text      = label,
-                                fontSize  = 12.sp,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 16.sp,
-                                color     = txtColor,
-                            )
-                        }
-                        if (section == NavSection.WEARABLES && currentUnreadCount > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(top = 4.dp, end = 4.dp)
-                                    .background(GpPrimary, RoundedCornerShape(50))
-                                    .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
-                                    .padding(horizontal = 5.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text       = currentUnreadCount.toString(),
-                                    color      = Color.White,
-                                    fontSize   = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                        }
-                    }
+        NavigationBar {
+            NAV_ITEMS.forEach { section ->
+                val icon = when (section) {
+                    NavSection.OVERVIEW  -> Icons.Filled.Home
+                    NavSection.TRAINING  -> Icons.Filled.Bolt
+                    NavSection.DOGS      -> Icons.Filled.Pets
+                    NavSection.WEARABLES -> Icons.Filled.Notifications
+                    NavSection.MORE      -> Icons.Filled.Menu
                 }
+                val title = when (section) {
+                    NavSection.OVERVIEW  -> "Home"
+                    NavSection.TRAINING  -> "Log"
+                    NavSection.DOGS      -> "History"
+                    NavSection.WEARABLES -> "Alerts"
+                    NavSection.MORE      -> "Menu"
+                }
+                NavigationBarItem(
+                    selected = section != NavSection.MORE && currentSection == section,
+                    onClick  = {
+                        if (section == NavSection.MORE) showMenu = true
+                        else currentSection = section
+                    },
+                    icon     = {
+                        if (section == NavSection.WEARABLES && currentUnreadCount > 0) {
+                            BadgedBox(badge = { Badge { Text(currentUnreadCount.toString()) } }) {
+                                Icon(icon, contentDescription = title)
+                            }
+                        } else {
+                            Icon(icon, contentDescription = title)
+                        }
+                    },
+                    label    = { Text(title) },
+                )
             }
         }
     }
