@@ -542,6 +542,9 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun TrainingSection() {
         var dropdownExpanded by remember { mutableStateOf(false) }
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        val isEditing = currentEditingLogId != null
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -549,9 +552,56 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (trainMessage.isNotBlank()) {
-                Text(trainMessage, color = GpOnSurfaceVariant)
+            // Active dog context
+            SummaryCard {
+                if (activeDog != null) {
+                    Text("Logging for ${activeDog.name}", fontWeight = FontWeight.SemiBold)
+                } else {
+                    Text("No active dog", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Go to Dogs to select one before logging.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
             }
+
+            // Edit mode banner with Cancel, or plain status message after submit
+            if (isEditing) {
+                OutlinedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors   = CardDefaults.outlinedCardColors(containerColor = GpPrimaryContainer),
+                ) {
+                    Row(
+                        modifier              = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            trainMessage.ifBlank { "Editing existing log" },
+                            style    = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = {
+                            clearEditLog()
+                            logLocation    = ""
+                            logCityState   = ""
+                            logType        = locationTypes.first()
+                            focusLevel     = 3
+                            logNotes       = ""
+                            selectedSkills = emptySet()
+                            trainMessage   = ""
+                        }) { Text("Cancel") }
+                    }
+                }
+            } else if (trainMessage.isNotBlank()) {
+                Text(trainMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            // Location
+            Text("Location", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
             OutlinedTextField(
                 value         = logLocation,
                 onValueChange = { logLocation = it },
@@ -590,7 +640,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            Text("Focus level: $focusLevel", fontWeight = FontWeight.Medium)
+
+            // Focus
+            Text("Focus level: $focusLevel", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
             Slider(
                 value         = focusLevel.toFloat(),
                 onValueChange = { focusLevel = it.roundToInt() },
@@ -598,9 +650,11 @@ class MainActivity : AppCompatActivity() {
                 steps         = 3,
                 modifier      = Modifier.fillMaxWidth(),
             )
-            Text("Skills practiced", fontWeight = FontWeight.Medium)
+
+            // Skills
+            Text("Skills practiced", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
             FlowRow(
-                modifier             = Modifier.fillMaxWidth(),
+                modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement   = Arrangement.spacedBy(4.dp),
             ) {
@@ -615,18 +669,31 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+
+            // Notes
             OutlinedTextField(
                 value         = logNotes,
                 onValueChange = { logNotes = it },
-                label         = { Text("Handler notes") },
+                label         = { Text("Handler notes (optional)") },
                 minLines      = 3,
                 modifier      = Modifier.fillMaxWidth(),
             )
+
             Button(
                 onClick  = { submitTrainingLog() },
                 enabled  = currentActiveDogId != null,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(saveLogLabel) }
+
+            if (currentActiveDogId == null) {
+                Text(
+                    "Select an active dog to enable logging.",
+                    style     = MaterialTheme.typography.bodySmall,
+                    color     = GpOnSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier  = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 
