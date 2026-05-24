@@ -473,11 +473,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Overview section ────────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun OverviewSection() {
         val me        = currentMe
         val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
         val recentLogs = currentLogs.take(2)
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; refreshCurrent() },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -597,6 +603,7 @@ class MainActivity : AppCompatActivity() {
                     ),
                 ) { Text("Sign Out") }
             }
+        }
         }
     }
 

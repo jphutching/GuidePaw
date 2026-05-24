@@ -1,3 +1,6 @@
+## v0.035 (2026-05-24)
+- Android: Pull-to-refresh on Overview screen — pull down triggers the same full dashboard refresh as the Refresh button; PTR spinner replaces the global LinearProgressIndicator during the reload
+
 ## v0.034 (2026-05-24)
 - Android: Regression Engine empty-state hint card — shown when no data is loaded and no message is pending; includes a "Load Events" button
 - Android: Refresh button moved inside the loaded-result block so it no longer appears alongside the hint card or error message
