@@ -384,7 +384,7 @@ $trainingStats = getTrainingCoreStats($pdo, $userId);
         </div>
         <div class="d-flex flex-wrap gap-2 mb-3">
             <a class="btn btn-outline-primary btn-sm" href="#training-setup">Training setup</a>
-            <a class="btn btn-outline-primary btn-sm" href="#program-guide">AKC programs</a>
+            <a class="btn btn-outline-primary btn-sm" href="#program-guide">Programs &amp; tests</a>
             <a class="btn btn-outline-primary btn-sm" href="#training-ladder">Training ladder</a>
             <a class="btn btn-outline-primary btn-sm" href="certification.php">Certification</a>
             <a class="btn btn-outline-primary btn-sm" href="candidate_assessment.php">Candidate Assessment</a>
