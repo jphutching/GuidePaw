@@ -131,7 +131,7 @@ if (empty($_SESSION['user_id'])) {
                         <li>Share a public dog profile and found-dog contact details.</li>
                         <li>Compare breeds before committing to a dog.</li>
                         <li>Keep ADA, travel, and support notes in one place.</li>
-                        <li>Use the companion app for training and wearable data.</li>
+                        <li>Use the companion app for native training tools, goal intake, behavior tracking, and wearable data.</li>
                     </ul>
                 </div>
             </div>
@@ -159,7 +159,7 @@ if (empty($_SESSION['user_id'])) {
                 </a>
                 <a class="landing-example text-decoration-none text-dark" href="app.php">
                     <div class="fw-bold mb-1">GuidePaw Companion App</div>
-                    <div class="text-muted small">Training-first mobile access with wearable data built in.</div>
+                    <div class="text-muted small">Native Android app — training logs, goal intake, habit repair, behavior tracking, and wearable data. No browser wrappers.</div>
                 </a>
                 <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php">
                     <div class="fw-bold mb-1">Service Dog Notes</div>
@@ -196,8 +196,8 @@ if (empty($_SESSION['user_id'])) {
                     <ol class="mt-3 mb-0">
                         <li>Research a breed before you commit.</li>
                         <li>Create a handler account and add your dogs.</li>
-                        <li>Track training, reminders, and public profile details.</li>
-                        <li>Keep support options and add-ons separate from the core workflow.</li>
+                        <li>Track training in the app or on the web, and share a public dog profile.</li>
+                        <li>Use built-in tools — goal intake, habit repair, and behavior tracking — as the dog's work develops.</li>
                     </ol>
                 </div>
             </div>
