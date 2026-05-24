@@ -116,7 +116,7 @@ if (empty($_SESSION['user_id'])) {
                 <div class="flex-grow-1" style="min-width: 260px;">
                     <div class="landing-pill mb-3">Dog training logs • service dog profiles • breed research • Guide Paw</div>
                     <h1 class="display-6 fw-bold mb-3">GuidePaw keeps handler work organized.</h1>
-                    <p class="lead mb-4"><?= e($landingDescription) ?></p>
+                    <p class="lead mb-4">Research dog breeds, track training sessions, manage dog profiles, and keep service dog paperwork organized — all in one place.</p>
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-light btn-lg fw-bold" href="breed_questionnaire.php">Research a breed</a>
                         <a class="btn btn-outline-light btn-lg fw-bold" href="app.php">GuidePaw Companion App</a>
@@ -149,10 +149,10 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Breed Questionnaire</div>
                     <div class="text-muted small">Size, focus, family, and nickname matching to help narrow breeds worth researching.</div>
                 </a>
-                <div class="landing-example">
+                <a class="landing-example text-decoration-none text-dark" href="dogs.php">
                     <div class="fw-bold mb-1">Public Dog Profile</div>
                     <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes. Shared via QR or direct link.</div>
-                </div>
+                </a>
                 <a class="landing-example text-decoration-none text-dark" href="support_funding.php">
                     <div class="fw-bold mb-1">Support Options</div>
                     <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
@@ -706,10 +706,6 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
         <div class="alert alert-warning">Detailed Log is temporarily disabled during beta.</div>
     <?php endif; ?>
 
-    <section class="menu-hint mb-4">
-        <div class="fw-bold mb-1">Need another tool?</div>
-        <div class="small text-muted">Tap <strong>Menu</strong> in the bottom navigation. Tools are now grouped under Dog, Logs, Training, Care, and More.</div>
-    </section>
 </main>
 
 <script src="app.js"></script>
