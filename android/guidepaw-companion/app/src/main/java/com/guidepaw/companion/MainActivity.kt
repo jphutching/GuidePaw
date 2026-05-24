@@ -414,6 +414,7 @@ class MainActivity : AppCompatActivity() {
     private fun OverviewSection() {
         val me        = currentMe
         val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        val recentLogs = currentLogs.take(2)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -421,26 +422,95 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (me != null) {
-                SummaryCard {
-                    Text("Signed in as ${me.username}", fontWeight = FontWeight.SemiBold)
+            // Active dog hero card
+            SummaryCard {
+                if (activeDog != null) {
+                    Text(
+                        activeDog.name,
+                        style      = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
                     Text(
                         buildString {
-                            append("Active dog: ")
-                            append(activeDog?.name ?: "None selected")
-                            activeDog?.breed?.let { append(" • $it") }
-                            if (currentDogs.isNotEmpty()) append(" • ${currentDogs.size} dogs")
-                        },
+                            activeDog.breed?.let { append(it) }
+                            activeDog.lifecycleStatus?.let {
+                                if (isNotEmpty()) append(" • ")
+                                append(it)
+                            }
+                        }.ifEmpty { "Active dog" },
                         style = MaterialTheme.typography.bodySmall,
                         color = GpOnSurfaceVariant,
                     )
+                    if (currentDogs.size > 1) {
+                        Text(
+                            "${currentDogs.size} dogs accessible · tap Dogs to switch",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                    }
+                } else {
+                    Text("No active dog", fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Account synced. Training, logs, and dog access are up to date.",
+                        "Go to Dogs to select one.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+                if (me != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "Signed in as ${me.username}",
                         style = MaterialTheme.typography.bodySmall,
                         color = GpOnSurfaceVariant,
                     )
                 }
             }
+
+            // Quick actions
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick  = { currentSection = NavSection.TRAINING },
+                    modifier = Modifier.weight(1f),
+                ) { Text("Log Training") }
+                OutlinedButton(
+                    onClick  = { currentSection = NavSection.DOGS },
+                    modifier = Modifier.weight(1f),
+                ) { Text("View History") }
+            }
+
+            // Recent activity
+            SummaryCard {
+                Text("Recent Activity", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                if (recentLogs.isEmpty()) {
+                    Text(
+                        "No training logs yet for this dog.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                } else {
+                    recentLogs.forEach { log ->
+                        Text(
+                            listOfNotNull(
+                                log.logDate.takeIf { it.isNotBlank() },
+                                log.locationName.ifBlank { "Training session" },
+                                log.locationCityState,
+                                "Focus ${log.focusLevel}",
+                            ).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (log.skillsPracticed.isNotEmpty()) {
+                            Text(
+                                log.skillsPracticed.joinToString(", "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+                        }
+                        if (log != recentLogs.last()) Spacer(Modifier.height(6.dp))
+                    }
+                }
+            }
+
             if (currentSuggestions.isNotEmpty()) {
                 SummaryCard {
                     Text("Training Suggestions", fontWeight = FontWeight.SemiBold)
@@ -450,6 +520,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
                     onClick   = { refreshCurrent() },
