@@ -10,12 +10,14 @@ Make the Android companion app feel truly native and fluid (Jetpack Compose + Ma
 - [x] Update `app.php` — reflect actual shipped features, note native Compose build
 - [x] Redesign `OverviewSection` — active dog as hero, compact recent-activity summary, quick Log Training / View History buttons (v0.025)
 - [x] Declutter `DogsSection` — compact active-dog header, collapsible Switch picker, logs labelled with dog name (v0.026)
+- [x] Improve `TrainingSection` — active dog context, edit-mode banner with Cancel, section labels, disabled-state explanation (v0.027)
+- [x] Restructure `WearablesSection` — split into Wearable Data + Notifications, active dog in wearable card, unread count surfaced inline (v0.028)
 
-## Phase 2 — Next Up
+## Next Up
 
-- [ ] Review `TrainingSection` for UX improvements now that nav and overview are native
-- [ ] Review `WearablesSection` for UX improvements
 - [ ] Improve information hierarchy across web so users don't get lost
+- [ ] Review `MenuBottomSheet` for UX improvements
+- [ ] Goal intake, habit repair, and behavior risk views (Android)
 
 **Rules**:
 - Small, safe changes
