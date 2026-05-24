@@ -1,3 +1,7 @@
+## v0.022 (2026-05-24)
+- Android: Ported GuidePawWebActivity to Compose — removed XML layout, replaced deprecated onBackPressed() with OnBackPressedCallback, embedded WebView via AndroidView
+- Android: Removed activity_guidepaw_web.xml — no XML layout files remain in any activity
+
 ## v0.021 (2026-05-24)
 - Android: Ported FeedbackActivity to Compose — deleted activity_feedback.xml, replaced 9 lateinit var Views with mutableStateOf, converted deprecated onActivityResult to registerForActivityResult
 - Android: All activities are now pure Compose — no remaining View-based or XML layout code in the companion app
