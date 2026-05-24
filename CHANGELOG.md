@@ -1,3 +1,12 @@
+## v0.020 (2026-05-24)
+- Android: Ported the Menu tab from a View-based AlertDialog to a native Compose ModalBottomSheet — all hybrid View/Compose code removed from MainActivity
+- Web: Consolidated landing page public sections into one grid, fixed three unlinked cards (Breed Questionnaire, Support Options, Service Dog Notes), removed duplicate Housing & Access FAQ entry
+
+## v0.019
+- Web + Android: Added feedback link to login screens
+- Android: Allowed anonymous feedback submission (no login required)
+- Android: Fixed sign-in keyboard options and added show-password toggle
+
 ## v21
 - Added migration tracker and DB status page
 - Added quick log workflow
