@@ -1,3 +1,7 @@
+## v0.023 (2026-05-24)
+- Android: Ported NotificationCenterActivity to Compose — removed 14 lateinit var View fields, MaterialButtonToggleGroup replaced with FilterChip Row, dynamic card builders replaced with NotificationCard/InviteCard composables
+- Android: Deleted activity_notifications.xml and activity_main.xml — the res/layout/ directory is now empty
+
 ## v0.022 (2026-05-24)
 - Android: Ported GuidePawWebActivity to Compose — removed XML layout, replaced deprecated onBackPressed() with OnBackPressedCallback, embedded WebView via AndroidView
 - Android: Removed activity_guidepaw_web.xml — no XML layout files remain in any activity
