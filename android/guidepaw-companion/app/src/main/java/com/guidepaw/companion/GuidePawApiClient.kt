@@ -295,6 +295,31 @@ data class GpCandidateAssessmentsResult(
     val scoreLabels: Map<String, String>,
 )
 
+data class GpVetItem(
+    val id: Int,
+    val clinicName: String,
+    val vetName: String,
+    val phone: String,
+)
+
+data class GpAppointmentItem(
+    val id: Int,
+    val title: String,
+    val status: String,
+    val appointmentAt: String,
+    val reminderAt: String,
+    val locationText: String,
+    val notes: String,
+    val clinicName: String,
+    val vetPhone: String,
+)
+
+data class GpAppointmentsResult(
+    val dogName: String,
+    val vets: List<GpVetItem>,
+    val appointments: List<GpAppointmentItem>,
+)
+
 data class GpMedicationItem(
     val id: Int,
     val medicationName: String,
@@ -816,6 +841,68 @@ class GuidePawApiClient(
         val response = requestJson("api/medications.php", "POST", token, payload)
         ensureSuccess(response)
     }
+
+    fun appointments(token: String): GpAppointmentsResult {
+        val response = requestJson("api/appointments.php", "GET", token, null)
+        ensureSuccess(response)
+        val vets = response.json.optJSONArray("vets")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toVetItem() } }
+            .orEmpty()
+        val appts = response.json.optJSONArray("appointments")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toAppointmentItem() } }
+            .orEmpty()
+        return GpAppointmentsResult(
+            dogName      = response.json.optString("dog_name", ""),
+            vets         = vets,
+            appointments = appts,
+        )
+    }
+
+    fun addAppointment(
+        token: String,
+        title: String,
+        appointmentAt: String,
+        reminderAt: String,
+        locationText: String,
+        notes: String,
+        vetId: Int,
+    ) {
+        val payload = JSONObject()
+            .put("action", "add_appointment")
+            .put("title", title)
+            .put("appointment_at", appointmentAt)
+            .put("reminder_at", reminderAt)
+            .put("location_text", locationText)
+            .put("notes", notes)
+            .put("dog_vet_id", if (vetId > 0) vetId else JSONObject.NULL)
+        val response = requestJson("api/appointments.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    fun markAppointmentStatus(token: String, appointmentId: Int, newStatus: String) {
+        val payload  = JSONObject().put("action", "mark_status").put("appointment_id", appointmentId).put("new_status", newStatus)
+        val response = requestJson("api/appointments.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    private fun JSONObject.toVetItem() = GpVetItem(
+        id          = optInt("id", 0),
+        clinicName  = optString("clinic_name", ""),
+        vetName     = optString("vet_name", ""),
+        phone       = optString("phone", ""),
+    )
+
+    private fun JSONObject.toAppointmentItem() = GpAppointmentItem(
+        id            = optInt("id", 0),
+        title         = optString("title", ""),
+        status        = optString("status", "scheduled"),
+        appointmentAt = optString("appointment_at", ""),
+        reminderAt    = optString("reminder_at", ""),
+        locationText  = optString("location_text", ""),
+        notes         = optString("notes", ""),
+        clinicName    = optString("clinic_name", ""),
+        vetPhone      = optString("vet_phone", ""),
+    )
 
     private fun JSONObject.toMedicationItem() = GpMedicationItem(
         id                   = optInt("id", 0),

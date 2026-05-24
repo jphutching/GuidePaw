@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -230,6 +230,18 @@ class MainActivity : AppCompatActivity() {
     private var candidateHealthNotes  by mutableStateOf("")
     private var candidateSafetyFlags  by mutableStateOf("")
     private var candidateDogExpanded  by mutableStateOf(false)
+
+    // ── Appointments state ─────────────────────────────────────────────────
+    private var appointmentsResult  by mutableStateOf<GpAppointmentsResult?>(null)
+    private var appointmentsMessage by mutableStateOf("")
+    private var apptTitle           by mutableStateOf("")
+    private var apptAt              by mutableStateOf("")
+    private var apptReminderAt      by mutableStateOf("")
+    private var apptLocation        by mutableStateOf("")
+    private var apptNotes           by mutableStateOf("")
+    private var apptVetId           by mutableStateOf(0)
+    private var apptVetExpanded     by mutableStateOf(false)
+    private var apptShowForm        by mutableStateOf(false)
 
     // ── Medications state ──────────────────────────────────────────────────
     private var medicationsResult  by mutableStateOf<GpMedicationsResult?>(null)
@@ -355,6 +367,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
                         NavSection.CANDIDATE_COMPARISON -> CandidateComparisonSection()
                         NavSection.MEDICATIONS          -> MedicationsSection()
+                        NavSection.APPOINTMENTS         -> VetAppointmentsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -2407,6 +2420,204 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Vet Appointments section ────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun VetAppointmentsSection() {
+        val result = appointmentsResult
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadAppointments(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (result != null) "📅 ${result.dogName}" else "📅 Vet Appointments",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(appointmentsMessage, onRetry = { loadAppointments() })
+
+                OutlinedButton(
+                    onClick  = { apptShowForm = !apptShowForm },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (apptShowForm) "Cancel" else "+ Schedule Appointment") }
+
+                if (apptShowForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("New appointment", fontWeight = FontWeight.SemiBold)
+
+                            OutlinedTextField(
+                                value         = apptTitle,
+                                onValueChange = { apptTitle = it },
+                                label         = { Text("Title *") },
+                                placeholder   = { Text("Annual wellness exam") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+
+                            // Vet picker
+                            if (!result?.vets.isNullOrEmpty()) {
+                                val vets = result!!.vets
+                                val selectedVet = vets.firstOrNull { it.id == apptVetId }
+                                ExposedDropdownMenuBox(
+                                    expanded         = apptVetExpanded,
+                                    onExpandedChange = { apptVetExpanded = it },
+                                ) {
+                                    OutlinedTextField(
+                                        value         = selectedVet?.clinicName ?: "No vet selected",
+                                        onValueChange = {},
+                                        readOnly      = true,
+                                        label         = { Text("Vet / Clinic") },
+                                        trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(apptVetExpanded) },
+                                        modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded         = apptVetExpanded,
+                                        onDismissRequest = { apptVetExpanded = false },
+                                    ) {
+                                        DropdownMenuItem(
+                                            text    = { Text("No vet selected") },
+                                            onClick = { apptVetId = 0; apptVetExpanded = false },
+                                        )
+                                        vets.forEach { vet ->
+                                            DropdownMenuItem(
+                                                text    = { Text(if (vet.vetName.isNotBlank()) "${vet.clinicName} — ${vet.vetName}" else vet.clinicName) },
+                                                onClick = { apptVetId = vet.id; apptVetExpanded = false },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value         = apptAt,
+                                onValueChange = { apptAt = it },
+                                label         = { Text("Appointment time *") },
+                                placeholder   = { Text("YYYY-MM-DD HH:MM") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            OutlinedTextField(
+                                value         = apptReminderAt,
+                                onValueChange = { apptReminderAt = it },
+                                label         = { Text("Reminder time") },
+                                placeholder   = { Text("YYYY-MM-DD HH:MM") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            OutlinedTextField(
+                                value         = apptLocation,
+                                onValueChange = { apptLocation = it },
+                                label         = { Text("Location") },
+                                placeholder   = { Text("Clinic address") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+                            OutlinedTextField(
+                                value         = apptNotes,
+                                onValueChange = { apptNotes = it },
+                                label         = { Text("Notes") },
+                                placeholder   = { Text("Shots due, paperwork to bring…") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                minLines      = 2,
+                            )
+                            Button(onClick = { submitAddAppointment() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Save Appointment")
+                            }
+                        }
+                    }
+                }
+
+                // Appointment list
+                if (result != null && result.appointments.isNotEmpty()) {
+                    result.appointments.forEach { appt ->
+                        val statusColor = when (appt.status) {
+                            "scheduled" -> Color(0xFFCA8A04)
+                            "completed" -> Color(0xFF16A34A)
+                            else        -> GpOnSurfaceVariant
+                        }
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.Top,
+                                ) {
+                                    Text(appt.title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                    Text(
+                                        appt.status.replaceFirstChar { it.uppercase() },
+                                        style      = MaterialTheme.typography.labelSmall,
+                                        color      = statusColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier   = Modifier.padding(start = 8.dp),
+                                    )
+                                }
+                                Text(
+                                    formatAppointmentDateTime(appt.appointmentAt) +
+                                        if (appt.clinicName.isNotBlank()) " • ${appt.clinicName}" else "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = GpOnSurfaceVariant,
+                                )
+                                if (appt.locationText.isNotBlank()) {
+                                    Text(appt.locationText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (appt.reminderAt.isNotBlank()) {
+                                    Text("Reminder: ${formatAppointmentDateTime(appt.reminderAt)}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (appt.notes.isNotBlank()) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(appt.notes, style = MaterialTheme.typography.bodySmall)
+                                }
+
+                                if (appt.status == "scheduled") {
+                                    Spacer(Modifier.height(6.dp))
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Button(
+                                            onClick        = { updateAppointmentStatus(appt.id, "completed") },
+                                            modifier       = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                                        ) { Text("Complete", style = MaterialTheme.typography.labelSmall) }
+                                        OutlinedButton(
+                                            onClick        = { updateAppointmentStatus(appt.id, "cancelled") },
+                                            modifier       = Modifier.weight(1f),
+                                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                                            colors         = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                        ) { Text("Cancel", style = MaterialTheme.typography.labelSmall) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun formatAppointmentDateTime(raw: String): String {
+        if (raw.isBlank()) return "—"
+        return try {
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+            val out = java.text.SimpleDateFormat("MMM d, yyyy h:mm a", java.util.Locale.US)
+            out.format(sdf.parse(raw.take(19)) ?: return raw)
+        } catch (_: Exception) { raw }
+    }
+
     // ── Medications section ─────────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -2798,7 +3009,7 @@ class MainActivity : AppCompatActivity() {
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
                     "🩺 Health Docs"      to { openWebPage("https://guidepaw.app/dog_health.php") },
-                    "📅 Vet Appointments" to { openWebPage("https://guidepaw.app/appointments.php") },
+                    "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
                     "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
                 ), onDismiss)
@@ -3376,6 +3587,65 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (t: Throwable) {
                 runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not archive assessment.") }
+            }
+        }
+    }
+
+    private fun loadAppointments() {
+        val token = currentToken ?: return
+        appointmentsMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.appointments(token)
+                runOnUiThread {
+                    appointmentsResult  = result
+                    appointmentsMessage = if (result.appointments.isEmpty()) "No appointments for ${result.dogName} yet." else ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { appointmentsMessage = friendlyMessage(t.message, "Could not load appointments.") }
+            }
+        }
+    }
+
+    private fun submitAddAppointment() {
+        val token = currentToken ?: return
+        if (apptTitle.isBlank()) { appointmentsMessage = "Title is required."; return }
+        if (apptAt.isBlank()) { appointmentsMessage = "Appointment time is required."; return }
+        setLoading(true, "Saving appointment...")
+        worker.execute {
+            try {
+                api.addAppointment(
+                    token         = token,
+                    title         = apptTitle.trim(),
+                    appointmentAt = apptAt.trim(),
+                    reminderAt    = apptReminderAt.trim(),
+                    locationText  = apptLocation.trim(),
+                    notes         = apptNotes.trim(),
+                    vetId         = apptVetId,
+                )
+                runOnUiThread {
+                    apptTitle = ""; apptAt = ""; apptReminderAt = ""; apptLocation = ""; apptNotes = ""; apptVetId = 0
+                    apptShowForm = false
+                    setLoading(false, "Appointment saved.")
+                    loadAppointments()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    setLoading(false, "")
+                    appointmentsMessage = friendlyMessage(t.message, "Could not save appointment.")
+                }
+            }
+        }
+    }
+
+    private fun updateAppointmentStatus(apptId: Int, newStatus: String) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.markAppointmentStatus(token, apptId, newStatus)
+                runOnUiThread { loadAppointments() }
+            } catch (t: Throwable) {
+                runOnUiThread { appointmentsMessage = friendlyMessage(t.message, "Could not update appointment.") }
             }
         }
     }

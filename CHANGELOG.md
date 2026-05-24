@@ -1,3 +1,6 @@
+## v0.043 (2026-05-24)
+- Android: Native Vet Appointments screen — appointment list (sorted by time) with status-coloured badges, vet/clinic picker from saved vets, add form (title, vet, appointment time, reminder time, location, notes), Complete/Cancel buttons per scheduled appointment, pull-to-refresh; new `api/appointments.php` (GET list+vets, POST add/mark_status); added to Care menu as "📅 Vet Appointments"
+
 ## v0.042 (2026-05-24)
 - Android: Native Medications screen — medication list with status-coloured badges (active/paused/completed), add form (name, dosage, schedule, status, refill date, provider, instructions, notes), inline three-button status update per medication, pull-to-refresh, footer link to full form on web; new `api/medications.php` (GET list, POST add/set_status); added to Care menu as "💊 Medications"
 
