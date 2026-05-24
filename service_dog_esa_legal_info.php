@@ -165,7 +165,7 @@ body { background:#f1f5f9; color:#0f172a; }
             <div class="section-card p-4 h-100">
                 <div class="text-uppercase text-muted fw-semibold small mb-2">GuidePaw note</div>
                 <h2 class="h4">What GuidePaw does and does not do</h2>
-                <p class="mb-2">GuidePaw is a practical organizer for handlers. It helps with training logs, public profiles, breed research, and support tools.</p>
+                <p class="mb-2">GuidePaw is a practical organizer for handlers — with a native Android companion app for training logs, goal intake, habit repair, and behavior tracking, plus web tools for public profiles, breed research, and support.</p>
                 <ul class="mb-0">
                     <li>GuidePaw does not issue certifications or registrations.</li>
                     <li>GuidePaw does not replace ADA.gov, HUD guidance, DOT guidance, or airline policies.</li>
@@ -190,7 +190,7 @@ body { background:#f1f5f9; color:#0f172a; }
     <section class="section-card p-4">
         <div class="text-uppercase text-muted fw-semibold small mb-2">Bottom line</div>
         <h2 class="h4">Use the public reference, then verify the rule that applies to your situation</h2>
-        <p class="mb-0">The draft you shared lines up with the big federal points, but it needed softer housing wording and a clearer air-travel distinction. This page adds the missing public-facing summary without replacing the detailed ADA and air-travel notes already in GuidePaw.</p>
+        <p class="mb-0">This page covers the core federal distinctions between service dogs and ESAs, when access can be denied, and how air travel works under current DOT rules. Use the detailed ADA notes for scripts and handler guidance, and verify final rules from official sources before acting on any specific situation.</p>
     </section>
 </main>
 </body>
