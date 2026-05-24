@@ -13,11 +13,11 @@ Make the Android companion app feel truly native and fluid (Jetpack Compose + Ma
 - [x] Improve `TrainingSection` — active dog context, edit-mode banner with Cancel, section labels, disabled-state explanation (v0.027)
 - [x] Restructure `WearablesSection` — split into Wearable Data + Notifications, active dog in wearable card, unread count surfaced inline (v0.028)
 - [x] Tidy `MenuBottomSheet` — identity card at top, Logs section removed, Training trimmed 14→7, More trimmed 16→7; 46→24 total items (v0.029)
+- [x] Improve web information hierarchy — web menu Training trimmed 14→8 primary + "More tools" subgroup; dashboard "Needs Attention" cleared of 4 non-actionable status cards
 
 ## Next Up
 
-- [ ] Improve information hierarchy across web so users don't get lost
-- [ ] Goal intake, habit repair, and behavior risk views — native Android screens (not WebView)
+- [ ] Native Android screens for Goal Intake, Habit Repair, and Behavior Risk (currently open as WebView pages from the menu)
 
 **Rules**:
 - Small, safe changes
