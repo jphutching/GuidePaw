@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -141,6 +142,7 @@ class MainActivity : AppCompatActivity() {
     private var currentRelease     by mutableStateOf<GuidePawAppReleaseResult?>(null)
 
     private var isLoading        by mutableStateOf(false)
+    private var isStatusError    by mutableStateOf(false)
     private var statusMessage    by mutableStateOf("")
     private var loginMessage     by mutableStateOf("")
     private var usernameText     by mutableStateOf("")
@@ -300,7 +302,7 @@ class MainActivity : AppCompatActivity() {
                         text     = statusMessage,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                         style    = MaterialTheme.typography.bodySmall,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color    = if (isStatusError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 if (currentToken == null) {
@@ -1018,9 +1020,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            if (goalIntakeMessage.isNotBlank()) {
-                Text(goalIntakeMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-            }
+            SectionMessage(goalIntakeMessage, onRetry = { loadGoalIntake(goalIntakeFilter) })
 
             // New goal form
             SummaryCard {
@@ -1181,7 +1181,11 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
-            } else if (!isLoading) {
+            } else if (isLoading) {
+                SummaryCard {
+                    Text("Loading goals...", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+            } else if (goalIntakeMessage.isBlank()) {
                 SummaryCard {
                     Text(
                         "No ${goalIntakeFilter} goals found.",
@@ -1219,9 +1223,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            if (habitRepairMessage.isNotBlank()) {
-                Text(habitRepairMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-            }
+            SectionMessage(habitRepairMessage, onRetry = { loadHabitRepair() })
 
             // Protocol selector
             if (habitRepairProtocols.isNotEmpty()) {
@@ -1382,9 +1384,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            if (behaviorRiskMessage.isNotBlank()) {
-                Text(behaviorRiskMessage, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-            }
+            SectionMessage(behaviorRiskMessage, onRetry = { loadBehaviorRisk(behaviorRiskResult?.dogId) })
 
             // Dog selector
             if (currentDogs.size > 1) {
@@ -1640,6 +1640,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Composable
+    private fun SectionMessage(message: String, onRetry: (() -> Unit)? = null) {
+        if (message.isBlank()) return
+        val isError = isErrorText(message)
+        if (isError) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            ) {
+                Row(
+                    modifier          = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text     = message,
+                        style    = MaterialTheme.typography.bodySmall,
+                        color    = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (onRetry != null) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onRetry) { Text("Retry") }
+                    }
+                }
+            }
+        } else {
+            Text(
+                text  = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+
     // ── Business logic (minimal changes from original) ──────────────────────
     private fun attemptLogin() {
         val username    = usernameText.trim()
@@ -1772,9 +1807,7 @@ class MainActivity : AppCompatActivity() {
                 Text("Regression Engine", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
             }
 
-            if (regressionMessage.isNotBlank()) {
-                Text(regressionMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-            }
+            SectionMessage(regressionMessage, onRetry = { loadRegressionEvents() })
 
             val result = regressionResult
             if (result != null) {
@@ -1910,9 +1943,7 @@ class MainActivity : AppCompatActivity() {
             }
             Text("Score 1 = major concern · 3 = acceptable foundation · 5 = excellent", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
 
-            if (candidateMessage.isNotBlank()) {
-                Text(candidateMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-            }
+            SectionMessage(candidateMessage, onRetry = { loadCandidateAssessments() })
 
             SummaryCard {
                 Text("New Assessment", fontWeight = FontWeight.SemiBold)
@@ -2361,7 +2392,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean, message: String?) {
         isLoading = loading
-        if (message != null) statusMessage = message
+        if (message != null) {
+            statusMessage = message
+            isStatusError = !loading && isErrorText(message)
+        }
     }
 
     private fun checkForAppUpdate() {
@@ -2525,6 +2559,10 @@ class MainActivity : AppCompatActivity() {
             .put("suggestions", JSONArray(currentSuggestions))
         prefs.edit().putString(KEY_CACHE, cache.toString()).commit()
     }
+
+    private fun isErrorText(msg: String): Boolean =
+        listOf("could not", "failed", "error", "unable", "invalid", "not found")
+            .any { msg.startsWith(it, ignoreCase = true) }
 
     private fun friendlyMessage(message: String?, fallback: String): String {
         val raw = message?.trim().orEmpty()

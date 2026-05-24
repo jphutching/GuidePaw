@@ -1,3 +1,9 @@
+## v0.032 (2026-05-24)
+- Android: Added `SectionMessage` composable — errors display in an `errorContainer` card with a Retry button; success/info stays as plain primary-colored text
+- Android: Global status bar message now colors red when the message is an error (detected via `isErrorText()`)
+- Android: GoalIntake section now shows a "Loading goals…" placeholder instead of "No goals found" while loading, and suppresses the empty state when an error message is already shown
+- Android: All five section message sites (Goal Intake, Habit Repair, Behavior Risk, Regression, Candidate Assessment) upgraded from bare `Text()` to `SectionMessage()` with section-specific retry lambdas
+
 ## v0.031 (2026-05-24)
 - Android: Native Regression Engine screen — open events list, per-event inline status update and reset plan editor, static reset plan card
 - Android: Native Candidate Assessment screen — 10 score sliders (1–5), dog selector, health notes, safety flags, recent assessments with archive
