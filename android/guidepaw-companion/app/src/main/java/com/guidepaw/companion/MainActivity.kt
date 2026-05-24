@@ -160,9 +160,6 @@ class MainActivity : AppCompatActivity() {
     private var selectedSkills by mutableStateOf<Set<String>>(emptySet())
     private var trainMessage   by mutableStateOf("")
     private var saveLogLabel   by mutableStateOf("Save training log")
-    private var wearablesBody  by mutableStateOf(
-        "Wearable data will feed the active dog timeline once a dog is selected."
-    )
 
     // ── Download receiver (unchanged) ───────────────────────────────────────
     private val updateDownloadReceiver = object : BroadcastReceiver() {
@@ -857,6 +854,7 @@ class MainActivity : AppCompatActivity() {
     // ── Wearables section ───────────────────────────────────────────────────
     @Composable
     private fun WearablesSection() {
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -864,17 +862,44 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                "Wearables & Notifications",
-                style      = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            SummaryCard { Text(wearablesBody) }
+            // Wearable data
+            Text("Wearable Data", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            SummaryCard {
+                if (activeDog != null) {
+                    Text("Tied to ${activeDog.name}", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Health Connect, tracker imports, and vendor feeds flow into ${activeDog.name}'s handler timeline alongside training logs.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                } else {
+                    Text("No active dog", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Wearable data attaches to the active dog's timeline. Select a dog first.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+            }
             Button(
                 onClick  = { openWebPage("https://guidepaw.app/wearable_integrations.php") },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Open Wearables Setup") }
-            OutlinedButton(
+            ) { Text("Wearable Setup") }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Notifications
+            Text("Notifications", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            if (currentUnreadCount > 0) {
+                SummaryCard {
+                    Text(
+                        "$currentUnreadCount unread notification${if (currentUnreadCount == 1) "" else "s"}",
+                        fontWeight = FontWeight.SemiBold,
+                        color      = GpPrimary,
+                    )
+                }
+            }
+            Button(
                 onClick  = { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Notification Center") }
@@ -1133,15 +1158,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renderDashboard() {
-        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
-        wearablesBody = if (activeDog == null)
-            "Wearable data will feed the active dog timeline once a dog is selected."
-        else
-            "Wearable data is tied to ${activeDog.name} and will flow into the same handler timeline."
-        trainMessage = if (activeDog == null)
-            "Pick an active dog before saving a training log."
-        else
-            "Training log will save to ${activeDog.name}."
+        trainMessage  = ""
         statusMessage = "Signed in as ${currentMe?.username.orEmpty()}"
         loginMessage  = ""
     }
