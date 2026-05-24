@@ -259,14 +259,11 @@ $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['i
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
 $behaviorRiskState = gpBehaviorRiskAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
-$communityChallengeState = $activeDog ? gpCommunityChallengeState($userId, (int) $activeDog['id']) : null;
+$communityChallengeState = null;
 $openRegressionEvents = $activeDog ? gpDashboardOpenRegressionEvents($pdo, $userId) : [];
 $openRegressionCount = $activeDog ? gpRegressionEngineOpenCount($pdo, $userId, (int) $activeDog['id']) : 0;
 $openCoachReviews = gpDashboardOpenCoachReviews($pdo, $userId);
 $openVideoReviews = gpDashboardOpenVideoReviews($pdo, $userId);
-$wearableEvents = gpWearableRecentEvents($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null, 1);
-$latestWearableSync = $wearableEvents[0] ?? null;
-$trainerMarketplaceEntries = gpTrainerMarketplaceEntries($pdo, $userId);
 $unreadNotifications = gpUnreadNotificationCount($pdo, $userId);
 $dailyWinPrompt = $activeDog ? gpDailyWinPromptForDate() : null;
 $dailyWinLogName = $dailyWinPrompt ? gpDailyWinLogName($dailyWinPrompt) : '';
@@ -572,80 +569,6 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
                                 Latest assessment: <?= e($behaviorRiskState['candidate']['dog_name']) ?>.
                             <?php endif; ?>
                         </div>
-                    </div>
-                </details>
-            <?php endif; ?>
-            <?php if (featureEnabled($pdo, 'wearable_integrations_enabled')): ?>
-                <details class="fold-card mb-2">
-                    <summary>
-                        <div>
-                            <div class="small text-uppercase text-muted fw-semibold">Care</div>
-                            <h3 class="h6 mb-1">Wearable Sync</h3>
-                            <div class="small text-muted">
-                                <?php if ($latestWearableSync): ?>
-                                    Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?>.
-                                <?php else: ?>
-                                    No wearable snapshots recorded yet.
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <a href="wearable_integrations.php" class="btn btn-outline-dark btn-sm" onclick="event.stopPropagation();">Open sync hub</a>
-                    </summary>
-                    <div class="card-body pt-0">
-                        <div class="attention-empty">
-                            <?php if ($latestWearableSync): ?>
-                                Last sync <?= e((string) ($latestWearableSync['recorded_for_date'] ?? $latestWearableSync['created_at'])) ?> from <?= e((string) ($latestWearableSync['source'] ?? 'manual')) ?>.
-                            <?php else: ?>
-                                No wearable snapshots recorded yet.
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </details>
-            <?php endif; ?>
-            <?php if (featureEnabled($pdo, 'trainer_marketplace_enabled')): ?>
-                <details class="fold-card mb-2">
-                    <summary>
-                        <div>
-                            <div class="small text-uppercase text-muted fw-semibold">Training</div>
-                            <h3 class="h6 mb-1">Trainer Marketplace</h3>
-                            <div class="small text-muted"><?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready.</div>
-                        </div>
-                        <a href="trainer_marketplace.php" class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation();">Open directory</a>
-                    </summary>
-                    <div class="card-body pt-0">
-                        <div class="attention-empty">
-                            <?= (int) count($trainerMarketplaceEntries) ?> trainer profile<?= count($trainerMarketplaceEntries) === 1 ? '' : 's' ?> ready in the directory.
-                        </div>
-                    </div>
-                </details>
-            <?php endif; ?>
-            <?php if (featureEnabled($pdo, 'candidate_comparison_enabled') && count($dogs) > 1): ?>
-                <details class="fold-card mb-2">
-                    <summary>
-                        <div>
-                            <div class="small text-uppercase text-muted fw-semibold">Compare</div>
-                            <h3 class="h6 mb-1">Candidate Comparison</h3>
-                            <div class="small text-muted">Compare the active dog against other accessible dogs.</div>
-                        </div>
-                        <a href="candidate_comparison.php" class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation();">Compare dogs</a>
-                    </summary>
-                    <div class="card-body pt-0">
-                        <div class="attention-empty">Compare the active dog against other accessible dogs to see their latest candidate scores side by side.</div>
-                    </div>
-                </details>
-            <?php endif; ?>
-            <?php if (featureEnabled($pdo, 'community_challenges_enabled') && $activeDog && $communityChallengeState): ?>
-                <details class="fold-card mb-2">
-                    <summary>
-                        <div>
-                            <div class="small text-uppercase text-muted fw-semibold">Community</div>
-                            <h3 class="h6 mb-1">Community Challenge</h3>
-                            <div class="small text-muted"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?></div>
-                        </div>
-                        <a href="community_challenges.php" class="btn btn-outline-success btn-sm" onclick="event.stopPropagation();">Open challenge</a>
-                    </summary>
-                    <div class="card-body pt-0">
-                        <div class="attention-empty"><?= e(gpCommunityChallengeDashboardLabel($communityChallengeState)) ?> · <?= e((string) (($communityChallengeState['check_ins'] ?? 0))) ?> check-ins logged.</div>
                     </div>
                 </details>
             <?php endif; ?>
