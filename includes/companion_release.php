@@ -5,8 +5,8 @@ require_once __DIR__ . '/seo.php';
 if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.037'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '37');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.038'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '38');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
@@ -17,7 +17,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Native ADA Access Card screen — calm script with Copy/Share, two-question rule, definitions, scam warning, DOJ phone; menu item no longer opens a WebView.',
+            'release_notes' => 'Native Air Travel Rights screen — ACAA coverage, DOT form requirements, denial grounds, SDIT note, practical reminders; added to menu alongside ADA Access Card.',
             'published_at' => gmdate('c'),
         ];
     }

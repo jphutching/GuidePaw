@@ -1,3 +1,6 @@
+## v0.038 (2026-05-24)
+- Android: Native Air Travel Rights screen — ACAA coverage, DOT form requirements, denial grounds, SDIT note, practical reminders, and cross-link to ADA Access Card; added to menu as "✈️ Air Travel Rights"
+
 ## v0.037 (2026-05-24)
 - Android: Native ADA Access Card screen — calm script (large text, Copy and Share buttons), two permissible questions, what staff may not require, service dog/SDIT/ESA definitions, scam warning, when access can be denied, tappable DOJ ADA Information Line, state law note with link to web version; menu item no longer opens a WebView
 

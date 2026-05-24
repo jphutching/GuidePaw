@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, ADA_ACCESS_CARD, AIR_TRAVEL }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -341,6 +341,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.REGRESSION           -> RegressionSection()
                         NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
+                        NavSection.AIR_TRAVEL           -> AirTravelSection()
                     }
                 }
             }
@@ -1662,6 +1663,137 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Air Travel section ──────────────────────────────────────────────────
+    @Composable
+    private fun AirTravelSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text(
+                    "Air Travel Rights",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            // Warning banner
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("Use this as a practical reference, not legal advice.", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall)
+                    Text("Air travel is covered by the Air Carrier Access Act, not the ADA.", color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            // Service dogs covered
+            SummaryCard {
+                Text("Service dogs are covered on flights", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Under DOT air-travel rules, airlines must recognize dogs that are individually trained to do work or perform tasks for a person with a disability.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Airlines must allow a covered service dog in the cabin on flights to, within, and from the United States.",
+                    "Airlines may require DOT service animal forms and may ask the two travel-specific questions.",
+                    "The dog must fit in the handler's foot space or under the seat in front of the handler when required by the airline.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // What airlines can ask/require
+            SummaryCard {
+                Text("What airlines can ask or require", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "A U.S. DOT Service Animal Air Transportation Form for health, behavior, and training.",
+                    "A U.S. DOT Relief Attestation Form for flights of 8 hours or more.",
+                    "Advance submission if the reservation was made before the 48-hour deadline.",
+                    "Harness, leash, or tether control in the airport and on the aircraft when required by the airline.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // When travel can be denied
+            SummaryCard {
+                Text("When airlines can refuse transport", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "The dog is too large or heavy to fit safely in the cabin space.",
+                    "The dog poses a direct threat to the health or safety of others.",
+                    "The dog causes a significant disruption in the cabin or gate area.",
+                    "The dog fails required health or destination-entry rules.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // SDIT note
+            SummaryCard {
+                Text("Service dogs in training (SDIT)", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "DOT air-travel rules do not treat service dogs in training as service animals for flights.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "If you are traveling with an SDIT, check the airline's current animal policy before you book. The carrier may treat the dog as a pet or may have its own handling rules, and destination rules can also matter.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+            }
+
+            // Practical reminders
+            SummaryCard {
+                Text("Practical reminders", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Call the airline before you travel if you need a specific seating or relief-area plan.",
+                    "Keep a copy of the DOT forms and reservation confirmation with you.",
+                    "Check destination-country rules for international travel — foreign entry rules can override the U.S. baseline.",
+                    "Ask for a Complaints Resolution Official if you believe your rights under air-travel disability rules are being denied.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            // ADA Access Card cross-link
+            SummaryCard {
+                Text("Also useful", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text("For general ADA public-access rights, the calm script, and handler reference cards:", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = { currentSection = NavSection.ADA_ACCESS_CARD }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Open ADA Access Card")
+                }
+            }
+
+            // Sources note
+            Text(
+                "Sources: U.S. Department of Transportation service-animal guidance, final rule on traveling by air with service animals, and the Air Carrier Access Act summary.",
+                style = MaterialTheme.typography.bodySmall,
+                color = GpOnSurfaceVariant,
+            )
+        }
+    }
+
     // ── Habit Repair section ────────────────────────────────────────────────
     @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
@@ -2064,6 +2196,7 @@ class MainActivity : AppCompatActivity() {
                     "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
                     "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
+                    "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "✅ Certification"      to { openWebPage("https://guidepaw.app/certification.php") },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
