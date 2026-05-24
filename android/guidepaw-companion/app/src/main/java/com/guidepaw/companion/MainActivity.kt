@@ -108,7 +108,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, HABIT_REPAIR, BEHAVIOR_RISK }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -181,6 +181,33 @@ class MainActivity : AppCompatActivity() {
     // ── Behavior Risk state ────────────────────────────────────────────────
     private var behaviorRiskResult  by mutableStateOf<GpBehaviorRiskResult?>(null)
     private var behaviorRiskMessage by mutableStateOf("")
+
+    // ── Regression Engine state ────────────────────────────────────────────
+    private var regressionResult          by mutableStateOf<GpRegressionResult?>(null)
+    private var regressionMessage         by mutableStateOf("")
+    private var regressionExpandedEventId by mutableStateOf(-1)
+    private var regressionEditStatus      by mutableStateOf("open")
+    private var regressionEditPlan        by mutableStateOf("")
+
+    // ── Candidate Assessment state ─────────────────────────────────────────
+    private var candidateResult     by mutableStateOf<GpCandidateAssessmentsResult?>(null)
+    private var candidateMessage    by mutableStateOf("")
+    private var candidateDogId      by mutableStateOf(0)
+    private var candidateScores     by mutableStateOf(linkedMapOf(
+        "confidence_score"         to 3,
+        "startle_recovery_score"   to 3,
+        "handler_engagement_score" to 3,
+        "food_motivation_score"    to 3,
+        "toy_motivation_score"     to 3,
+        "settle_score"             to 3,
+        "human_neutrality_score"   to 3,
+        "dog_neutrality_score"     to 3,
+        "environment_score"        to 3,
+        "handling_score"           to 3,
+    ))
+    private var candidateHealthNotes  by mutableStateOf("")
+    private var candidateSafetyFlags  by mutableStateOf("")
+    private var candidateDogExpanded  by mutableStateOf(false)
 
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
@@ -285,9 +312,11 @@ class MainActivity : AppCompatActivity() {
                         NavSection.DOGS          -> DogsSection()
                         NavSection.WEARABLES     -> WearablesSection()
                         NavSection.MORE          -> OverviewSection()
-                        NavSection.GOAL_INTAKE   -> GoalIntakeSection()
-                        NavSection.HABIT_REPAIR  -> HabitRepairSection()
-                        NavSection.BEHAVIOR_RISK -> BehaviorRiskSection()
+                        NavSection.GOAL_INTAKE          -> GoalIntakeSection()
+                        NavSection.HABIT_REPAIR         -> HabitRepairSection()
+                        NavSection.BEHAVIOR_RISK        -> BehaviorRiskSection()
+                        NavSection.REGRESSION           -> RegressionSection()
+                        NavSection.CANDIDATE_ASSESSMENT -> CandidateAssessmentSection()
                     }
                 }
             }
@@ -1542,8 +1571,8 @@ class MainActivity : AppCompatActivity() {
                     "🎯 Goal Intake"          to { loadGoalIntake(goalIntakeFilter); currentSection = NavSection.GOAL_INTAKE },
                     "🛠️ Habit Repair"        to { loadHabitRepair(); currentSection = NavSection.HABIT_REPAIR },
                     "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
-                    "♻️ Regression Engine"   to { openWebPage("https://guidepaw.app/regression_engine.php") },
-                    "🐾 Candidate Assessment" to { openWebPage("https://guidepaw.app/candidate_assessment.php") },
+                    "♻️ Regression Engine"   to { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
+                    "🐾 Candidate Assessment" to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
                     "🧩 Goal Builder"         to { openWebPage("https://guidepaw.app/goal_builder.php") },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
@@ -1720,6 +1749,348 @@ class MainActivity : AppCompatActivity() {
         trainMessage  = ""
         statusMessage = "Signed in as ${currentMe?.username.orEmpty()}"
         loginMessage  = ""
+    }
+
+    @Composable
+    private fun RegressionSection() {
+        val statusLabels = linkedMapOf(
+            "open"             to "Open",
+            "in_review"        to "In review",
+            "paused_for_review" to "Paused",
+            "resolved"         to "Resolved",
+            "closed"           to "Closed",
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("Regression Engine", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            if (regressionMessage.isNotBlank()) {
+                Text(regressionMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+            }
+
+            val result = regressionResult
+            if (result != null) {
+                SummaryCard {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            Text(result.dogName, fontWeight = FontWeight.SemiBold)
+                        }
+                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.small) {
+                            Text("${result.openCount} open", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
+
+                // Reset plan (static)
+                SummaryCard {
+                    Text("Reset plan", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+                    listOf(
+                        "1. Return to the easier step." to "Keep the current behavior short, quiet, and predictable until success returns.",
+                        "2. Keep reinforcement high." to "Use the best reward available for one clean win instead of extending the session.",
+                        "3. Re-check before raising difficulty." to "If the pattern repeats, keep the plan easy and revisit coach review when needed.",
+                    ).forEach { (title, body) ->
+                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                            Text(title, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+                            Text(body, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        }
+                    }
+                }
+
+                // Events
+                SummaryCard {
+                    Text("Open regression events", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    if (result.events.isEmpty()) {
+                        Text("No open regression events for this dog.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    } else {
+                        result.events.forEach { event ->
+                            val isEditing = regressionExpandedEventId == event.id
+                            OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top,
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(event.detectedReason.ifBlank { "Regression event" }, fontWeight = FontWeight.Medium)
+                                            val meta = buildString {
+                                                if (event.moduleTitle.isNotBlank()) append(event.moduleTitle)
+                                                if (event.goalCategory.isNotBlank()) { if (isNotEmpty()) append(" • "); append(event.goalCategory) }
+                                                if (event.createdAt.length >= 10) { if (isNotEmpty()) append(" • "); append(event.createdAt.take(10)) }
+                                            }
+                                            if (meta.isNotBlank()) Text(meta, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                        }
+                                        Surface(
+                                            color = if (event.status == "paused_for_review") Color(0xFFFEF3C7) else MaterialTheme.colorScheme.surfaceVariant,
+                                            shape = MaterialTheme.shapes.small,
+                                            modifier = Modifier.padding(start = 8.dp),
+                                        ) {
+                                            Text(statusLabels[event.status] ?: event.status, modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp), style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+                                    if (event.recommendedAction.isNotBlank() && !isEditing) {
+                                        Surface(color = Color(0xFFFFFBEB), shape = MaterialTheme.shapes.small, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                            Text(event.recommendedAction, modifier = Modifier.padding(10.dp), style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                    if (isEditing) {
+                                        Spacer(Modifier.height(10.dp))
+                                        Text("Status", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                                        Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            statusLabels.forEach { (key, label) ->
+                                                FilterChip(selected = regressionEditStatus == key, onClick = { regressionEditStatus = key }, label = { Text(label) })
+                                            }
+                                        }
+                                        OutlinedTextField(
+                                            value         = regressionEditPlan,
+                                            onValueChange = { regressionEditPlan = it },
+                                            label         = { Text("Reset plan") },
+                                            placeholder   = { Text("What should the handler do next?") },
+                                            minLines      = 3,
+                                            modifier      = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                        )
+                                        Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Button(
+                                                onClick  = { submitRegressionUpdate(event.id) },
+                                                modifier = Modifier.weight(1f),
+                                            ) { Text("Save update") }
+                                            OutlinedButton(
+                                                onClick  = { regressionExpandedEventId = -1 },
+                                                modifier = Modifier.weight(1f),
+                                            ) { Text("Cancel") }
+                                        }
+                                    } else {
+                                        TextButton(
+                                            onClick  = {
+                                                regressionExpandedEventId = event.id
+                                                regressionEditStatus      = event.status
+                                                regressionEditPlan        = event.recommendedAction
+                                            },
+                                            modifier = Modifier.padding(top = 4.dp),
+                                        ) { Text("Edit reset plan") }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Button(onClick = { loadRegressionEvents() }, modifier = Modifier.fillMaxWidth()) { Text("Refresh") }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun CandidateAssessmentSection() {
+        val result      = candidateResult
+        val dogs        = result?.dogs ?: emptyList()
+        val scoreLabels = result?.scoreLabels ?: emptyMap()
+        val activeDog   = dogs.firstOrNull { it.id == candidateDogId.takeIf { it > 0 } } ?: dogs.firstOrNull()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("Candidate Assessment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+            Text("Score 1 = major concern · 3 = acceptable foundation · 5 = excellent", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+
+            if (candidateMessage.isNotBlank()) {
+                Text(candidateMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+            }
+
+            SummaryCard {
+                Text("New Assessment", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                if (dogs.isEmpty()) {
+                    Text("No dogs on this account. Add a dog profile first.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                } else {
+                    ExposedDropdownMenuBox(expanded = candidateDogExpanded, onExpandedChange = { candidateDogExpanded = it }) {
+                        OutlinedTextField(
+                            value         = activeDog?.name ?: "Select dog",
+                            onValueChange = {},
+                            readOnly      = true,
+                            label         = { Text("Dog") },
+                            trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(candidateDogExpanded) },
+                            modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(expanded = candidateDogExpanded, onDismissRequest = { candidateDogExpanded = false }) {
+                            dogs.forEach { dog ->
+                                DropdownMenuItem(
+                                    text    = { Text(dog.name) },
+                                    onClick = { candidateDogId = dog.id; candidateDogExpanded = false },
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    candidateScores.keys.forEach { key ->
+                        val label = scoreLabels[key] ?: key.replace('_', ' ').replaceFirstChar { it.uppercase() }
+                        val score = candidateScores[key] ?: 3
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                            Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            Text("$score", fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Slider(
+                            value         = score.toFloat(),
+                            onValueChange = { v -> candidateScores = LinkedHashMap(candidateScores).also { it[key] = v.roundToInt() } },
+                            valueRange    = 1f..5f,
+                            steps         = 3,
+                            modifier      = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    OutlinedTextField(
+                        value         = candidateHealthNotes,
+                        onValueChange = { candidateHealthNotes = it },
+                        label         = { Text("Health notes") },
+                        placeholder   = { Text("Health, structure, fatigue, pain, medication, vet concerns") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                    OutlinedTextField(
+                        value         = candidateSafetyFlags,
+                        onValueChange = { candidateSafetyFlags = it },
+                        label         = { Text("Safety flags") },
+                        placeholder   = { Text("Bite history, severe fear, shutdown, uncontrolled lunging") },
+                        minLines      = 2,
+                        modifier      = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                    Button(onClick = { submitCandidateAssessment(activeDog?.id ?: 0) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                        Text("Save Assessment")
+                    }
+                }
+            }
+
+            // Recent assessments
+            val assessments = result?.assessments ?: emptyList()
+            SummaryCard {
+                Text("Recent Assessments", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                if (assessments.isEmpty()) {
+                    Text("No assessments yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                } else {
+                    assessments.forEach { a ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(a.dogName, fontWeight = FontWeight.Medium)
+                                        Text("Focus level ${a.focusLevelRecommended} · Avg ${a.averageScore}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                        if (a.createdAt.length >= 10) Text(a.createdAt.take(10), style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                    }
+                                }
+                                if (a.recommendation.isNotBlank()) {
+                                    Text(a.recommendation, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+                                }
+                                if (a.safetyFlags.isNotBlank()) {
+                                    Text("⚠ ${a.safetyFlags}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB45309), modifier = Modifier.padding(top = 4.dp))
+                                }
+                                TextButton(onClick = { archiveCandidateAssessmentItem(a.id) }) { Text("Archive") }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun loadRegressionEvents() {
+        val token = currentToken ?: return
+        regressionMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.regressionEvents(token)
+                runOnUiThread {
+                    regressionResult          = result
+                    regressionMessage         = ""
+                    regressionExpandedEventId = -1
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { regressionMessage = friendlyMessage(t.message, "Could not load regression events.") }
+            }
+        }
+    }
+
+    private fun submitRegressionUpdate(eventId: Int) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                val result = api.updateRegressionEvent(token, eventId, regressionEditStatus, regressionEditPlan)
+                runOnUiThread {
+                    regressionResult          = result
+                    regressionMessage         = "Regression event updated."
+                    regressionExpandedEventId = -1
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { regressionMessage = friendlyMessage(t.message, "Could not update regression event.") }
+            }
+        }
+    }
+
+    private fun loadCandidateAssessments() {
+        val token = currentToken ?: return
+        candidateMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.candidateAssessments(token)
+                runOnUiThread {
+                    candidateResult  = result
+                    candidateMessage = ""
+                    if (candidateDogId == 0) candidateDogId = result.dogs.firstOrNull()?.id ?: 0
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not load assessments.") }
+            }
+        }
+    }
+
+    private fun submitCandidateAssessment(dogId: Int) {
+        val token = currentToken ?: return
+        if (dogId <= 0) { candidateMessage = "Select a dog first."; return }
+        worker.execute {
+            try {
+                val msg = api.createCandidateAssessment(token, dogId, candidateScores, candidateHealthNotes, candidateSafetyFlags)
+                runOnUiThread {
+                    candidateMessage     = msg
+                    candidateHealthNotes = ""
+                    candidateSafetyFlags = ""
+                    candidateScores      = LinkedHashMap(candidateScores.mapValues { 3 })
+                    loadCandidateAssessments()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not save assessment.") }
+            }
+        }
+    }
+
+    private fun archiveCandidateAssessmentItem(assessmentId: Int) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.archiveCandidateAssessment(token, assessmentId)
+                runOnUiThread {
+                    candidateMessage = "Assessment archived."
+                    loadCandidateAssessments()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not archive assessment.") }
+            }
+        }
     }
 
     private fun loadGoalIntake(filter: String = "active") {

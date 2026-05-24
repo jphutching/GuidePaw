@@ -255,6 +255,46 @@ data class GpBehaviorRiskResult(
     val candidate: GpCandidateSummary?,
 )
 
+data class GpRegressionEventItem(
+    val id: Int,
+    val status: String,
+    val detectedReason: String,
+    val recommendedAction: String,
+    val moduleTitle: String,
+    val goalCategory: String,
+    val createdAt: String,
+)
+
+data class GpRegressionResult(
+    val dogId: Int,
+    val dogName: String,
+    val openCount: Int,
+    val events: List<GpRegressionEventItem>,
+)
+
+data class GpCandidateDogItem(
+    val id: Int,
+    val name: String,
+)
+
+data class GpCandidateAssessmentItem(
+    val id: Int,
+    val dogId: Int,
+    val dogName: String,
+    val focusLevelRecommended: Int,
+    val recommendation: String,
+    val safetyFlags: String,
+    val healthNotes: String,
+    val averageScore: Float,
+    val createdAt: String,
+)
+
+data class GpCandidateAssessmentsResult(
+    val dogs: List<GpCandidateDogItem>,
+    val assessments: List<GpCandidateAssessmentItem>,
+    val scoreLabels: Map<String, String>,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -661,6 +701,61 @@ class GuidePawApiClient(
         )
     }
 
+    fun regressionEvents(token: String): GpRegressionResult {
+        val response = requestJson("api/regression_engine.php", "GET", token, null)
+        ensureSuccess(response)
+        return parseRegressionResult(response.json)
+    }
+
+    fun updateRegressionEvent(token: String, eventId: Int, status: String, recommendedAction: String): GpRegressionResult {
+        val payload = JSONObject()
+            .put("action", "update_event")
+            .put("event_id", eventId)
+            .put("status", status)
+            .put("recommended_action", recommendedAction)
+        val response = requestJson("api/regression_engine.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseRegressionResult(response.json)
+    }
+
+    fun candidateAssessments(token: String): GpCandidateAssessmentsResult {
+        val response = requestJson("api/candidate_assessment.php", "GET", token, null)
+        ensureSuccess(response)
+        return parseCandidateAssessmentsResult(response.json)
+    }
+
+    fun createCandidateAssessment(
+        token: String,
+        dogId: Int,
+        scores: Map<String, Int>,
+        healthNotes: String,
+        safetyFlags: String,
+    ): String {
+        val payload = JSONObject()
+            .put("action", "create")
+            .put("dog_id", dogId)
+            .put("health_notes", healthNotes)
+            .put("safety_flags", safetyFlags)
+        scores.forEach { (key, value) -> payload.put(key, value) }
+        val response = requestJson("api/candidate_assessment.php", "POST", token, payload)
+        ensureSuccess(response)
+        val avg = response.json.optDouble("average_score", 0.0)
+        val fl  = response.json.optInt("focus_level", 0)
+        val rec = response.json.optString("recommendation", "")
+        return buildString {
+            append("Average: %.1f".format(avg))
+            append(" • Focus level: $fl")
+            if (rec.isNotBlank()) append("\n$rec")
+        }
+    }
+
+    fun archiveCandidateAssessment(token: String, assessmentId: Int): Boolean {
+        val payload  = JSONObject().put("action", "archive").put("assessment_id", assessmentId)
+        val response = requestJson("api/candidate_assessment.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optBoolean("success", false)
+    }
+
     private fun requestJson(path: String, method: String, token: String?, body: JSONObject?): ApiResponse {
         val resolvedPath = if (token.isNullOrBlank()) {
             path
@@ -1060,6 +1155,62 @@ class GuidePawApiClient(
     }
 
     private fun JSONArray.toList(): List<Any?> = (0 until length()).map { opt(it) }
+
+    private fun parseRegressionResult(json: JSONObject): GpRegressionResult =
+        GpRegressionResult(
+            dogId     = json.optInt("dog_id", 0),
+            dogName   = json.optString("dog_name", ""),
+            openCount = json.optInt("open_count", 0),
+            events    = json.optJSONArray("events")?.toRegressionEventList().orEmpty(),
+        )
+
+    private fun JSONArray.toRegressionEventList(): List<GpRegressionEventItem> =
+        (0 until length()).mapNotNull { i ->
+            optJSONObject(i)?.let { o ->
+                GpRegressionEventItem(
+                    id                = o.optInt("id", 0),
+                    status            = o.optString("status", "open"),
+                    detectedReason    = o.optString("detected_reason", ""),
+                    recommendedAction = o.optString("recommended_action", ""),
+                    moduleTitle       = o.optString("module_title", ""),
+                    goalCategory      = o.optString("goal_category", ""),
+                    createdAt         = o.optString("created_at", ""),
+                )
+            }
+        }
+
+    private fun parseCandidateAssessmentsResult(json: JSONObject): GpCandidateAssessmentsResult {
+        val dogsArr = json.optJSONArray("dogs")
+        val dogs = (0 until (dogsArr?.length() ?: 0)).mapNotNull { i ->
+            dogsArr?.optJSONObject(i)?.let { o ->
+                GpCandidateDogItem(id = o.optInt("id", 0), name = o.optString("name", ""))
+            }
+        }
+        val labelsObj = json.optJSONObject("score_labels")
+        val scoreLabels = labelsObj?.keys()?.asSequence()?.associateWith { labelsObj.optString(it, it) } ?: emptyMap()
+        return GpCandidateAssessmentsResult(
+            dogs        = dogs,
+            assessments = json.optJSONArray("assessments")?.toCandidateAssessmentList().orEmpty(),
+            scoreLabels = scoreLabels,
+        )
+    }
+
+    private fun JSONArray.toCandidateAssessmentList(): List<GpCandidateAssessmentItem> =
+        (0 until length()).mapNotNull { i ->
+            optJSONObject(i)?.let { o ->
+                GpCandidateAssessmentItem(
+                    id                    = o.optInt("id", 0),
+                    dogId                 = o.optInt("dog_id", 0),
+                    dogName               = o.optString("dog_name", ""),
+                    focusLevelRecommended = o.optInt("focus_level_recommended", 0),
+                    recommendation        = o.optString("recommendation", ""),
+                    safetyFlags           = o.optString("safety_flags", ""),
+                    healthNotes           = o.optString("health_notes", ""),
+                    averageScore          = o.optDouble("average_score", 0.0).toFloat(),
+                    createdAt             = o.optString("created_at", ""),
+                )
+            }
+        }
 
     private fun sanitizeFileName(name: String): String {
         return name.trim().ifBlank { "feedback_attachment" }.replace(Regex("[\\r\\n\"]"), "_")

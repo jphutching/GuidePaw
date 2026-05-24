@@ -1,3 +1,9 @@
+## v0.031 (2026-05-24)
+- Android: Native Regression Engine screen — open events list, per-event inline status update and reset plan editor, static reset plan card
+- Android: Native Candidate Assessment screen — 10 score sliders (1–5), dog selector, health notes, safety flags, recent assessments with archive
+- Android: New API endpoints api/regression_engine.php and api/candidate_assessment.php
+- Android: Both screens previously opened WebView; now full native Compose
+
 ## v0.023 (2026-05-24)
 - Android: Ported NotificationCenterActivity to Compose — removed 14 lateinit var View fields, MaterialButtonToggleGroup replaced with FilterChip Row, dynamic card builders replaced with NotificationCard/InviteCard composables
 - Android: Deleted activity_notifications.xml and activity_main.xml — the res/layout/ directory is now empty
