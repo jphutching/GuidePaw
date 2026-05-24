@@ -16,7 +16,23 @@ $faqSchema = [
                 'name' => 'What is GuidePaw?',
                 'acceptedAnswer' => [
                     '@type' => 'Answer',
-                    'text' => 'GuidePaw is a handler-focused dog training and profile tool for people who want to keep logs, public contact details, and support tools in one place.',
+                    'text' => 'GuidePaw is a handler-focused platform for dog training logs, public profiles, breed research, and support tools — with a native Android companion app for training, goal intake, behavior tracking, and wearable data.',
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => 'Is there a mobile app?',
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => 'Yes. The GuidePaw Companion is a native Android app with training logs, goal intake, habit repair, behavior risk scoring, regression event tracking, and wearable data. All screens are fully native — no browser wrappers.',
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => 'What training tools are built into the platform?',
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => 'The dashboard and companion app include goal intake (define training goals with success criteria and a reinforcement plan), habit repair (protocol lookup and behavior incident logging), behavior risk scoring, regression event tracking, and candidate assessment for prospect dogs.',
                 ],
             ],
             [
@@ -126,7 +142,15 @@ $faqSchema = [
         <div class="label mb-2">Questions people actually ask</div>
         <div class="faq-item">
             <div class="faq-q">What is GuidePaw?</div>
-            <div class="faq-a">GuidePaw is a handler-focused dog training and profile tool for people who want to keep logs, public contact details, and support tools in one place.</div>
+            <div class="faq-a">GuidePaw is a handler-focused platform for dog training logs, public profiles, breed research, and support tools — with a native Android companion app for training, goal intake, behavior tracking, and wearable data.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q">Is there a mobile app?</div>
+            <div class="faq-a">Yes. The GuidePaw Companion is a native Android app with training logs, goal intake, habit repair, behavior risk scoring, regression event tracking, and wearable data. All screens are fully native — no browser wrappers. <a href="app.php">See the companion app page</a> for download details.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q">What training tools are built into the platform?</div>
+            <div class="faq-a">The dashboard and companion app include goal intake (define training goals with success criteria and a reinforcement plan), habit repair (protocol lookup and behavior incident logging), behavior risk scoring, regression event tracking, and candidate assessment for prospect dogs.</div>
         </div>
         <div class="faq-item">
             <div class="faq-q">Do I need an account to use the public breed tools?</div>
