@@ -3,7 +3,8 @@
 #
 # Known Render URLs:
 #   Main app:   https://guidepaw.onrender.com
-#   Middleware: https://guidepaw-middleware.onrender.com  (confirm slug after deploy)
+#   Middleware: https://guidepaw-middleware.onrender.com
+
 services:
   # ── Main GuidePaw App ─────────────────────────────────────────────────────
   - type: web
@@ -11,7 +12,7 @@ services:
     runtime: node
     plan: starter
     branch: main
-    buildCommand: npm install && npm run build
+    buildCommand: npm install        # removed "npm run build" — no build script exists
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -31,6 +32,8 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     envVars:
+      - key: NODE_VERSION
+        value: "20"                  # pins to Node 20 LTS — fixes better-sqlite3 compile error
       - key: NODE_ENV
         value: production
       - key: MIDDLEWARE_SECRET
