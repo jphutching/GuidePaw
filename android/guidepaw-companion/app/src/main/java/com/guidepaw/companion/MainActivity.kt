@@ -2,6 +2,8 @@ package com.guidepaw.companion
 
 import android.Manifest
 import android.app.DownloadManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -18,6 +20,7 @@ import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -87,6 +90,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -109,6 +113,9 @@ import android.provider.OpenableColumns
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 import java.util.concurrent.Executors
 
 private data class FeedbackAttachment(
@@ -141,7 +148,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, SMART_ALERTS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -187,6 +194,10 @@ class MainActivity : AppCompatActivity() {
     private var updateStatusText by mutableStateOf("")
     private var showMenu         by mutableStateOf(false)
     private var pendingLaunchSection by mutableStateOf<String?>(null)
+    private var qrResult         by mutableStateOf<GpQrResult?>(null)
+    private var qrBitmap         by mutableStateOf<Bitmap?>(null)
+    private var qrMessage        by mutableStateOf("")
+    private var qrIsLoading      by mutableStateOf(false)
 
     // ── Goal Intake state ──────────────────────────────────────────────────
     private var goalIntakeGoals       by mutableStateOf<List<GpTrainingGoalItem>>(emptyList())
@@ -518,6 +529,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.PROFILE              -> ProfileSection()
                         NavSection.STATS                -> StatsSection()
                         NavSection.DOG_ACCESS           -> DogAccessSection()
+                        NavSection.QR_TRACKING          -> QrTrackingSection()
                         NavSection.SMART_ALERTS         -> SmartAlertsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
@@ -4810,7 +4822,7 @@ class MainActivity : AppCompatActivity() {
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
                     "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
                     "🤝 Dog Access"      to { if (dogAccessResult == null) loadDogAccess(); currentSection = NavSection.DOG_ACCESS },
-                    "📡 QR Tracking"     to { openWebPage("https://guidepaw.app/qr_tracking.php") },
+                    "📡 QR Tracking"     to { loadQrTracking(); currentSection = NavSection.QR_TRACKING },
                     "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
                 ), onDismiss)
                 MenuSheetSection("Training", listOf(
@@ -4923,6 +4935,121 @@ class MainActivity : AppCompatActivity() {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
             )
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun QrTrackingSection() {
+        val result = qrResult
+        val bitmap = qrBitmap
+        val context = LocalContext.current
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadQrTracking() },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text("QR Tracking", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+                }
+
+                SectionMessage(qrMessage, onRetry = { loadQrTracking() })
+
+                if (qrIsLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
+                if (result == null && !qrIsLoading) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("No QR tracking loaded yet.", fontWeight = FontWeight.SemiBold)
+                            Text("Load the active dog's public QR code and recent scan activity.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            Button(onClick = { loadQrTracking() }, modifier = Modifier.fillMaxWidth()) { Text("Load QR Tracking") }
+                        }
+                    }
+                } else if (result != null) {
+                    SummaryCard {
+                        Text(result.dogName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                        Text("Public QR profile", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "QR code for ${result.dogName}",
+                                    modifier = Modifier.size(280.dp),
+                                )
+                            } else {
+                                Text("QR image unavailable.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+
+                            SummaryCard {
+                                Text("Total views", style = MaterialTheme.typography.labelLarge, color = GpOnSurfaceVariant)
+                                Text("${result.totalViews}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                if (result.lastViewed.isNotBlank()) {
+                                    Text("Last viewed: ${result.lastViewed}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+
+                            Text(
+                                text = result.publicUrl,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        cb.setPrimaryClip(ClipData.newPlainText("GuidePaw QR public URL", result.publicUrl))
+                                        qrMessage = "Public URL copied to clipboard."
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                ) { Text("Copy URL") }
+                                Button(
+                                    onClick = { loadQrTracking() },
+                                    modifier = Modifier.weight(1f),
+                                ) { Text("Refresh") }
+                            }
+                        }
+                    }
+
+                    SummaryCard {
+                        Text("Recent scans", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(8.dp))
+                        if (result.recentViews.isEmpty()) {
+                            Text("No recent scans yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        } else {
+                            result.recentViews.forEach { view ->
+                                OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(view.viewedAt.ifBlank { "Unknown time" }, fontWeight = FontWeight.Medium)
+                                        Text(view.device.ifBlank { "Unknown device" }, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        if (view.referrer.isNotBlank()) {
+                                            Text(view.referrer, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -5894,6 +6021,43 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     statsIsLoading = false
                     statsMessage   = friendlyMessage(t.message, "Could not load stats.")
+                }
+            }
+        }
+    }
+
+    private fun loadQrTracking() {
+        val token = currentToken ?: return
+        qrIsLoading = true
+        qrMessage   = "Loading..."
+        worker.execute {
+            try {
+                val result = api.getQrTracking(token)
+                val bitmap = result?.publicUrl?.takeIf { it.isNotBlank() }?.let { publicUrl ->
+                    val encoded = URLEncoder.encode(publicUrl, "UTF-8")
+                    val connection = URL("https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=$encoded").openConnection() as HttpURLConnection
+                    try {
+                        connection.connectTimeout = 10_000
+                        connection.readTimeout = 10_000
+                        connection.doInput = true
+                        connection.requestMethod = "GET"
+                        connection.inputStream.use { BitmapFactory.decodeStream(it) }
+                    } finally {
+                        connection.disconnect()
+                    }
+                }
+                runOnUiThread {
+                    qrResult = result
+                    qrBitmap = bitmap
+                    qrIsLoading = false
+                    qrMessage = if (result == null) "No active dog." else ""
+                    isPullingToRefresh = false
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    qrIsLoading = false
+                    isPullingToRefresh = false
+                    qrMessage = friendlyMessage(t.message, "Could not load QR tracking.")
                 }
             }
         }
