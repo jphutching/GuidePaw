@@ -17,7 +17,7 @@ services:
         value: https://guidepaw.app
       - key: APP_ENV
         value: production
-      # DB vars are set in Render dashboard — sync:false means Blueprint won't overwrite them
+      # All vars below are set in Render dashboard — sync:false prevents Blueprint from wiping them.
       # CRITICAL: db_connect.php reads DB_USERNAME (not DB_USER)
       - key: DB_HOST
         sync: false
@@ -28,6 +28,46 @@ services:
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
+        sync: false
+      - key: DB_DRIVER
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false
+      - key: SMS_NOTIFY_ENABLED
+        sync: false
+      - key: SMS_PROVIDER
+        sync: false
+      - key: FOUND_DOG_NOTIFY_SMS_ENABLED
+        sync: false
+      - key: DOG_ACCESS_NOTIFY_SMS_ENABLED
+        sync: false
+      - key: FOUND_DOG_NOTIFY_EMAIL_ENABLED
+        sync: false
+      - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
+        sync: false
+      - key: BETA_NOTIFY_TELEGRAM_ENABLED
+        sync: false
+      - key: BETA_NOTIFY_EMAIL_ENABLED
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: GUIDEPAW_STRIPE_API_VERSION
+        sync: false
+      - key: GUIDEPAW_STRIPE_SECRET_KEY
+        sync: false
+      - key: GUIDEPAW_STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ZEPTO_SEND_MAIL_TOKEN
+        sync: false
+      - key: GUIDEPAW_COMPANION_VERSION_CODE
+        sync: false
+      - key: GUIDEPAW_COMPANION_VERSION_NAME
         sync: false
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
