@@ -36,6 +36,20 @@ data class GuidePawMeResult(
     val activeDogId: Int?,
 )
 
+data class GpSkillStat(val skill: String, val count: Int)
+data class GpEnvStat(val type: String, val count: Int)
+data class GpTrendDay(val date: String, val logs: Int, val avgFocus: Double)
+data class GpStats(
+    val dogId: Int,
+    val totalLogs: Int,
+    val avgFocus: Double,
+    val logsThisWeek: Int,
+    val logsThisMonth: Int,
+    val topSkills: List<GpSkillStat>,
+    val locationBreakdown: List<GpEnvStat>,
+    val trend14d: List<GpTrendDay>,
+)
+
 data class GpHandlerProfile(
     val id: Int,
     val username: String,
@@ -526,6 +540,40 @@ class GuidePawApiClient(
         val response = requestJson("api/profile.php", "POST", token, payload)
         ensureSuccess(response)
         return response.json.optString("message", "Profile saved.")
+    }
+
+    fun getStats(token: String): GpStats? {
+        val response = requestJson("api/stats.php", "GET", token, null)
+        ensureSuccess(response)
+        val s = response.json.optJSONObject("stats") ?: return null
+        val skills = s.optJSONArray("top_skills")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpSkillStat(o.optString("skill"), o.optInt("count"))
+            }
+        }.orEmpty()
+        val envs = s.optJSONArray("location_breakdown")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpEnvStat(o.optString("type", "Other"), o.optInt("count"))
+            }
+        }.orEmpty()
+        val trend = s.optJSONArray("trend_14d")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpTrendDay(o.optString("date"), o.optInt("logs"), o.optDouble("avg_focus"))
+            }
+        }.orEmpty()
+        return GpStats(
+            dogId            = response.json.optInt("dog_id"),
+            totalLogs        = s.optInt("total_logs"),
+            avgFocus         = s.optDouble("avg_focus"),
+            logsThisWeek     = s.optInt("logs_this_week"),
+            logsThisMonth    = s.optInt("logs_this_month"),
+            topSkills        = skills,
+            locationBreakdown = envs,
+            trend14d         = trend,
+        )
     }
 
     fun dogs(token: String): List<GuidePawDogItem> {

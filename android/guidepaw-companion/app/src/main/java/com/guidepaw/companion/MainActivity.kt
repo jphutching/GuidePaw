@@ -140,7 +140,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -352,6 +352,11 @@ class MainActivity : AppCompatActivity() {
     private var profileSmsPhone      by mutableStateOf("")
     private var profileSmsEnabled    by mutableStateOf(false)
 
+    // ── Stats state ────────────────────────────────────────────────────────
+    private var statsResult      by mutableStateOf<GpStats?>(null)
+    private var statsMessage     by mutableStateOf("")
+    private var statsIsLoading   by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -469,6 +474,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.HEALTH_DOCS          -> HealthDocsSection()
                         NavSection.CERTIFICATION        -> CertificationSection()
                         NavSection.PROFILE              -> ProfileSection()
+                        NavSection.STATS                -> StatsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -1196,6 +1202,150 @@ class MainActivity : AppCompatActivity() {
                     onClick  = { beginEditLog(log) },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Edit") }
+            }
+        }
+    }
+
+    // ── Stats section ───────────────────────────────────────────────────────
+    @Composable
+    private fun StatsSection() {
+        val stats = statsResult
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("Training Stats", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    if (activeDog != null)
+                        Text(activeDog.name, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+                TextButton(onClick = { loadStats() }) { Text("Refresh") }
+            }
+
+            if (statsIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+            if (statsMessage.isNotBlank()) {
+                Text(
+                    statsMessage,
+                    color = if (isErrorText(statsMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            if (stats == null && !statsIsLoading) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("No stats loaded", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadStats() }, modifier = Modifier.fillMaxWidth()) { Text("Load Stats") }
+                    }
+                }
+            }
+
+            if (stats != null) {
+                // Summary row
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatTile("Total Logs",   stats.totalLogs.toString(),              Modifier.weight(1f))
+                    StatTile("Avg Focus",    if (stats.totalLogs > 0) "%.2f".format(stats.avgFocus) else "—", Modifier.weight(1f))
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatTile("This Week",  stats.logsThisWeek.toString(),  Modifier.weight(1f))
+                    StatTile("This Month", stats.logsThisMonth.toString(), Modifier.weight(1f))
+                }
+
+                // Top skills
+                if (stats.topSkills.isNotEmpty()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Top Skills", fontWeight = FontWeight.SemiBold)
+                            val maxCount = stats.topSkills.maxOf { it.count }.coerceAtLeast(1)
+                            stats.topSkills.forEach { s ->
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Row(
+                                        modifier              = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Text(s.skill, style = MaterialTheme.typography.bodySmall)
+                                        Text(s.count.toString(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { s.count.toFloat() / maxCount },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color    = GpPrimary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Environment breakdown
+                if (stats.locationBreakdown.isNotEmpty()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Environment Breakdown", fontWeight = FontWeight.SemiBold)
+                            val maxEnv = stats.locationBreakdown.maxOf { it.count }.coerceAtLeast(1)
+                            stats.locationBreakdown.forEach { e ->
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Row(
+                                        modifier              = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Text(e.type, style = MaterialTheme.typography.bodySmall)
+                                        Text(e.count.toString(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { e.count.toFloat() / maxEnv },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color    = GpPrimary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 14-day trend
+                if (stats.trend14d.isNotEmpty()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Last 14 Days", fontWeight = FontWeight.SemiBold)
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Text("Date",      style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(2f), color = GpOnSurfaceVariant)
+                                Text("Logs",      style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f), color = GpOnSurfaceVariant)
+                                Text("Avg Focus", style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f), color = GpOnSurfaceVariant)
+                            }
+                            HorizontalDivider()
+                            stats.trend14d.forEach { day ->
+                                Row(modifier = Modifier.fillMaxWidth()) {
+                                    Text(day.date.takeLast(5), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(2f))
+                                    Text(day.logs.toString(),  style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                                    Text("%.2f".format(day.avgFocus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+        }
+    }
+
+    @Composable
+    private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
+        OutlinedCard(modifier = modifier) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(label, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -4257,7 +4407,7 @@ class MainActivity : AppCompatActivity() {
                     "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
                     "🤝 Dog Access"      to { openWebPage("https://guidepaw.app/dog_access.php") },
                     "📡 QR Tracking"     to { openWebPage("https://guidepaw.app/qr_tracking.php") },
-                    "📊 Stats"           to { openWebPage("https://guidepaw.app/stats.php") },
+                    "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
                 ), onDismiss)
                 MenuSheetSection("Training", listOf(
                     "⚡ Log Training"         to { currentSection = NavSection.TRAINING },
@@ -5241,6 +5391,27 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadMedications() }
             } catch (t: Throwable) {
                 runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not update status.") }
+            }
+        }
+    }
+
+    private fun loadStats() {
+        val token = currentToken ?: return
+        statsIsLoading = true
+        statsMessage   = "Loading..."
+        worker.execute {
+            try {
+                val result = api.getStats(token)
+                runOnUiThread {
+                    statsResult    = result
+                    statsIsLoading = false
+                    statsMessage   = if (result == null) "No active dog." else ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    statsIsLoading = false
+                    statsMessage   = friendlyMessage(t.message, "Could not load stats.")
+                }
             }
         }
     }
