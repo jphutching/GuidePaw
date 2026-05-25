@@ -74,4 +74,5 @@ echo "  Middleware  : $MIDDLEWARE_URL"
 echo "  Repo        : $REPO_ROOT"
 echo ""
 
-codex --full-auto --system-prompt "$CONTEXT" "$TASK"
+printf '%s\n\n---\n%s' "$CONTEXT" "$TASK" | \
+  codex exec --dangerously-bypass-approvals-and-sandbox -
