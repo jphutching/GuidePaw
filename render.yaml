@@ -2,7 +2,7 @@
 # Add to repo root, push, then in Render: New → Blueprint → connect jphutching/GuidePaw
 #
 # Known Render URLs:
-#   Main app:   https://guidepaw.onrender.com
+#   Main app:   https://guidepaw-ch3y.onrender.com
 #   Middleware: https://guidepaw-middleware.onrender.com
 
 services:
@@ -45,7 +45,7 @@ services:
       - key: DB_PATH
         value: /tmp/guidepaw-sessions.db
       - key: RENDER_APP_URL
-        value: https://guidepaw.onrender.com
+        value: https://guidepaw-ch3y.onrender.com
       - key: RENDER_MIDDLEWARE_URL
         value: https://guidepaw-middleware.onrender.com
       - key: RENDER_API_KEY

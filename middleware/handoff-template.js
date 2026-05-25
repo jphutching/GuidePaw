@@ -71,7 +71,7 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 - **Repo:** https://github.com/jphutching/GuidePaw (private)
 - **Local:** /home/james/projects/guidepaw
 - **Middleware (laptop):** http://10.147.18.184:3333
-- **App (Render):** https://guidepaw.onrender.com
+- **App (Render):** https://guidepaw-ch3y.onrender.com
 - **Middleware (Render):** https://guidepaw-middleware.onrender.com
 
 ---
