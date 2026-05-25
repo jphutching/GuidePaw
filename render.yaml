@@ -15,6 +15,20 @@ services:
     envVars:
       - key: APP_URL
         value: https://guidepaw.app
+      - key: APP_ENV
+        value: production
+      # DB vars are set in Render dashboard — sync:false means Blueprint won't overwrite them
+      # CRITICAL: db_connect.php reads DB_USERNAME (not DB_USER)
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
