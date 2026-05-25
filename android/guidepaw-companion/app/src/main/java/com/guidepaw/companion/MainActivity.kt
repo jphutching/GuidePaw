@@ -102,10 +102,19 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import android.database.Cursor
+import android.provider.OpenableColumns
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Executors
+
+private data class FeedbackAttachment(
+    val uri         : Uri,
+    val displayName : String,
+    val mimeType    : String,
+    val sizeBytes   : Long?,
+)
 
 // ── Brand colours ──────────────────────────────────────────────────────────
 private val GpPrimary          = Color(0xFF0D6EFD)
@@ -130,7 +139,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -296,6 +305,15 @@ class MainActivity : AppCompatActivity() {
     private var medNotes           by mutableStateOf("")
     private var medShowForm        by mutableStateOf(false)
 
+    // ── Feedback state ──────────────────────────────────────────────────────
+    private var feedbackCategory     by mutableStateOf("bug")
+    private var feedbackPageWorkflow by mutableStateOf("")
+    private var feedbackEmail        by mutableStateOf("")
+    private var feedbackDetails      by mutableStateOf("")
+    private var feedbackAttachments  by mutableStateOf<List<FeedbackAttachment>>(emptyList())
+    private var feedbackMessage      by mutableStateOf("")
+    private var feedbackIsLoading    by mutableStateOf(false)
+
     // ── Notification Center state ───────────────────────────────────────────
     private var notifResult      by mutableStateOf<GuidePawNotificationsResult?>(null)
     private var notifMessage     by mutableStateOf("")
@@ -408,6 +426,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.WEARABLES      -> WearablesSection()
                         NavSection.MORE           -> OverviewSection()
                         NavSection.NOTIFICATIONS  -> NotificationsSection()
+                        NavSection.FEEDBACK       -> FeedbackSection()
                         NavSection.GOAL_INTAKE          -> GoalIntakeSection()
                         NavSection.GOAL_BUILDER         -> GoalBuilderSection()
                         NavSection.HABIT_REPAIR         -> HabitRepairSection()
@@ -571,7 +590,7 @@ class MainActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign In") }
             TextButton(
-                onClick = { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+                onClick  = { currentSection = NavSection.FEEDBACK },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Report an issue", fontSize = 13.sp, color = Color(0xFF6B7280)) }
         }
@@ -1376,6 +1395,146 @@ class MainActivity : AppCompatActivity() {
                     Button(onClick = { notifAcceptInvite(invite.handlerId) }, modifier = Modifier.weight(1f)) { Text("Accept") }
                     OutlinedButton(onClick = { notifDeclineInvite(invite.handlerId) }, modifier = Modifier.weight(1f)) { Text("Decline") }
                 }
+            }
+        }
+    }
+
+    // ── Feedback section ────────────────────────────────────────────────────
+    @Composable
+    private fun FeedbackSection() {
+        val attachmentLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != RESULT_OK) return@rememberLauncherForActivityResult
+            val data = result.data ?: return@rememberLauncherForActivityResult
+            val picked = mutableListOf<FeedbackAttachment>()
+            val clip = data.clipData
+            if (clip != null) {
+                for (i in 0 until clip.itemCount) {
+                    feedbackResolveAttachment(clip.getItemAt(i).uri ?: continue)?.let(picked::add)
+                }
+            } else {
+                data.data?.let { feedbackResolveAttachment(it)?.let(picked::add) }
+            }
+            if (picked.isNotEmpty()) feedbackAttachments = feedbackAttachments + picked
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Feedback / Bug Report", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            if (feedbackMessage.isNotBlank()) {
+                Text(feedbackMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+            if (feedbackIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+            SummaryCard {
+                Text(
+                    "Submitted from GuidePaw Companion v${CompanionAppVersion.VERSION_NAME} on Android.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+
+                Spacer(Modifier.height(8.dp))
+                Text("Category", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                Row(
+                    modifier              = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    listOf("bug" to "Bug", "feature" to "Feature", "enhancement" to "Enhancement").forEach { (value, label) ->
+                        FilterChip(
+                            selected = feedbackCategory == value,
+                            onClick  = { feedbackCategory = value },
+                            label    = { Text(label, fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value           = feedbackPageWorkflow,
+                    onValueChange   = { feedbackPageWorkflow = it },
+                    label           = { Text("Page or workflow") },
+                    placeholder     = { Text("dogs.php, login, training log", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier        = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value           = feedbackEmail,
+                    onValueChange   = { feedbackEmail = it },
+                    label           = { Text("Contact email (optional)") },
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrect = false),
+                    modifier        = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value           = feedbackDetails,
+                    onValueChange   = { feedbackDetails = it },
+                    label           = { Text("Details") },
+                    placeholder     = { Text("What happened, what you expected, steps to reproduce.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
+                    minLines        = 5,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, capitalization = KeyboardCapitalization.Sentences),
+                    modifier        = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(4.dp))
+                Text("Attachments", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                if (feedbackAttachments.isEmpty()) {
+                    Text("No attachments selected.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                } else {
+                    feedbackAttachments.forEachIndexed { i, a ->
+                        Text(
+                            "${i + 1}. ${a.displayName} (${a.mimeType.ifBlank { "file" }}${a.sizeBytes?.let { ", ${feedbackFormatBytes(it)}" } ?: ""})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                    }
+                }
+                Row(
+                    modifier              = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick  = {
+                            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                                type = "*/*"
+                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
+                                    "image/*", "video/*", "audio/*", "application/pdf",
+                                    "text/plain", "text/csv", "application/json",
+                                    "application/msword",
+                                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                ))
+                            }
+                            attachmentLauncher.launch(Intent.createChooser(intent, "Select attachments"))
+                        },
+                        enabled  = !feedbackIsLoading,
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Attach file", fontSize = 13.sp) }
+                    OutlinedButton(
+                        onClick  = { feedbackAttachments = emptyList() },
+                        enabled  = !feedbackIsLoading && feedbackAttachments.isNotEmpty(),
+                    ) { Text("Clear") }
+                }
+
+                Spacer(Modifier.height(4.dp))
+                Button(
+                    onClick  = { feedbackSubmit() },
+                    enabled  = !feedbackIsLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Send feedback") }
+                OutlinedButton(
+                    onClick  = { openWebPage("https://guidepaw.app/feedback.php") },
+                    enabled  = !feedbackIsLoading,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                ) { Text("Open web feedback") }
             }
         }
     }
@@ -3726,7 +3885,7 @@ class MainActivity : AppCompatActivity() {
                 MenuSheetSection("More", listOf(
                     "🔔 Notifications"     to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
                     "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
-                    "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
+                    "💬 Feedback"          to { currentSection = NavSection.FEEDBACK },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
@@ -4977,6 +5136,124 @@ class MainActivity : AppCompatActivity() {
         recoveryKeyText = ""
         showTwoFactor   = false
         showLoggedOut(message)
+    }
+
+    // ── Feedback helpers ────────────────────────────────────────────────────
+
+    private fun feedbackSubmit() {
+        val detailsVal = feedbackDetails.trim()
+        if (detailsVal.isBlank()) { feedbackMessage = "Add details before sending."; return }
+        feedbackIsLoading = true
+        feedbackMessage   = "Sending feedback..."
+        val token         = currentToken
+        val category      = feedbackCategory
+        val pageVal       = feedbackPageWorkflow.trim()
+        val emailVal      = feedbackEmail.trim()
+        val attaches      = feedbackAttachments.toList()
+        worker.execute {
+            try {
+                val attachmentInputs = attaches.map { a ->
+                    GuidePawFeedbackAttachmentInput(uri = a.uri, displayName = a.displayName, mimeType = a.mimeType)
+                }
+                val response = api.submitFeedback(
+                    token           = token,
+                    category        = category,
+                    pageWorkflow    = pageVal,
+                    contactEmail    = emailVal,
+                    details         = detailsVal,
+                    sourceVersion   = CompanionAppVersion.VERSION_NAME,
+                    sourceDevice    = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim(),
+                    attachments     = attachmentInputs,
+                    contentResolver = contentResolver,
+                )
+                runOnUiThread {
+                    feedbackMessage = buildString {
+                        append(response.message ?: "Feedback sent.")
+                        if (response.uploadDebug.isNotEmpty()) append(" ${response.uploadDebug.joinToString(" | ")}")
+                    }
+                    feedbackAttachments  = emptyList()
+                    feedbackDetails      = ""
+                    feedbackPageWorkflow = ""
+                    feedbackEmail        = ""
+                    feedbackCategory     = "bug"
+                    feedbackIsLoading    = false
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { feedbackMessage = friendlyMessage(e.message, "Could not send feedback."); feedbackIsLoading = false }
+            } catch (t: Throwable) {
+                runOnUiThread { feedbackMessage = friendlyMessage(t.message, "Could not send feedback."); feedbackIsLoading = false }
+            }
+        }
+    }
+
+    private fun feedbackResolveAttachment(uri: Uri): FeedbackAttachment? {
+        val projection  = arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
+        val name = runCatching {
+            contentResolver.query(uri, projection, null, null, null)?.use { it.feedbackReadName(uri) }
+        }.getOrNull()
+        val mime        = contentResolver.getType(uri).orEmpty()
+        val displayName = feedbackEnsureExtension(
+            name ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: "attachment",
+            mime,
+        )
+        val size = runCatching {
+            contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (!c.moveToFirst()) null
+                else { val idx = c.getColumnIndex(OpenableColumns.SIZE); if (idx >= 0 && !c.isNull(idx)) c.getLong(idx).takeIf { it > 0 } else null }
+            }
+        }.getOrNull()
+        return FeedbackAttachment(uri = uri, displayName = displayName, mimeType = mime.ifBlank { feedbackInferMime(displayName) }, sizeBytes = size)
+    }
+
+    private fun Cursor.feedbackReadName(uri: Uri): String? {
+        if (!moveToFirst()) return null
+        val idx = getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        return (if (idx >= 0 && !isNull(idx)) getString(idx)?.trim()?.takeIf { it.isNotBlank() } else null)
+            ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+    }
+
+    private fun feedbackInferMime(name: String): String {
+        val lower = name.lowercase()
+        return when {
+            lower.endsWith(".pdf")  -> "application/pdf"
+            lower.endsWith(".doc")  -> "application/msword"
+            lower.endsWith(".docx") -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            lower.endsWith(".csv")  -> "text/csv"
+            lower.endsWith(".json") -> "application/json"
+            lower.endsWith(".txt") || lower.endsWith(".log") -> "text/plain"
+            lower.endsWith(".mp3")  -> "audio/mpeg"
+            lower.endsWith(".m4a")  -> "audio/mp4"
+            lower.endsWith(".wav")  -> "audio/wav"
+            lower.endsWith(".mp4")  -> "video/mp4"
+            lower.endsWith(".mov")  -> "video/quicktime"
+            lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
+            lower.endsWith(".png")  -> "image/png"
+            lower.endsWith(".gif")  -> "image/gif"
+            lower.endsWith(".webp") -> "image/webp"
+            else                    -> "application/octet-stream"
+        }
+    }
+
+    private fun feedbackEnsureExtension(displayName: String, mimeType: String): String {
+        val current = displayName.trim().ifBlank { "attachment" }
+        if (current.contains('.')) return current
+        val ext = when (mimeType.lowercase()) {
+            "application/pdf"     -> "pdf"; "application/msword" -> "doc"
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> "docx"
+            "text/csv"            -> "csv"; "application/json"   -> "json"; "text/plain" -> "txt"
+            "audio/mpeg"          -> "mp3"; "audio/mp4"          -> "m4a";  "audio/wav"  -> "wav"
+            "video/mp4"           -> "mp4"; "video/quicktime"    -> "mov"
+            "image/jpeg"          -> "jpg"; "image/png"          -> "png";  "image/gif"  -> "gif"
+            "image/webp"          -> "webp"
+            else                  -> ""
+        }
+        return if (ext.isBlank()) current else "$current.$ext"
+    }
+
+    private fun feedbackFormatBytes(bytes: Long): String = when {
+        bytes >= 1024 * 1024 -> String.format("%.1f MB", bytes / 1024.0 / 1024.0)
+        bytes >= 1024        -> String.format("%.1f KB", bytes / 1024.0)
+        else                 -> "$bytes B"
     }
 
     private fun saveToken(token: String) {
