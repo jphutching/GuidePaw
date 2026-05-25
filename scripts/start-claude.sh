@@ -54,5 +54,7 @@ echo "  Middleware  : $MIDDLEWARE_URL"
 echo "  Repo        : $REPO_ROOT"
 echo ""
 
+# Unset API key so Claude Code uses claude.ai account auth (avoids auth conflict)
+unset ANTHROPIC_API_KEY
 # Claude Code reads .claude/CLAUDE.md automatically — no --system-prompt needed
 claude --dangerously-skip-permissions
