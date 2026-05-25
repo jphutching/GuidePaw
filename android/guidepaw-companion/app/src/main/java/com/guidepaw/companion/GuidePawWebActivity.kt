@@ -128,6 +128,14 @@ class GuidePawWebActivity : AppCompatActivity() {
                         wv.settings.domStorageEnabled  = true
                         wv.webViewClient = object : WebViewClient() {
                             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                                if (GuidePawNavigation.isNotificationCenterUrl(request.url)) {
+                                    GuidePawNavigation.openNativeSection(
+                                        this@GuidePawWebActivity,
+                                        GuidePawNavigation.OPEN_SECTION_NOTIFICATIONS,
+                                        accessToken,
+                                    )
+                                    return true
+                                }
                                 val host = request.url.host.orEmpty().lowercase()
                                 if (host == "guidepaw.app" || host.endsWith(".guidepaw.app")) return false
                                 startActivity(Intent(Intent.ACTION_VIEW, request.url))

@@ -57,6 +57,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -185,6 +186,7 @@ class MainActivity : AppCompatActivity() {
     private var showUpdateCard   by mutableStateOf(false)
     private var updateStatusText by mutableStateOf("")
     private var showMenu         by mutableStateOf(false)
+    private var pendingLaunchSection by mutableStateOf<String?>(null)
 
     // ── Goal Intake state ──────────────────────────────────────────────────
     private var goalIntakeGoals       by mutableStateOf<List<GpTrainingGoalItem>>(emptyList())
@@ -322,6 +324,7 @@ class MainActivity : AppCompatActivity() {
     private var notifPrefCare    by mutableStateOf(true)
     private var notifPrefAdmin   by mutableStateOf(true)
     private var notifPrefGeneral by mutableStateOf(true)
+    private var notifSelectedIds by mutableStateOf<Set<Int>>(emptySet())
 
     // ── Wearables state ────────────────────────────────────────────────────
     private var wearableResult        by mutableStateOf<GuidePawWearableResult?>(null)
@@ -418,12 +421,22 @@ class MainActivity : AppCompatActivity() {
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         checkForAppUpdate()
 
+        pendingLaunchSection = intent?.getStringExtra(GuidePawNavigation.EXTRA_OPEN_SECTION)
+        val launchToken = intent?.getStringExtra(GuidePawWebActivity.EXTRA_ACCESS_TOKEN).orEmpty().trim().takeIf { it.isNotBlank() }
         val storedToken = prefs.getString(KEY_TOKEN, null)
-        if (!storedToken.isNullOrBlank()) {
-            currentToken = storedToken
+        val startToken = storedToken ?: launchToken
+        if (!startToken.isNullOrBlank()) {
+            currentToken = startToken
+            if (storedToken.isNullOrBlank() && !launchToken.isNullOrBlank()) {
+                prefs.edit().putString(KEY_TOKEN, launchToken).commit()
+            }
             statusMessage = "Restoring saved session..."
             restoreCachedDashboard()
-            refreshDashboard(storedToken, null)
+            refreshDashboard(startToken, null)
+            if (pendingLaunchSection == GuidePawNavigation.OPEN_SECTION_NOTIFICATIONS) {
+                currentSection = NavSection.NOTIFICATIONS
+                refreshNotifications()
+            }
         } else {
             showLoggedOut("Sign in to load your dogs, logs, and training dashboard.")
         }
@@ -442,6 +455,20 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         checkForAppUpdate()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        pendingLaunchSection = intent.getStringExtra(GuidePawNavigation.EXTRA_OPEN_SECTION)
+        val launchToken = intent.getStringExtra(GuidePawWebActivity.EXTRA_ACCESS_TOKEN).orEmpty().trim().takeIf { it.isNotBlank() }
+        if (currentToken.isNullOrBlank() && !launchToken.isNullOrBlank()) {
+            currentToken = launchToken
+            prefs.edit().putString(KEY_TOKEN, launchToken).commit()
+        }
+        if (pendingLaunchSection == GuidePawNavigation.OPEN_SECTION_NOTIFICATIONS) {
+            currentSection = NavSection.NOTIFICATIONS
+            if (!currentToken.isNullOrBlank()) refreshNotifications()
+        }
     }
 
     // ── Root composable ─────────────────────────────────────────────────────
@@ -521,7 +548,7 @@ class MainActivity : AppCompatActivity() {
                     NavSection.OVERVIEW       -> "Home"
                     NavSection.TRAINING       -> "Log"
                     NavSection.DOGS           -> "History"
-                    NavSection.NOTIFICATIONS  -> "Inbox"
+                    NavSection.NOTIFICATIONS  -> "Notifications"
                     else                      -> "Menu"
                 }
                 NavigationBarItem(
@@ -2069,7 +2096,7 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Notification Inbox", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Notification Center", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             if (notifMessage.isNotBlank()) {
                 Text(notifMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
@@ -2134,16 +2161,45 @@ class MainActivity : AppCompatActivity() {
                         onClick  = { refreshNotifications() },
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     ) { Text("Refresh") }
-                    OutlinedButton(
-                        onClick  = { openWebPage("https://guidepaw.app/notifications.php") },
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    ) { Text("Open web notifications") }
                 }
 
                 // Notification list
                 SummaryCard {
-                    Text("Notifications", fontWeight = FontWeight.SemiBold)
                     val notifications = result?.notifications ?: emptyList()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Notifications", fontWeight = FontWeight.SemiBold)
+                        if (notifications.isNotEmpty()) {
+                            Text(
+                                "${notifSelectedIds.size} selected",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (notifications.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            OutlinedButton(
+                                onClick = { notifSelectedIds = notifications.map { it.id }.toSet() },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Select all") }
+                            OutlinedButton(
+                                onClick = { notifSelectedIds = emptySet() },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Clear") }
+                            Button(
+                                onClick = { notifDeleteSelected(notifSelectedIds.toList()) },
+                                enabled = notifSelectedIds.isNotEmpty(),
+                                modifier = Modifier.weight(1f),
+                            ) { Text("Delete selected") }
+                        }
+                    }
                     if (notifications.isEmpty()) {
                         Text(
                             "No notifications yet.",
@@ -2152,7 +2208,19 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.padding(top = 4.dp),
                         )
                     } else {
-                        notifications.forEach { NotifNotificationCard(it) }
+                        notifications.forEach { notification ->
+                            NotifNotificationCard(
+                                notification = notification,
+                                selected = notifSelectedIds.contains(notification.id),
+                                onSelectedChange = { selected ->
+                                    notifSelectedIds = if (selected) {
+                                        notifSelectedIds + notification.id
+                                    } else {
+                                        notifSelectedIds - notification.id
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -2176,22 +2244,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun NotifNotificationCard(notification: GuidePawNotificationItem) {
+    private fun NotifNotificationCard(
+        notification: GuidePawNotificationItem,
+        selected: Boolean,
+        onSelectedChange: (Boolean) -> Unit,
+    ) {
+        val context = LocalContext.current
         OutlinedCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
         ) {
             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(notification.title, fontWeight = FontWeight.SemiBold)
-                val meta = buildString {
-                    append(notification.category)
-                    if (notification.dogName.isNotBlank()) { append(" · "); append(notification.dogName) }
-                    append(" · ")
-                    append(if (notification.isRead) "read" else "unread")
-                    if (notification.priority.isNotBlank()) { append(" · "); append(notification.priority) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Checkbox(
+                        checked = selected,
+                        onCheckedChange = onSelectedChange,
+                    )
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(notification.title, fontWeight = FontWeight.SemiBold)
+                        val meta = buildString {
+                            append(notification.category)
+                            if (notification.dogName.isNotBlank()) { append(" · "); append(notification.dogName) }
+                            append(" · ")
+                            append(if (notification.isRead) "read" else "unread")
+                            if (notification.priority.isNotBlank()) { append(" · "); append(notification.priority) }
+                        }
+                        Text(meta, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
                 }
-                Text(meta, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                 if (notification.body.isNotBlank()) {
                     Text(notification.body, style = MaterialTheme.typography.bodySmall)
                 }
@@ -2208,6 +2293,13 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     if (notification.actionUrl.isNotBlank()) {
                         Button(onClick = { openWebPage(notification.actionUrl) }, modifier = Modifier.weight(1f)) { Text("Open") }
+                        OutlinedButton(
+                            onClick = {
+                                val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                cb.setPrimaryClip(ClipData.newPlainText("GuidePaw notification link", notification.actionUrl))
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Copy link") }
                     }
                     if (!notification.isRead) {
                         Button(onClick = { notifMarkSelectedRead(notification.id) }, modifier = Modifier.weight(1f)) { Text("Mark read") }
@@ -4739,7 +4831,7 @@ class MainActivity : AppCompatActivity() {
                     "⌚ Wearable Sync"    to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
-                    "🔔 Notifications"     to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
+                    "🔔 Notification Center" to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
                     "🧠 Smart Alerts"      to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
                     "💬 Feedback"          to { currentSection = NavSection.FEEDBACK },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
@@ -4910,6 +5002,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult       = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = ""
                 }
             } catch (e: GuidePawApiException) {
@@ -4936,6 +5029,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = "Preferences saved."
                 }
             } catch (e: GuidePawApiException) {
@@ -4956,6 +5050,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = "All notifications marked read."
                 }
             } catch (e: GuidePawApiException) {
@@ -4976,6 +5071,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = ""
                 }
             } catch (e: GuidePawApiException) {
@@ -4988,6 +5084,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun notifDeleteSelected(notificationIds: List<Int>) {
         val token = currentToken ?: return
+        if (notificationIds.isEmpty()) return
         notifMessage = "Deleting..."
         worker.execute {
             try {
@@ -4996,6 +5093,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = ""
                 }
             } catch (e: GuidePawApiException) {
@@ -5016,6 +5114,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = "Invite accepted."
                 }
             } catch (e: GuidePawApiException) {
@@ -5036,6 +5135,7 @@ class MainActivity : AppCompatActivity() {
                     notifResult = result
                     currentUnreadCount = result.visibleUnreadCount
                     notifSyncPreferences(result.preferences)
+                    notifSelectedIds = emptySet()
                     notifMessage = "Invite declined."
                 }
             } catch (e: GuidePawApiException) {
