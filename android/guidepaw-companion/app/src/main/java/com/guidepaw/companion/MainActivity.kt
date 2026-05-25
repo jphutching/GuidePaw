@@ -113,7 +113,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -230,6 +230,18 @@ class MainActivity : AppCompatActivity() {
     private var candidateHealthNotes  by mutableStateOf("")
     private var candidateSafetyFlags  by mutableStateOf("")
     private var candidateDogExpanded  by mutableStateOf(false)
+
+    // ── Certification state ────────────────────────────────────────────────
+    private var certResult             by mutableStateOf<GpCertResult?>(null)
+    private var certMessage            by mutableStateOf("")
+    private var certExpandedCategories by mutableStateOf<Set<String>>(emptySet())
+    private var certAsmDate            by mutableStateOf("")
+    private var certAsmPublic          by mutableStateOf("")
+    private var certAsmTask            by mutableStateOf("")
+    private var certAsmObedience       by mutableStateOf("")
+    private var certAsmEnv             by mutableStateOf("")
+    private var certAsmNotes           by mutableStateOf("")
+    private var certShowAsmForm        by mutableStateOf(false)
 
     // ── Health Docs state ──────────────────────────────────────────────────
     private var healthDocsResult   by mutableStateOf<GpHealthDocsResult?>(null)
@@ -380,6 +392,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.MEDICATIONS          -> MedicationsSection()
                         NavSection.APPOINTMENTS         -> VetAppointmentsSection()
                         NavSection.HEALTH_DOCS          -> HealthDocsSection()
+                        NavSection.CERTIFICATION        -> CertificationSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -2432,6 +2445,205 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Certification section ───────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun CertificationSection() {
+        val result = certResult
+        val byCategory = result?.items?.groupBy { it.category } ?: emptyMap()
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadCertification(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (result != null) "✅ ${result.dogName}" else "✅ Certification",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(certMessage, onRetry = { loadCertification() })
+
+                // Summary stats
+                if (result != null) {
+                    SummaryCard {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            StatChip("Items", result.total.toString(), Modifier.weight(1f))
+                            StatChip("Proficient", result.proficient.toString(), Modifier.weight(1f))
+                            StatChip("In training", result.inTraining.toString(), Modifier.weight(1f))
+                            StatChip("Ready", "${result.readinessPct}%", Modifier.weight(1f))
+                        }
+                    }
+                }
+
+                // Checklist
+                if (result != null && result.items.isEmpty()) {
+                    SummaryCard {
+                        Text("No checklist loaded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { seedCertTemplate() }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Load starter checklist")
+                        }
+                    }
+                }
+
+                byCategory.forEach { (category, items) ->
+                    val expanded = certExpandedCategories.contains(category)
+                    val proficientInCat = items.count { it.status == "proficient" }
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            // Category header — tap to expand/collapse
+                            TextButton(
+                                onClick  = {
+                                    certExpandedCategories = if (expanded)
+                                        certExpandedCategories - category
+                                    else
+                                        certExpandedCategories + category
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                            ) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.CenterVertically,
+                                ) {
+                                    Text(category, fontWeight = FontWeight.SemiBold, color = GpOnSurface)
+                                    Text(
+                                        "$proficientInCat/${items.size}  ${if (expanded) "▲" else "▼"}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GpOnSurfaceVariant,
+                                    )
+                                }
+                            }
+
+                            if (expanded) {
+                                HorizontalDivider()
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    items.forEach { item ->
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(item.itemName, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                                            if (item.description.isNotBlank()) {
+                                                Text(item.description, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                            }
+                                            if (item.notes.isNotBlank()) {
+                                                Text("Note: ${item.notes}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                            }
+                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                listOf("not_started" to "Not started", "in_training" to "In training", "proficient" to "Proficient")
+                                                    .forEach { (value, label) ->
+                                                        if (item.status == value) {
+                                                            Button(
+                                                                onClick        = {},
+                                                                modifier       = Modifier.weight(1f),
+                                                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                                            ) { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                                                        } else {
+                                                            OutlinedButton(
+                                                                onClick        = { updateCertItem(item.id, value, item.notes) },
+                                                                modifier       = Modifier.weight(1f),
+                                                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                                            ) { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                                                        }
+                                                    }
+                                            }
+                                            if (item !== items.last()) HorizontalDivider(color = GpOutline)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Assessment snapshot
+                if (result?.assessment != null) {
+                    val asm = result.assessment
+                    SummaryCard {
+                        Text("Latest assessment snapshot", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        Text(formatAssessmentDate(asm.assessmentDate), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            StatChip("Public", asm.publicAccessScore?.let { "$it%" } ?: "—", Modifier.weight(1f))
+                            StatChip("Task", asm.taskReliabilityScore?.let { "$it%" } ?: "—", Modifier.weight(1f))
+                            StatChip("Obedience", asm.obedienceScore?.let { "$it%" } ?: "—", Modifier.weight(1f))
+                            StatChip("Environ.", asm.environmentalScore?.let { "$it%" } ?: "—", Modifier.weight(1f))
+                        }
+                        if (asm.notes.isNotBlank()) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(asm.notes, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+
+                // Add assessment form
+                OutlinedButton(onClick = { certShowAsmForm = !certShowAsmForm }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (certShowAsmForm) "Cancel" else "+ Add Assessment")
+                }
+                if (certShowAsmForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("New assessment", fontWeight = FontWeight.SemiBold)
+                            OutlinedTextField(
+                                value = certAsmDate, onValueChange = { certAsmDate = it },
+                                label = { Text("Date") }, placeholder = { Text("YYYY-MM-DD") },
+                                modifier = Modifier.fillMaxWidth(), singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = certAsmPublic, onValueChange = { certAsmPublic = it },
+                                    label = { Text("Public access %") }, modifier = Modifier.weight(1f), singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                                OutlinedTextField(
+                                    value = certAsmTask, onValueChange = { certAsmTask = it },
+                                    label = { Text("Task %") }, modifier = Modifier.weight(1f), singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = certAsmObedience, onValueChange = { certAsmObedience = it },
+                                    label = { Text("Obedience %") }, modifier = Modifier.weight(1f), singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                                OutlinedTextField(
+                                    value = certAsmEnv, onValueChange = { certAsmEnv = it },
+                                    label = { Text("Environmental %") }, modifier = Modifier.weight(1f), singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                            }
+                            OutlinedTextField(
+                                value = certAsmNotes, onValueChange = { certAsmNotes = it },
+                                label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 2,
+                            )
+                            Button(onClick = { submitCertAssessment() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Save Assessment")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Health Docs section ─────────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -3194,7 +3406,7 @@ class MainActivity : AppCompatActivity() {
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
-                    "✅ Certification"      to { openWebPage("https://guidepaw.app/certification.php") },
+                    "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
                 ), onDismiss)
@@ -3761,6 +3973,76 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (t: Throwable) {
                 runOnUiThread { candidateMessage = friendlyMessage(t.message, "Could not archive assessment.") }
+            }
+        }
+    }
+
+    private fun loadCertification() {
+        val token = currentToken ?: return
+        certMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.certification(token)
+                runOnUiThread {
+                    certResult  = result
+                    certMessage = ""
+                    if (certExpandedCategories.isEmpty() && result.items.isNotEmpty()) {
+                        certExpandedCategories = setOf(result.items.first().category)
+                    }
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { certMessage = friendlyMessage(t.message, "Could not load certification data.") }
+            }
+        }
+    }
+
+    private fun seedCertTemplate() {
+        val token = currentToken ?: return
+        setLoading(true, "Loading template...")
+        worker.execute {
+            try {
+                api.seedCertTemplate(token)
+                runOnUiThread { setLoading(false, "Checklist loaded."); loadCertification() }
+            } catch (t: Throwable) {
+                runOnUiThread { setLoading(false, ""); certMessage = friendlyMessage(t.message, "Could not load template.") }
+            }
+        }
+    }
+
+    private fun updateCertItem(itemId: Int, status: String, notes: String) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.updateCertItem(token, itemId, status, notes)
+                runOnUiThread { loadCertification() }
+            } catch (t: Throwable) {
+                runOnUiThread { certMessage = friendlyMessage(t.message, "Could not update item.") }
+            }
+        }
+    }
+
+    private fun submitCertAssessment() {
+        val token = currentToken ?: return
+        setLoading(true, "Saving assessment...")
+        worker.execute {
+            try {
+                api.addCertAssessment(
+                    token           = token,
+                    assessmentDate  = certAsmDate.ifBlank { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) },
+                    publicAccess    = certAsmPublic.trim().toIntOrNull()?.coerceIn(0, 100) ?: 0,
+                    taskReliability = certAsmTask.trim().toIntOrNull()?.coerceIn(0, 100) ?: 0,
+                    obedience       = certAsmObedience.trim().toIntOrNull()?.coerceIn(0, 100) ?: 0,
+                    environmental   = certAsmEnv.trim().toIntOrNull()?.coerceIn(0, 100) ?: 0,
+                    notes           = certAsmNotes.trim(),
+                )
+                runOnUiThread {
+                    certAsmDate = ""; certAsmPublic = ""; certAsmTask = ""; certAsmObedience = ""; certAsmEnv = ""; certAsmNotes = ""
+                    certShowAsmForm = false
+                    setLoading(false, "Assessment saved.")
+                    loadCertification()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { setLoading(false, ""); certMessage = friendlyMessage(t.message, "Could not save assessment.") }
             }
         }
     }

@@ -1,3 +1,6 @@
+## v0.045 (2026-05-24)
+- Android: Native Certification screen — summary stats (items/proficient/in-training/readiness%), collapsible category accordions with 3-button status switcher per item (Not Started / In Training / Proficient), "Load starter checklist" when empty, latest assessment snapshot (4 score chips), add assessment form (date, public/task/obedience/environmental %, notes), pull-to-refresh; new `api/certification.php`; added to More menu as "✅ Certification"
+
 ## v0.044 (2026-05-24)
 - Android: Native Health & Docs screen — vet contacts list (clinic, vet name, tappable phone, address, notes, Primary badge), add vet form (clinic, vet, phone, address, notes, primary checkbox), document list (type chip, title, provider, date, open file link), "Upload on web" footer button; new `api/health_docs.php` (GET vets+docs, POST add_vet); pull-to-refresh; added to Care menu as "🩺 Health Docs"
 

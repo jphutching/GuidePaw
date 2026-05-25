@@ -295,6 +295,34 @@ data class GpCandidateAssessmentsResult(
     val scoreLabels: Map<String, String>,
 )
 
+data class GpCertItem(
+    val id: Int,
+    val category: String,
+    val itemName: String,
+    val description: String,
+    val status: String,
+    val notes: String,
+)
+
+data class GpCertAssessment(
+    val assessmentDate: String,
+    val publicAccessScore: Int?,
+    val taskReliabilityScore: Int?,
+    val obedienceScore: Int?,
+    val environmentalScore: Int?,
+    val notes: String,
+)
+
+data class GpCertResult(
+    val dogName: String,
+    val total: Int,
+    val proficient: Int,
+    val inTraining: Int,
+    val readinessPct: Int,
+    val items: List<GpCertItem>,
+    val assessment: GpCertAssessment?,
+)
+
 data class GpVetItem(
     val id: Int,
     val clinicName: String,
@@ -940,6 +968,81 @@ class GuidePawApiClient(
         val response = requestJson("api/health_docs.php", "POST", token, payload)
         ensureSuccess(response)
     }
+
+    fun certification(token: String): GpCertResult {
+        val response = requestJson("api/certification.php", "GET", token, null)
+        ensureSuccess(response)
+        val j = response.json
+        val items = j.optJSONArray("items")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toCertItem() } }
+            .orEmpty()
+        val asmJson = j.optJSONObject("assessment")
+        val assessment = asmJson?.let {
+            GpCertAssessment(
+                assessmentDate       = it.optString("assessment_date", ""),
+                publicAccessScore    = if (!it.isNull("public_access_score")) it.optInt("public_access_score") else null,
+                taskReliabilityScore = if (!it.isNull("task_reliability_score")) it.optInt("task_reliability_score") else null,
+                obedienceScore       = if (!it.isNull("obedience_score")) it.optInt("obedience_score") else null,
+                environmentalScore   = if (!it.isNull("environmental_score")) it.optInt("environmental_score") else null,
+                notes                = it.optString("notes", ""),
+            )
+        }
+        return GpCertResult(
+            dogName     = j.optString("dog_name", ""),
+            total       = j.optInt("total", 0),
+            proficient  = j.optInt("proficient", 0),
+            inTraining  = j.optInt("in_training", 0),
+            readinessPct = j.optInt("readiness_pct", 0),
+            items       = items,
+            assessment  = assessment,
+        )
+    }
+
+    fun seedCertTemplate(token: String) {
+        val payload  = JSONObject().put("action", "seed_template")
+        val response = requestJson("api/certification.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    fun updateCertItem(token: String, itemId: Int, status: String, notes: String) {
+        val payload = JSONObject()
+            .put("action", "update_item")
+            .put("item_id", itemId)
+            .put("status", status)
+            .put("notes", notes)
+        val response = requestJson("api/certification.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    fun addCertAssessment(
+        token: String,
+        assessmentDate: String,
+        publicAccess: Int,
+        taskReliability: Int,
+        obedience: Int,
+        environmental: Int,
+        notes: String,
+    ) {
+        val payload = JSONObject()
+            .put("action", "add_assessment")
+            .put("assessment_date", assessmentDate)
+            .put("public_access_score", publicAccess)
+            .put("task_reliability_score", taskReliability)
+            .put("obedience_score", obedience)
+            .put("environmental_score", environmental)
+            .put("notes", notes)
+        val response = requestJson("api/certification.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    private fun JSONObject.toCertItem() = GpCertItem(
+        id          = optInt("id", 0),
+        category    = optString("category", ""),
+        itemName    = optString("item_name", ""),
+        description = optString("description", ""),
+        status      = optString("status", "not_started"),
+        notes       = optString("notes", ""),
+    )
 
     private fun JSONObject.toHealthDocItem() = GpHealthDocItem(
         id           = optInt("id", 0),
