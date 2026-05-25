@@ -322,6 +322,19 @@ class MainActivity : AppCompatActivity() {
     private var notifPrefAdmin   by mutableStateOf(true)
     private var notifPrefGeneral by mutableStateOf(true)
 
+    // ── Wearables state ────────────────────────────────────────────────────
+    private var wearableResult        by mutableStateOf<GuidePawWearableResult?>(null)
+    private var wearableMessage       by mutableStateOf("")
+    private var wearableIsLoading     by mutableStateOf(false)
+    private var wearableHandlerSlug   by mutableStateOf("")
+    private var wearableDogSlug       by mutableStateOf("")
+    private var wearableSyncMode      by mutableStateOf("")
+    private var wearableNotes         by mutableStateOf("")
+    private var wearableShowSetupForm by mutableStateOf(false)
+    private var wearableHandlerExp    by mutableStateOf(false)
+    private var wearableDogExp        by mutableStateOf(false)
+    private var wearableSyncExp       by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -1158,9 +1171,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Wearables section ───────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun WearablesSection() {
-        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        val result = wearableResult
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1168,36 +1182,182 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Wearable data
-            Text("Wearable Data", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            SummaryCard {
-                if (activeDog != null) {
-                    Text("Tied to ${activeDog.name}", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "Health Connect, tracker imports, and vendor feeds flow into ${activeDog.name}'s handler timeline alongside training logs.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = GpOnSurfaceVariant,
-                    )
-                } else {
-                    Text("No active dog", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "Wearable data attaches to the active dog's timeline. Select a dog first.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = GpOnSurfaceVariant,
-                    )
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text("Wearable Sync", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { loadWearables() }) { Text("Refresh") }
+                    Button(onClick = { wearableShowSetupForm = !wearableShowSetupForm }) {
+                        Text(if (wearableShowSetupForm) "Cancel" else "Edit Setup")
+                    }
                 }
             }
-            Button(
-                onClick  = { openWebPage("https://guidepaw.app/wearable_integrations.php") },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Wearable Setup") }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            if (wearableIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 
-            OutlinedButton(
-                onClick  = { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Open Notification Inbox") }
+            if (wearableMessage.isNotBlank()) {
+                Text(
+                    wearableMessage,
+                    color  = if (isErrorText(wearableMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style  = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            if (result == null && !wearableIsLoading) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("No data loaded", fontWeight = FontWeight.SemiBold)
+                        Text("Tap Refresh to load your wearable setup.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Button(onClick = { loadWearables() }, modifier = Modifier.fillMaxWidth()) { Text("Load Wearables") }
+                    }
+                }
+            }
+
+            if (result != null) {
+                // Current setup snapshot
+                val setup = result.currentSetup
+                SummaryCard {
+                    Text("Current Setup", fontWeight = FontWeight.SemiBold)
+                    if (setup != null) {
+                        if (!setup.handlerWearableLabel.isNullOrBlank())
+                            Text("Handler: ${setup.handlerWearableLabel}", style = MaterialTheme.typography.bodySmall)
+                        if (!setup.dogTrackerLabel.isNullOrBlank())
+                            Text("Dog Tracker: ${setup.dogTrackerLabel}", style = MaterialTheme.typography.bodySmall)
+                        if (!setup.syncModeLabel.isNullOrBlank())
+                            Text("Sync: ${setup.syncModeLabel}", style = MaterialTheme.typography.bodySmall)
+                        if (!setup.notes.isNullOrBlank())
+                            Text(setup.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    } else {
+                        Text("No wearable configured yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+
+                // Setup form
+                if (wearableShowSetupForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Edit Setup", fontWeight = FontWeight.SemiBold)
+
+                            // Handler wearable dropdown
+                            val handlerLabel = result.handlerWearables.firstOrNull { it.slug == wearableHandlerSlug }?.label ?: "None"
+                            ExposedDropdownMenuBox(expanded = wearableHandlerExp, onExpandedChange = { wearableHandlerExp = it }) {
+                                OutlinedTextField(
+                                    value         = handlerLabel,
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Handler Wearable") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableHandlerExp) },
+                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                )
+                                ExposedDropdownMenu(expanded = wearableHandlerExp, onDismissRequest = { wearableHandlerExp = false }) {
+                                    DropdownMenuItem(text = { Text("None") }, onClick = { wearableHandlerSlug = ""; wearableHandlerExp = false })
+                                    result.handlerWearables.forEach { item ->
+                                        DropdownMenuItem(
+                                            text    = { Text(item.label) },
+                                            onClick = { wearableHandlerSlug = item.slug; wearableHandlerExp = false },
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Dog tracker dropdown
+                            val dogLabel = result.dogTrackers.firstOrNull { it.slug == wearableDogSlug }?.label ?: "None"
+                            ExposedDropdownMenuBox(expanded = wearableDogExp, onExpandedChange = { wearableDogExp = it }) {
+                                OutlinedTextField(
+                                    value         = dogLabel,
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Dog Tracker") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableDogExp) },
+                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                )
+                                ExposedDropdownMenu(expanded = wearableDogExp, onDismissRequest = { wearableDogExp = false }) {
+                                    DropdownMenuItem(text = { Text("None") }, onClick = { wearableDogSlug = ""; wearableDogExp = false })
+                                    result.dogTrackers.forEach { item ->
+                                        DropdownMenuItem(
+                                            text    = { Text(item.label) },
+                                            onClick = { wearableDogSlug = item.slug; wearableDogExp = false },
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Sync mode dropdown
+                            val syncLabel = result.syncModes[wearableSyncMode]?.label ?: "Select sync mode"
+                            ExposedDropdownMenuBox(expanded = wearableSyncExp, onExpandedChange = { wearableSyncExp = it }) {
+                                OutlinedTextField(
+                                    value         = syncLabel,
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Sync Mode") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableSyncExp) },
+                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                )
+                                ExposedDropdownMenu(expanded = wearableSyncExp, onDismissRequest = { wearableSyncExp = false }) {
+                                    result.syncModes.forEach { (key, info) ->
+                                        DropdownMenuItem(
+                                            text    = { Text(info.label) },
+                                            onClick = { wearableSyncMode = key; wearableSyncExp = false },
+                                        )
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value         = wearableNotes,
+                                onValueChange = { wearableNotes = it },
+                                label         = { Text("Notes") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                minLines      = 2,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            )
+
+                            Button(onClick = { wearableSave() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Save Setup")
+                            }
+                        }
+                    }
+                }
+
+                // Recent activity events
+                if (result.recentEvents.isNotEmpty()) {
+                    Text("Recent Activity", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    result.recentEvents.forEach { event ->
+                        WearableEventCard(event)
+                    }
+                } else {
+                    SummaryCard {
+                        Text("No activity data recorded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+            }
+
+            TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+        }
+    }
+
+    @Composable
+    private fun WearableEventCard(event: GuidePawWearableEvent) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(event.deviceName.ifBlank { event.source }, fontWeight = FontWeight.SemiBold)
+                    Text(event.recordedForDate, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+                if (event.steps != null) Text("Steps: ${event.steps}", style = MaterialTheme.typography.bodySmall)
+                if (event.distanceMiles != null) Text("Distance: ${"%.2f".format(event.distanceMiles)} mi", style = MaterialTheme.typography.bodySmall)
+                if (event.activeMinutes != null) Text("Active: ${event.activeMinutes} min", style = MaterialTheme.typography.bodySmall)
+                if (event.sleepHours != null) Text("Sleep: ${"%.1f".format(event.sleepHours)} hr", style = MaterialTheme.typography.bodySmall)
+                if (event.avgHeartRate != null) Text("Avg HR: ${event.avgHeartRate} bpm", style = MaterialTheme.typography.bodySmall)
+                if (event.batteryPercent != null) Text("Battery: ${event.batteryPercent}%", style = MaterialTheme.typography.bodySmall)
+                if (event.summaryText.isNotBlank()) Text(event.summaryText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
         }
     }
 
@@ -3880,7 +4040,7 @@ class MainActivity : AppCompatActivity() {
                     "🩺 Health Docs"      to { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                     "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
-                    "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
+                    "⌚ Wearable Sync"    to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
                     "🔔 Notifications"     to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
@@ -4847,6 +5007,64 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadMedications() }
             } catch (t: Throwable) {
                 runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not update status.") }
+            }
+        }
+    }
+
+    private fun loadWearables() {
+        val token = currentToken ?: return
+        wearableIsLoading = true
+        wearableMessage   = "Loading..."
+        worker.execute {
+            try {
+                val result = api.wearables(token, currentActiveDogId)
+                runOnUiThread {
+                    wearableResult    = result
+                    wearableIsLoading = false
+                    wearableMessage   = ""
+                    val setup = result.currentSetup
+                    if (setup != null) {
+                        wearableHandlerSlug = setup.handlerWearableSlug.orEmpty()
+                        wearableDogSlug     = setup.dogTrackerSlug.orEmpty()
+                        wearableSyncMode    = setup.syncMode.orEmpty()
+                        wearableNotes       = setup.notes.orEmpty()
+                    }
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    wearableIsLoading = false
+                    wearableMessage   = friendlyMessage(t.message, "Could not load wearable data.")
+                }
+            }
+        }
+    }
+
+    private fun wearableSave() {
+        val token = currentToken ?: return
+        val dogId = currentActiveDogId ?: run { wearableMessage = "Select an active dog first."; return }
+        wearableIsLoading = true
+        wearableMessage   = "Saving..."
+        worker.execute {
+            try {
+                api.saveWearableSetup(
+                    token               = token,
+                    dogId               = dogId,
+                    handlerWearableSlug = wearableHandlerSlug,
+                    dogTrackerSlug      = wearableDogSlug,
+                    syncMode            = wearableSyncMode,
+                    notes               = wearableNotes,
+                )
+                runOnUiThread {
+                    wearableShowSetupForm = false
+                    wearableIsLoading     = false
+                    wearableMessage       = "Setup saved."
+                    loadWearables()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    wearableIsLoading = false
+                    wearableMessage   = friendlyMessage(t.message, "Could not save wearable setup.")
+                }
             }
         }
     }
