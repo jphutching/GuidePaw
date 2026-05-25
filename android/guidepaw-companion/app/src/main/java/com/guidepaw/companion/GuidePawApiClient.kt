@@ -36,6 +36,47 @@ data class GuidePawMeResult(
     val activeDogId: Int?,
 )
 
+data class GpDogAccessHandler(
+    val id: Int,
+    val userId: Int,
+    val username: String,
+    val displayName: String,
+    val role: String,
+    val permissionLevel: String,
+    val accessEndsAt: String,
+    val accessStatus: String,
+)
+data class GpDogAccessInvite(
+    val id: Int,
+    val dogId: Int,
+    val dogName: String,
+    val ownerUsername: String,
+    val role: String,
+    val accessStatus: String,
+)
+data class GpDogAccessTransfer(
+    val id: Int,
+    val dogId: Int,
+    val dogName: String,
+    val fromUsername: String,
+    val note: String,
+    val requestedAt: String,
+)
+data class GpDogAccessDog(
+    val id: Int,
+    val name: String,
+    val ownerUsername: String,
+    val lifecycleStatus: String,
+)
+data class GpDogAccessResult(
+    val dog: GpDogAccessDog?,
+    val isOwner: Boolean,
+    val canEdit: Boolean,
+    val handlers: List<GpDogAccessHandler>,
+    val pendingInvites: List<GpDogAccessInvite>,
+    val incomingTransfers: List<GpDogAccessTransfer>,
+)
+
 data class GpSkillStat(val skill: String, val count: Int)
 data class GpEnvStat(val type: String, val count: Int)
 data class GpTrendDay(val date: String, val logs: Int, val avgFocus: Double)
@@ -478,6 +519,110 @@ class GuidePawApiClient(
         return GuidePawMeResult(
             username = user.optString("username", ""),
             activeDogId = optNullableInt(response.json, "active_dog_id"),
+        )
+    }
+
+    fun getDogAccess(token: String, dogId: Int? = null): GpDogAccessResult {
+        val path = if (dogId != null) "api/dog_access.php?dog_id=$dogId" else "api/dog_access.php"
+        val response = requestJson(path, "GET", token, null)
+        ensureSuccess(response)
+        return parseDogAccessResult(response.json)
+    }
+
+    fun grantDogAccess(token: String, dogId: Int, handlerIdentity: String, role: String, permissionLevel: String, endsAt: String): GpDogAccessResult {
+        val payload = JSONObject()
+            .put("action", "grant_access")
+            .put("dog_id", dogId)
+            .put("handler_identity", handlerIdentity)
+            .put("role", role)
+            .put("permission_level", permissionLevel)
+            .put("access_ends_at", endsAt)
+        val response = requestJson("api/dog_access.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseDogAccessResult(response.json)
+    }
+
+    fun revokeDogAccess(token: String, handlerId: Int): GpDogAccessResult {
+        val payload = JSONObject().put("action", "revoke_access").put("handler_id", handlerId)
+        val response = requestJson("api/dog_access.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseDogAccessResult(response.json)
+    }
+
+    fun respondDogAccessInvite(token: String, handlerId: Int, accept: Boolean): GpDogAccessResult {
+        val action = if (accept) "accept_dog_access_invite" else "decline_dog_access_invite"
+        val payload = JSONObject().put("action", action).put("handler_id", handlerId)
+        val response = requestJson("api/dog_access.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseDogAccessResult(response.json)
+    }
+
+    fun respondTransfer(token: String, transferId: Int, accept: Boolean): GpDogAccessResult {
+        val action = if (accept) "accept_transfer" else "decline_transfer"
+        val payload = JSONObject().put("action", action).put("transfer_id", transferId)
+        val response = requestJson("api/dog_access.php", "POST", token, payload)
+        ensureSuccess(response)
+        return parseDogAccessResult(response.json)
+    }
+
+    private fun parseDogAccessResult(json: JSONObject): GpDogAccessResult {
+        val dogObj = json.optJSONObject("dog")
+        val dog = dogObj?.let {
+            GpDogAccessDog(
+                id              = it.optInt("id"),
+                name            = it.optString("name", ""),
+                ownerUsername   = it.optString("owner_username", ""),
+                lifecycleStatus = it.optString("lifecycle_status", "active"),
+            )
+        }
+        val handlers = json.optJSONArray("handlers")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpDogAccessHandler(
+                    id             = o.optInt("id"),
+                    userId         = o.optInt("user_id"),
+                    username       = o.optString("username", ""),
+                    displayName    = o.optString("display_name", ""),
+                    role           = o.optString("role", ""),
+                    permissionLevel = o.optString("permission_level", "view"),
+                    accessEndsAt   = o.optString("access_ends_at", ""),
+                    accessStatus   = o.optString("access_status", ""),
+                )
+            }
+        }.orEmpty()
+        val invites = json.optJSONArray("pending_invites")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpDogAccessInvite(
+                    id            = o.optInt("id"),
+                    dogId         = o.optInt("dog_id"),
+                    dogName       = o.optString("dog_name", ""),
+                    ownerUsername = o.optString("owner_username", ""),
+                    role          = o.optString("role", ""),
+                    accessStatus  = o.optString("access_status", ""),
+                )
+            }
+        }.orEmpty()
+        val transfers = json.optJSONArray("incoming_transfers")?.let { arr ->
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                GpDogAccessTransfer(
+                    id           = o.optInt("id"),
+                    dogId        = o.optInt("dog_id"),
+                    dogName      = o.optString("dog_name", ""),
+                    fromUsername = o.optString("from_username", ""),
+                    note         = o.optString("note", ""),
+                    requestedAt  = o.optString("requested_at", ""),
+                )
+            }
+        }.orEmpty()
+        return GpDogAccessResult(
+            dog               = dog,
+            isOwner           = json.optBoolean("is_owner"),
+            canEdit           = json.optBoolean("can_edit"),
+            handlers          = handlers,
+            pendingInvites    = invites,
+            incomingTransfers = transfers,
         )
     }
 

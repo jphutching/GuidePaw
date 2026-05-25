@@ -140,7 +140,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -357,6 +357,16 @@ class MainActivity : AppCompatActivity() {
     private var statsMessage     by mutableStateOf("")
     private var statsIsLoading   by mutableStateOf(false)
 
+    // ── Dog Access state ───────────────────────────────────────────────────
+    private var dogAccessResult      by mutableStateOf<GpDogAccessResult?>(null)
+    private var dogAccessMessage     by mutableStateOf("")
+    private var dogAccessIsLoading   by mutableStateOf(false)
+    private var dogAccessInviteId    by mutableStateOf("")
+    private var dogAccessInviteRole  by mutableStateOf("co-op handler")
+    private var dogAccessInvitePerm  by mutableStateOf("view")
+    private var dogAccessInviteEnds  by mutableStateOf("")
+    private var dogAccessShowInvite  by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -475,6 +485,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.CERTIFICATION        -> CertificationSection()
                         NavSection.PROFILE              -> ProfileSection()
                         NavSection.STATS                -> StatsSection()
+                        NavSection.DOG_ACCESS           -> DogAccessSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -1203,6 +1214,214 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Edit") }
             }
+        }
+    }
+
+    // ── Dog Access section ──────────────────────────────────────────────────
+    @Composable
+    private fun DogAccessSection() {
+        val result = dogAccessResult
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text("Dog Access", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = { loadDogAccess() }) { Text("Refresh") }
+            }
+
+            if (dogAccessIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+            if (dogAccessMessage.isNotBlank()) {
+                Text(
+                    dogAccessMessage,
+                    color = if (isErrorText(dogAccessMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            if (result == null && !dogAccessIsLoading) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Not loaded", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadDogAccess() }, modifier = Modifier.fillMaxWidth()) { Text("Load Dog Access") }
+                    }
+                }
+            }
+
+            if (result != null) {
+                // Dog info
+                val dog = result.dog
+                SummaryCard {
+                    if (dog != null) {
+                        Text(dog.name, fontWeight = FontWeight.SemiBold)
+                        Text("Owner: @${dog.ownerUsername}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Text("Status: ${dog.lifecycleStatus}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    } else {
+                        Text("No active dog selected.", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Incoming transfer requests
+                if (result.incomingTransfers.isNotEmpty()) {
+                    Text("Ownership Transfer Requests", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    result.incomingTransfers.forEach { transfer ->
+                        OutlinedCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            border   = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("${transfer.dogName} from @${transfer.fromUsername}", fontWeight = FontWeight.SemiBold)
+                                if (transfer.note.isNotBlank())
+                                    Text(transfer.note, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick  = { dogAccessRespondTransfer(transfer.id, true) },
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text("Accept") }
+                                    OutlinedButton(
+                                        onClick  = { dogAccessRespondTransfer(transfer.id, false) },
+                                        modifier = Modifier.weight(1f),
+                                        colors   = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                    ) { Text("Decline") }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Pending invites received by me
+                if (result.pendingInvites.isNotEmpty()) {
+                    Text("Your Pending Invites", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                    result.pendingInvites.forEach { invite ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(invite.dogName, fontWeight = FontWeight.SemiBold)
+                                Text("from @${invite.ownerUsername} · ${invite.role}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick  = { dogAccessRespondInvite(invite.id, true) },
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text("Accept") }
+                                    OutlinedButton(
+                                        onClick  = { dogAccessRespondInvite(invite.id, false) },
+                                        modifier = Modifier.weight(1f),
+                                        colors   = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                    ) { Text("Decline") }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Handlers list
+                if (result.handlers.isNotEmpty()) {
+                    Text("Shared Handlers", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                    result.handlers.forEach { handler ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        val name = handler.displayName.ifBlank { handler.username }
+                                        Text(name, fontWeight = FontWeight.SemiBold)
+                                        Text("@${handler.username}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        Text("${handler.role} · ${handler.permissionLevel}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        val statusColor = when (handler.accessStatus) {
+                                            "accepted" -> GpPrimary
+                                            "pending"  -> MaterialTheme.colorScheme.tertiary
+                                            else       -> MaterialTheme.colorScheme.error
+                                        }
+                                        Text(handler.accessStatus, style = MaterialTheme.typography.labelSmall, color = statusColor)
+                                    }
+                                    if (result.isOwner && handler.accessStatus != "revoked") {
+                                        TextButton(
+                                            onClick = { dogAccessRevoke(handler.id) },
+                                            colors  = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                        ) { Text("Revoke") }
+                                    }
+                                }
+                                if (handler.accessEndsAt.isNotBlank())
+                                    Text("Expires: ${handler.accessEndsAt}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+                        }
+                    }
+                } else if (result.pendingInvites.isEmpty()) {
+                    SummaryCard {
+                        Text("No shared handlers yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+
+                // Invite form (owner only)
+                if (result.isOwner && dog != null) {
+                    HorizontalDivider()
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        Text("Invite a Handler", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        TextButton(onClick = { dogAccessShowInvite = !dogAccessShowInvite }) {
+                            Text(if (dogAccessShowInvite) "Cancel" else "New Invite")
+                        }
+                    }
+                    if (dogAccessShowInvite) {
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedTextField(
+                                    value         = dogAccessInviteId,
+                                    onValueChange = { dogAccessInviteId = it },
+                                    label         = { Text("Username or email *") },
+                                    modifier      = Modifier.fillMaxWidth(),
+                                    singleLine    = true,
+                                )
+                                OutlinedTextField(
+                                    value         = dogAccessInviteRole,
+                                    onValueChange = { dogAccessInviteRole = it },
+                                    label         = { Text("Role (e.g. co-op handler)") },
+                                    modifier      = Modifier.fillMaxWidth(),
+                                    singleLine    = true,
+                                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    listOf("view" to "View only", "edit" to "Can edit").forEach { (value, label) ->
+                                        FilterChip(
+                                            selected = dogAccessInvitePerm == value,
+                                            onClick  = { dogAccessInvitePerm = value },
+                                            label    = { Text(label) },
+                                        )
+                                    }
+                                }
+                                OutlinedTextField(
+                                    value         = dogAccessInviteEnds,
+                                    onValueChange = { dogAccessInviteEnds = it },
+                                    label         = { Text("Access ends (YYYY-MM-DD, optional)") },
+                                    modifier      = Modifier.fillMaxWidth(),
+                                    singleLine    = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                                Button(
+                                    onClick  = { dogAccessGrant(dog.id) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled  = dogAccessInviteId.isNotBlank(),
+                                ) { Text("Send Invite") }
+                            }
+                        }
+                    }
+                }
+            }
+
+            TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
         }
     }
 
@@ -4405,7 +4624,7 @@ class MainActivity : AppCompatActivity() {
                     "👤 Handler Profile" to { if (profileResult == null) loadProfile(); currentSection = NavSection.PROFILE },
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
                     "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
-                    "🤝 Dog Access"      to { openWebPage("https://guidepaw.app/dog_access.php") },
+                    "🤝 Dog Access"      to { if (dogAccessResult == null) loadDogAccess(); currentSection = NavSection.DOG_ACCESS },
                     "📡 QR Tracking"     to { openWebPage("https://guidepaw.app/qr_tracking.php") },
                     "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
                 ), onDismiss)
@@ -5391,6 +5610,77 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadMedications() }
             } catch (t: Throwable) {
                 runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not update status.") }
+            }
+        }
+    }
+
+    private fun loadDogAccess() {
+        val token = currentToken ?: return
+        dogAccessIsLoading = true
+        dogAccessMessage   = "Loading..."
+        worker.execute {
+            try {
+                val result = api.getDogAccess(token, currentActiveDogId)
+                runOnUiThread { dogAccessResult = result; dogAccessIsLoading = false; dogAccessMessage = "" }
+            } catch (t: Throwable) {
+                runOnUiThread { dogAccessIsLoading = false; dogAccessMessage = friendlyMessage(t.message, "Could not load dog access.") }
+            }
+        }
+    }
+
+    private fun dogAccessGrant(dogId: Int) {
+        val token = currentToken ?: return
+        if (dogAccessInviteId.isBlank()) { dogAccessMessage = "Username or email is required."; return }
+        dogAccessIsLoading = true; dogAccessMessage = "Sending invite..."
+        worker.execute {
+            try {
+                val result = api.grantDogAccess(token, dogId, dogAccessInviteId.trim(), dogAccessInviteRole.trim(), dogAccessInvitePerm, dogAccessInviteEnds.trim())
+                runOnUiThread {
+                    dogAccessResult = result; dogAccessIsLoading = false
+                    dogAccessMessage = "Invite sent."; dogAccessShowInvite = false
+                    dogAccessInviteId = ""; dogAccessInviteRole = "co-op handler"; dogAccessInvitePerm = "view"; dogAccessInviteEnds = ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { dogAccessIsLoading = false; dogAccessMessage = friendlyMessage(t.message, "Could not send invite.") }
+            }
+        }
+    }
+
+    private fun dogAccessRevoke(handlerId: Int) {
+        val token = currentToken ?: return
+        dogAccessIsLoading = true; dogAccessMessage = "Revoking..."
+        worker.execute {
+            try {
+                val result = api.revokeDogAccess(token, handlerId)
+                runOnUiThread { dogAccessResult = result; dogAccessIsLoading = false; dogAccessMessage = "Access revoked." }
+            } catch (t: Throwable) {
+                runOnUiThread { dogAccessIsLoading = false; dogAccessMessage = friendlyMessage(t.message, "Could not revoke access.") }
+            }
+        }
+    }
+
+    private fun dogAccessRespondInvite(handlerId: Int, accept: Boolean) {
+        val token = currentToken ?: return
+        dogAccessIsLoading = true; dogAccessMessage = if (accept) "Accepting..." else "Declining..."
+        worker.execute {
+            try {
+                val result = api.respondDogAccessInvite(token, handlerId, accept)
+                runOnUiThread { dogAccessResult = result; dogAccessIsLoading = false; dogAccessMessage = if (accept) "Invite accepted." else "Invite declined." }
+            } catch (t: Throwable) {
+                runOnUiThread { dogAccessIsLoading = false; dogAccessMessage = friendlyMessage(t.message, "Could not respond to invite.") }
+            }
+        }
+    }
+
+    private fun dogAccessRespondTransfer(transferId: Int, accept: Boolean) {
+        val token = currentToken ?: return
+        dogAccessIsLoading = true; dogAccessMessage = if (accept) "Accepting transfer..." else "Declining transfer..."
+        worker.execute {
+            try {
+                val result = api.respondTransfer(token, transferId, accept)
+                runOnUiThread { dogAccessResult = result; dogAccessIsLoading = false; dogAccessMessage = if (accept) "Transfer accepted." else "Transfer declined." }
+            } catch (t: Throwable) {
+                runOnUiThread { dogAccessIsLoading = false; dogAccessMessage = friendlyMessage(t.message, "Could not respond to transfer.") }
             }
         }
     }
