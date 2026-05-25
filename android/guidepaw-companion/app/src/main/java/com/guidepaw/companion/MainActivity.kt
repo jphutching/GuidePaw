@@ -1,5 +1,6 @@
 package com.guidepaw.companion
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.ClipData
@@ -8,9 +9,25 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.Locale
+import kotlin.coroutines.resume
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.activity.compose.setContent
@@ -683,6 +700,111 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── GPS location helpers ────────────────────────────────────────────────
+
+    private suspend fun resolveLocation(context: Context): Pair<String, String>? =
+        suspendCancellableCoroutine { cont ->
+            val client = LocationServices.getFusedLocationProviderClient(context)
+            try {
+                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener { loc ->
+                        if (loc == null) { cont.resume(null); return@addOnSuccessListener }
+                        try {
+                            val geocoder = Geocoder(context, Locale.getDefault())
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                geocoder.getFromLocation(loc.latitude, loc.longitude, 1) { addresses ->
+                                    cont.resume(formatAddress(addresses.firstOrNull()))
+                                }
+                            } else {
+                                @Suppress("DEPRECATION")
+                                val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+                                cont.resume(formatAddress(addresses?.firstOrNull()))
+                            }
+                        } catch (_: Exception) { cont.resume(null) }
+                    }
+                    .addOnFailureListener { cont.resume(null) }
+            } catch (_: SecurityException) { cont.resume(null) }
+        }
+
+    private fun formatAddress(address: Address?): Pair<String, String>? {
+        address ?: return null
+        val name = (address.featureName?.takeIf { it != address.thoroughfare }
+            ?: address.premises
+            ?: address.thoroughfare
+            ?: address.subLocality
+            ?: "").trim()
+        val city = (address.locality ?: address.subAdminArea ?: "").trim()
+        val state = (address.adminArea ?: "").trim()
+        val cityState = listOf(city, state).filter { it.isNotBlank() }.joinToString(", ")
+        return Pair(name.ifBlank { cityState }, cityState)
+    }
+
+    @Composable
+    private fun LocationPickerButton(
+        onLocationFound: (locationName: String, cityState: String) -> Unit
+    ) {
+        val context = LocalContext.current
+        val scope   = rememberCoroutineScope()
+        var isLocating    by remember { mutableStateOf(false) }
+        var locationError by remember { mutableStateOf("") }
+
+        fun doFetch() {
+            isLocating = true
+            locationError = ""
+            scope.launch {
+                val result = resolveLocation(context)
+                isLocating = false
+                if (result != null) onLocationFound(result.first, result.second)
+                else locationError = "Could not determine location. Try again."
+            }
+        }
+
+        val launcher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { perms ->
+            if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                doFetch()
+            } else {
+                locationError = "Location permission denied"
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            OutlinedButton(
+                onClick = {
+                    val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                    val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                        doFetch()
+                    } else {
+                        launcher.launch(arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        ))
+                    }
+                },
+                enabled  = !isLocating,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    Icons.Filled.MyLocation,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(if (isLocating) "Getting location…" else "Use my location")
+            }
+            if (locationError.isNotBlank()) {
+                Text(
+                    locationError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+
     // ── Training section ────────────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
     @Composable
@@ -748,6 +870,10 @@ class MainActivity : AppCompatActivity() {
 
             // Location
             Text("Location", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+            LocationPickerButton { name, cityState ->
+                if (logLocation.isBlank()) logLocation = name
+                if (logCityState.isBlank()) logCityState = cityState
+            }
             OutlinedTextField(
                 value         = logLocation,
                 onValueChange = { logLocation = it },
@@ -2907,6 +3033,9 @@ class MainActivity : AppCompatActivity() {
                                 singleLine    = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
+                            LocationPickerButton { name, _ ->
+                                if (apptLocation.isBlank()) apptLocation = name
+                            }
                             OutlinedTextField(
                                 value         = apptLocation,
                                 onValueChange = { apptLocation = it },
