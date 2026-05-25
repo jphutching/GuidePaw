@@ -1,12 +1,12 @@
 {
   "active_ai": null,
-  "session_id": "codex-1779743774565",
-  "session_started_at": "2026-05-25T21:16:14.565Z",
-  "last_milestone": "Verified Notification Center navsection",
-  "last_handoff_at": "2026-05-25T21:17:11.280Z",
-  "current_task": "Verify and finalize the native Notification Center navsection conversion.",
+  "session_id": "codex-1779744656696",
+  "session_started_at": "2026-05-25T21:30:56.696Z",
+  "last_milestone": "QR tracking native section",
+  "last_handoff_at": "2026-05-25T21:37:14.260Z",
+  "current_task": "Create a native QR Tracking section in the Android companion app (v0.056). Here are the exact steps: **Step 1 — Create `api/qr_tracking.php`** (already created by Claude, verify it exists at `/home/james/projects/guidepaw/api/qr_tracking.php`). If missing, it should require `api_auth.php`, `includes/qr_tracking.php`, `includes/public_dog_profile_token.php`, get the active dog, call `gpDogQrTrackingSummary()`, build a public URL via `publicDogProfileToken()`, and return JSON with `dog_id`, `dog_name`, `public_url`, `total_views`, `last_viewed`, `recent_views[]`. **Step 2 — Add to `GuidePawApiClient.kt`** (already done by Claude): - `data class GpQrScanEvent(val viewedAt: String, val device: String, val referrer: String)` - `data class GpQrResult(val dogId: Int, val dogName: String, val publicUrl: String, val totalViews: Int, val lastViewed: String, val recentViews: List<GpQrScanEvent>)` - `fun getQrTracking(token: String): GpQrResult?` — calls `api/qr_tracking.php` **Step 3 — Update `MainActivity.kt`**: - Add `QR_TRACKING` to the `NavSection` enum (line ~144) - Add state vars near the other section state blocks:   ```kotlin",
   "files_in_progress": [],
   "branch": "main",
-  "updated_at": "2026-05-25T21:17:11.280Z",
+  "updated_at": "2026-05-25T21:37:14.260Z",
   "_note": "Auto-managed by GuidePaw Middleware. Do not edit manually."
 }
