@@ -16,11 +16,21 @@ require_once __DIR__ . '/dog_access_helpers.php';
 require_once __DIR__ . '/dog_care_helpers.php';
 
 $dbDriver = 'pgsql';
-$dbHost = appEnv('DB_HOST', 'localhost');
-$dbPort = appEnv('DB_PORT', '5432');
-$dbName = appEnv('DB_DATABASE', 'psd_app_logs');
-$dbUser = appEnv('DB_USERNAME', 'root');
-$dbPass = appEnv('DB_PASSWORD', '');
+// Accept DATABASE_URL (Render auto-injects this when fromDatabase is configured)
+if ($dbUrl = appEnv('DATABASE_URL', '')) {
+    $parts = parse_url($dbUrl);
+    $dbHost = $parts['host'];
+    $dbPort = (string)($parts['port'] ?? 5432);
+    $dbName = ltrim($parts['path'] ?? '', '/');
+    $dbUser = $parts['user'] ?? '';
+    $dbPass = rawurldecode($parts['pass'] ?? '');
+} else {
+    $dbHost = appEnv('DB_HOST', 'localhost');
+    $dbPort = appEnv('DB_PORT', '5432');
+    $dbName = appEnv('DB_DATABASE', 'psd_app_logs');
+    $dbUser = appEnv('DB_USERNAME', 'root');
+    $dbPass = appEnv('DB_PASSWORD', '');
+}
 $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s', $dbHost, $dbPort, $dbName);
 
 try {
