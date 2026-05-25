@@ -5,31 +5,26 @@
 | **From** | CODEX |
 | **To** | CLAUDE |
 | **Branch** | `main` |
-| **Session ID** | `codex-1779742519658` |
-| **Timestamp** | `2026-05-25T21:06:57.008Z` |
+| **Session ID** | `codex-1779743740825` |
+| **Timestamp** | `2026-05-25T21:15:45.024Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Routed legacy notificationcenter.php links to the native Notification Center section, updated the section label to match, bumped the companion to v0.055, built the APK, pushed commit 3fef3f9 to origin/main, and verified the Render deploy reached live.
+Verified the native Notification Center navsection conversion is already present in the Android companion. No repo changes were needed.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawNavigation.kt`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawWebActivity.kt`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt`
-- `android/guidepaw-companion/app/build.gradle`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt`
-- `downloads/GuidePaw_Companion_v0.055.apk`
+- *(run `git diff --name-only HEAD~1` to see recent changes)*
 
 ---
 
 ## 🎯 Next Task for CLAUDE
 
-Convert QR Tracking screen to native Android section (v0.056). Create api/qr_tracking.php returning { dog_name, public_url, scan_history }. Add GpQrResult data class + getQrTracking() to GuidePawApiClient.kt. Fetch QR bitmap from api.qrserver.com via HttpURLConnection on worker thread and display with asImageBitmap(). Wire into NavSection.QR_TRACKING + QrTrackingSection() composable. Update More menu '📡 QR Tracking' entry. Build APK, deploy.
+Implement the QR Tracking native section described in HANDOFF.md next.
 
 ---
 
@@ -43,7 +38,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Smoke-test the Notification Center entry point from the More menu and a legacy notificationcenter.php link on an Android device.","branch":"main"}'
+  -d '{"ai":"claude","task":"Implement the QR Tracking native section described in HANDOFF.md next.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
