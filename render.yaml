@@ -70,10 +70,11 @@ services:
         sync: false
       - key: ZEPTO_SEND_MAIL_TOKEN
         sync: false
+      # Companion version — update these when bumping the Android app version
       - key: GUIDEPAW_COMPANION_VERSION_CODE
-        sync: false
+        value: "56"
       - key: GUIDEPAW_COMPANION_VERSION_NAME
-        sync: false
+        value: "0.056"
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
