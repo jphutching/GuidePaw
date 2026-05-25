@@ -1,0 +1,12 @@
+{
+  "active_ai": null,
+  "session_id": null,
+  "session_started_at": null,
+  "last_milestone": null,
+  "last_handoff_at": null,
+  "current_task": "Run migrate-repo.sh, then install.sh, then review open GitHub issues",
+  "files_in_progress": [],
+  "branch": "main",
+  "updated_at": "2026-05-24T00:00:00.000Z",
+  "_note": "Auto-managed by GuidePaw Middleware. Do not edit manually."
+}

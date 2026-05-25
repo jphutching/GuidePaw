@@ -1,0 +1,20 @@
+{
+  "name": "guidepaw-middleware",
+  "version": "1.0.0",
+  "description": "AI session handoff middleware for GuidePaw — bridges Claude Code and Codex CLI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "better-sqlite3": "^9.6.0",
+    "simple-git": "^3.25.0",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

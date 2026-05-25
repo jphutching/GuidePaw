@@ -1,162 +1,66 @@
-# GuidePaw Render Blueprint
-# Put this file at the root of the GitHub repo:
-# /home/james/projects/gpb3/gpb3/render.yaml
+# render.yaml — GuidePaw Render Blueprint
+# Add to repo root, push, then in Render: New → Blueprint → connect jphutching/GuidePaw
+#
+# Known Render URLs:
+#   Main app:   https://guidepaw.onrender.com
+#   Middleware: https://guidepaw-middleware.onrender.com  (confirm slug after deploy)
 
-version: "1"
+services:
 
-projects:
-  - name: GuidePaw
-    environments:
-      - name: Beta
-        services:
-          - type: web
-            name: GuidePaw
-            runtime: docker
-            repo: https://github.com/jphutching/GuidePaw
-            branch: main
-            plan: starter
-            region: oregon
-            dockerContext: .
-            dockerfilePath: ./Dockerfile
-            autoDeployTrigger: commit
-            domains:
-              - guidepaw.app
-            envVars:
-              - key: APP_ENV
-                value: production
+  # ── Main GuidePaw App ─────────────────────────────────────────────────────
+  # Adjust buildCommand/startCommand to match your actual stack
+  - type: web
+    name: guidepaw
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
 
-              - key: APP_DEBUG
-                value: "false"
-
-              - key: APP_URL
-                value: https://guidepaw.app
-
-              - key: DB_CONNECTION
-                value: pgsql
-
-              - key: DB_DRIVER
-                value: pgsql
-
-              - key: DB_HOST
-                fromDatabase:
-                  name: guidepaw_db
-                  property: host
-
-              - key: DB_PORT
-                value: "5432"
-
-              - key: DB_DATABASE
-                fromDatabase:
-                  name: guidepaw_db
-                  property: database
-
-              - key: DB_NAME
-                fromDatabase:
-                  name: guidepaw_db
-                  property: database
-
-              - key: DB_USERNAME
-                fromDatabase:
-                  name: guidepaw_db
-                  property: user
-
-              - key: DB_USER
-                fromDatabase:
-                  name: guidepaw_db
-                  property: user
-
-              - key: DB_PASSWORD
-                fromDatabase:
-                  name: guidepaw_db
-                  property: password
-
-              - key: DATABASE_URL
-                fromDatabase:
-                  name: guidepaw_db
-                  property: connectionString
-
-              - key: SESSION_SECRET
-                generateValue: true
-
-              - key: ADMIN_EMAIL
-                value: admin@guidepaw.app
-
-              - key: ADMIN_NOTIFY_EMAIL
-                value: admin@guidepaw.app
-
-              - key: BETA_NOTIFY_EMAIL_ENABLED
-                value: "true"
-
-              - key: BETA_NOTIFY_TELEGRAM_ENABLED
-                value: "true"
-
-              - key: FOUND_DOG_NOTIFY_EMAIL_ENABLED
-                value: "true"
-
-              - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
-                value: "true"
-
-              - key: SMS_PROVIDER
-                value: twilio
-
-              - key: SMS_NOTIFY_ENABLED
-                value: "true"
-
-              - key: DOG_ACCESS_NOTIFY_SMS_ENABLED
-                value: "true"
-
-              - key: FOUND_DOG_NOTIFY_SMS_ENABLED
-                value: "true"
-
-              - key: TWILIO_ACCOUNT_SID
-                sync: false
-
-              - key: TWILIO_AUTH_TOKEN
-                sync: false
-
-              - key: TWILIO_FROM_NUMBER
-                sync: false
-
-              - key: ADMIN_NOTIFY_SMS_PHONE
-                sync: false
-
-              - key: GUIDEPAW_DISCORD_INVITE_URL
-                sync: false
-
-              - key: GUIDEPAW_MERCH_STORE_URL
-                sync: false
-
-              - key: GUIDEPAW_SUPPORT_FUNDING_URL
-                sync: false
-
-              - key: GUIDEPAW_STRIPE_SECRET_KEY
-                sync: false
-
-              - key: GUIDEPAW_STRIPE_WEBHOOK_SECRET
-                sync: false
-
-              - key: GUIDEPAW_STRIPE_FUNDING_ONE_TIME_PRICE_ID
-                sync: false
-
-              - key: GUIDEPAW_STRIPE_FUNDING_MONTHLY_PRICE_ID
-                sync: false
-
-              - key: GUIDEPAW_STRIPE_API_VERSION
-                value: 2026-02-25.clover
-
-              # Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID directly in Render Environment.
-              # Do not commit real Telegram tokens to Git.
-              # Set Twilio values directly in Render Environment.
-              # Do not commit real Twilio credentials or phone numbers to Git.
-
-        databases:
-          - name: guidepaw_db
-            databaseName: guidepaw_db_z9vv
-            user: guidepaw
-            plan: basic-256mb
-            region: oregon
-            postgresMajorVersion: "18"
-            diskSizeGB: 15
-            ipAllowList:
-              - source: 0.0.0.0/0
-                description: everywhere
+  # ── AI Middleware ─────────────────────────────────────────────────────────
+  - type: web
+    name: guidepaw-middleware
+    runtime: node
+    plan: free
+    branch: main
+    rootDir: middleware
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MIDDLEWARE_SECRET
+        sync: false
+      - key: MIDDLEWARE_URL
+        value: https://guidepaw-middleware.onrender.com
+      - key: REPO_PATH
+        value: /opt/render/project/src
+      - key: DB_PATH
+        value: /tmp/guidepaw-sessions.db
+      - key: RENDER_APP_URL
+        value: https://guidepaw.onrender.com
+      - key: RENDER_MIDDLEWARE_URL
+        value: https://guidepaw-middleware.onrender.com
+      - key: RENDER_API_KEY
+        sync: false
+      - key: RENDER_SERVICE_NAME
+        value: guidepaw
+      - key: RENDER_DEPLOY_HOOK
+        sync: false
+      - key: GITHUB_DEPLOY_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SESSION_TIMEOUT_MINUTES
+        value: "45"
+      - key: TOKEN_WARNING_THRESHOLD
+        value: "15000"

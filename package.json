@@ -27,7 +27,12 @@
     "@playwright/test": "^1.59.1"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "playwright": "^1.59.1",
-    "playwright-core": "^1.59.1"
-  }
+    "playwright-core": "^1.59.1",
+    "simple-git": "^3.36.0",
+    "winston": "^3.19.0"
+  },
+  "type": "commonjs"
 }
