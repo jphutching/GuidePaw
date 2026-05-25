@@ -130,13 +130,13 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
     NavSection.TRAINING,
     NavSection.DOGS,
-    NavSection.WEARABLES,
+    NavSection.NOTIFICATIONS,
     NavSection.MORE,
 )
 
@@ -296,6 +296,14 @@ class MainActivity : AppCompatActivity() {
     private var medNotes           by mutableStateOf("")
     private var medShowForm        by mutableStateOf(false)
 
+    // ── Notification Center state ───────────────────────────────────────────
+    private var notifResult      by mutableStateOf<GuidePawNotificationsResult?>(null)
+    private var notifMessage     by mutableStateOf("")
+    private var notifPrefAccess  by mutableStateOf(true)
+    private var notifPrefCare    by mutableStateOf(true)
+    private var notifPrefAdmin   by mutableStateOf(true)
+    private var notifPrefGeneral by mutableStateOf(true)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -394,11 +402,12 @@ class MainActivity : AppCompatActivity() {
                     LoginSection()
                 } else {
                     when (currentSection) {
-                        NavSection.OVERVIEW      -> OverviewSection()
-                        NavSection.TRAINING      -> TrainingSection()
-                        NavSection.DOGS          -> DogsSection()
-                        NavSection.WEARABLES     -> WearablesSection()
-                        NavSection.MORE          -> OverviewSection()
+                        NavSection.OVERVIEW       -> OverviewSection()
+                        NavSection.TRAINING       -> TrainingSection()
+                        NavSection.DOGS           -> DogsSection()
+                        NavSection.WEARABLES      -> WearablesSection()
+                        NavSection.MORE           -> OverviewSection()
+                        NavSection.NOTIFICATIONS  -> NotificationsSection()
                         NavSection.GOAL_INTAKE          -> GoalIntakeSection()
                         NavSection.GOAL_BUILDER         -> GoalBuilderSection()
                         NavSection.HABIT_REPAIR         -> HabitRepairSection()
@@ -429,27 +438,30 @@ class MainActivity : AppCompatActivity() {
         NavigationBar {
             NAV_ITEMS.forEach { section ->
                 val icon = when (section) {
-                    NavSection.OVERVIEW  -> Icons.Filled.Home
-                    NavSection.TRAINING  -> Icons.Filled.Bolt
-                    NavSection.DOGS      -> Icons.Filled.Pets
-                    NavSection.WEARABLES -> Icons.Filled.Notifications
-                    else                 -> Icons.Filled.Menu
+                    NavSection.OVERVIEW       -> Icons.Filled.Home
+                    NavSection.TRAINING       -> Icons.Filled.Bolt
+                    NavSection.DOGS           -> Icons.Filled.Pets
+                    NavSection.NOTIFICATIONS  -> Icons.Filled.Notifications
+                    else                      -> Icons.Filled.Menu
                 }
                 val title = when (section) {
-                    NavSection.OVERVIEW  -> "Home"
-                    NavSection.TRAINING  -> "Log"
-                    NavSection.DOGS      -> "History"
-                    NavSection.WEARABLES -> "Alerts"
-                    else                 -> "Menu"
+                    NavSection.OVERVIEW       -> "Home"
+                    NavSection.TRAINING       -> "Log"
+                    NavSection.DOGS           -> "History"
+                    NavSection.NOTIFICATIONS  -> "Inbox"
+                    else                      -> "Menu"
                 }
                 NavigationBarItem(
                     selected = section != NavSection.MORE && currentSection == section,
                     onClick  = {
                         if (section == NavSection.MORE) showMenu = true
-                        else currentSection = section
+                        else {
+                            currentSection = section
+                            if (section == NavSection.NOTIFICATIONS && notifResult == null) refreshNotifications()
+                        }
                     },
                     icon     = {
-                        if (section == NavSection.WEARABLES && currentUnreadCount > 0) {
+                        if (section == NavSection.NOTIFICATIONS && currentUnreadCount > 0) {
                             BadgedBox(badge = { Badge { Text(currentUnreadCount.toString()) } }) {
                                 Icon(icon, contentDescription = title)
                             }
@@ -1163,25 +1175,208 @@ class MainActivity : AppCompatActivity() {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            // Notifications
-            Text("Notifications", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            if (currentUnreadCount > 0) {
+            OutlinedButton(
+                onClick  = { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Open Notification Inbox") }
+        }
+    }
+
+    // ── Notifications section ───────────────────────────────────────────────
+    @Composable
+    private fun NotificationsSection() {
+        val token  = currentToken
+        val result = notifResult
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Notification Inbox", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+            if (notifMessage.isNotBlank()) {
+                Text(notifMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            }
+
+            if (token.isNullOrBlank()) {
                 SummaryCard {
+                    Text("Sign in first to view notifications.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+            } else {
+                // Inbox snapshot
+                SummaryCard {
+                    Text("Inbox", fontWeight = FontWeight.SemiBold)
+                    if (result != null) {
+                        Text(
+                            buildString {
+                                append("Signed in as ")
+                                append(if (result.username.isBlank()) "your account" else result.username)
+                                result.activeDogId?.let { append(" · active dog #$it") }
+                                if (result.hiddenCount > 0) append(" · ${result.hiddenCount} hidden")
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                        Text(
+                            "Unread: ${result.unreadCount}  ·  Visible unread: ${result.visibleUnreadCount}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    } else {
+                        Text("Loading notifications...", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+
+                // Preferences
+                SummaryCard {
+                    Text("Notification preferences", fontWeight = FontWeight.SemiBold)
                     Text(
-                        "$currentUnreadCount unread notification${if (currentUnreadCount == 1) "" else "s"}",
-                        fontWeight = FontWeight.SemiBold,
-                        color      = GpPrimary,
+                        if (result != null) "Filter your inbox by category."
+                        else "Tap Refresh if the inbox does not load.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
                     )
+                    Row(
+                        modifier              = Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        FilterChip(selected = notifPrefAccess,  onClick = { notifPrefAccess  = !notifPrefAccess  }, label = { Text("Access",  fontSize = 12.sp) })
+                        FilterChip(selected = notifPrefCare,    onClick = { notifPrefCare    = !notifPrefCare    }, label = { Text("Care",    fontSize = 12.sp) })
+                        FilterChip(selected = notifPrefAdmin,   onClick = { notifPrefAdmin   = !notifPrefAdmin   }, label = { Text("Admin",   fontSize = 12.sp) })
+                        FilterChip(selected = notifPrefGeneral, onClick = { notifPrefGeneral = !notifPrefGeneral }, label = { Text("General", fontSize = 12.sp) })
+                    }
+                    Row(
+                        modifier              = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Button(onClick = { notifSavePreferences() }, modifier = Modifier.weight(1f)) { Text("Save prefs") }
+                        OutlinedButton(onClick = { notifMarkAllRead() }, modifier = Modifier.weight(1f)) { Text("Mark all read") }
+                    }
+                    OutlinedButton(
+                        onClick  = { refreshNotifications() },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    ) { Text("Refresh") }
+                    OutlinedButton(
+                        onClick  = { openWebPage("https://guidepaw.app/notifications.php") },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    ) { Text("Open web notifications") }
+                }
+
+                // Notification list
+                SummaryCard {
+                    Text("Notifications", fontWeight = FontWeight.SemiBold)
+                    val notifications = result?.notifications ?: emptyList()
+                    if (notifications.isEmpty()) {
+                        Text(
+                            "No notifications yet.",
+                            style    = MaterialTheme.typography.bodySmall,
+                            color    = GpOnSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    } else {
+                        notifications.forEach { NotifNotificationCard(it) }
+                    }
+                }
+
+                // Pending invites
+                SummaryCard {
+                    Text("Pending invites", fontWeight = FontWeight.SemiBold)
+                    val invites = result?.pendingInvites ?: emptyList()
+                    if (invites.isEmpty()) {
+                        Text(
+                            "No pending dog access invites.",
+                            style    = MaterialTheme.typography.bodySmall,
+                            color    = GpOnSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    } else {
+                        invites.forEach { NotifInviteCard(it) }
+                    }
                 }
             }
-            Button(
-                onClick  = { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Notification Center") }
-            OutlinedButton(
-                onClick  = { openWebPage("https://guidepaw.app/notifications.php") },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Notification Settings (Web)") }
+        }
+    }
+
+    @Composable
+    private fun NotifNotificationCard(notification: GuidePawNotificationItem) {
+        OutlinedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(notification.title, fontWeight = FontWeight.SemiBold)
+                val meta = buildString {
+                    append(notification.category)
+                    if (notification.dogName.isNotBlank()) { append(" · "); append(notification.dogName) }
+                    append(" · ")
+                    append(if (notification.isRead) "read" else "unread")
+                    if (notification.priority.isNotBlank()) { append(" · "); append(notification.priority) }
+                }
+                Text(meta, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                if (notification.body.isNotBlank()) {
+                    Text(notification.body, style = MaterialTheme.typography.bodySmall)
+                }
+                if (notification.createdAt.isNotBlank()) {
+                    Text(
+                        notification.createdAt.replace('T', ' ').take(19),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+                Row(
+                    modifier              = Modifier.padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (notification.actionUrl.isNotBlank()) {
+                        Button(onClick = { openWebPage(notification.actionUrl) }, modifier = Modifier.weight(1f)) { Text("Open") }
+                    }
+                    if (!notification.isRead) {
+                        Button(onClick = { notifMarkSelectedRead(notification.id) }, modifier = Modifier.weight(1f)) { Text("Mark read") }
+                    }
+                    OutlinedButton(
+                        onClick  = { notifDeleteSelected(listOf(notification.id)) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Delete") }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun NotifInviteCard(invite: GuidePawNotificationInviteItem) {
+        OutlinedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Dog access invite", fontWeight = FontWeight.SemiBold)
+                Text(
+                    buildString {
+                        append(invite.dogName.ifBlank { "Dog" })
+                        if (invite.role.isNotBlank()) { append(" · "); append(invite.role) }
+                        if (invite.permissionLevel.isNotBlank()) { append(" · "); append(invite.permissionLevel) }
+                        if (invite.accessEndsAt.isNotBlank()) { append("\nEnds: "); append(invite.accessEndsAt.take(10)) }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    listOf(invite.ownerDisplayName, invite.ownerUsername).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+                Row(
+                    modifier              = Modifier.padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(onClick = { notifAcceptInvite(invite.handlerId) }, modifier = Modifier.weight(1f)) { Text("Accept") }
+                    OutlinedButton(onClick = { notifDeclineInvite(invite.handlerId) }, modifier = Modifier.weight(1f)) { Text("Decline") }
+                }
+            }
         }
     }
 
@@ -3529,7 +3724,7 @@ class MainActivity : AppCompatActivity() {
                     "⌚ Wearable Sync"    to { openWebPage("https://guidepaw.app/wearable_integrations.php") },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
-                    "🔔 Notifications"     to { startActivity(Intent(this@MainActivity, NotificationCenterActivity::class.java)) },
+                    "🔔 Notifications"     to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
                     "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
                     "💬 Feedback"          to { startActivity(Intent(this@MainActivity, FeedbackActivity::class.java)) },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
@@ -3679,6 +3874,161 @@ class MainActivity : AppCompatActivity() {
         if (token.isNullOrBlank()) { showLoggedOut("Sign in to load the dashboard."); return }
         refreshDashboard(token, currentActiveDogId, keepSignedInOnFailure = currentMe != null)
         checkForAppUpdate()
+    }
+
+    // ── Notification Center actions ─────────────────────────────────────────
+
+    private fun notifSyncPreferences(preferences: Map<String, Boolean>) {
+        notifPrefAccess  = preferences["access"]  ?: true
+        notifPrefCare    = preferences["care"]    ?: true
+        notifPrefAdmin   = preferences["admin"]   ?: true
+        notifPrefGeneral = preferences["general"] ?: true
+    }
+
+    private fun refreshNotifications() {
+        val token = currentToken ?: return
+        notifMessage = "Loading notifications..."
+        worker.execute {
+            try {
+                val result = api.notifications(token)
+                runOnUiThread {
+                    notifResult       = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = ""
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not load notifications.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not load notifications.") }
+            }
+        }
+    }
+
+    private fun notifSavePreferences() {
+        val token = currentToken ?: return
+        val prefsMap = linkedMapOf(
+            "access"  to notifPrefAccess,
+            "care"    to notifPrefCare,
+            "admin"   to notifPrefAdmin,
+            "general" to notifPrefGeneral,
+        )
+        notifMessage = "Saving preferences..."
+        worker.execute {
+            try {
+                val result = api.saveNotificationPreferences(token, prefsMap)
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = "Preferences saved."
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not save preferences.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not save preferences.") }
+            }
+        }
+    }
+
+    private fun notifMarkAllRead() {
+        val token = currentToken ?: return
+        notifMessage = "Marking all read..."
+        worker.execute {
+            try {
+                val result = api.markNotificationsRead(token)
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = "All notifications marked read."
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not update notifications.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not update notifications.") }
+            }
+        }
+    }
+
+    private fun notifMarkSelectedRead(notificationId: Int) {
+        val token = currentToken ?: return
+        notifMessage = "Marking read..."
+        worker.execute {
+            try {
+                val result = api.markNotificationsRead(token, listOf(notificationId))
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = ""
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not update notification.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not update notification.") }
+            }
+        }
+    }
+
+    private fun notifDeleteSelected(notificationIds: List<Int>) {
+        val token = currentToken ?: return
+        notifMessage = "Deleting..."
+        worker.execute {
+            try {
+                val result = api.deleteNotifications(token, notificationIds)
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = ""
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not delete notification.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not delete notification.") }
+            }
+        }
+    }
+
+    private fun notifAcceptInvite(handlerId: Int) {
+        val token = currentToken ?: return
+        notifMessage = "Accepting invite..."
+        worker.execute {
+            try {
+                val result = api.acceptDogAccessInvite(token, handlerId)
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = "Invite accepted."
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not accept invite.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not accept invite.") }
+            }
+        }
+    }
+
+    private fun notifDeclineInvite(handlerId: Int) {
+        val token = currentToken ?: return
+        notifMessage = "Declining invite..."
+        worker.execute {
+            try {
+                val result = api.declineDogAccessInvite(token, handlerId)
+                runOnUiThread {
+                    notifResult = result
+                    currentUnreadCount = result.visibleUnreadCount
+                    notifSyncPreferences(result.preferences)
+                    notifMessage = "Invite declined."
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { notifMessage = friendlyMessage(e.message, "Could not decline invite.") }
+            } catch (t: Throwable) {
+                runOnUiThread { notifMessage = friendlyMessage(t.message, "Could not decline invite.") }
+            }
+        }
     }
 
     private fun refreshDashboard(token: String, preferDogId: Int?, keepSignedInOnFailure: Boolean = false) {

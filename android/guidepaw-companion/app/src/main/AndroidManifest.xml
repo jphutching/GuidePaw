@@ -17,9 +17,6 @@
             android:name=".FeedbackActivity"
             android:exported="false" />
         <activity
-            android:name=".NotificationCenterActivity"
-            android:exported="false" />
-        <activity
             android:name=".GuidePawWebActivity"
             android:exported="false" />
         <activity
