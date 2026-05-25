@@ -139,7 +139,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -335,6 +335,25 @@ class MainActivity : AppCompatActivity() {
     private var wearableDogExp        by mutableStateOf(false)
     private var wearableSyncExp       by mutableStateOf(false)
 
+    // ── Handler Profile state ──────────────────────────────────────────────
+    private var profileResult        by mutableStateOf<GpHandlerProfile?>(null)
+    private var profileMessage       by mutableStateOf("")
+    private var profileIsLoading     by mutableStateOf(false)
+    private var profileDisplayName   by mutableStateOf("")
+    private var profileHomeStreet    by mutableStateOf("")
+    private var profileHomeApt       by mutableStateOf("")
+    private var profileHomeCity      by mutableStateOf("")
+    private var profileHomeState     by mutableStateOf("")
+    private var profileHomeZip       by mutableStateOf("")
+    private var profilePhone         by mutableStateOf("")
+    private var profilePublicEmail   by mutableStateOf("")
+    private var profileFacebookUrl   by mutableStateOf("")
+    private var profileBackupName    by mutableStateOf("")
+    private var profileBackupPhone   by mutableStateOf("")
+    private var profilePublicNotes   by mutableStateOf("")
+    private var profileSmsPhone      by mutableStateOf("")
+    private var profileSmsEnabled    by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -451,6 +470,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.APPOINTMENTS         -> VetAppointmentsSection()
                         NavSection.HEALTH_DOCS          -> HealthDocsSection()
                         NavSection.CERTIFICATION        -> CertificationSection()
+                        NavSection.PROFILE              -> ProfileSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -772,13 +792,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun formatAddress(address: Address?): Pair<String, String>? {
         address ?: return null
-        val name = (address.featureName?.takeIf { it != address.thoroughfare }
-            ?: address.premises
-            ?: address.thoroughfare
-            ?: address.subLocality
-            ?: "").trim()
-        val city = (address.locality ?: address.subAdminArea ?: "").trim()
-        val state = (address.adminArea ?: "").trim()
+        val feature    = address.featureName?.trim().orEmpty()
+        val streetNum  = address.subThoroughfare?.trim().orEmpty()
+        val streetName = address.thoroughfare?.trim().orEmpty()
+        // featureName is a business/POI name when it's non-numeric and differs from the street
+        val isBusinessName = feature.isNotBlank()
+            && feature != streetName
+            && !feature.all { it.isDigit() || it == '-' || it == ' ' }
+        val fullStreet = when {
+            streetNum.isNotBlank() && streetName.isNotBlank() -> "$streetNum $streetName"
+            streetName.isNotBlank() -> streetName
+            else -> ""
+        }
+        val name = when {
+            isBusinessName -> feature
+            fullStreet.isNotBlank() -> fullStreet
+            else -> (address.premises ?: address.subLocality ?: "").trim()
+        }
+        val city      = (address.locality ?: address.subAdminArea ?: "").trim()
+        val state     = (address.adminArea ?: "").trim()
         val cityState = listOf(city, state).filter { it.isNotBlank() }.joinToString(", ")
         return Pair(name.ifBlank { cityState }, cityState)
     }
@@ -1167,6 +1199,203 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Edit") }
             }
+        }
+    }
+
+    // ── Handler Profile section ─────────────────────────────────────────────
+    @Composable
+    private fun ProfileSection() {
+        val profile = profileResult
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text("Handler Profile", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Button(onClick = { profileSave() }, enabled = !profileIsLoading) { Text("Save") }
+            }
+
+            if (profileIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+            if (profileMessage.isNotBlank()) {
+                Text(
+                    profileMessage,
+                    color = if (isErrorText(profileMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            if (profile == null && !profileIsLoading) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Profile not loaded", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadProfile() }, modifier = Modifier.fillMaxWidth()) { Text("Load Profile") }
+                    }
+                }
+            }
+
+            if (profile != null) {
+                // Identity
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Identity", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        Text("@${profile.username}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        OutlinedTextField(
+                            value         = profileDisplayName,
+                            onValueChange = { profileDisplayName = it },
+                            label         = { Text("Display Name") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                        )
+                        OutlinedTextField(
+                            value         = profilePublicEmail,
+                            onValueChange = { profilePublicEmail = it },
+                            label         = { Text("Public Email") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        )
+                        OutlinedTextField(
+                            value         = profilePhone,
+                            onValueChange = { profilePhone = it },
+                            label         = { Text("Phone") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        )
+                        OutlinedTextField(
+                            value         = profileFacebookUrl,
+                            onValueChange = { profileFacebookUrl = it },
+                            label         = { Text("Facebook URL") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                        )
+                    }
+                }
+
+                // Home address
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Home Address", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        OutlinedTextField(
+                            value         = profileHomeStreet,
+                            onValueChange = { profileHomeStreet = it },
+                            label         = { Text("Street") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                        )
+                        OutlinedTextField(
+                            value         = profileHomeApt,
+                            onValueChange = { profileHomeApt = it },
+                            label         = { Text("Apt / Unit") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value         = profileHomeCity,
+                                onValueChange = { profileHomeCity = it },
+                                label         = { Text("City") },
+                                modifier      = Modifier.weight(2f),
+                                singleLine    = true,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                            )
+                            OutlinedTextField(
+                                value         = profileHomeState,
+                                onValueChange = { profileHomeState = it.uppercase().take(2) },
+                                label         = { Text("State") },
+                                modifier      = Modifier.weight(1f),
+                                singleLine    = true,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                            )
+                        }
+                        OutlinedTextField(
+                            value         = profileHomeZip,
+                            onValueChange = { profileHomeZip = it },
+                            label         = { Text("ZIP") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        )
+                    }
+                }
+
+                // Backup contact
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Backup Contact", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        OutlinedTextField(
+                            value         = profileBackupName,
+                            onValueChange = { profileBackupName = it },
+                            label         = { Text("Name") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                        )
+                        OutlinedTextField(
+                            value         = profileBackupPhone,
+                            onValueChange = { profileBackupPhone = it },
+                            label         = { Text("Phone") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        )
+                    }
+                }
+
+                // SMS / Notifications
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("SMS Notifications", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        OutlinedTextField(
+                            value         = profileSmsPhone,
+                            onValueChange = { profileSmsPhone = it },
+                            label         = { Text("SMS Phone (defaults to phone if blank)") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            androidx.compose.material3.Switch(
+                                checked         = profileSmsEnabled,
+                                onCheckedChange = { profileSmsEnabled = it },
+                            )
+                            Text("Enable SMS notifications")
+                        }
+                    }
+                }
+
+                // Public notes
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Public Notes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                        OutlinedTextField(
+                            value         = profilePublicNotes,
+                            onValueChange = { profilePublicNotes = it },
+                            label         = { Text("Notes (visible on your public profile)") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            minLines      = 3,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        )
+                    }
+                }
+
+                Button(onClick = { profileSave() }, modifier = Modifier.fillMaxWidth(), enabled = !profileIsLoading) {
+                    Text("Save Profile")
+                }
+            }
+
+            TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
         }
     }
 
@@ -4018,7 +4247,7 @@ class MainActivity : AppCompatActivity() {
                     ) { Text("↩️ Sign Out") }
                 }
                 MenuSheetSection("Dog", listOf(
-                    "👤 Handler Profile" to { openWebPage("https://guidepaw.app/handler_profile.php") },
+                    "👤 Handler Profile" to { if (profileResult == null) loadProfile(); currentSection = NavSection.PROFILE },
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
                     "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
                     "🤝 Dog Access"      to { openWebPage("https://guidepaw.app/dog_access.php") },
@@ -5007,6 +5236,78 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadMedications() }
             } catch (t: Throwable) {
                 runOnUiThread { medicationsMessage = friendlyMessage(t.message, "Could not update status.") }
+            }
+        }
+    }
+
+    private fun loadProfile() {
+        val token = currentToken ?: return
+        profileIsLoading = true
+        profileMessage   = "Loading..."
+        worker.execute {
+            try {
+                val p = api.getProfile(token)
+                runOnUiThread {
+                    profileResult      = p
+                    profileIsLoading   = false
+                    profileMessage     = ""
+                    profileDisplayName = p.displayName
+                    profileHomeStreet  = p.homeStreet
+                    profileHomeApt     = p.homeApt
+                    profileHomeCity    = p.homeCity
+                    profileHomeState   = p.homeState
+                    profileHomeZip     = p.homeZip
+                    profilePhone       = p.phone
+                    profilePublicEmail = p.publicEmail
+                    profileFacebookUrl = p.facebookUrl
+                    profileBackupName  = p.backupContactName
+                    profileBackupPhone = p.backupContactPhone
+                    profilePublicNotes = p.publicNotes
+                    profileSmsPhone    = p.smsPhone
+                    profileSmsEnabled  = p.smsNotificationsEnabled
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    profileIsLoading = false
+                    profileMessage   = friendlyMessage(t.message, "Could not load profile.")
+                }
+            }
+        }
+    }
+
+    private fun profileSave() {
+        val token = currentToken ?: return
+        profileIsLoading = true
+        profileMessage   = "Saving..."
+        worker.execute {
+            try {
+                val msg = api.saveProfile(
+                    token                  = token,
+                    displayName            = profileDisplayName.trim(),
+                    homeStreet             = profileHomeStreet.trim(),
+                    homeApt                = profileHomeApt.trim(),
+                    homeCity               = profileHomeCity.trim(),
+                    homeState              = profileHomeState.trim(),
+                    homeZip                = profileHomeZip.trim(),
+                    phone                  = profilePhone.trim(),
+                    publicEmail            = profilePublicEmail.trim(),
+                    facebookUrl            = profileFacebookUrl.trim(),
+                    backupContactName      = profileBackupName.trim(),
+                    backupContactPhone     = profileBackupPhone.trim(),
+                    publicNotes            = profilePublicNotes.trim(),
+                    smsPhone               = profileSmsPhone.trim(),
+                    smsNotificationsEnabled = profileSmsEnabled,
+                )
+                runOnUiThread {
+                    profileIsLoading = false
+                    profileMessage   = msg
+                    loadProfile()
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    profileIsLoading = false
+                    profileMessage   = friendlyMessage(t.message, "Could not save profile.")
+                }
             }
         }
     }

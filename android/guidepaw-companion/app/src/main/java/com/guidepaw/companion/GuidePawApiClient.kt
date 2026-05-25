@@ -36,6 +36,25 @@ data class GuidePawMeResult(
     val activeDogId: Int?,
 )
 
+data class GpHandlerProfile(
+    val id: Int,
+    val username: String,
+    val displayName: String,
+    val homeStreet: String,
+    val homeApt: String,
+    val homeCity: String,
+    val homeState: String,
+    val homeZip: String,
+    val phone: String,
+    val publicEmail: String,
+    val facebookUrl: String,
+    val backupContactName: String,
+    val backupContactPhone: String,
+    val publicNotes: String,
+    val smsPhone: String,
+    val smsNotificationsEnabled: Boolean,
+)
+
 data class GuidePawDogItem(
     val id: Int,
     val name: String,
@@ -446,6 +465,67 @@ class GuidePawApiClient(
             username = user.optString("username", ""),
             activeDogId = optNullableInt(response.json, "active_dog_id"),
         )
+    }
+
+    fun getProfile(token: String): GpHandlerProfile {
+        val response = requestJson("api/profile.php", "GET", token, null)
+        ensureSuccess(response)
+        val u = response.json.optJSONObject("user") ?: JSONObject()
+        return GpHandlerProfile(
+            id                      = u.optInt("id", 0),
+            username                = u.optString("username", ""),
+            displayName             = u.optString("display_name", ""),
+            homeStreet              = u.optString("home_street", ""),
+            homeApt                 = u.optString("home_apt", ""),
+            homeCity                = u.optString("home_city", ""),
+            homeState               = u.optString("home_state", ""),
+            homeZip                 = u.optString("home_zip", ""),
+            phone                   = u.optString("phone", ""),
+            publicEmail             = u.optString("public_email", ""),
+            facebookUrl             = u.optString("facebook_url", ""),
+            backupContactName       = u.optString("backup_contact_name", ""),
+            backupContactPhone      = u.optString("backup_contact_phone", ""),
+            publicNotes             = u.optString("public_notes", ""),
+            smsPhone                = u.optString("sms_phone", ""),
+            smsNotificationsEnabled = u.optBoolean("sms_notifications_enabled", false),
+        )
+    }
+
+    fun saveProfile(
+        token: String,
+        displayName: String,
+        homeStreet: String,
+        homeApt: String,
+        homeCity: String,
+        homeState: String,
+        homeZip: String,
+        phone: String,
+        publicEmail: String,
+        facebookUrl: String,
+        backupContactName: String,
+        backupContactPhone: String,
+        publicNotes: String,
+        smsPhone: String,
+        smsNotificationsEnabled: Boolean,
+    ): String {
+        val payload = JSONObject()
+            .put("display_name", displayName)
+            .put("home_street", homeStreet)
+            .put("home_apt", homeApt)
+            .put("home_city", homeCity)
+            .put("home_state", homeState)
+            .put("home_zip", homeZip)
+            .put("phone", phone)
+            .put("public_email", publicEmail)
+            .put("facebook_url", facebookUrl)
+            .put("backup_contact_name", backupContactName)
+            .put("backup_contact_phone", backupContactPhone)
+            .put("public_notes", publicNotes)
+            .put("sms_phone", smsPhone)
+            .put("sms_notifications_enabled", if (smsNotificationsEnabled) 1 else 0)
+        val response = requestJson("api/profile.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optString("message", "Profile saved.")
     }
 
     fun dogs(token: String): List<GuidePawDogItem> {
