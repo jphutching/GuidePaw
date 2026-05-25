@@ -4,15 +4,12 @@
 # Known Render URLs:
 #   Main app:   https://guidepaw.onrender.com
 #   Middleware: https://guidepaw-middleware.onrender.com  (confirm slug after deploy)
-
 services:
-
   # ── Main GuidePaw App ─────────────────────────────────────────────────────
-  # Adjust buildCommand/startCommand to match your actual stack
   - type: web
     name: guidepaw
     runtime: node
-    plan: free
+    plan: starter
     branch: main
     buildCommand: npm install && npm run build
     startCommand: npm start
@@ -28,7 +25,7 @@ services:
   - type: web
     name: guidepaw-middleware
     runtime: node
-    plan: free
+    plan: starter
     branch: main
     rootDir: middleware
     buildCommand: npm install
