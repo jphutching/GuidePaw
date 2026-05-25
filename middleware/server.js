@@ -4,7 +4,7 @@
  *
  * Runs on:
  *   Laptop  → http://10.147.18.184:3333
- *   Render  → https://guidepaw-middleware.onrender.com (confirm slug after first deploy)
+ *   Render  → https://guidepaw-middleware-kfzu.onrender.com
  */
 
 require("dotenv").config();

@@ -16,7 +16,7 @@ You execute implementation tasks efficiently and write clean handoff docs so Cla
 - **Repo:** https://github.com/jphutching/GuidePaw (private)
 - **Local path:** `/home/james/projects/guidepaw`
 - **App on Render:** https://guidepaw-ch3y.onrender.com
-- **Middleware on Render:** https://guidepaw-middleware.onrender.com
+- **Middleware on Render:** https://guidepaw-middleware-kfzu.onrender.com
 - **Middleware on laptop:** http://10.147.18.184:3333
 - **Dev access:** Android phone → SSH → ZeroTier → james@10.147.18.184
 

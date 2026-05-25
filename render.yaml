@@ -3,7 +3,7 @@
 #
 # Known Render URLs:
 #   Main app:   https://guidepaw-ch3y.onrender.com
-#   Middleware: https://guidepaw-middleware.onrender.com
+#   Middleware: https://guidepaw-middleware-kfzu.onrender.com
 
 services:
   # ── Main GuidePaw App ─────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ services:
       - key: MIDDLEWARE_SECRET
         sync: false
       - key: MIDDLEWARE_URL
-        value: https://guidepaw-middleware.onrender.com
+        value: https://guidepaw-middleware-kfzu.onrender.com
       - key: REPO_PATH
         value: /opt/render/project/src
       - key: DB_PATH
@@ -47,7 +47,7 @@ services:
       - key: RENDER_APP_URL
         value: https://guidepaw-ch3y.onrender.com
       - key: RENDER_MIDDLEWARE_URL
-        value: https://guidepaw-middleware.onrender.com
+        value: https://guidepaw-middleware-kfzu.onrender.com
       - key: RENDER_API_KEY
         sync: false
       - key: RENDER_SERVICE_NAME
