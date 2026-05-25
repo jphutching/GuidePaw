@@ -16,7 +16,11 @@ export OPENAI_API_KEY="${OPENAI_API_KEY:?Set OPENAI_API_KEY in middleware/.env}"
 
 TASK="${1:-}"
 if [[ -z "$TASK" ]]; then
-  TASK=$(python3 -c "import json; s=json.load(open('$REPO_ROOT/SESSION_STATE.json')); print(s.get('current_task','Review HANDOFF.md'))" 2>/dev/null || echo "Review HANDOFF.md and continue")
+  # Prefer the "Next Task" line from HANDOFF.md over SESSION_STATE.json (which can be stale)
+  TASK=$(grep -A1 "## 🎯 Next Task" "$REPO_ROOT/HANDOFF.md" 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//' | grep -v '^#' || true)
+  if [[ -z "$TASK" ]]; then
+    TASK=$(python3 -c "import json; s=json.load(open('$REPO_ROOT/SESSION_STATE.json')); print(s.get('current_task','Review HANDOFF.md'))" 2>/dev/null || echo "Review HANDOFF.md and continue")
+  fi
 fi
 
 echo ""

@@ -29,7 +29,7 @@ Routed legacy notificationcenter.php links to the native Notification Center sec
 
 ## 🎯 Next Task for CLAUDE
 
-Smoke-test the Notification Center entry point from the More menu and a legacy notificationcenter.php link on an Android device.
+Convert QR Tracking screen to native Android section (v0.056). Create api/qr_tracking.php returning { dog_name, public_url, scan_history }. Add GpQrResult data class + getQrTracking() to GuidePawApiClient.kt. Fetch QR bitmap from api.qrserver.com via HttpURLConnection on worker thread and display with asImageBitmap(). Wire into NavSection.QR_TRACKING + QrTrackingSection() composable. Update More menu '📡 QR Tracking' entry. Build APK, deploy.
 
 ---
 
