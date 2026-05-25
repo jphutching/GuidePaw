@@ -140,7 +140,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, SMART_ALERTS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -367,6 +367,11 @@ class MainActivity : AppCompatActivity() {
     private var dogAccessInviteEnds  by mutableStateOf("")
     private var dogAccessShowInvite  by mutableStateOf(false)
 
+    // ── Smart Alerts state ─────────────────────────────────────────────────
+    private var alertsResult    by mutableStateOf<List<GpAlert>>(emptyList())
+    private var alertsMessage   by mutableStateOf("")
+    private var alertsIsLoading by mutableStateOf(false)
+
     private var logLocation    by mutableStateOf("")
     private var logCityState   by mutableStateOf("")
     private var logType        by mutableStateOf(locationTypes.first())
@@ -486,6 +491,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.PROFILE              -> ProfileSection()
                         NavSection.STATS                -> StatsSection()
                         NavSection.DOG_ACCESS           -> DogAccessSection()
+                        NavSection.SMART_ALERTS         -> SmartAlertsSection()
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
@@ -1415,6 +1421,93 @@ class MainActivity : AppCompatActivity() {
                                     modifier = Modifier.fillMaxWidth(),
                                     enabled  = dogAccessInviteId.isNotBlank(),
                                 ) { Text("Send Invite") }
+                            }
+                        }
+                    }
+                }
+            }
+
+            TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+        }
+    }
+
+    // ── Smart Alerts section ────────────────────────────────────────────────
+    @Composable
+    private fun SmartAlertsSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text("Smart Alerts", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = { loadAlerts() }) { Text("Refresh") }
+            }
+
+            if (alertsIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+
+            if (alertsMessage.isNotBlank()) {
+                val isError = alertsMessage.startsWith("Could not")
+                Text(
+                    alertsMessage,
+                    color = if (isError) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+
+            if (!alertsIsLoading && alertsResult.isEmpty() && alertsMessage.isBlank()) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("✅ All clear", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("No active alerts for your dog.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+            }
+
+            alertsResult.forEach { alert ->
+                val (borderColor, badgeColor, badgeText) = when (alert.level) {
+                    "danger"  -> Triple(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.error, "⚠ Urgent")
+                    "warning" -> Triple(Color(0xFFF59E0B), Color(0xFFF59E0B), "⚡ Warning")
+                    else      -> Triple(GpPrimary, GpPrimary, "ℹ Info")
+                }
+                OutlinedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    border   = BorderStroke(1.5.dp, borderColor),
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.Top,
+                        ) {
+                            Text(
+                                alert.title,
+                                style      = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier   = Modifier.weight(1f),
+                            )
+                            Text(
+                                badgeText,
+                                style  = MaterialTheme.typography.labelSmall,
+                                color  = badgeColor,
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                        if (alert.detail.isNotBlank()) {
+                            Text(alert.detail, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        }
+                        if (alert.actionUrl.isNotBlank() && alert.actionLabel.isNotBlank()) {
+                            TextButton(
+                                onClick  = { openWebPage(alert.actionUrl) },
+                                contentPadding = PaddingValues(0.dp),
+                            ) {
+                                Text(alert.actionLabel + " →", style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -4647,7 +4740,7 @@ class MainActivity : AppCompatActivity() {
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
                     "🔔 Notifications"     to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
-                    "🧠 Smart Alerts"      to { openWebPage("https://guidepaw.app/alerts.php") },
+                    "🧠 Smart Alerts"      to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
                     "💬 Feedback"          to { currentSection = NavSection.FEEDBACK },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
@@ -5701,6 +5794,27 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     statsIsLoading = false
                     statsMessage   = friendlyMessage(t.message, "Could not load stats.")
+                }
+            }
+        }
+    }
+
+    private fun loadAlerts() {
+        val token = currentToken ?: return
+        alertsIsLoading = true
+        alertsMessage   = "Loading..."
+        worker.execute {
+            try {
+                val result = api.getAlerts(token)
+                runOnUiThread {
+                    alertsResult    = result
+                    alertsIsLoading = false
+                    alertsMessage   = if (result.isEmpty()) "No active alerts for your dog." else ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    alertsIsLoading = false
+                    alertsMessage   = friendlyMessage(t.message, "Could not load alerts.")
                 }
             }
         }

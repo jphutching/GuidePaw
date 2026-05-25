@@ -77,6 +77,14 @@ data class GpDogAccessResult(
     val incomingTransfers: List<GpDogAccessTransfer>,
 )
 
+data class GpAlert(
+    val level: String,
+    val title: String,
+    val detail: String,
+    val actionUrl: String,
+    val actionLabel: String,
+)
+
 data class GpSkillStat(val skill: String, val count: Int)
 data class GpEnvStat(val type: String, val count: Int)
 data class GpTrendDay(val date: String, val logs: Int, val avgFocus: Double)
@@ -719,6 +727,23 @@ class GuidePawApiClient(
             locationBreakdown = envs,
             trend14d         = trend,
         )
+    }
+
+    fun getAlerts(token: String): List<GpAlert> {
+        val response = requestJson("api/alerts.php", "GET", token, null)
+        ensureSuccess(response)
+        return response.json.optJSONArray("alerts")?.let { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                GpAlert(
+                    level       = o.optString("level", "info"),
+                    title       = o.optString("title", ""),
+                    detail      = o.optString("detail", ""),
+                    actionUrl   = o.optString("action_url", ""),
+                    actionLabel = o.optString("action_label", ""),
+                )
+            }
+        }.orEmpty()
     }
 
     fun dogs(token: String): List<GuidePawDogItem> {
