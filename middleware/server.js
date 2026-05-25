@@ -78,7 +78,7 @@ function defaultState() {
 
 function logEvent(sid, ai, event, payload = {}) {
   db.prepare("INSERT INTO sessions (session_id,ai,event,payload) VALUES (?,?,?,?)")
-    .run(sid, ai, event, JSON.stringify(payload));
+    .run(sid || "standalone", ai, event, JSON.stringify(payload));
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
