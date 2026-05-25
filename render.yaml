@@ -12,7 +12,7 @@ services:
     runtime: node
     plan: starter
     branch: main
-    buildCommand: npm install        # removed "npm run build" — no build script exists
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
