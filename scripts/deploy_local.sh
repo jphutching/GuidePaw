@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="/home/james/projects/gpb3/gpb3"
+REPO="/home/james/projects/guidepaw"
 LIVE="/var/www/guidepaw"
 
 cd "$REPO"
