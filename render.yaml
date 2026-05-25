@@ -17,18 +17,28 @@ services:
         value: https://guidepaw.app
       - key: APP_ENV
         value: production
-      # All vars below are set in Render dashboard — sync:false prevents Blueprint from wiping them.
+      # DB vars injected automatically from the linked Render PostgreSQL service.
       # CRITICAL: db_connect.php reads DB_USERNAME (not DB_USER)
       - key: DB_HOST
-        sync: false
+        fromDatabase:
+          name: guidepaw_db
+          property: host
       - key: DB_PORT
-        sync: false
+        fromDatabase:
+          name: guidepaw_db
+          property: port
       - key: DB_DATABASE
-        sync: false
+        fromDatabase:
+          name: guidepaw_db
+          property: database
       - key: DB_USERNAME
-        sync: false
+        fromDatabase:
+          name: guidepaw_db
+          property: user
       - key: DB_PASSWORD
-        sync: false
+        fromDatabase:
+          name: guidepaw_db
+          property: password
       - key: DB_DRIVER
         sync: false
       - key: SESSION_SECRET
