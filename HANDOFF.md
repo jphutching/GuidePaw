@@ -1,34 +1,39 @@
 # 🤝 GuidePaw AI Handoff Document
 
+> ⚠️ **Handoff reason:** `watchdog_timeout`
+
 | Field | Value |
 |---|---|
-| **From** | CODEX |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `codex-1779728025325` |
-| **Timestamp** | `2026-05-25T16:58:47.890Z` |
+| **Session ID** | `claude-1779730811966` |
+| **Timestamp** | `2026-05-25T18:25:00.269Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Verified and synced both local and Render middleware instances. Both show active_ai=codex, last_milestone=Render deploy fixed, correct current_task and branch. All Render service URLs confirmed live. Middleware flow end-to-end tested.
+Watchdog auto-handoff after 45min
 
 ---
 
 ## 📁 Files Changed This Session
 
-- *(run `git diff --name-only HEAD~1` to see recent changes)*
+- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt`
+- `android/guidepaw-companion/app/src/main/AndroidManifest.xml`
+- `android/guidepaw-companion/app/build.gradle`
+- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt`
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Review open GitHub issues and run migrate-repo.sh and install.sh
+Convert notificationcenter to native navsection
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -38,7 +43,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Review open GitHub issues and run migrate-repo.sh and install.sh","branch":"main"}'
+  -d '{"ai":"codex","task":"Convert notificationcenter to native navsection","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -50,9 +55,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
