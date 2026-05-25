@@ -77,6 +77,16 @@ data class GpDogAccessResult(
     val incomingTransfers: List<GpDogAccessTransfer>,
 )
 
+data class GpQrScanEvent(val viewedAt: String, val device: String, val referrer: String)
+data class GpQrResult(
+    val dogId: Int,
+    val dogName: String,
+    val publicUrl: String,
+    val totalViews: Int,
+    val lastViewed: String,
+    val recentViews: List<GpQrScanEvent>,
+)
+
 data class GpAlert(
     val level: String,
     val title: String,
@@ -726,6 +736,30 @@ class GuidePawApiClient(
             topSkills        = skills,
             locationBreakdown = envs,
             trend14d         = trend,
+        )
+    }
+
+    fun getQrTracking(token: String): GpQrResult? {
+        val response = requestJson("api/qr_tracking.php", "GET", token, null)
+        ensureSuccess(response)
+        if (response.json.isNull("dog_id")) return null
+        val views = response.json.optJSONArray("recent_views")?.let { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                GpQrScanEvent(
+                    viewedAt = o.optString("viewed_at", ""),
+                    device   = o.optString("device", "Unknown"),
+                    referrer = o.optString("referrer", ""),
+                )
+            }
+        }.orEmpty()
+        return GpQrResult(
+            dogId      = response.json.optInt("dog_id"),
+            dogName    = response.json.optString("dog_name", ""),
+            publicUrl  = response.json.optString("public_url", ""),
+            totalViews = response.json.optInt("total_views"),
+            lastViewed = response.json.optString("last_viewed", ""),
+            recentViews = views,
         )
     }
 
