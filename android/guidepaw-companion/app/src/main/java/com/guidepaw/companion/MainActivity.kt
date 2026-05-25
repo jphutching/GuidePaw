@@ -49,6 +49,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -331,9 +332,6 @@ class MainActivity : AppCompatActivity() {
     private var wearableSyncMode      by mutableStateOf("")
     private var wearableNotes         by mutableStateOf("")
     private var wearableShowSetupForm by mutableStateOf(false)
-    private var wearableHandlerExp    by mutableStateOf(false)
-    private var wearableDogExp        by mutableStateOf(false)
-    private var wearableSyncExp       by mutableStateOf(false)
 
     // ── Handler Profile state ──────────────────────────────────────────────
     private var profileResult        by mutableStateOf<GpHandlerProfile?>(null)
@@ -1400,7 +1398,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Wearables section ───────────────────────────────────────────────────
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun WearablesSection() {
         val result = wearableResult
@@ -1409,7 +1406,7 @@ class MainActivity : AppCompatActivity() {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
                 modifier              = Modifier.fillMaxWidth(),
@@ -1417,12 +1414,7 @@ class MainActivity : AppCompatActivity() {
                 verticalAlignment     = Alignment.CenterVertically,
             ) {
                 Text("Wearable Sync", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { loadWearables() }) { Text("Refresh") }
-                    Button(onClick = { wearableShowSetupForm = !wearableShowSetupForm }) {
-                        Text(if (wearableShowSetupForm) "Cancel" else "Edit Setup")
-                    }
-                }
+                TextButton(onClick = { loadWearables() }) { Text("Refresh") }
             }
 
             if (wearableIsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -1430,142 +1422,155 @@ class MainActivity : AppCompatActivity() {
             if (wearableMessage.isNotBlank()) {
                 Text(
                     wearableMessage,
-                    color  = if (isErrorText(wearableMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
-                    style  = MaterialTheme.typography.bodySmall,
+                    color = if (isErrorText(wearableMessage)) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
 
             if (result == null && !wearableIsLoading) {
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("No data loaded", fontWeight = FontWeight.SemiBold)
-                        Text("Tap Refresh to load your wearable setup.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Text("Not loaded", fontWeight = FontWeight.SemiBold)
                         Button(onClick = { loadWearables() }, modifier = Modifier.fillMaxWidth()) { Text("Load Wearables") }
                     }
                 }
             }
 
             if (result != null) {
-                // Current setup snapshot
-                val setup = result.currentSetup
-                SummaryCard {
-                    Text("Current Setup", fontWeight = FontWeight.SemiBold)
-                    if (setup != null) {
-                        if (!setup.handlerWearableLabel.isNullOrBlank())
-                            Text("Handler: ${setup.handlerWearableLabel}", style = MaterialTheme.typography.bodySmall)
-                        if (!setup.dogTrackerLabel.isNullOrBlank())
-                            Text("Dog Tracker: ${setup.dogTrackerLabel}", style = MaterialTheme.typography.bodySmall)
-                        if (!setup.syncModeLabel.isNullOrBlank())
-                            Text("Sync: ${setup.syncModeLabel}", style = MaterialTheme.typography.bodySmall)
-                        if (!setup.notes.isNullOrBlank())
-                            Text(setup.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                    } else {
-                        Text("No wearable configured yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                    }
-                }
+                // ── Your wearable ───────────────────────────────────────────
+                Text("Your Wearable", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                WearablePickerRow(
+                    items       = result.handlerWearables,
+                    selectedSlug = wearableHandlerSlug,
+                    onSelect    = { slug ->
+                        wearableHandlerSlug = slug
+                        val suggested = suggestSyncMode(slug)
+                        if (suggested.isNotBlank()) wearableSyncMode = suggested
+                    },
+                )
 
-                // Setup form
-                if (wearableShowSetupForm) {
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Edit Setup", fontWeight = FontWeight.SemiBold)
+                // ── Dog's tracker ───────────────────────────────────────────
+                Text("Dog's Tracker", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                WearablePickerRow(
+                    items        = result.dogTrackers,
+                    selectedSlug = wearableDogSlug,
+                    onSelect     = { wearableDogSlug = it },
+                )
 
-                            // Handler wearable dropdown
-                            val handlerLabel = result.handlerWearables.firstOrNull { it.slug == wearableHandlerSlug }?.label ?: "None"
-                            ExposedDropdownMenuBox(expanded = wearableHandlerExp, onExpandedChange = { wearableHandlerExp = it }) {
-                                OutlinedTextField(
-                                    value         = handlerLabel,
-                                    onValueChange = {},
-                                    readOnly      = true,
-                                    label         = { Text("Handler Wearable") },
-                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableHandlerExp) },
-                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
-                                )
-                                ExposedDropdownMenu(expanded = wearableHandlerExp, onDismissRequest = { wearableHandlerExp = false }) {
-                                    DropdownMenuItem(text = { Text("None") }, onClick = { wearableHandlerSlug = ""; wearableHandlerExp = false })
-                                    result.handlerWearables.forEach { item ->
-                                        DropdownMenuItem(
-                                            text    = { Text(item.label) },
-                                            onClick = { wearableHandlerSlug = item.slug; wearableHandlerExp = false },
-                                        )
+                // ── Sync mode ───────────────────────────────────────────────
+                val autoSuggested = suggestSyncMode(wearableHandlerSlug)
+                Text("Sync Mode", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        result.syncModes.forEach { (key, info) ->
+                            val isSelected = key == wearableSyncMode
+                            val isAuto     = key == autoSuggested && wearableHandlerSlug.isNotBlank()
+                            OutlinedCard(
+                                onClick = { wearableSyncMode = key },
+                                border  = BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) GpPrimary else GpOutline),
+                                colors  = CardDefaults.outlinedCardColors(
+                                    containerColor = if (isSelected) GpPrimaryContainer else Color.Transparent,
+                                ),
+                            ) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth().padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Text(info.label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                            if (isAuto) Text("· auto", style = MaterialTheme.typography.labelSmall, color = GpPrimary)
+                                        }
+                                        if (info.notes.isNotBlank())
+                                            Text(info.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                                     }
+                                    if (isSelected) Text("✓", color = GpPrimary, fontWeight = FontWeight.Bold)
                                 }
-                            }
-
-                            // Dog tracker dropdown
-                            val dogLabel = result.dogTrackers.firstOrNull { it.slug == wearableDogSlug }?.label ?: "None"
-                            ExposedDropdownMenuBox(expanded = wearableDogExp, onExpandedChange = { wearableDogExp = it }) {
-                                OutlinedTextField(
-                                    value         = dogLabel,
-                                    onValueChange = {},
-                                    readOnly      = true,
-                                    label         = { Text("Dog Tracker") },
-                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableDogExp) },
-                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
-                                )
-                                ExposedDropdownMenu(expanded = wearableDogExp, onDismissRequest = { wearableDogExp = false }) {
-                                    DropdownMenuItem(text = { Text("None") }, onClick = { wearableDogSlug = ""; wearableDogExp = false })
-                                    result.dogTrackers.forEach { item ->
-                                        DropdownMenuItem(
-                                            text    = { Text(item.label) },
-                                            onClick = { wearableDogSlug = item.slug; wearableDogExp = false },
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Sync mode dropdown
-                            val syncLabel = result.syncModes[wearableSyncMode]?.label ?: "Select sync mode"
-                            ExposedDropdownMenuBox(expanded = wearableSyncExp, onExpandedChange = { wearableSyncExp = it }) {
-                                OutlinedTextField(
-                                    value         = syncLabel,
-                                    onValueChange = {},
-                                    readOnly      = true,
-                                    label         = { Text("Sync Mode") },
-                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(wearableSyncExp) },
-                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
-                                )
-                                ExposedDropdownMenu(expanded = wearableSyncExp, onDismissRequest = { wearableSyncExp = false }) {
-                                    result.syncModes.forEach { (key, info) ->
-                                        DropdownMenuItem(
-                                            text    = { Text(info.label) },
-                                            onClick = { wearableSyncMode = key; wearableSyncExp = false },
-                                        )
-                                    }
-                                }
-                            }
-
-                            OutlinedTextField(
-                                value         = wearableNotes,
-                                onValueChange = { wearableNotes = it },
-                                label         = { Text("Notes") },
-                                modifier      = Modifier.fillMaxWidth(),
-                                minLines      = 2,
-                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                            )
-
-                            Button(onClick = { wearableSave() }, modifier = Modifier.fillMaxWidth()) {
-                                Text("Save Setup")
                             }
                         }
                     }
                 }
 
-                // Recent activity events
+                // ── Notes ───────────────────────────────────────────────────
+                OutlinedTextField(
+                    value           = wearableNotes,
+                    onValueChange   = { wearableNotes = it },
+                    label           = { Text("Notes (optional)") },
+                    modifier        = Modifier.fillMaxWidth(),
+                    minLines        = 2,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                )
+
+                Button(onClick = { wearableSave() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Save Setup")
+                }
+
+                // ── Recent activity ─────────────────────────────────────────
                 if (result.recentEvents.isNotEmpty()) {
                     Text("Recent Activity", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    result.recentEvents.forEach { event ->
-                        WearableEventCard(event)
-                    }
-                } else {
-                    SummaryCard {
-                        Text("No activity data recorded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                    }
+                    result.recentEvents.forEach { event -> WearableEventCard(event) }
                 }
             }
 
             TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
         }
+    }
+
+    @Composable
+    private fun WearablePickerRow(
+        items: List<GuidePawWearableCatalogItem>,
+        selectedSlug: String,
+        onSelect: (String) -> Unit,
+    ) {
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                // "None" deselect chip
+                if (selectedSlug.isNotBlank()) {
+                    TextButton(
+                        onClick  = { onSelect("") },
+                        modifier = Modifier.align(Alignment.End),
+                    ) { Text("Clear selection", style = MaterialTheme.typography.labelSmall) }
+                }
+                items.forEach { item ->
+                    val isSelected = item.slug == selectedSlug
+                    OutlinedCard(
+                        onClick = { onSelect(item.slug) },
+                        border  = BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) GpPrimary else GpOutline),
+                        colors  = CardDefaults.outlinedCardColors(
+                            containerColor = if (isSelected) GpPrimaryContainer else Color.Transparent,
+                        ),
+                    ) {
+                        Row(
+                            modifier              = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(item.label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                Text(item.dataFocus, style = MaterialTheme.typography.labelSmall, color = GpPrimary)
+                                if (item.notes.isNotBlank())
+                                    Text(item.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+                            if (isSelected) Text("✓", color = GpPrimary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun suggestSyncMode(handlerSlug: String): String = when (handlerSlug) {
+        "apple-watch"                   -> "healthkit"
+        "samsung-galaxy-watch",
+        "samsung-galaxy-watch-6-classic" -> "samsung_health"
+        "google-pixel-watch"            -> "health_connect"
+        "garmin-watch"                  -> "garmin_health"
+        "fitbit"                        -> "fitbit_api"
+        "oura-ring"                     -> "oura_api"
+        "polar-suunto"                  -> "polar_accesslink"
+        "fitbark"                       -> "fitbark_api"
+        else                            -> ""
     }
 
     @Composable
