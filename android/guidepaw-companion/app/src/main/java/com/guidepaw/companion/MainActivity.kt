@@ -6420,6 +6420,7 @@ class MainActivity : AppCompatActivity() {
                     "🩺 Health Docs"      to { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                     "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
+                    "🔍 Find a Vet"       to { currentSection = NavSection.VET_FINDER },
                     "⌚ Wearable Sync"    to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
                 ), onDismiss)
                 MenuSheetSection("More", listOf(
@@ -6430,7 +6431,6 @@ class MainActivity : AppCompatActivity() {
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "🗺️ State Access Laws" to { currentSection = NavSection.STATE_ACCESS },
-                    "🏥 Find a Vet"        to { currentSection = NavSection.VET_FINDER },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
                     "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                     "🏆 Challenges"         to { currentSection = NavSection.COMMUNITY_CHALLENGES },
