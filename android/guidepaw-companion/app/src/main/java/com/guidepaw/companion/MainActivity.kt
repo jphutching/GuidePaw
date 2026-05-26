@@ -443,7 +443,7 @@ class MainActivity : AppCompatActivity() {
             }
             statusMessage = "Restoring saved session..."
             restoreCachedDashboard()
-            refreshDashboard(startToken, null)
+            refreshDashboard(startToken, null, keepSignedInOnFailure = true)
             if (pendingLaunchSection == GuidePawNavigation.OPEN_SECTION_NOTIFICATIONS) {
                 currentSection = NavSection.NOTIFICATIONS
                 refreshNotifications()
@@ -5300,19 +5300,27 @@ class MainActivity : AppCompatActivity() {
             } catch (e: GuidePawApiException) {
                 runOnUiThread {
                     val msg = friendlyMessage(e.message, "Could not refresh dashboard.")
-                    if (keepSignedInOnFailure) { statusMessage = msg }
-                    else {
+                    // Only wipe the stored token on explicit auth rejection (401).
+                    // Network errors, 5xx, etc. should not log the user out — they may
+                    // just be a temporary server issue (e.g. Render waking from sleep).
+                    if (e.statusCode == 401) {
                         prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
                         showLoggedOut(friendlyMessage(e.message, "Session expired. Please sign in again."))
+                    } else if (keepSignedInOnFailure) {
+                        statusMessage = msg
+                    } else {
+                        prefs.edit().remove(KEY_CACHE).commit()
+                        showLoggedOut(msg)
                     }
                     setLoading(false, msg)
                 }
             } catch (t: Throwable) {
                 runOnUiThread {
                     val msg = friendlyMessage(t.message, "Could not refresh dashboard.")
+                    // Non-API exceptions are network/parse errors — keep stored token.
                     if (keepSignedInOnFailure) { statusMessage = msg }
                     else {
-                        prefs.edit().remove(KEY_TOKEN).remove(KEY_CACHE).commit()
+                        prefs.edit().remove(KEY_CACHE).commit()
                         showLoggedOut(msg)
                     }
                     setLoading(false, msg)

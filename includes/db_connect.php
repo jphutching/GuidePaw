@@ -1,20 +1,9 @@
 <?php
-session_start();
 
 require_once __DIR__ . '/app_config.php';
 require_once __DIR__ . '/error_handler.php';
-require_once __DIR__ . '/roles.php';
-require_once __DIR__ . '/paywalls.php';
-require_once __DIR__ . '/training_data.php';
-require_once __DIR__ . '/dog_age_helpers.php';
-require_once __DIR__ . '/db_core.php';
-require_once __DIR__ . '/address_helpers.php';
-require_once __DIR__ . '/handler_profile_helpers.php';
-require_once __DIR__ . '/auth_helpers.php';
-require_once __DIR__ . '/training_helpers.php';
-require_once __DIR__ . '/dog_access_helpers.php';
-require_once __DIR__ . '/dog_care_helpers.php';
 
+// ── Database connection (created before session_start so the session handler can use it) ──
 $dbDriver = 'pgsql';
 // Accept DATABASE_URL (Render auto-injects this when fromDatabase is configured)
 if ($dbUrl = appEnv('DATABASE_URL', '')) {
@@ -39,6 +28,7 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+    $GLOBALS['pdo'] = $pdo;
 } catch (PDOException $e) {
     http_response_code(500);
     if (appEnv('APP_ENV', 'production') === 'production') {
@@ -46,3 +36,20 @@ try {
     }
     die('Connection failed: ' . $e->getMessage());
 }
+
+// ── Database-backed sessions (survives Render container restarts) ──
+require_once __DIR__ . '/db_sessions.php';
+gpRegisterDbSessionHandler($pdo);
+session_start();
+
+require_once __DIR__ . '/roles.php';
+require_once __DIR__ . '/paywalls.php';
+require_once __DIR__ . '/training_data.php';
+require_once __DIR__ . '/dog_age_helpers.php';
+require_once __DIR__ . '/db_core.php';
+require_once __DIR__ . '/address_helpers.php';
+require_once __DIR__ . '/handler_profile_helpers.php';
+require_once __DIR__ . '/auth_helpers.php';
+require_once __DIR__ . '/training_helpers.php';
+require_once __DIR__ . '/dog_access_helpers.php';
+require_once __DIR__ . '/dog_care_helpers.php';
