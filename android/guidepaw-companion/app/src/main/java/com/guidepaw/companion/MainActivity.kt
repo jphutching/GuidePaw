@@ -71,6 +71,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -3762,8 +3763,56 @@ class MainActivity : AppCompatActivity() {
         var expanded by remember { mutableStateOf(false) }
         var selectedState by remember { mutableStateOf<StateSDLaw?>(null) }
         var query by remember { mutableStateOf("") }
+        var detecting by remember { mutableStateOf(false) }
+        var gpsStatus by remember { mutableStateOf("") }
         val filtered = if (query.isBlank()) states
                        else states.filter { it.name.contains(query, ignoreCase = true) || it.abbr.contains(query, ignoreCase = true) }
+
+        val context = LocalContext.current
+        val scope   = rememberCoroutineScope()
+
+        fun matchStateFromAdminArea(adminArea: String): StateSDLaw? =
+            states.firstOrNull { it.name.equals(adminArea.trim(), ignoreCase = true) }
+
+        fun runGpsDetect() {
+            detecting = true
+            gpsStatus = ""
+            scope.launch {
+                val result = resolveLocation(context)
+                detecting = false
+                if (result != null) {
+                    val stateName = result.second.split(", ").lastOrNull()?.trim() ?: ""
+                    val match = matchStateFromAdminArea(stateName)
+                    if (match != null) {
+                        selectedState = match
+                        gpsStatus = "📍 Auto-detected: ${match.name}"
+                    } else {
+                        gpsStatus = "📍 Location found but state not matched — select manually"
+                    }
+                } else {
+                    gpsStatus = "Could not get location — select manually"
+                }
+            }
+        }
+
+        val permLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { perms ->
+            if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                runGpsDetect()
+            } else {
+                gpsStatus = "Location permission denied — select state manually"
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+            if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                runGpsDetect()
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -3792,6 +3841,42 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.padding(12.dp),
                     color    = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
+            }
+
+            // GPS detect row
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                if (detecting) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Text("Detecting your state…", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                } else {
+                    Text(
+                        gpsStatus.ifBlank { if (selectedState == null) "Select your state below" else "" },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                            runGpsDetect()
+                        } else {
+                            permLauncher.launch(arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ))
+                        }
+                    },
+                    enabled = !detecting,
+                ) { Text("📍 Detect", style = MaterialTheme.typography.bodySmall) }
             }
 
             // State picker
