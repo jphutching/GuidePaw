@@ -21,6 +21,9 @@ sudo rm -rf "$LIVE/android"
 sudo rm -f "$LIVE/bridge_apk.php" "$LIVE/wearable_bridge.php" "$LIVE/api/wearables.php" "$LIVE/bridge/GuidePaw-Bridge-debug.apk" "$LIVE/bridge/GuidePaw-Companion-debug.apk"
 sudo rmdir "$LIVE/bridge" 2>/dev/null || true
 
+echo "== Fixing file ownership =="
+sudo chown -R www-data:www-data "$LIVE"/*.php "$LIVE"/api "$LIVE"/includes "$LIVE"/assets 2>/dev/null || true
+
 echo "== PHP syntax: live =="
 cd "$LIVE"
 for f in *.php; do php -l "$f" >/dev/null; done
