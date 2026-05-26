@@ -1,41 +1,36 @@
 # 🤝 GuidePaw AI Handoff Document
 
+> ⚠️ **Handoff reason:** `watchdog_timeout`
+
 | Field | Value |
 |---|---|
-| **From** | CODEX |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `codex-1779804247298` |
-| **Timestamp** | `2026-05-26T14:15:32.448Z` |
+| **Session ID** | `claude-1779804983096` |
+| **Timestamp** | `2026-05-26T15:00:00.945Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Implemented a new native Android Health Summary section backed by api/dog_health_summary.php. The companion now loads last checkup date, weight, active medication count, and a scrollable recent records list from the new endpoint, with version metadata bumped to 0.058/58 across the APK, companion constants, Render env, and release defaults. Built the debug APK, copied it to downloads/GuidePaw_Companion_v0.058.apk, synced Render env vars, committed, and pushed the work to main at 63cdc05.
+Watchdog auto-handoff after 45min
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `api/dog_health_summary.php`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawApiClient.kt`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt`
-- `android/guidepaw-companion/app/build.gradle`
-- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt`
-- `includes/companion_release.php`
-- `render.yaml`
-- `downloads/GuidePaw_Companion_v0.058.apk`
+- *(run `git diff --name-only HEAD~1` to see recent changes)*
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly.
+Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly. ---
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -45,7 +40,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly.","branch":"main"}'
+  -d '{"ai":"codex","task":"Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly. ---","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -57,9 +52,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
