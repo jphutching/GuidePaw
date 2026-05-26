@@ -6,8 +6,8 @@ if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
         // Update these alongside app/build.gradle when bumping the Android version
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.062'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '62');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.063'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '63');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Training streak and this-week session count on the Overview dashboard.',
+            'release_notes' => 'Native Trucking Mode planner — pick your day type and get a tailored training plan offline.',
             'published_at' => gmdate('c'),
         ];
     }

@@ -148,7 +148,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -543,6 +543,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
                         NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
+                        NavSection.TRUCKING_MODE        -> TruckingModeSection()
                         NavSection.FORGOT_PASSWORD      -> ForgotPasswordSection()
                     }
                 }
@@ -1431,6 +1432,128 @@ class MainActivity : AppCompatActivity() {
                     logs.forEach { LogCard(it) }
                 }
             }
+        }
+    }
+
+    // ── Trucking Mode section ───────────────────────────────────────────────
+    @Composable
+    private fun TruckingModeSection() {
+        data class TruckMode(
+            val key: String, val icon: String, val label: String,
+            val summary: String, val sessionLength: String,
+            val priority: String, val avoid: String, val nextStep: String,
+        )
+        val modes = remember {
+            listOf(
+                TruckMode("driving_day",   "🚚", "Driving Day",
+                    "Keep the session short, structured, and easy to pause between stops.",
+                    "5 to 10 minutes", "Loose leash, settle, and quick resets",
+                    "Long drills, high-rep fatigue work, and advanced public-access pushes",
+                    "Finish with a calm crate or mat settle before the next drive segment."),
+                TruckMode("reset_day",     "🔄", "Reset Day",
+                    "Use this when the dog needs a lighter restart after a rough stretch or travel gap.",
+                    "10 to 15 minutes", "Confidence, engagement, and one easy win",
+                    "Multi-step proofing, stress stacking, or exposing the dog to crowded settings too soon",
+                    "End on a clean cue the dog already knows well."),
+                TruckMode("weather_day",   "🌦️", "Weather Day",
+                    "Adjust the plan for wind, rain, heat, glare, or reduced footing.",
+                    "5 to 12 minutes", "Comfort checks, footwork, and controlled exposure",
+                    "Overheating, slick surfaces, and long exposure to bad footing or extreme weather",
+                    "Practice calm entry and exit from the truck, crate, or shelter."),
+                TruckMode("low_energy_day","🪫", "Low Energy Day",
+                    "Keep the dog in a low-demand mode and protect motivation.",
+                    "3 to 8 minutes", "Easy cues, settle work, and reinforcement",
+                    "High arousal games or heavy obedience sequences",
+                    "Reward a clean settle and stop while the dog still has some spark left."),
+                TruckMode("high_stress_day","🧯", "High Stress Day",
+                    "Use when the handler day is rough and the dog should get a narrow, predictable task.",
+                    "2 to 6 minutes", "Neutrality, settle, and one repeated success",
+                    "Crowded routes, long sessions, and new challenges",
+                    "Finish with a short recovery period and a calm return to the crate or mat."),
+            )
+        }
+
+        var selectedKey by remember { mutableStateOf(prefs.getString(KEY_TRUCKING_MODE, "driving_day") ?: "driving_day") }
+        var notes       by remember { mutableStateOf(prefs.getString(KEY_TRUCKING_NOTES, "") ?: "") }
+        val selected = modes.firstOrNull { it.key == selectedKey } ?: modes.first()
+
+        fun save() { prefs.edit().putString(KEY_TRUCKING_MODE, selectedKey).putString(KEY_TRUCKING_NOTES, notes).apply() }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.TACTICAL_TRAINING }) { Text("← Back") }
+                Text("🚚 Trucking Mode", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            Text(
+                "Pick the day type that matches the route, weather, and energy level.",
+                style = MaterialTheme.typography.bodySmall,
+                color = GpOnSurfaceVariant,
+            )
+
+            // Mode picker grid
+            modes.chunked(2).forEach { pair ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pair.forEach { mode ->
+                        val isSelected = mode.key == selectedKey
+                        OutlinedButton(
+                            onClick   = { selectedKey = mode.key; save() },
+                            modifier  = Modifier.weight(1f),
+                            colors    = if (isSelected)
+                                ButtonDefaults.outlinedButtonColors(containerColor = GpPrimaryContainer)
+                            else
+                                ButtonDefaults.outlinedButtonColors(),
+                            border    = if (isSelected)
+                                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            else
+                                ButtonDefaults.outlinedButtonBorder,
+                        ) {
+                            Text("${mode.icon} ${mode.label}", fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2)
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+
+            // Plan card for selected mode
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.outlinedCardColors(containerColor = GpPrimaryContainer),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${selected.icon} ${selected.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text(selected.summary, style = MaterialTheme.typography.bodySmall)
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row { Text("⏱ ", style = MaterialTheme.typography.bodySmall); Text(selected.sessionLength, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold) }
+                            Row { Text("✅ ", style = MaterialTheme.typography.bodySmall); Text(selected.priority, style = MaterialTheme.typography.bodySmall) }
+                            Row { Text("🚫 ", style = MaterialTheme.typography.bodySmall); Text(selected.avoid, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                            Row { Text("➡️ ", style = MaterialTheme.typography.bodySmall); Text(selected.nextStep, style = MaterialTheme.typography.bodySmall) }
+                        }
+                    }
+                }
+            }
+
+            // Optional notes
+            OutlinedTextField(
+                value         = notes,
+                onValueChange = { notes = it; save() },
+                label         = { Text("Notes (optional)") },
+                placeholder   = { Text("Route conditions, dog observations…") },
+                modifier      = Modifier.fillMaxWidth(),
+                minLines      = 3,
+            )
+
+            Button(
+                onClick  = { currentSection = NavSection.TRAINING },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("⚡ Log a Training Session") }
         }
     }
 
@@ -3674,7 +3797,7 @@ class MainActivity : AppCompatActivity() {
                         modifier  = Modifier.weight(1f),
                     ) { Text("Behavior Risk") }
                     OutlinedButton(
-                        onClick   = { openWebPage("https://guidepaw.app/trucking_mode.php") },
+                        onClick   = { currentSection = NavSection.TRUCKING_MODE },
                         modifier  = Modifier.weight(1f),
                     ) { Text("Trucking Mode") }
                 }
@@ -5177,6 +5300,7 @@ class MainActivity : AppCompatActivity() {
                     "📊 Compare Dogs"         to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_COMPARISON },
                     "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
+                    "🚚 Trucking Mode"        to { currentSection = NavSection.TRUCKING_MODE },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
                     "🏥 Health Summary"   to { loadHealthSummary(); currentSection = NavSection.HEALTH_SUMMARY },
@@ -7239,5 +7363,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TOKEN               = "auth_token"
         private const val KEY_CACHE               = "dashboard_cache"
         private const val KEY_IGNORED_UPDATE_CODE = "ignored_update_code"
+        private const val KEY_TRUCKING_MODE       = "trucking_mode"
+        private const val KEY_TRUCKING_NOTES      = "trucking_notes"
     }
 }
