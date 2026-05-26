@@ -509,6 +509,17 @@ class MainActivity : AppCompatActivity() {
                     .fillMaxSize()
                     .padding(padding),
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(end = 10.dp, top = 2.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    Text(
+                        "v${CompanionAppVersion.VERSION_NAME}",
+                        style    = MaterialTheme.typography.labelSmall,
+                        fontSize = 9.sp,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                    )
+                }
                 if (showUpdateCard) UpdateBanner()
                 if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
