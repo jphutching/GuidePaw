@@ -223,6 +223,7 @@ test.describe.serial('GuidePaw normal user action flows', () => {
 
     const guide = page.locator('details#command-words');
     await expect(guide).toBeVisible();
+    await guide.evaluate(el => { el.open = true; });
 
     const firstCommandField = guide.locator('input.form-control-sm').first();
     test.skip(!(await firstCommandField.count()), 'No command words editor found');

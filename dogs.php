@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $weight = ($_POST['weight_lbs'] ?? '') !== '' ? round((float) $_POST['weight_lbs'], 2) : null;
         $dob = cleanDateValue($_POST['date_of_birth'] ?? '');
         $birthApprox = !empty($_POST['birth_is_approximate']) ? 1 : 0;
-        $approxAge = $dob !== '' ? gpApproxAgeYearsFromBirthDate($dob) : (($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null);
+        $approxAge = $dob !== null ? gpApproxAgeYearsFromBirthDate($dob) : (($_POST['approx_age_years'] ?? '') !== '' ? round((float) $_POST['approx_age_years'], 1) : null);
         $notes = cleanTextarea($_POST['notes'] ?? '', 2000);
 
         if ($name === '') {
