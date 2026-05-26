@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/db_connect.php';
+require_once __DIR__ . '/../includes/api_auth.php';
 require_once __DIR__ . '/../includes/smtp_mailer.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

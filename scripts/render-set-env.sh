@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # render-set-env.sh — Safely set one or more Render env vars WITHOUT wiping others.
 # Usage: ./scripts/render-set-env.sh KEY=VALUE [KEY2=VALUE2 ...]
-# Example: ./scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=56 GUIDEPAW_COMPANION_VERSION_NAME=0.056
 #
-# This script always fetches the current env vars first and merges,
-# so it is safe to call from Codex or Claude without losing other vars.
+# This script paginates through ALL current env vars before merging,
+# so it is safe to call without losing other vars.
 
 set -euo pipefail
 
@@ -19,16 +18,30 @@ RENDER_SVC_ID="srv-d8a3qidckfvc739ct2cg"
 
 [[ $# -eq 0 ]] && { echo "Usage: $0 KEY=VALUE [KEY2=VALUE2 ...]"; exit 1; }
 
-# Fetch current env vars
-CURRENT=$(curl -s "https://api.render.com/v1/services/$RENDER_SVC_ID/env-vars" \
-  -H "Authorization: Bearer $RENDER_API_KEY" \
-  -H "Accept: application/json")
+# Fetch ALL pages of current env vars
+ALL_VARS="[]"
+CURSOR=""
+while true; do
+  URL="https://api.render.com/v1/services/$RENDER_SVC_ID/env-vars?limit=100"
+  [[ -n "$CURSOR" ]] && URL="${URL}&cursor=${CURSOR}"
+  PAGE=$(curl -s "$URL" -H "Authorization: Bearer $RENDER_API_KEY" -H "Accept: application/json")
+  COUNT=$(echo "$PAGE" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+  ALL_VARS=$(python3 -c "
+import json, sys
+existing = json.loads('$ALL_VARS')
+page = json.loads(sys.stdin.read())
+existing.extend(page)
+print(json.dumps(existing))
+" <<< "$PAGE")
+  if [[ "$COUNT" -lt 100 ]]; then break; fi
+  CURSOR=$(echo "$PAGE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[-1].get('cursor','') if d else '')")
+  [[ -z "$CURSOR" ]] && break
+done
 
-# Merge new values into existing
+# Merge new values into all existing vars
 UPDATES=$(printf '%s\n' "$@" | python3 -c "
-import sys, json, os
+import sys, json
 
-# Parse KEY=VALUE args from stdin
 overrides = {}
 for line in sys.stdin:
     line = line.strip()
@@ -36,12 +49,12 @@ for line in sys.stdin:
         k, v = line.split('=', 1)
         overrides[k.strip()] = v.strip()
 
-current_json = os.environ.get('CURRENT_JSON', '[]')
-data = json.loads(current_json)
+import os
+data = json.loads(os.environ.get('ALL_VARS_JSON', '[]'))
 existing = {item['envVar']['key']: item['envVar']['value'] for item in data}
 existing.update(overrides)
 print(json.dumps([{'key': k, 'value': v} for k, v in existing.items()]))
-" CURRENT_JSON="$CURRENT")
+" ALL_VARS_JSON="$ALL_VARS")
 
 HTTP=$(curl -s -o /tmp/render-env-response.json -w "%{http_code}" -X PUT \
   "https://api.render.com/v1/services/$RENDER_SVC_ID/env-vars" \
