@@ -151,7 +151,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -550,6 +550,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.ADA_ACCESS_CARD      -> ADAAccessCardSection()
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
+                        NavSection.STATE_ACCESS         -> StateAccessSection()
                         NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
                         NavSection.TRUCKING_MODE        -> TruckingModeSection()
                         NavSection.COMMUNITY_CHALLENGES -> CommunityChallengesSection()
@@ -3678,16 +3679,241 @@ class MainActivity : AppCompatActivity() {
                 Text("State law notes", fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "This screen shows federal ADA guidance only. For state-specific law notes and GPS state detection, use the web version.",
+                    "State laws vary — many states grant SDITs public access, and most states criminalize misrepresenting a pet as a service dog.",
                     style = MaterialTheme.typography.bodySmall,
                     color = GpOnSurfaceVariant,
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick  = { openWebPage("https://guidepaw.app/ada_access_card.php") },
+                    onClick  = { currentSection = NavSection.STATE_ACCESS },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Open web version for state law") }
+                ) { Text("View state-by-state access laws") }
             }
+        }
+    }
+
+    // ── State Access Laws section ───────────────────────────────────────────
+    @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+    @Composable
+    private fun StateAccessSection() {
+        data class StateSDLaw(
+            val name: String,
+            val abbr: String,
+            val sditAccess: String,
+            val misrepLaw: Boolean?,
+            val misrepNote: String,
+            val keyNote: String,
+        )
+
+        val states = listOf(
+            StateSDLaw("Alabama",              "AL", "Check current statutes",    true,  "Code of Ala. § 21-7-8; misdemeanor", "Largely follows federal ADA baseline."),
+            StateSDLaw("Alaska",               "AK", "Yes — with trainer",        true,  "AS § 18.80.395; class B misdemeanor", "Guide dog laws in AS § 18.80.395."),
+            StateSDLaw("Arizona",              "AZ", "Yes — with trainer",        true,  "A.R.S. § 11-1024; class 3 misdemeanor", "SDITs granted access when accompanied by trainer. Strong misrep penalties."),
+            StateSDLaw("Arkansas",             "AR", "Check current statutes",    true,  "Ark. Code § 20-14-305; Class A misdemeanor", "Misrepresentation is a Class A misdemeanor."),
+            StateSDLaw("California",           "CA", "Yes — same as trained SD",  true,  "Penal Code § 365.7; misdemeanor, fine up to \$1,000", "Civil Code § 54.2 grants SDITs the same public access as fully trained service dogs. Broadest state protections in the US."),
+            StateSDLaw("Colorado",             "CO", "Yes — with trainer",        true,  "C.R.S. § 24-34-803.5; petty offense", "SDITs allowed with trainer. Misrepresentation is a petty offense. One of the stronger state frameworks."),
+            StateSDLaw("Connecticut",          "CT", "Yes — with trainer",        true,  "CGS § 1-1f; infraction", "SDITs allowed with trainer. Misrepresentation is an infraction."),
+            StateSDLaw("Delaware",             "DE", "Yes — with trainer",        true,  "Del. Code tit. 6 § 4504A; fine up to \$1,000", "SDITs allowed with trainer."),
+            StateSDLaw("District of Columbia", "DC", "Yes — with trainer",        true,  "D.C. Code § 7-1009; misdemeanor", "Misrepresentation is a misdemeanor."),
+            StateSDLaw("Florida",              "FL", "Yes — with trainer/handler",true,  "F.S. § 413.081; second-degree misdemeanor", "F.S. § 413.08 grants SDIT access with trainer or handler. Strong framework."),
+            StateSDLaw("Georgia",              "GA", "Yes — with trainer",        true,  "O.C.G.A. § 30-4-2; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Hawaii",               "HI", "Yes — with trainer",        true,  "HRS § 347-13; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Idaho",                "ID", "Check current statutes",    true,  "Idaho Code § 56-704; fine up to \$1,000", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Illinois",             "IL", "Yes — with trainer",        true,  "775 ILCS 5/5-102.2; petty offense/Class B misdemeanor", "SDITs granted access when accompanied by trainer or handler. Well-established framework."),
+            StateSDLaw("Indiana",              "IN", "Check current statutes",    true,  "IC § 16-32-3; Class C infraction", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Iowa",                 "IA", "Yes — with trainer",        true,  "Iowa Code § 216C.11; simple misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Kansas",               "KS", "Check current statutes",    null,  "Verify current statutes", "Largely follows federal ADA baseline. K.S.A. § 39-1109."),
+            StateSDLaw("Kentucky",             "KY", "Check current statutes",    true,  "KRS § 258.500; fine", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Louisiana",            "LA", "Yes — with trainer",        true,  "La. R.S. § 46:1958; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Maine",                "ME", "Yes — with trainer",        true,  "5 M.R.S.A. § 4553; civil violation", "SDITs allowed with trainer."),
+            StateSDLaw("Maryland",             "MD", "Yes — with trainer",        true,  "Md. Code Art. 49B § 15; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Massachusetts",        "MA", "Yes — with trainer",        true,  "M.G.L. c. 272 § 98A; fine up to \$500", "SDITs allowed with trainer."),
+            StateSDLaw("Michigan",             "MI", "Yes — with trainer",        true,  "MCL § 750.502b; misdemeanor", "SDITs allowed with trainer. Misrepresentation is a misdemeanor."),
+            StateSDLaw("Minnesota",            "MN", "Yes — with trainer",        true,  "Minn. Stat. § 256C.02; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Mississippi",          "MS", "Check current statutes",    null,  "Verify current statutes", "Miss. Code § 43-6-155; largely follows federal baseline."),
+            StateSDLaw("Missouri",             "MO", "Check current statutes",    true,  "Mo. Rev. Stat. § 209.150; class D misdemeanor", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Montana",              "MT", "Check current statutes",    null,  "Verify current statutes", "MCA § 49-4-214; largely follows federal baseline."),
+            StateSDLaw("Nebraska",             "NE", "Check current statutes",    true,  "Neb. Rev. Stat. § 20-128; fine", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Nevada",               "NV", "Yes — with trainer",        true,  "NRS § 651.075; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("New Hampshire",        "NH", "Yes — with trainer",        null,  "Verify current statutes", "RSA § 167-D:2 covers guide dogs."),
+            StateSDLaw("New Jersey",           "NJ", "Yes — with trainer",        true,  "N.J.S.A. § 10:5-29.2; disorderly persons offense", "SDITs allowed with trainer."),
+            StateSDLaw("New Mexico",           "NM", "Yes — with trainer",        true,  "NMSA § 28-11-2; misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("New York",             "NY", "Yes — with trainer",        true,  "Civil Rights Law § 47-b; violation/fine", "Civil Rights Law § 47-b grants SDIT access with trainer."),
+            StateSDLaw("North Carolina",       "NC", "Yes — with trainer",        true,  "N.C.G.S. § 168-4.2; Class 3 misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("North Dakota",         "ND", "Check current statutes",    null,  "Verify current statutes", "N.D. Cent. Code § 25-13-01; largely follows federal."),
+            StateSDLaw("Ohio",                 "OH", "Yes — with trainer",        true,  "Ohio Rev. Code § 955.011; fine up to \$1,000", "SDITs allowed with trainer."),
+            StateSDLaw("Oklahoma",             "OK", "Check current statutes",    true,  "7 Okl. St. § 19.1; misdemeanor", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Oregon",               "OR", "Yes — with trainer",        true,  "ORS § 659A.143; violation", "SDITs allowed with trainer."),
+            StateSDLaw("Pennsylvania",         "PA", "Yes — with trainer",        true,  "43 P.S. § 953; summary offense/fine", "SDITs allowed with trainer."),
+            StateSDLaw("Rhode Island",         "RI", "Yes — with trainer",        true,  "RIGL § 40-9.1-1; fine", "SDITs allowed with trainer."),
+            StateSDLaw("South Carolina",       "SC", "Check current statutes",    true,  "S.C. Code § 43-33-20; fine up to \$500", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("South Dakota",         "SD", "Check current statutes",    null,  "Verify current statutes", "SDCL § 20-13-23.2; largely follows federal."),
+            StateSDLaw("Tennessee",            "TN", "Check current statutes",    true,  "Tenn. Code § 62-7-112; Class B misdemeanor", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Texas",                "TX", "Yes — with trainer",        true,  "Tex. Human Resources Code § 121.006; Class A misdemeanor, fine up to \$300", "Tex. Human Resources Code § 121.003 grants SDIT access with trainer."),
+            StateSDLaw("Utah",                 "UT", "Check current statutes",    true,  "Utah Code § 62A-5b-102; fine", "Check current statutes for SDIT-specific access."),
+            StateSDLaw("Vermont",              "VT", "Yes — with trainer",        null,  "Verify current statutes", "9 V.S.A. § 4502 covers service animals."),
+            StateSDLaw("Virginia",             "VA", "Yes — with trainer",        true,  "Va. Code § 51.5-44; Class 4 misdemeanor", "SDITs allowed with trainer."),
+            StateSDLaw("Washington",           "WA", "Yes — with trainer",        true,  "RCW § 49.60.215; civil infraction, fine up to \$250", "SDITs allowed with trainer."),
+            StateSDLaw("West Virginia",        "WV", "Check current statutes",    null,  "Verify current statutes", "W. Va. Code § 5-15-4; largely follows federal."),
+            StateSDLaw("Wisconsin",            "WI", "Yes — with trainer",        true,  "Wis. Stat. § 174.056; forfeiture/fine", "SDITs allowed with trainer."),
+            StateSDLaw("Wyoming",              "WY", "Check current statutes",    null,  "Verify current statutes", "Wyo. Stat. § 35-9-305; largely follows federal."),
+        )
+
+        var expanded by remember { mutableStateOf(false) }
+        var selectedState by remember { mutableStateOf<StateSDLaw?>(null) }
+        var query by remember { mutableStateOf("") }
+        val filtered = if (query.isBlank()) states
+                       else states.filter { it.name.contains(query, ignoreCase = true) || it.abbr.contains(query, ignoreCase = true) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.ADA_ACCESS_CARD }) { Text("← Back") }
+                Text(
+                    "State Access Laws",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier   = Modifier.padding(start = 4.dp),
+                )
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            ) {
+                Text(
+                    "Federal ADA rights apply in every state. State laws may add broader protections — especially for service dogs in training (SDITs). Always verify current statutes before relying on this summary.",
+                    style    = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(12.dp),
+                    color    = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+
+            // State picker
+            ExposedDropdownMenuBox(
+                expanded         = expanded,
+                onExpandedChange = { expanded = !expanded },
+            ) {
+                OutlinedTextField(
+                    value            = if (expanded) query else (selectedState?.let { "${it.abbr} — ${it.name}" } ?: ""),
+                    onValueChange    = { query = it; expanded = true },
+                    label            = { Text("Select a state") },
+                    trailingIcon     = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier         = Modifier.fillMaxWidth().menuAnchor(),
+                    singleLine       = true,
+                )
+                ExposedDropdownMenu(
+                    expanded         = expanded,
+                    onDismissRequest = { expanded = false; query = "" },
+                ) {
+                    filtered.forEach { law ->
+                        DropdownMenuItem(
+                            text    = { Text("${law.abbr} — ${law.name}") },
+                            onClick = { selectedState = law; expanded = false; query = "" },
+                        )
+                    }
+                    if (filtered.isEmpty()) {
+                        DropdownMenuItem(
+                            text    = { Text("No match", color = GpOnSurfaceVariant) },
+                            onClick = {},
+                        )
+                    }
+                }
+            }
+
+            // State detail
+            val law = selectedState
+            if (law != null) {
+                val sditColor = when {
+                    law.sditAccess.startsWith("Yes — same") -> androidx.compose.ui.graphics.Color(0xFF2E7D32)
+                    law.sditAccess.startsWith("Yes")        -> androidx.compose.ui.graphics.Color(0xFF1565C0)
+                    else                                    -> GpOnSurfaceVariant
+                }
+
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("${law.name} (${law.abbr})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+                        // SDIT access
+                        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("SDIT Access", style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(90.dp))
+                            Text(law.sditAccess, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = sditColor, modifier = Modifier.weight(1f))
+                        }
+
+                        // Misrep law
+                        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Misrep Law", style = MaterialTheme.typography.labelMedium, modifier = Modifier.width(90.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    when (law.misrepLaw) {
+                                        true  -> "Yes — criminal/civil penalty"
+                                        false -> "No state law found"
+                                        null  -> "Verify current statutes"
+                                    },
+                                    style      = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color      = if (law.misrepLaw == true) androidx.compose.ui.graphics.Color(0xFF2E7D32) else GpOnSurfaceVariant,
+                                )
+                                if (law.misrepNote.isNotBlank() && law.misrepNote != "Verify current statutes") {
+                                    Text(law.misrepNote, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+
+                        if (law.keyNote.isNotBlank()) {
+                            HorizontalDivider()
+                            Text(law.keyNote, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        }
+                    }
+                }
+            } else {
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Select a state above to see its SDIT access rights, misrepresentation laws, and key notes.",
+                        style    = MaterialTheme.typography.bodySmall,
+                        color    = GpOnSurfaceVariant,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
+
+            // ADA baseline reminder
+            SummaryCard {
+                Text("Federal ADA baseline (all states)", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(6.dp))
+                listOf(
+                    "Fully trained service dogs have public access in all 50 states and DC.",
+                    "Staff may only ask the two permitted questions.",
+                    "No documentation, vest, or certification required.",
+                    "Access may be denied only if the dog is out of control or not housebroken.",
+                ).forEach {
+                    Text("• $it", style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(2.dp))
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { currentSection = NavSection.ADA_ACCESS_CARD }, modifier = Modifier.weight(1f)) {
+                    Text("ADA Card", fontSize = 12.sp)
+                }
+                OutlinedButton(onClick = { currentSection = NavSection.AIR_TRAVEL }, modifier = Modifier.weight(1f)) {
+                    Text("Air Travel", fontSize = 12.sp)
+                }
+                OutlinedButton(onClick = { currentSection = NavSection.HOUSING_FAQ }, modifier = Modifier.weight(1f)) {
+                    Text("Housing", fontSize = 12.sp)
+                }
+            }
+
+            Text(
+                "This is a general reference only, not legal advice. Laws change — verify current statutes before relying on any state-specific information.",
+                style = MaterialTheme.typography.bodySmall,
+                color = GpOnSurfaceVariant,
+            )
         }
     }
 
@@ -5792,6 +6018,7 @@ class MainActivity : AppCompatActivity() {
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
+                    "🗺️ State Access Laws" to { currentSection = NavSection.STATE_ACCESS },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
                     "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                     "🏆 Challenges"         to { currentSection = NavSection.COMMUNITY_CHALLENGES },
