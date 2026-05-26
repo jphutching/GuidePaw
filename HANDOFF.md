@@ -1,32 +1,38 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `watchdog_timeout`
-
 | Field | Value |
 |---|---|
 | **From** | CLAUDE |
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1779804983096` |
-| **Timestamp** | `2026-05-26T15:00:00.945Z` |
+| **Timestamp** | `2026-05-26T22:16:08.414Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Watchdog auto-handoff after 45min
+v0.079: 4 native Android sections added (FAQ, Add Dog, Plans tier cards, Trainer Marketplace). Fixed 2 build errors (GuidePawDogItem missing params, OutlinedCard non-nullable border). Fixed deploy_local.sh reading version from source not nginx. APK built, deployed locally and Render (dep-d8b1n6d7vvec73ecdk80).
 
 ---
 
 ## 📁 Files Changed This Session
 
-- *(run `git diff --name-only HEAD~1` to see recent changes)*
+- `android/guidepaw-companion/app/build.gradle`
+- `CompanionAppVersion.kt`
+- `GuidePawApiClient.kt`
+- `MainActivity.kt`
+- `api/dogs.php`
+- `api/trainer_marketplace.php`
+- `includes/companion_release.php`
+- `render.yaml`
+- `scripts/deploy_local.sh`
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly. ---
+Audit remaining WebView-only sections and port the next batch natively. Consider: Training Log list, Public Dog Profile viewer, Community Challenges detail. Check if api/billing.php exists or needs creating for the Plans section getBilling() call.
 
 ---
 
@@ -40,7 +46,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"Pull origin/main, verify the Render companion env vars are still GUIDEPAW_COMPANION_VERSION_CODE=58 and GUIDEPAW_COMPANION_VERSION_NAME=0.058, then smoke-test api/dog_health_summary.php with a real token and confirm the Android Health Summary section renders recent_records correctly. ---","branch":"main"}'
+  -d '{"ai":"codex","task":"Audit remaining WebView-only sections and port the next batch natively. Consider: Training Log list, Public Dog Profile viewer, Community Challenges detail. Check if api/billing.php exists or needs creating for the Plans section getBilling() call.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
