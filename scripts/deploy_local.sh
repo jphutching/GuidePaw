@@ -17,6 +17,8 @@ sudo cp -r api "$LIVE/"
 sudo cp app.js sw.js manifest.json offline.html styles.css "$LIVE/" 2>/dev/null || true
 sudo cp -r includes "$LIVE/"
 sudo cp -r assets "$LIVE/"
+sudo mkdir -p "$LIVE/downloads"
+sudo cp downloads/*.apk "$LIVE/downloads/" 2>/dev/null || true
 sudo rm -rf "$LIVE/android"
 sudo rm -f "$LIVE/bridge_apk.php" "$LIVE/wearable_bridge.php" "$LIVE/api/wearables.php" "$LIVE/bridge/GuidePaw-Bridge-debug.apk" "$LIVE/bridge/GuidePaw-Companion-debug.apk"
 sudo rmdir "$LIVE/bridge" 2>/dev/null || true
@@ -91,6 +93,15 @@ do
   code=$(curl -k -s -o /tmp/gp_deploy_check.out -w "%{http_code}" "https://10.147.18.184/$url?deploycheck=1")
   echo "$code  $url"
 done
+
+echo "== Syncing companion version in nginx =="
+VER_NAME=$(php -r "require '$REPO/includes/app_config.php'; echo gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.078');" 2>/dev/null || grep "VERSION_NAME" "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '"\K[^"]+')
+VER_CODE=$(php -r "require '$REPO/includes/app_config.php'; echo gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '78');" 2>/dev/null || grep "VERSION_CODE" "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '= \K[0-9]+')
+NGINX_CONF="/etc/nginx/sites-available/guidepaw"
+sudo sed -i "s|fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME .*;|fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME ${VER_NAME};|" "$NGINX_CONF"
+sudo sed -i "s|fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE .*;|fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE ${VER_CODE};|" "$NGINX_CONF"
+sudo nginx -t >/dev/null 2>&1 && sudo systemctl reload nginx
+echo "  companion version → ${VER_NAME} (code ${VER_CODE})"
 
 if [ "$missing" -ne 0 ] || [ "$bad_links" -ne 0 ]; then
   echo "Deploy completed with warnings."
