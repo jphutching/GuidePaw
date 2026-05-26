@@ -477,6 +477,11 @@ data class GpMedicationsResult(
     val medications: List<GpMedicationItem>,
 )
 
+data class GpForgotPasswordResult(
+    val success: Boolean,
+    val message: String,
+)
+
 data class GpHealthSummary(
     val dogId: Int,
     val dogName: String,
@@ -1387,6 +1392,15 @@ class GuidePawApiClient(
             .put("notes", notes)
         val response = requestJson("api/certification.php", "POST", token, payload)
         ensureSuccess(response)
+    }
+
+    fun forgotPassword(email: String): GpForgotPasswordResult {
+        val payload = JSONObject().put("email", email)
+        val response = requestJson("api/forgot_password.php", "POST", null, payload)
+        return GpForgotPasswordResult(
+            success = response.json.optBoolean("success", false),
+            message = response.json.optString("message", "Check your email for a reset link."),
+        )
     }
 
     fun addCertAssessment(

@@ -148,7 +148,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -190,6 +190,9 @@ class MainActivity : AppCompatActivity() {
     private var twoFactorText    by mutableStateOf("")
     private var recoveryKeyText  by mutableStateOf("")
     private var showTwoFactor    by mutableStateOf(false)
+    private var forgotPasswordEmail   by mutableStateOf("")
+    private var forgotPasswordMessage by mutableStateOf("")
+    private var forgotPasswordSent    by mutableStateOf(false)
     private var showUpdateCard   by mutableStateOf(false)
     private var updateStatusText by mutableStateOf("")
     private var showMenu         by mutableStateOf(false)
@@ -538,6 +541,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
                         NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
+                        NavSection.FORGOT_PASSWORD      -> ForgotPasswordSection()
                     }
                 }
             }
@@ -685,10 +689,78 @@ class MainActivity : AppCompatActivity() {
                 onClick  = { attemptLogin() },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Sign In") }
+            Row(
+                modifier              = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                TextButton(onClick = {
+                    forgotPasswordEmail   = ""
+                    forgotPasswordMessage = ""
+                    forgotPasswordSent    = false
+                    currentSection = NavSection.FORGOT_PASSWORD
+                }) { Text("Forgot Password?", fontSize = 13.sp, color = Color(0xFF6B7280)) }
+                TextButton(onClick = {
+                    openWebPage("https://guidepaw.app/register.php")
+                }) { Text("Create Account", fontSize = 13.sp, color = Color(0xFF6B7280)) }
+            }
             TextButton(
                 onClick  = { currentSection = NavSection.FEEDBACK },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Report an issue", fontSize = 13.sp, color = Color(0xFF6B7280)) }
+        }
+    }
+
+    // ── Forgot-password section ─────────────────────────────────────────────
+    @Composable
+    private fun ForgotPasswordSection() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                "Reset Password",
+                style      = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            if (forgotPasswordSent) {
+                Text(
+                    forgotPasswordMessage.ifBlank { "Check your email for a reset link." },
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(
+                    onClick  = { currentSection = NavSection.OVERVIEW },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Back to Login") }
+            } else {
+                Text(
+                    "Enter the email address on your account and we'll send you a reset link.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = GpOnSurfaceVariant,
+                )
+                if (forgotPasswordMessage.isNotBlank()) {
+                    Text(forgotPasswordMessage, color = MaterialTheme.colorScheme.error)
+                }
+                OutlinedTextField(
+                    value           = forgotPasswordEmail,
+                    onValueChange   = { forgotPasswordEmail = it },
+                    label           = { Text("Email address") },
+                    singleLine      = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrect = false),
+                    modifier        = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick  = { submitForgotPassword() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Send Reset Link") }
+                TextButton(
+                    onClick  = { currentSection = NavSection.OVERVIEW },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Back to Login", fontSize = 13.sp, color = Color(0xFF6B7280)) }
+            }
         }
     }
 
@@ -5270,6 +5342,27 @@ class MainActivity : AppCompatActivity() {
             } catch (t: Throwable) {
                 runOnUiThread {
                     loginMessage = friendlyMessage(t.message, "Sign in failed.")
+                    setLoading(false, null)
+                }
+            }
+        }
+    }
+
+    private fun submitForgotPassword() {
+        val email = forgotPasswordEmail.trim()
+        if (email.isBlank()) { forgotPasswordMessage = "Please enter your email address."; return }
+        setLoading(true, "Sending reset link...")
+        worker.execute {
+            try {
+                val result = api.forgotPassword(email)
+                runOnUiThread {
+                    forgotPasswordSent    = true
+                    forgotPasswordMessage = result.message
+                    setLoading(false, null)
+                }
+            } catch (t: Throwable) {
+                runOnUiThread {
+                    forgotPasswordMessage = friendlyMessage(t.message, "Could not send reset email. Check your connection.")
                     setLoading(false, null)
                 }
             }

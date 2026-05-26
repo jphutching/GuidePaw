@@ -72,9 +72,9 @@ services:
         sync: false
       # Companion version — update these when bumping the Android app version
       - key: GUIDEPAW_COMPANION_VERSION_CODE
-        value: "58"
+        value: "59"
       - key: GUIDEPAW_COMPANION_VERSION_NAME
-        value: "0.058"
+        value: "0.059"
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
