@@ -148,7 +148,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS }
+private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -307,8 +307,10 @@ class MainActivity : AppCompatActivity() {
     private var apptShowForm        by mutableStateOf(false)
 
     // ── Medications state ──────────────────────────────────────────────────
-    private var medicationsResult  by mutableStateOf<GpMedicationsResult?>(null)
-    private var medicationsMessage by mutableStateOf("")
+    private var medicationsResult     by mutableStateOf<GpMedicationsResult?>(null)
+    private var medicationsMessage    by mutableStateOf("")
+    private var healthSummaryResult   by mutableStateOf<GpHealthSummary?>(null)
+    private var healthSummaryMessage  by mutableStateOf("")
     private var medName            by mutableStateOf("")
     private var medDosage          by mutableStateOf("")
     private var medSchedule        by mutableStateOf("")
@@ -525,6 +527,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.MEDICATIONS          -> MedicationsSection()
                         NavSection.APPOINTMENTS         -> VetAppointmentsSection()
                         NavSection.HEALTH_DOCS          -> HealthDocsSection()
+                        NavSection.HEALTH_SUMMARY       -> HealthSummarySection()
                         NavSection.CERTIFICATION        -> CertificationSection()
                         NavSection.PROFILE              -> ProfileSection()
                         NavSection.STATS                -> StatsSection()
@@ -4246,6 +4249,175 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Health Summary section ──────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun HealthSummarySection() {
+        val summary = healthSummaryResult
+
+        fun fmtDate(raw: String?): String {
+            if (raw.isNullOrBlank()) return "—"
+            return try {
+                val iso = raw.substringBefore('T')
+                val parts = iso.split('-')
+                if (parts.size == 3) {
+                    val months = listOf("","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+                    "${months[parts[1].toInt()]} ${parts[2].trimStart('0')}, ${parts[0]}"
+                } else raw
+            } catch (_: Exception) { raw }
+        }
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadHealthSummary(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (summary != null) "🏥 ${summary.dogName}" else "🏥 Health Summary",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(healthSummaryMessage, onRetry = { loadHealthSummary() })
+
+                if (summary != null) {
+                    // Stat cards row
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedCard(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("⚖️ Weight", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                                Text(
+                                    if (summary.weightLbs != null) "%.1f lbs".format(summary.weightLbs) else "—",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                        OutlinedCard(modifier = Modifier.weight(1f)) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("💊 Active Meds", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                                Text(
+                                    summary.activeMedicationCount.toString(),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+
+                    // Vet + next appointment
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("🏥 Primary Vet", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                            if (summary.primaryVetClinic.isNotBlank()) {
+                                Text(summary.primaryVetClinic, fontWeight = FontWeight.SemiBold)
+                                if (summary.primaryVetPhone.isNotBlank())
+                                    Text(summary.primaryVetPhone, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            } else {
+                                Text("No vet on file", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+                            if (summary.nextAppointmentAt != null) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                Text("📅 Next Appointment", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                                Text(summary.nextAppointmentTitle, fontWeight = FontWeight.SemiBold)
+                                Text(fmtDate(summary.nextAppointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+                        }
+                    }
+
+                    // Active medications list
+                    if (summary.activeMedications.isNotEmpty()) {
+                        Text("💊 Active Medications", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        summary.activeMedications.forEach { med ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(med.medicationName, fontWeight = FontWeight.SemiBold)
+                                    if (med.dosage.isNotBlank())
+                                        Text(med.dosage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (med.scheduleText.isNotBlank())
+                                        Text(med.scheduleText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (med.refillDate.isNotBlank())
+                                        Text("Refill: ${fmtDate(med.refillDate)}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+
+                    // Upcoming appointments
+                    if (summary.upcomingAppointments.isNotEmpty()) {
+                        Text("📅 Upcoming Appointments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        summary.upcomingAppointments.forEach { appt ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(appt.title, fontWeight = FontWeight.SemiBold)
+                                    Text(fmtDate(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (appt.clinicName.isNotBlank())
+                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (appt.locationText.isNotBlank())
+                                        Text(appt.locationText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+
+                    // Recent completed appointments
+                    if (summary.recentAppointments.isNotEmpty()) {
+                        Text("✅ Recent Visits", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        summary.recentAppointments.forEach { appt ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(appt.title, fontWeight = FontWeight.SemiBold)
+                                    Text(fmtDate(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (appt.clinicName.isNotBlank())
+                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (appt.notes.isNotBlank())
+                                        Text(appt.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+
+                    if (summary.activeMedications.isEmpty() && summary.upcomingAppointments.isEmpty() && summary.recentAppointments.isEmpty()) {
+                        Text(
+                            "No health records yet for ${summary.dogName}. Add medications or vet appointments from the Care menu.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = GpOnSurfaceVariant,
+                        )
+                    }
+
+                    // Quick links
+                    Row(
+                        modifier              = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick  = { loadMedications(); currentSection = NavSection.MEDICATIONS },
+                            modifier = Modifier.weight(1f),
+                        ) { Text("💊 Medications", fontSize = 12.sp) }
+                        OutlinedButton(
+                            onClick  = { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
+                            modifier = Modifier.weight(1f),
+                        ) { Text("📅 Appointments", fontSize = 12.sp) }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Vet Appointments section ────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -4837,6 +5009,7 @@ class MainActivity : AppCompatActivity() {
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                 ), onDismiss)
                 MenuSheetSection("Care", listOf(
+                    "🏥 Health Summary"   to { loadHealthSummary(); currentSection = NavSection.HEALTH_SUMMARY },
                     "🩺 Health Docs"      to { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                     "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
@@ -5877,6 +6050,22 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadAppointments() }
             } catch (t: Throwable) {
                 runOnUiThread { appointmentsMessage = friendlyMessage(t.message, "Could not update appointment.") }
+            }
+        }
+    }
+
+    private fun loadHealthSummary() {
+        val token = currentToken ?: return
+        healthSummaryMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.healthSummary(token)
+                runOnUiThread {
+                    healthSummaryResult  = result
+                    healthSummaryMessage = ""
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { healthSummaryMessage = friendlyMessage(t.message, "Could not load health summary.") }
             }
         }
     }

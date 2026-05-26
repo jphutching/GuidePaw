@@ -477,6 +477,20 @@ data class GpMedicationsResult(
     val medications: List<GpMedicationItem>,
 )
 
+data class GpHealthSummary(
+    val dogId: Int,
+    val dogName: String,
+    val weightLbs: Float?,
+    val activeMedicationCount: Int,
+    val primaryVetClinic: String,
+    val primaryVetPhone: String,
+    val nextAppointmentAt: String?,
+    val nextAppointmentTitle: String,
+    val activeMedications: List<GpMedicationItem>,
+    val upcomingAppointments: List<GpAppointmentItem>,
+    val recentAppointments: List<GpAppointmentItem>,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -1277,6 +1291,35 @@ class GuidePawApiClient(
             dogName   = response.json.optString("dog_name", ""),
             vets      = vets,
             documents = docs,
+        )
+    }
+
+    fun healthSummary(token: String): GpHealthSummary {
+        val response = requestJson("api/health_summary.php", "GET", token, null)
+        ensureSuccess(response)
+        val activeMeds = response.json.optJSONArray("active_medications")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toMedicationItem() } }
+            .orEmpty()
+        val upcomingAppts = response.json.optJSONArray("upcoming_appointments")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toAppointmentItem() } }
+            .orEmpty()
+        val recentAppts = response.json.optJSONArray("recent_appointments")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toAppointmentItem() } }
+            .orEmpty()
+        val weightRaw = if (response.json.isNull("weight_lbs")) null else response.json.optDouble("weight_lbs").toFloat()
+        val nextAt    = if (response.json.isNull("next_appointment_at")) null else response.json.optString("next_appointment_at")
+        return GpHealthSummary(
+            dogId                  = response.json.optInt("dog_id", 0),
+            dogName                = response.json.optString("dog_name", ""),
+            weightLbs              = weightRaw,
+            activeMedicationCount  = response.json.optInt("active_medication_count", 0),
+            primaryVetClinic       = response.json.optString("primary_vet_clinic", ""),
+            primaryVetPhone        = response.json.optString("primary_vet_phone", ""),
+            nextAppointmentAt      = nextAt,
+            nextAppointmentTitle   = response.json.optString("next_appointment_title", ""),
+            activeMedications      = activeMeds,
+            upcomingAppointments   = upcomingAppts,
+            recentAppointments     = recentAppts,
         )
     }
 

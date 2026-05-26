@@ -15,7 +15,7 @@ ENV_FILE="$REPO_ROOT/middleware/.env"
 set -a; source "$ENV_FILE"; set +a
 
 RENDER_API_KEY="${RENDER_API_KEY:?Set RENDER_API_KEY in middleware/.env}"
-RENDER_SVC_ID="srv-d7qmnj7lk1mc73cl18j0"
+RENDER_SVC_ID="srv-d8a3qidckfvc739ct2cg"
 
 [[ $# -eq 0 ]] && { echo "Usage: $0 KEY=VALUE [KEY2=VALUE2 ...]"; exit 1; }
 
