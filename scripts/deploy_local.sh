@@ -95,8 +95,8 @@ do
 done
 
 echo "== Syncing companion version in nginx =="
-VER_NAME=$(php -r "require '$REPO/includes/app_config.php'; echo gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.078');" 2>/dev/null || grep "VERSION_NAME" "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '"\K[^"]+')
-VER_CODE=$(php -r "require '$REPO/includes/app_config.php'; echo gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '78');" 2>/dev/null || grep "VERSION_CODE" "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '= \K[0-9]+')
+VER_NAME=$(grep 'VERSION_NAME' "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '"\K[^"]+')
+VER_CODE=$(grep 'VERSION_CODE.*Int' "$REPO/android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt" | grep -oP '= \K[0-9]+')
 NGINX_CONF="/etc/nginx/sites-available/guidepaw"
 sudo sed -i "s|fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME .*;|fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME ${VER_NAME};|" "$NGINX_CONF"
 sudo sed -i "s|fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE .*;|fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE ${VER_CODE};|" "$NGINX_CONF"

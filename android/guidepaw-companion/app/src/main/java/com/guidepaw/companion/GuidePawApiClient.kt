@@ -614,6 +614,33 @@ data class GpBreedMatch(
     val score: Int,
 )
 
+data class GpBillingPlan(
+    val slug: String,
+    val label: String,
+    val summary: String,
+    val includedText: List<String>,
+    val isCurrent: Boolean,
+)
+
+data class GpBillingInfo(
+    val currentTier: String,
+    val currentTierLabel: String,
+    val canCreateAnotherDog: Boolean,
+    val plans: List<GpBillingPlan>,
+)
+
+data class GpTrainerEntry(
+    val trainerName: String,
+    val businessName: String,
+    val credentials: String,
+    val phone: String,
+    val email: String,
+    val website: String,
+    val trainingFocus: String,
+    val notes: String,
+    val dogs: List<String>,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -2325,6 +2352,86 @@ class GuidePawApiClient(
                     traits      = o.optString("traits", ""),
                     notes       = o.optString("notes", ""),
                     score       = o.optInt("score", 0),
+                )
+            }
+        }
+    }
+
+    fun createDog(
+        token: String,
+        name: String,
+        breed: String,
+        dateOfBirth: String,
+        notes: String,
+    ): Pair<Int, List<GuidePawDogItem>> {
+        val payload = JSONObject()
+            .put("action", "create_dog")
+            .put("name", name)
+            .put("breed", breed)
+            .put("date_of_birth", dateOfBirth)
+            .put("notes", notes)
+        val response = requestJson("api/dogs.php", "POST", token, payload)
+        ensureSuccess(response)
+        val newId = response.json.optInt("dog_id", 0)
+        val dogsArr = response.json.optJSONArray("dogs") ?: JSONArray()
+        val dogs = (0 until dogsArr.length()).mapNotNull { i ->
+            dogsArr.optJSONObject(i)?.let { o ->
+                GuidePawDogItem(
+                    id              = o.optInt("id", 0),
+                    name            = o.optString("name", ""),
+                    breed           = o.optString("breed"),
+                    ownerUsername   = o.optString("owner_username"),
+                    accessRole      = o.optString("access_role"),
+                    lifecycleStatus = o.optString("lifecycle_status"),
+                )
+            }
+        }
+        return newId to dogs
+    }
+
+    fun getBilling(token: String): GpBillingInfo {
+        val response = requestJson("api/billing.php", "GET", token, null)
+        ensureSuccess(response)
+        val plansArr = response.json.optJSONArray("plan_rows") ?: JSONArray()
+        val plans = (0 until plansArr.length()).mapNotNull { i ->
+            plansArr.optJSONObject(i)?.let { o ->
+                val inclArr = o.optJSONArray("included_text")
+                val incl = inclArr?.let { a -> (0 until a.length()).map { a.optString(it, "") } } ?: emptyList()
+                GpBillingPlan(
+                    slug        = o.optString("slug", ""),
+                    label       = o.optString("label", ""),
+                    summary     = o.optString("summary", ""),
+                    includedText = incl,
+                    isCurrent   = o.optBoolean("is_current", false),
+                )
+            }
+        }
+        return GpBillingInfo(
+            currentTier          = response.json.optString("current_tier", "free"),
+            currentTierLabel     = response.json.optString("current_tier_label", "Free"),
+            canCreateAnotherDog  = response.json.optBoolean("can_create_another_dog", true),
+            plans                = plans,
+        )
+    }
+
+    fun getTrainerMarketplace(token: String): List<GpTrainerEntry> {
+        val response = requestJson("api/trainer_marketplace.php", "GET", token, null)
+        ensureSuccess(response)
+        val arr = response.json.optJSONArray("entries") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            arr.optJSONObject(i)?.let { o ->
+                val dogsArr = o.optJSONArray("dogs") ?: JSONArray()
+                val dogs = (0 until dogsArr.length()).mapNotNull { j -> dogsArr.optJSONObject(j)?.optString("dog_name") }
+                GpTrainerEntry(
+                    trainerName   = o.optString("trainer_name", ""),
+                    businessName  = o.optString("business_name", ""),
+                    credentials   = o.optString("credentials", ""),
+                    phone         = o.optString("trainer_phone", ""),
+                    email         = o.optString("trainer_email", ""),
+                    website       = o.optString("trainer_website", ""),
+                    trainingFocus = o.optString("training_focus", ""),
+                    notes         = o.optString("notes", ""),
+                    dogs          = dogs,
                 )
             }
         }

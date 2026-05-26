@@ -155,7 +155,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ, FAQ, PLANS, TRAINER_MARKETPLACE, ADD_DOG }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -576,6 +576,10 @@ class MainActivity : AppCompatActivity() {
                         NavSection.AI_ASSISTANT         -> AiAssistantSection()
                         NavSection.ESA_LEGAL            -> EsaLegalSection()
                         NavSection.BREED_QUIZ           -> BreedQuizSection()
+                        NavSection.FAQ                  -> FaqSection()
+                        NavSection.PLANS                -> PlansSection()
+                        NavSection.TRAINER_MARKETPLACE  -> TrainerMarketplaceSection()
+                        NavSection.ADD_DOG              -> AddDogSection()
                     }
                 }
             }
@@ -6448,6 +6452,7 @@ class MainActivity : AppCompatActivity() {
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
                     "🪪 Dog Profile"     to { currentSection = NavSection.DOG_PROFILE },
                     "🐾 Breed Finder"   to { currentSection = NavSection.BREED_QUIZ },
+                    "➕ Add Dog"        to { currentSection = NavSection.ADD_DOG },
                     "🤝 Dog Access"      to { if (dogAccessResult == null) loadDogAccess(); currentSection = NavSection.DOG_ACCESS },
                     "📡 QR Tracking"     to { loadQrTracking(); currentSection = NavSection.QR_TRACKING },
                     "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
@@ -6487,8 +6492,9 @@ class MainActivity : AppCompatActivity() {
                     "🔔 Notifications"   to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
                     "🧠 Smart Alerts"    to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
                     "⌚ Wearable Sync"   to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
-                    "🏷️ Plans"          to { openWebPage("https://guidepaw.app/paywalls.php") },
-                    "❓ FAQ"             to { openWebPage("https://guidepaw.app/faq.php") },
+                    "🏷️ Plans"          to { currentSection = NavSection.PLANS },
+                    "🤝 My Trainers"    to { currentSection = NavSection.TRAINER_MARKETPLACE },
+                    "❓ FAQ"             to { currentSection = NavSection.FAQ },
                     "💬 Feedback"        to { currentSection = NavSection.FEEDBACK },
                 ), onDismiss, defaultExpanded = false)
             }
@@ -9126,6 +9132,270 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── FAQ section ───────────────────────────────────────────────────────────
+    @Composable
+    private fun FaqSection() {
+        data class FaqItem(val q: String, val a: String)
+        val faqs = listOf(
+            FaqItem("What is GuidePaw?", "GuidePaw is a handler-focused platform for dog training logs, public profiles, breed research, and support tools — with a native Android companion app for training, goal intake, behavior tracking, and wearable data."),
+            FaqItem("Is there a mobile app?", "Yes. The GuidePaw Companion is a native Android app with training logs, goal intake, habit repair, behavior risk scoring, regression event tracking, and wearable data. All screens are fully native — no browser wrappers."),
+            FaqItem("What training tools are built in?", "Goal intake (define training goals with success criteria and a reinforcement plan), habit repair, behavior risk scoring, regression event tracking, candidate assessment, training ladder, community challenges, and the AI Coach for focused guidance."),
+            FaqItem("Do I need an account to use public breed tools?", "No. The breed questionnaire, comparison content, and other public pages are readable without signing in. The Breed Finder in the app requires a sign-in for the scored results."),
+            FaqItem("How is support different from the free core?", "The free core stays available for the first handler and first dog. Plus and Pro plans unlock additional features and add-ons that help fund ongoing development."),
+            FaqItem("What do public dog profiles show?", "Public dog profiles show only the contact and public notes you choose to share, plus the found-dog reporting flow. They do not expose private logs or account history."),
+            FaqItem("Does GuidePaw replace ADA.gov or airline rules?", "No. GuidePaw is a practical organizer and reference tool, but you should still rely on official ADA, HUD, DOT, and airline guidance for final rules."),
+            FaqItem("Where do housing and access disputes fit?", "Housing requests are different from public access. Use the Housing & Access screen in Laws & Rights for a plain-language summary, then verify with HUD and ADA guidance."),
+            FaqItem("How do I change my active dog?", "Open the menu → Dogs. Tap Switch if you have more than one dog, then tap the dog you want to make active."),
+            FaqItem("How do I add a new dog?", "Open the menu → Dog & Profile → Add Dog. Enter the dog's name and details and tap Save. The new dog becomes your active dog immediately."),
+            FaqItem("What is the AI Coach?", "The AI Coach is a rule-based training advisor. Describe what's going wrong, pick a topic, and receive a focused plan with next steps, things to avoid, and follow-up questions. It requires the Pro plan."),
+            FaqItem("How do I report a found dog?", "Scan the QR code on the dog's tag or profile. You'll be taken to the public report page without needing an account."),
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("❓ FAQ", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+            faqs.forEach { faq ->
+                var expanded by remember { mutableStateOf(false) }
+                OutlinedCard(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(faq.q, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            Text(if (expanded) "▲" else "▼", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                        }
+                        AnimatedVisibility(visible = expanded) {
+                            Text(faq.a, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Plans section ─────────────────────────────────────────────────────────
+    @Composable
+    private fun PlansSection() {
+        val scope = rememberCoroutineScope()
+        var billing  by remember { mutableStateOf<GpBillingInfo?>(null) }
+        var loading  by remember { mutableStateOf(true) }
+        var errorMsg by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { errorMsg = "Not signed in."; loading = false; return@LaunchedEffect }
+            try {
+                billing = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getBilling(token) }
+            } catch (t: Throwable) {
+                errorMsg = friendlyMessage(t.message, "Could not load plan info.")
+            } finally {
+                loading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🏷️ Plans", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            if (loading) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return@Column }
+            SectionMessage(errorMsg)
+
+            billing?.let { b ->
+                // Current tier badge
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column {
+                            Text("Current plan", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                            Text(b.currentTierLabel, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        }
+                        Badge { Text(b.currentTierLabel) }
+                    }
+                }
+
+                // Plan comparison cards
+                b.plans.forEach { plan ->
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        border   = if (plan.isCurrent) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(plan.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                if (plan.isCurrent) Badge { Text("Current") }
+                            }
+                            if (plan.summary.isNotBlank()) Text(plan.summary, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            plan.includedText.forEach { line ->
+                                if (line.isNotBlank()) Text("✓ $line", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+
+                // Upgrade CTA
+                if (b.currentTier != "pro") {
+                    Button(
+                        onClick  = { openWebPage("https://guidepaw.app/paywalls.php") },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("View Upgrade Options") }
+                }
+            }
+        }
+    }
+
+    // ── Trainer Marketplace section ───────────────────────────────────────────
+    @Composable
+    private fun TrainerMarketplaceSection() {
+        val scope    = rememberCoroutineScope()
+        var trainers by remember { mutableStateOf<List<GpTrainerEntry>?>(null) }
+        var loading  by remember { mutableStateOf(true) }
+        var errorMsg by remember { mutableStateOf("") }
+        var query    by remember { mutableStateOf("") }
+        var expanded by remember { mutableStateOf<String?>(null) }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { errorMsg = "Not signed in."; loading = false; return@LaunchedEffect }
+            try {
+                trainers = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getTrainerMarketplace(token) }
+            } catch (t: Throwable) {
+                errorMsg = friendlyMessage(t.message, "Could not load trainers.")
+            } finally {
+                loading = false
+            }
+        }
+
+        val filtered = trainers?.filter { t ->
+            if (query.isBlank()) true
+            else {
+                val hay = "${t.trainerName} ${t.businessName} ${t.credentials} ${t.trainingFocus} ${t.dogs.joinToString()}".lowercase()
+                hay.contains(query.lowercase())
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🤝 My Trainers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+            Text("Trainers associated with your dogs via dog training profiles.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+
+            if (loading) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return@Column }
+            SectionMessage(errorMsg)
+
+            if (!trainers.isNullOrEmpty()) {
+                OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search trainers") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            }
+
+            when {
+                errorMsg.isNotBlank() -> { /* shown above */ }
+                trainers.isNullOrEmpty() -> SectionMessage("No trainer entries found. Add trainer info in your dog's training profile on the web.")
+                filtered.isNullOrEmpty() -> SectionMessage("No trainers match \"$query\".")
+                else -> filtered!!.forEach { t ->
+                    val key = "${t.trainerName}|${t.businessName}"
+                    val isExpanded = expanded == key
+                    OutlinedCard(modifier = Modifier.fillMaxWidth().clickable { expanded = if (isExpanded) null else key }) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(t.trainerName.ifBlank { t.businessName.ifBlank { "Unnamed trainer" } }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    if (t.businessName.isNotBlank() && t.businessName != t.trainerName) Text(t.businessName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    if (t.dogs.isNotEmpty()) Text(t.dogs.joinToString(", "), style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                }
+                                Text(if (isExpanded) "▲" else "▼", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                            }
+                            AnimatedVisibility(visible = isExpanded) {
+                                Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    if (t.credentials.isNotBlank()) Text("Credentials: ${t.credentials}", style = MaterialTheme.typography.bodySmall)
+                                    if (t.trainingFocus.isNotBlank()) Text("Focus: ${t.trainingFocus}", style = MaterialTheme.typography.bodySmall)
+                                    if (t.phone.isNotBlank()) {
+                                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                        TextButton(onClick = { openWebPage("tel:${t.phone}") }, modifier = Modifier.fillMaxWidth()) { Text("📞 ${t.phone}") }
+                                    }
+                                    if (t.email.isNotBlank()) {
+                                        TextButton(onClick = { openWebPage("mailto:${t.email}") }, modifier = Modifier.fillMaxWidth()) { Text("✉️ ${t.email}") }
+                                    }
+                                    if (t.website.isNotBlank()) {
+                                        TextButton(onClick = { openWebPage(t.website) }, modifier = Modifier.fillMaxWidth()) { Text("🌐 Website") }
+                                    }
+                                    if (t.notes.isNotBlank()) Text(t.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Add Dog section ───────────────────────────────────────────────────────
+    @Composable
+    private fun AddDogSection() {
+        val scope = rememberCoroutineScope()
+        var name    by remember { mutableStateOf("") }
+        var breed   by remember { mutableStateOf("") }
+        var dob     by remember { mutableStateOf("") }
+        var notes   by remember { mutableStateOf("") }
+        var saving  by remember { mutableStateOf(false) }
+        var errorMsg by remember { mutableStateOf("") }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.DOGS }) { Text("← Back") }
+                Text("➕ Add Dog", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            SectionMessage(errorMsg)
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Dog's name *") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of birth (YYYY-MM-DD)") }, placeholder = { Text("e.g. 2021-03-10") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+
+                    Button(
+                        onClick = {
+                            val token = currentToken ?: return@Button
+                            if (name.isBlank()) { errorMsg = "Dog name is required."; return@Button }
+                            saving = true; errorMsg = ""
+                            scope.launch {
+                                try {
+                                    val (newId, updatedDogs) = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        api.createDog(token, name.trim(), breed.trim(), dob.trim(), notes.trim())
+                                    }
+                                    currentDogs = updatedDogs
+                                    currentActiveDogId = newId
+                                    currentSection = NavSection.DOGS
+                                } catch (t: Throwable) {
+                                    errorMsg = friendlyMessage(t.message, "Could not add dog.")
+                                } finally {
+                                    saving = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !saving,
+                    ) {
+                        if (saving) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
+                        Text("Add Dog")
                     }
                 }
             }
