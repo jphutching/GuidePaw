@@ -31,35 +31,11 @@ function gpDogHealthFormatDate(?string $value): ?string
     if ($value === '') {
         return null;
     }
-
     $timestamp = strtotime($value);
     if ($timestamp === false) {
         return substr($value, 0, 10) ?: null;
     }
-
     return date('Y-m-d', $timestamp);
-}
-
-function gpDogHealthJoinText(array $parts, string $separator = ' • '): string
-{
-    $clean = [];
-    foreach ($parts as $part) {
-        $text = trim((string) $part);
-        if ($text !== '') {
-            $clean[] = $text;
-        }
-    }
-    return implode($separator, $clean);
-}
-
-function gpDogHealthNormalizeRecord(array $row): array
-{
-    return [
-        'date'      => (string) ($row['date'] ?? ''),
-        'type'      => (string) ($row['type'] ?? ''),
-        'notes'     => (string) ($row['notes'] ?? ''),
-        'weight_lbs' => isset($row['weight_lbs']) && $row['weight_lbs'] !== null ? (float) $row['weight_lbs'] : null,
-    ];
 }
 
 if ($dogId <= 0) {
@@ -71,93 +47,106 @@ if (!$dog) {
     apiJson(['success' => false, 'message' => 'Active dog not found.'], 404);
 }
 
-$medStmt = $pdo->prepare("SELECT COUNT(*) FROM dog_medications WHERE dog_id = ? AND status = 'active'");
+// Active medications (full list)
+$medStmt = $pdo->prepare("
+    SELECT id, medication_name, dosage, status, schedule_text, refill_date,
+           prescribing_provider, instructions, notes, created_at
+    FROM dog_medications
+    WHERE dog_id = ? AND status = 'active'
+    ORDER BY COALESCE(refill_date, start_date) ASC, id DESC
+");
 $medStmt->execute([$dogId]);
-$activeMedicationCount = (int) $medStmt->fetchColumn();
+$activeMeds = $medStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-$docStmt = $pdo->prepare("
-    SELECT id, doc_type, title, provider_name, notes, created_at
-    FROM dog_documents
+// Primary vet
+$vetStmt = $pdo->prepare("
+    SELECT clinic_name, vet_name, phone, notes
+    FROM dog_vets
     WHERE dog_id = ?
-    ORDER BY created_at DESC, id DESC
+    ORDER BY is_primary DESC, id ASC
+    LIMIT 1
+");
+$vetStmt->execute([$dogId]);
+$primaryVet = $vetStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+// Upcoming appointments (next 3 scheduled)
+$upcomingStmt = $pdo->prepare("
+    SELECT a.id, a.title, a.status, a.appointment_at, a.location_text, a.notes,
+           COALESCE(v.clinic_name, '') AS clinic_name,
+           COALESCE(v.phone, '')       AS vet_phone
+    FROM dog_vet_appointments a
+    LEFT JOIN dog_vets v ON v.id = a.dog_vet_id
+    WHERE a.dog_id = ? AND a.status = 'scheduled' AND a.appointment_at >= CURRENT_TIMESTAMP
+    ORDER BY a.appointment_at ASC
+    LIMIT 3
+");
+$upcomingStmt->execute([$dogId]);
+$upcomingAppts = $upcomingStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+// Recent completed appointments (last 5)
+$recentStmt = $pdo->prepare("
+    SELECT a.id, a.title, a.status, a.appointment_at, a.location_text, a.notes,
+           COALESCE(v.clinic_name, '') AS clinic_name,
+           COALESCE(v.phone, '')       AS vet_phone
+    FROM dog_vet_appointments a
+    LEFT JOIN dog_vets v ON v.id = a.dog_vet_id
+    WHERE a.dog_id = ? AND a.status = 'completed'
+    ORDER BY a.appointment_at DESC
     LIMIT 5
 ");
-$docStmt->execute([$dogId]);
-$documents = $docStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+$recentStmt->execute([$dogId]);
+$recentAppts = $recentStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-$apptStmt = $pdo->prepare("
-    SELECT id, title, notes, appointment_at, location_text
-    FROM dog_vet_appointments
-    WHERE dog_id = ? AND status = 'completed'
-    ORDER BY appointment_at DESC, id DESC
-    LIMIT 5
-");
-$apptStmt->execute([$dogId]);
-$appointments = $apptStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+$lastCheckupDate = !empty($recentAppts)
+    ? gpDogHealthFormatDate((string) ($recentAppts[0]['appointment_at'] ?? ''))
+    : null;
 
-$primaryVetStmt = $pdo->prepare("SELECT clinic_name, vet_name, phone, notes FROM dog_vets WHERE dog_id = ? ORDER BY is_primary DESC, id ASC LIMIT 1");
-$primaryVetStmt->execute([$dogId]);
-$primaryVet = $primaryVetStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+$nextApptAt    = !empty($upcomingAppts) ? (string) $upcomingAppts[0]['appointment_at'] : null;
+$nextApptTitle = !empty($upcomingAppts) ? (string) $upcomingAppts[0]['title'] : '';
 
-$recentRecords = [];
-foreach ($documents as $doc) {
-    $recentRecords[] = [
-        'date'       => gpDogHealthFormatDate((string) ($doc['created_at'] ?? '')) ?? '',
-        'type'       => (string) ($doc['doc_type'] ?? 'vet_record'),
-        'notes'      => gpDogHealthJoinText([
-            $doc['title'] ?? '',
-            $doc['provider_name'] ?? '',
-            $doc['notes'] ?? '',
-        ]),
-        'weight_lbs' => $dog['weight_lbs'] !== null ? (float) $dog['weight_lbs'] : null,
-    ];
-}
-foreach ($appointments as $appt) {
-    $recentRecords[] = [
-        'date'       => gpDogHealthFormatDate((string) ($appt['appointment_at'] ?? '')) ?? '',
-        'type'       => 'vet_appointment',
-        'notes'      => gpDogHealthJoinText([
-            $appt['title'] ?? '',
-            $appt['location_text'] ?? '',
-            $appt['notes'] ?? '',
-        ]),
-        'weight_lbs' => $dog['weight_lbs'] !== null ? (float) $dog['weight_lbs'] : null,
+function gpNormalizeAppt(array $r): array
+{
+    return [
+        'id'             => (int) $r['id'],
+        'title'          => (string) $r['title'],
+        'status'         => (string) $r['status'],
+        'appointment_at' => (string) $r['appointment_at'],
+        'location_text'  => (string) ($r['location_text'] ?? ''),
+        'notes'          => (string) ($r['notes'] ?? ''),
+        'clinic_name'    => (string) ($r['clinic_name'] ?? ''),
+        'vet_phone'      => (string) ($r['vet_phone'] ?? ''),
     ];
 }
 
-usort($recentRecords, static function (array $left, array $right): int {
-    return strcmp((string) ($right['date'] ?? ''), (string) ($left['date'] ?? ''));
-});
-$recentRecords = array_values(array_slice($recentRecords, 0, 8));
-
-$lastCheckupDate = null;
-if (!empty($appointments)) {
-    $lastCheckupDate = gpDogHealthFormatDate((string) ($appointments[0]['appointment_at'] ?? ''));
-} elseif (!empty($recentRecords)) {
-    $lastCheckupDate = $recentRecords[0]['date'] ?: null;
-}
-
-$healthNotesCandidates = [
-    $recentRecords[0]['notes'] ?? '',
-    $primaryVet['notes'] ?? '',
-    $dog['notes'] ?? '',
-];
-$healthNotes = '';
-foreach ($healthNotesCandidates as $candidate) {
-    $candidate = trim((string) $candidate);
-    if ($candidate !== '') {
-        $healthNotes = $candidate;
-        break;
-    }
+function gpNormalizeMed(array $r): array
+{
+    return [
+        'id'                   => (int) $r['id'],
+        'medication_name'      => (string) $r['medication_name'],
+        'dosage'               => (string) ($r['dosage'] ?? ''),
+        'status'               => (string) $r['status'],
+        'schedule_text'        => (string) ($r['schedule_text'] ?? ''),
+        'refill_date'          => (string) ($r['refill_date'] ?? ''),
+        'prescribing_provider' => (string) ($r['prescribing_provider'] ?? ''),
+        'instructions'         => (string) ($r['instructions'] ?? ''),
+        'notes'                => (string) ($r['notes'] ?? ''),
+        'created_at'           => (string) ($r['created_at'] ?? ''),
+    ];
 }
 
 apiJson([
-    'success'                 => true,
-    'dog_id'                  => (int) $dog['id'],
-    'dog_name'                => (string) $dog['name'],
-    'last_checkup_date'       => $lastCheckupDate,
-    'weight_lbs'              => $dog['weight_lbs'] !== null ? (float) $dog['weight_lbs'] : null,
-    'health_notes'            => $healthNotes,
-    'active_medication_count' => $activeMedicationCount,
-    'recent_records'          => array_map('gpDogHealthNormalizeRecord', $recentRecords),
+    'success'                  => true,
+    'dog_id'                   => (int) $dog['id'],
+    'dog_name'                 => (string) $dog['name'],
+    'weight_lbs'               => $dog['weight_lbs'] !== null ? (float) $dog['weight_lbs'] : null,
+    'last_checkup_date'        => $lastCheckupDate,
+    'active_medication_count'  => count($activeMeds),
+    'primary_vet_clinic'       => $primaryVet ? (string) ($primaryVet['clinic_name'] ?? '') : '',
+    'primary_vet_name'         => $primaryVet ? (string) ($primaryVet['vet_name'] ?? '') : '',
+    'primary_vet_phone'        => $primaryVet ? (string) ($primaryVet['phone'] ?? '') : '',
+    'next_appointment_at'      => $nextApptAt,
+    'next_appointment_title'   => $nextApptTitle,
+    'active_medications'       => array_map('gpNormalizeMed', $activeMeds),
+    'upcoming_appointments'    => array_map('gpNormalizeAppt', $upcomingAppts),
+    'recent_appointments'      => array_map('gpNormalizeAppt', $recentAppts),
 ]);

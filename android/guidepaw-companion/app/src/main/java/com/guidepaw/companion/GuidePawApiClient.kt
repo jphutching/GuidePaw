@@ -516,14 +516,31 @@ data class GpForgotPasswordResult(
     val message: String,
 )
 
+data class GpVetAppointment(
+    val id: Int,
+    val title: String,
+    val status: String,
+    val appointmentAt: String,
+    val locationText: String,
+    val notes: String,
+    val clinicName: String,
+    val vetPhone: String,
+)
+
 data class GpHealthSummary(
     val dogId: Int,
     val dogName: String,
     val lastCheckupDate: String,
     val weightLbs: Float?,
-    val healthNotes: String,
     val activeMedicationCount: Int,
-    val recentRecords: List<GpHealthRecord>,
+    val primaryVetClinic: String,
+    val primaryVetName: String,
+    val primaryVetPhone: String,
+    val nextAppointmentAt: String,
+    val nextAppointmentTitle: String,
+    val activeMedications: List<GpMedicationItem>,
+    val upcomingAppointments: List<GpVetAppointment>,
+    val recentAppointments: List<GpVetAppointment>,
 )
 
 class GuidePawApiException(
@@ -1338,26 +1355,59 @@ class GuidePawApiClient(
     fun getHealthSummary(token: String): GpHealthSummary? {
         val response = requestJson("api/dog_health_summary.php", "GET", token, null)
         ensureSuccess(response)
-        val records = response.json.optJSONArray("recent_records")
-            ?.let { arr -> (0 until arr.length()).mapNotNull { index ->
-                val obj = arr.optJSONObject(index) ?: return@mapNotNull null
-                GpHealthRecord(
-                    date     = obj.optString("date", ""),
-                    type     = obj.optString("type", ""),
-                    notes    = obj.optString("notes", ""),
-                    weightLbs = if (obj.isNull("weight_lbs")) null else obj.optDouble("weight_lbs").toFloat(),
-                )
-            } }
-            .orEmpty()
-        val weightRaw = if (response.json.isNull("weight_lbs")) null else response.json.optDouble("weight_lbs").toFloat()
+
+        fun parseAppts(key: String): List<GpVetAppointment> =
+            response.json.optJSONArray(key)
+                ?.let { arr -> (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                    GpVetAppointment(
+                        id            = o.optInt("id", 0),
+                        title         = o.optString("title", ""),
+                        status        = o.optString("status", ""),
+                        appointmentAt = o.optString("appointment_at", ""),
+                        locationText  = o.optString("location_text", ""),
+                        notes         = o.optString("notes", ""),
+                        clinicName    = o.optString("clinic_name", ""),
+                        vetPhone      = o.optString("vet_phone", ""),
+                    )
+                } }
+                .orEmpty()
+
+        fun parseMeds(key: String): List<GpMedicationItem> =
+            response.json.optJSONArray(key)
+                ?.let { arr -> (0 until arr.length()).mapNotNull { i ->
+                    val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                    GpMedicationItem(
+                        id                   = o.optInt("id", 0),
+                        medicationName       = o.optString("medication_name", ""),
+                        dosage               = o.optString("dosage", ""),
+                        status               = o.optString("status", ""),
+                        scheduleText         = o.optString("schedule_text", ""),
+                        refillDate           = o.optString("refill_date", ""),
+                        prescribingProvider  = o.optString("prescribing_provider", ""),
+                        instructions         = o.optString("instructions", ""),
+                        notes                = o.optString("notes", ""),
+                        createdAt            = o.optString("created_at", ""),
+                    )
+                } }
+                .orEmpty()
+
+        val weightRaw = if (response.json.isNull("weight_lbs")) null
+                        else response.json.optDouble("weight_lbs").toFloat()
         return GpHealthSummary(
-            dogId                = response.json.optInt("dog_id", 0),
-            dogName              = response.json.optString("dog_name", ""),
-            lastCheckupDate      = response.json.optString("last_checkup_date", ""),
-            weightLbs            = weightRaw,
-            healthNotes          = response.json.optString("health_notes", ""),
+            dogId                 = response.json.optInt("dog_id", 0),
+            dogName               = response.json.optString("dog_name", ""),
+            lastCheckupDate       = response.json.optString("last_checkup_date", ""),
+            weightLbs             = weightRaw,
             activeMedicationCount = response.json.optInt("active_medication_count", 0),
-            recentRecords        = records,
+            primaryVetClinic      = response.json.optString("primary_vet_clinic", ""),
+            primaryVetName        = response.json.optString("primary_vet_name", ""),
+            primaryVetPhone       = response.json.optString("primary_vet_phone", ""),
+            nextAppointmentAt     = response.json.optString("next_appointment_at", ""),
+            nextAppointmentTitle  = response.json.optString("next_appointment_title", ""),
+            activeMedications     = parseMeds("active_medications"),
+            upcomingAppointments  = parseAppts("upcoming_appointments"),
+            recentAppointments    = parseAppts("recent_appointments"),
         )
     }
 

@@ -6,8 +6,8 @@ if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
         // Update these alongside app/build.gradle when bumping the Android version
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.068'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '68');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.069'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '69');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Community Challenges, Training Ladder, Health Summary, Training History, Trucking Mode planner, streaks, medication alerts, and more.',
+            'release_notes' => 'Upgraded Health Summary: vet contact with tap-to-call, upcoming appointments, full medication list with refill alerts, and recent appointment history.',
             'published_at' => gmdate('c'),
         ];
     }

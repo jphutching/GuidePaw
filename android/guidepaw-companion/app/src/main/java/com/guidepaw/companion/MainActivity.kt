@@ -4954,12 +4954,14 @@ class MainActivity : AppCompatActivity() {
             }.getOrDefault(raw)
         }
 
-        fun fmtWeight(raw: Float?): String = if (raw != null) "%.1f lbs".format(raw) else "—"
-
-        fun fmtType(raw: String): String =
-            raw.replace('_', ' ')
-                .trim()
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        fun fmtDateTime(raw: String?): String {
+            if (raw.isNullOrBlank()) return "—"
+            return runCatching {
+                java.time.LocalDateTime.parse(raw.take(19)).format(
+                    java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"),
+                )
+            }.getOrElse { fmtDate(raw) }
+        }
 
         PullToRefreshBox(
             isRefreshing = isPullingToRefresh,
@@ -5006,93 +5008,174 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (summary != null) {
+                    // ── Stat tiles ─────────────────────────────────────────────
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         StatTile("Last Checkup", fmtDate(summary.lastCheckupDate), Modifier.weight(1f))
-                        StatTile("Weight", fmtWeight(summary.weightLbs), Modifier.weight(1f))
+                        StatTile("Weight", summary.weightLbs?.let { "%.1f lbs".format(it) } ?: "—", Modifier.weight(1f))
                         StatTile("Active Meds", summary.activeMedicationCount.toString(), Modifier.weight(1f))
                     }
 
-                    if (summary.healthNotes.isNotBlank()) {
-                        SummaryCard {
-                            Text("Health Notes", fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.height(4.dp))
-                            Text(summary.healthNotes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                        }
-                    }
-
-                    Text("Recent Records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 340.dp)
-                                .verticalScroll(rememberScrollState())
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            if (summary.recentRecords.isEmpty()) {
-                                Text(
-                                    "No recent health records yet for ${summary.dogName}.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = GpOnSurfaceVariant,
-                                )
-                            } else {
-                                summary.recentRecords.forEachIndexed { index, record ->
-                                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.Top,
-                                            ) {
-                                                Text(
-                                                    fmtType(record.type),
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    modifier = Modifier.weight(1f),
-                                                )
-                                                Text(
-                                                    fmtDate(record.date),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = GpOnSurfaceVariant,
-                                                )
-                                            }
-                                            if (record.notes.isNotBlank()) {
-                                                Text(record.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                            }
-                                            Text(
-                                                record.weightLbs?.let { "%.1f lbs".format(it) } ?: "Weight not recorded",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = GpOnSurfaceVariant,
-                                            )
-                                        }
-                                    }
-                                    if (index != summary.recentRecords.lastIndex) {
-                                        Spacer(Modifier.height(2.dp))
+                    // ── Vet contact ────────────────────────────────────────────
+                    if (summary.primaryVetClinic.isNotBlank() || summary.primaryVetName.isNotBlank()) {
+                        Text("Primary Vet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (summary.primaryVetClinic.isNotBlank()) {
+                                    Text(summary.primaryVetClinic, fontWeight = FontWeight.SemiBold)
+                                }
+                                if (summary.primaryVetName.isNotBlank()) {
+                                    Text(summary.primaryVetName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (summary.primaryVetPhone.isNotBlank()) {
+                                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                                    TextButton(
+                                        onClick = {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_DIAL,
+                                                android.net.Uri.parse("tel:${summary.primaryVetPhone}"))
+                                            ctx.startActivity(intent)
+                                        },
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                                    ) {
+                                        Text("📞 ${summary.primaryVetPhone}", style = MaterialTheme.typography.bodySmall)
                                     }
                                 }
                             }
                         }
                     }
 
-                    if (summary.recentRecords.isEmpty() && summary.healthNotes.isBlank()) {
-                        Text(
-                            "No health records yet for ${summary.dogName}. Add care records from the Care menu.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = GpOnSurfaceVariant,
-                        )
+                    // ── Upcoming appointments ──────────────────────────────────
+                    Text("Upcoming Appointments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (summary.upcomingAppointments.isEmpty()) {
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                "No upcoming appointments scheduled.",
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = GpOnSurfaceVariant,
+                                modifier = Modifier.padding(14.dp),
+                            )
+                        }
+                    } else {
+                        summary.upcomingAppointments.forEach { appt ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier              = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment     = Alignment.Top,
+                                    ) {
+                                        Text(appt.title.ifBlank { "Appointment" }, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                        Text(fmtDateTime(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (appt.clinicName.isNotBlank()) {
+                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (appt.locationText.isNotBlank()) {
+                                        Text("📍 ${appt.locationText}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (appt.notes.isNotBlank()) {
+                                        Text(appt.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
                     }
 
+                    // ── Active medications ─────────────────────────────────────
+                    Text("Active Medications", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (summary.activeMedications.isEmpty()) {
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                "No active medications.",
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = GpOnSurfaceVariant,
+                                modifier = Modifier.padding(14.dp),
+                            )
+                        }
+                    } else {
+                        summary.activeMedications.forEach { med ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier              = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment     = Alignment.CenterVertically,
+                                    ) {
+                                        Text(med.medicationName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                        if (med.dosage.isNotBlank()) {
+                                            Text(med.dosage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        }
+                                    }
+                                    if (med.scheduleText.isNotBlank()) {
+                                        Text("🕐 ${med.scheduleText}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (med.refillDate.isNotBlank()) {
+                                        val daysUntil = runCatching {
+                                            java.time.temporal.ChronoUnit.DAYS.between(
+                                                java.time.LocalDate.now(),
+                                                java.time.LocalDate.parse(med.refillDate.take(10)),
+                                            )
+                                        }.getOrDefault(Long.MAX_VALUE)
+                                        val refillColor = if (daysUntil <= 14) androidx.compose.ui.graphics.Color(0xFFE65100) else GpOnSurfaceVariant
+                                        Text(
+                                            "🔁 Refill: ${fmtDate(med.refillDate)}" + if (daysUntil in 0..14) " (${daysUntil}d)" else "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = refillColor,
+                                        )
+                                    }
+                                    if (med.instructions.isNotBlank()) {
+                                        Text(med.instructions, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Recent appointments ────────────────────────────────────
+                    Text("Recent Appointments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    if (summary.recentAppointments.isEmpty()) {
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                "No completed appointments on record.",
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = GpOnSurfaceVariant,
+                                modifier = Modifier.padding(14.dp),
+                            )
+                        }
+                    } else {
+                        summary.recentAppointments.forEach { appt ->
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier              = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment     = Alignment.Top,
+                                    ) {
+                                        Text(appt.title.ifBlank { "Appointment" }, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                        Text(fmtDate(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (appt.clinicName.isNotBlank()) {
+                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                    if (appt.notes.isNotBlank()) {
+                                        Text(appt.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Quick nav ──────────────────────────────────────────────
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         OutlinedButton(
-                            onClick  = { loadMedications(); currentSection = NavSection.MEDICATIONS },
+                            onClick  = { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                             modifier = Modifier.weight(1f),
-                        ) { Text("💊 Medications", fontSize = 12.sp) }
+                        ) { Text("📅 Appointments", fontSize = 12.sp) }
                         OutlinedButton(
                             onClick  = { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                             modifier = Modifier.weight(1f),
@@ -6820,11 +6903,7 @@ class MainActivity : AppCompatActivity() {
                 val result = api.getHealthSummary(token)
                 runOnUiThread {
                     healthSummary = result
-                    healthMessage = if (result?.recentRecords.isNullOrEmpty()) {
-                        result?.let { "No recent health records yet for ${it.dogName}." } ?: ""
-                    } else {
-                        ""
-                    }
+                    healthMessage = ""
                     healthIsLoading = false
                     isPullingToRefresh = false
                 }
