@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import androidx.compose.animation.AnimatedVisibility
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -6394,80 +6395,106 @@ class MainActivity : AppCompatActivity() {
                         colors   = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     ) { Text("↩️ Sign Out") }
                 }
-                MenuSheetSection("Dog", listOf(
+                MenuSheetSection("Dog & Profile", listOf(
                     "👤 Handler Profile" to { if (profileResult == null) loadProfile(); currentSection = NavSection.PROFILE },
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
                     "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
                     "🤝 Dog Access"      to { if (dogAccessResult == null) loadDogAccess(); currentSection = NavSection.DOG_ACCESS },
                     "📡 QR Tracking"     to { loadQrTracking(); currentSection = NavSection.QR_TRACKING },
                     "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
-                ), onDismiss)
+                ), onDismiss, defaultExpanded = true)
                 MenuSheetSection("Training", listOf(
                     "⚡ Log Training"         to { currentSection = NavSection.TRAINING },
                     "📋 Training History"     to { currentSection = NavSection.TRAINING_HISTORY },
                     "🎯 Goal Intake"          to { loadGoalIntake(goalIntakeFilter); currentSection = NavSection.GOAL_INTAKE },
+                    "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
                     "🛠️ Habit Repair"        to { loadHabitRepair(); currentSection = NavSection.HABIT_REPAIR },
                     "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
                     "♻️ Regression Engine"   to { loadRegressionEvents(); currentSection = NavSection.REGRESSION },
                     "🐾 Candidate Assessment" to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_ASSESSMENT },
                     "📊 Compare Dogs"         to { loadCandidateAssessments(); currentSection = NavSection.CANDIDATE_COMPARISON },
-                    "🧩 Goal Builder"         to { currentSection = NavSection.GOAL_BUILDER },
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                     "🚚 Trucking Mode"        to { currentSection = NavSection.TRUCKING_MODE },
-                ), onDismiss)
-                MenuSheetSection("Care", listOf(
+                    "🪜 Training Ladder"      to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
+                ), onDismiss, defaultExpanded = true)
+                MenuSheetSection("Care & Health", listOf(
                     "🏥 Health Summary"   to { loadHealthSummary(); currentSection = NavSection.HEALTH_SUMMARY },
                     "🩺 Health Docs"      to { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                     "📅 Vet Appointments" to { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
                     "💊 Medications"      to { loadMedications(); currentSection = NavSection.MEDICATIONS },
                     "🔍 Find a Vet"       to { currentSection = NavSection.VET_FINDER },
-                    "⌚ Wearable Sync"    to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
-                ), onDismiss)
-                MenuSheetSection("More", listOf(
-                    "🔔 Notification Center" to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
-                    "🧠 Smart Alerts"      to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
-                    "💬 Feedback"          to { currentSection = NavSection.FEEDBACK },
+                ), onDismiss, defaultExpanded = true)
+                MenuSheetSection("Laws & Rights", listOf(
+                    "🗺️ State Access Laws" to { currentSection = NavSection.STATE_ACCESS },
                     "🪪 ADA Access Card"   to { currentSection = NavSection.ADA_ACCESS_CARD },
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
-                    "🗺️ State Access Laws" to { currentSection = NavSection.STATE_ACCESS },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
-                    "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
-                    "🏆 Challenges"         to { currentSection = NavSection.COMMUNITY_CHALLENGES },
-                    "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
-                    "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
-                ), onDismiss)
+                ), onDismiss, defaultExpanded = false)
+                MenuSheetSection("App & Account", listOf(
+                    "🔔 Notifications"   to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
+                    "🧠 Smart Alerts"    to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
+                    "⌚ Wearable Sync"   to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
+                    "🏆 Challenges"      to { currentSection = NavSection.COMMUNITY_CHALLENGES },
+                    "🏷️ Plans"          to { openWebPage("https://guidepaw.app/paywalls.php") },
+                    "❓ FAQ"             to { openWebPage("https://guidepaw.app/faq.php") },
+                    "💬 Feedback"        to { currentSection = NavSection.FEEDBACK },
+                ), onDismiss, defaultExpanded = false)
             }
         }
     }
 
     @Composable
-    private fun MenuSheetSection(title: String, items: List<Pair<String, () -> Unit>>, onDismiss: () -> Unit) {
+    private fun MenuSheetSection(
+        title: String,
+        items: List<Pair<String, () -> Unit>>,
+        onDismiss: () -> Unit,
+        defaultExpanded: Boolean = true,
+    ) {
+        var expanded by remember { mutableStateOf(defaultExpanded) }
         OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    title,
-                    style      = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color      = GpOnSurfaceVariant,
-                    modifier   = Modifier.padding(bottom = 8.dp),
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items.chunked(2).forEach { pair ->
-                        Row(
-                            modifier              = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            pair.forEach { (label, action) ->
-                                OutlinedButton(
-                                    onClick        = { onDismiss(); action() },
-                                    modifier       = Modifier.weight(1f),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                                ) {
-                                    Text(label, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2)
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        title,
+                        style      = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color      = GpOnSurfaceVariant,
+                    )
+                    Text(
+                        if (expanded) "▲" else "▼",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                }
+                AnimatedVisibility(visible = expanded) {
+                    Column(
+                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        items.chunked(2).forEach { pair ->
+                            Row(
+                                modifier              = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                pair.forEach { (label, action) ->
+                                    OutlinedButton(
+                                        onClick        = { onDismiss(); action() },
+                                        modifier       = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                                    ) {
+                                        Text(label, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2)
+                                    }
                                 }
+                                if (pair.size == 1) Spacer(Modifier.weight(1f))
                             }
-                            if (pair.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
                 }
