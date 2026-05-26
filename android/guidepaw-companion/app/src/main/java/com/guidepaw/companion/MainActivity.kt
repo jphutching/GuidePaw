@@ -149,7 +149,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -279,6 +279,9 @@ class MainActivity : AppCompatActivity() {
     private var certResult             by mutableStateOf<GpCertResult?>(null)
     private var certMessage            by mutableStateOf("")
     private var certExpandedCategories by mutableStateOf<Set<String>>(emptySet())
+    private var trainProgResult             by mutableStateOf<GpTrainingProgramResult?>(null)
+    private var trainProgMessage            by mutableStateOf("")
+    private var trainProgExpandedCategories by mutableStateOf<Set<String>>(emptySet())
     private var certAsmDate            by mutableStateOf("")
     private var certAsmPublic          by mutableStateOf("")
     private var certAsmTask            by mutableStateOf("")
@@ -535,6 +538,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.HEALTH_DOCS          -> HealthDocsSection()
                         NavSection.HEALTH_SUMMARY       -> HealthSummarySection()
                         NavSection.CERTIFICATION        -> CertificationSection()
+                        NavSection.TRAINING_PROGRAM     -> TrainingProgramSection()
                         NavSection.PROFILE              -> ProfileSection()
                         NavSection.STATS                -> StatsSection()
                         NavSection.DOG_ACCESS           -> DogAccessSection()
@@ -4242,6 +4246,166 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Training Program / Ladder section ──────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun TrainingProgramSection() {
+        val result    = trainProgResult
+        val byCategory = result?.items?.groupBy { it.category } ?: emptyMap()
+
+        val statusLabel = mapOf(
+            "not_started" to "Not started",
+            "in_progress" to "In progress",
+            "proofing"    to "Proofing",
+            "mastered"    to "Mastered",
+        )
+        val statusOrder = listOf("not_started", "in_progress", "proofing", "mastered")
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; loadTrainingProgram(); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text(
+                        if (result != null) "🪜 ${result.dogName}" else "🪜 Training Ladder",
+                        style      = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier   = Modifier.padding(start = 4.dp),
+                    )
+                }
+
+                SectionMessage(trainProgMessage, onRetry = { loadTrainingProgram() })
+
+                if (result != null) {
+                    SummaryCard {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            StatChip("Total",      result.total.toString(),      Modifier.weight(1f))
+                            StatChip("Mastered",   result.mastered.toString(),   Modifier.weight(1f))
+                            StatChip("In progress", result.inProgress.toString(), Modifier.weight(1f))
+                            StatChip("Proofing",   result.proofing.toString(),   Modifier.weight(1f))
+                        }
+                    }
+                }
+
+                if (result != null && result.items.isEmpty()) {
+                    SummaryCard {
+                        Text("No training ladder loaded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { seedTrainingProgram() }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Load starter training ladder")
+                        }
+                    }
+                }
+
+                byCategory.forEach { (category, items) ->
+                    val expanded = trainProgExpandedCategories.contains(category)
+                    val masteredInCat = items.count { it.status == "mastered" }
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            TextButton(
+                                onClick  = {
+                                    trainProgExpandedCategories = if (expanded)
+                                        trainProgExpandedCategories - category
+                                    else
+                                        trainProgExpandedCategories + category
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                            ) {
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.CenterVertically,
+                                ) {
+                                    Text(category, fontWeight = FontWeight.SemiBold, color = GpOnSurface, modifier = Modifier.weight(1f))
+                                    Text(
+                                        "$masteredInCat/${items.size}  ${if (expanded) "▲" else "▼"}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = GpOnSurfaceVariant,
+                                    )
+                                }
+                            }
+
+                            if (expanded) {
+                                HorizontalDivider()
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                                ) {
+                                    items.forEach { item ->
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Row(
+                                                verticalAlignment     = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            ) {
+                                                Text(
+                                                    item.itemName,
+                                                    fontWeight = FontWeight.Medium,
+                                                    style      = MaterialTheme.typography.bodySmall,
+                                                    modifier   = Modifier.weight(1f),
+                                                )
+                                                if (item.trackCode.isNotBlank()) {
+                                                    Surface(
+                                                        shape = MaterialTheme.shapes.extraSmall,
+                                                        color = GpPrimaryContainer,
+                                                    ) {
+                                                        Text(
+                                                            item.trackCode.uppercase().replace('_', ' '),
+                                                            style    = MaterialTheme.typography.labelSmall,
+                                                            color    = GpOnSurface,
+                                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            if (item.description.isNotBlank()) {
+                                                Text(item.description, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                            }
+                                            // 2×2 status button grid
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                statusOrder.chunked(2).forEach { pair ->
+                                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                        pair.forEach { value ->
+                                                            val label = statusLabel[value] ?: value
+                                                            if (item.status == value) {
+                                                                Button(
+                                                                    onClick        = {},
+                                                                    modifier       = Modifier.weight(1f),
+                                                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                                                ) { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                                                            } else {
+                                                                OutlinedButton(
+                                                                    onClick        = { updateTrainingProgramItem(item.id, value) },
+                                                                    modifier       = Modifier.weight(1f),
+                                                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                                                ) { Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
+                                                            }
+                                                        }
+                                                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                                                    }
+                                                }
+                                            }
+                                            if (item !== items.last()) HorizontalDivider(color = GpOutline)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Certification section ───────────────────────────────────────────────
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -5379,6 +5543,7 @@ class MainActivity : AppCompatActivity() {
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
+                    "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
                 ), onDismiss)
@@ -6296,6 +6461,50 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { loadCertification() }
             } catch (t: Throwable) {
                 runOnUiThread { certMessage = friendlyMessage(t.message, "Could not update item.") }
+            }
+        }
+    }
+
+    private fun loadTrainingProgram() {
+        val token = currentToken ?: return
+        trainProgMessage = "Loading..."
+        worker.execute {
+            try {
+                val result = api.trainingProgram(token)
+                runOnUiThread {
+                    trainProgResult  = result
+                    trainProgMessage = ""
+                    if (trainProgExpandedCategories.isEmpty() && result.items.isNotEmpty()) {
+                        trainProgExpandedCategories = setOf(result.items.first().category)
+                    }
+                }
+            } catch (t: Throwable) {
+                runOnUiThread { trainProgMessage = friendlyMessage(t.message, "Could not load training ladder.") }
+            }
+        }
+    }
+
+    private fun seedTrainingProgram() {
+        val token = currentToken ?: return
+        setLoading(true, "Loading starter ladder...")
+        worker.execute {
+            try {
+                api.seedTrainingProgram(token)
+                runOnUiThread { setLoading(false, "Ladder loaded."); loadTrainingProgram() }
+            } catch (t: Throwable) {
+                runOnUiThread { setLoading(false, ""); trainProgMessage = friendlyMessage(t.message, "Could not load template.") }
+            }
+        }
+    }
+
+    private fun updateTrainingProgramItem(itemId: Int, status: String) {
+        val token = currentToken ?: return
+        worker.execute {
+            try {
+                api.updateTrainingItem(token, itemId, status)
+                runOnUiThread { loadTrainingProgram() }
+            } catch (t: Throwable) {
+                runOnUiThread { trainProgMessage = friendlyMessage(t.message, "Could not update item.") }
             }
         }
     }

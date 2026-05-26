@@ -421,6 +421,27 @@ data class GpCertResult(
     val assessment: GpCertAssessment?,
 )
 
+data class GpTrainingItem(
+    val id: Int,
+    val category: String,
+    val trackCode: String,
+    val level: Int,
+    val itemName: String,
+    val description: String,
+    val status: String,
+    val lastWorkedAt: String,
+    val notes: String,
+)
+
+data class GpTrainingProgramResult(
+    val dogName: String,
+    val total: Int,
+    val mastered: Int,
+    val inProgress: Int,
+    val proofing: Int,
+    val items: List<GpTrainingItem>,
+)
+
 data class GpVetItem(
     val id: Int,
     val clinicName: String,
@@ -1444,6 +1465,50 @@ class GuidePawApiClient(
         status      = optString("status", "not_started"),
         notes       = optString("notes", ""),
     )
+
+    private fun JSONObject.toTrainingItem() = GpTrainingItem(
+        id           = optInt("id", 0),
+        category     = optString("category", ""),
+        trackCode    = optString("track_code", ""),
+        level        = optInt("level", 1),
+        itemName     = optString("item_name", ""),
+        description  = optString("description", ""),
+        status       = optString("status", "not_started"),
+        lastWorkedAt = optString("last_worked_at", ""),
+        notes        = optString("notes", ""),
+    )
+
+    fun trainingProgram(token: String): GpTrainingProgramResult {
+        val response = requestJson("api/training_program.php", "GET", token, null)
+        ensureSuccess(response)
+        val j = response.json
+        val items = j.optJSONArray("items")
+            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toTrainingItem() } }
+            .orEmpty()
+        return GpTrainingProgramResult(
+            dogName    = j.optString("dog_name", ""),
+            total      = j.optInt("total", 0),
+            mastered   = j.optInt("mastered", 0),
+            inProgress = j.optInt("in_progress", 0),
+            proofing   = j.optInt("proofing", 0),
+            items      = items,
+        )
+    }
+
+    fun seedTrainingProgram(token: String) {
+        val payload  = JSONObject().put("action", "seed")
+        val response = requestJson("api/training_program.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
+
+    fun updateTrainingItem(token: String, itemId: Int, status: String) {
+        val payload = JSONObject()
+            .put("action", "update_status")
+            .put("item_id", itemId)
+            .put("status", status)
+        val response = requestJson("api/training_program.php", "POST", token, payload)
+        ensureSuccess(response)
+    }
 
     private fun JSONObject.toHealthDocItem() = GpHealthDocItem(
         id           = optInt("id", 0),
