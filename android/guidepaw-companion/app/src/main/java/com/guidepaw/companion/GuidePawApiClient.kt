@@ -135,6 +135,7 @@ data class GuidePawDogItem(
     val ownerUsername: String?,
     val accessRole: String?,
     val lifecycleStatus: String?,
+    val dateOfBirth: String? = null,
 )
 
 data class GuidePawLogItem(
@@ -812,6 +813,7 @@ class GuidePawApiClient(
                 ownerUsername = obj.optText("owner_username"),
                 accessRole = obj.optText("access_role"),
                 lifecycleStatus = obj.optText("lifecycle_status"),
+                dateOfBirth = obj.optText("date_of_birth"),
             )
         }
     }
@@ -1785,6 +1787,7 @@ class GuidePawApiClient(
                 ownerUsername = obj.optText("owner_username"),
                 accessRole = obj.optText("access_role"),
                 lifecycleStatus = obj.optText("lifecycle_status"),
+                dateOfBirth = obj.optText("date_of_birth"),
             )
         }
     }

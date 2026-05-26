@@ -812,6 +812,23 @@ class MainActivity : AppCompatActivity() {
                             color = GpOnSurfaceVariant,
                         )
                     }
+                    activeDog.dateOfBirth?.takeIf { it.isNotBlank() }?.let { dob ->
+                        runCatching {
+                            val born    = java.time.LocalDate.parse(dob.take(10))
+                            val today   = java.time.LocalDate.now()
+                            val years   = java.time.Period.between(born, today).years
+                            val months  = java.time.Period.between(born, today).months
+                            val ageText = if (years >= 1) "$years yr${if (years != 1) "s" else ""}" else "$months mo${if (months != 1) "s" else ""}"
+                            val nextBirthday = born.withYear(today.year).let { if (!it.isAfter(today)) it.plusYears(1) else it }
+                            val daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, nextBirthday)
+                            val birthdayHint = if (daysUntil <= 7) " 🎂 Birthday in ${daysUntil}d!" else ""
+                            Text(
+                                "Age: $ageText$birthdayHint",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (birthdayHint.isNotEmpty()) MaterialTheme.colorScheme.primary else GpOnSurfaceVariant,
+                            )
+                        }
+                    }
                 } else {
                     Text("No active dog", fontWeight = FontWeight.SemiBold)
                     Text(
@@ -1311,6 +1328,15 @@ class MainActivity : AppCompatActivity() {
                         dog.breed,
                         dog.accessRole?.replaceFirstChar { it.uppercase() },
                         dog.lifecycleStatus?.replace('_', ' '),
+                        dog.dateOfBirth?.takeIf { it.isNotBlank() }?.let { dob ->
+                            runCatching {
+                                val born = java.time.LocalDate.parse(dob.take(10))
+                                val today = java.time.LocalDate.now()
+                                val y = java.time.Period.between(born, today).years
+                                val m = java.time.Period.between(born, today).months
+                                if (y >= 1) "$y yr${if (y != 1) "s" else ""} old" else "$m mo${if (m != 1) "s" else ""} old"
+                            }.getOrNull()
+                        },
                     ).joinToString(" • ").ifBlank { "Dog record" },
                     style = MaterialTheme.typography.bodySmall,
                     color = GpOnSurfaceVariant,
@@ -7270,6 +7296,7 @@ class MainActivity : AppCompatActivity() {
                         ownerUsername   = o.optText("ownerUsername"),
                         accessRole      = o.optText("accessRole"),
                         lifecycleStatus = o.optText("lifecycleStatus"),
+                        dateOfBirth     = o.optText("dateOfBirth"),
                     )
                 }
             }.orEmpty()
@@ -7312,6 +7339,7 @@ class MainActivity : AppCompatActivity() {
                     .put("ownerUsername", dog.ownerUsername ?: JSONObject.NULL)
                     .put("accessRole", dog.accessRole ?: JSONObject.NULL)
                     .put("lifecycleStatus", dog.lifecycleStatus ?: JSONObject.NULL)
+                    .put("dateOfBirth", dog.dateOfBirth ?: JSONObject.NULL)
             }))
             .put("logs", JSONArray(currentLogs.map { log ->
                 JSONObject()
