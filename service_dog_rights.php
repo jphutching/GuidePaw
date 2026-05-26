@@ -2,7 +2,6 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once 'includes/seo.php';
-checkLogin();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,9 +9,9 @@ checkLogin();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php guidepawSeoHead([
-        'title' => 'Detailed ADA Service Dog Notes',
-        'description' => 'A practical GuidePaw reference for ADA service dog rights, handler responsibilities, and calm response scripts.',
-        'robots' => 'noindex,nofollow',
+        'title' => 'ADA Service Dog Rights — Handler Quick Reference | GuidePaw',
+        'description' => 'What staff may ask, what they may not ask, when access can be denied, and a fast response script — practical ADA reference for service dog handlers.',
+        'robots' => 'index,follow',
         'type' => 'article',
         'image' => '/assets/brand/guidepaw-logo.png',
         'json_ld' => [
@@ -168,10 +167,11 @@ checkLogin();
     <div class="sticky-actions p-3">
         <div class="container" style="max-width: 760px;">
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
-                <a href="ada_access_card.php" class="btn btn-outline-dark">ADA Access Card</a>
+                <a href="state_access_laws.php" class="btn btn-outline-success">State Access Laws</a>
                 <a href="air_travel_rights.php" class="btn btn-outline-dark">Air Travel Rights</a>
+                <a href="ada_access_card.php" class="btn btn-outline-dark">ADA Access Card</a>
                 <button class="btn btn-outline-secondary" onclick="window.print()">Print / Save PDF</button>
-                <a href="index.php" class="btn btn-primary">Done</a>
+                <a href="index.php" class="btn btn-primary">Home</a>
             </div>
         </div>
     </div>

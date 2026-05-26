@@ -140,6 +140,38 @@ if (empty($_SESSION['user_id'])) {
         <section class="mb-4">
             <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
                 <div>
+                    <div class="text-uppercase fw-semibold small" style="color:#0d9488;">No account needed</div>
+                    <h2 class="h3 mb-0">Service Dog &amp; Handler Rights</h2>
+                </div>
+                <a href="state_access_laws.php" class="btn btn-sm fw-semibold" style="background:#0d9488;color:#fff;">All 50 States →</a>
+            </div>
+            <div class="landing-grid">
+                <a class="landing-example text-decoration-none text-dark" href="state_access_laws.php" style="border-top: 3px solid #0d9488;">
+                    <div class="fw-bold mb-1">🗺️ State Access Laws</div>
+                    <div class="text-muted small">SDIT public access rights, misrepresentation laws, and key statutes for all 50 states and DC. Searchable and filterable.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php" style="border-top: 3px solid #0d6efd;">
+                    <div class="fw-bold mb-1">🪪 ADA Handler Quick Ref</div>
+                    <div class="text-muted small">What staff may ask, what they may not ask, when access can be denied, and a calm response script.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php" style="border-top: 3px solid #7c3aed;">
+                    <div class="fw-bold mb-1">📋 Service Dog &amp; ESA Legal Info</div>
+                    <div class="text-muted small">Plain-language guide covering service dogs, ESAs, housing rights, and air travel basics.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="air_travel_rights.php" style="border-top: 3px solid #ea580c;">
+                    <div class="fw-bold mb-1">✈️ Air Travel Rights</div>
+                    <div class="text-muted small">DOT forms, what airlines can require, SDIT rules, and what to do if access is denied at the gate.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php" style="border-top: 3px solid #0891b2;">
+                    <div class="fw-bold mb-1">🏠 Housing &amp; Access FAQ</div>
+                    <div class="text-muted small">What to do when a landlord, HOA, or business asks for paperwork, certification, or proof of training.</div>
+                </a>
+            </div>
+        </section>
+
+        <section class="mb-4">
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+                <div>
                     <div class="text-uppercase text-muted fw-semibold small">Public tools &amp; guides</div>
                     <h2 class="h3 mb-0">Browse without an account</h2>
                 </div>
@@ -153,25 +185,9 @@ if (empty($_SESSION['user_id'])) {
                     <div class="fw-bold mb-1">Public Dog Profile</div>
                     <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes. Shared via QR or direct link.</div>
                 </a>
-                <a class="landing-example text-decoration-none text-dark" href="support_funding.php">
-                    <div class="fw-bold mb-1">Support Options</div>
-                    <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
-                </a>
                 <a class="landing-example text-decoration-none text-dark" href="app.php">
                     <div class="fw-bold mb-1">GuidePaw Companion App</div>
                     <div class="text-muted small">Native Android app — training logs, goal intake, habit repair, behavior tracking, and wearable data. No browser wrappers.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php">
-                    <div class="fw-bold mb-1">Service Dog Notes</div>
-                    <div class="text-muted small">Practical ADA and travel notes for handlers who need a quick reference.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php">
-                    <div class="fw-bold mb-1">Service Dog &amp; ESA Legal Info</div>
-                    <div class="text-muted small">Plain-language guide for service dogs, ESAs, housing, and air travel basics.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php">
-                    <div class="fw-bold mb-1">Housing &amp; Access FAQ</div>
-                    <div class="text-muted small">What to do when a business, landlord, or policy asks for paperwork.</div>
                 </a>
                 <a class="landing-example text-decoration-none text-dark" href="breed_comparison_hub.php">
                     <div class="fw-bold mb-1">Breed Comparison Hub</div>
@@ -184,6 +200,10 @@ if (empty($_SESSION['user_id'])) {
                 <a class="landing-example text-decoration-none text-dark" href="faq.php">
                     <div class="fw-bold mb-1">GuidePaw FAQ</div>
                     <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>
+                </a>
+                <a class="landing-example text-decoration-none text-dark" href="support_funding.php">
+                    <div class="fw-bold mb-1">Support Options</div>
+                    <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
                 </a>
             </div>
         </section>

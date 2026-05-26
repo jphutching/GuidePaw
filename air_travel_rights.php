@@ -2,7 +2,6 @@
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
 require_once 'includes/seo.php';
-checkLogin();
 ?>
 <!doctype html>
 <html lang="en">
@@ -10,9 +9,9 @@ checkLogin();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php guidepawSeoHead([
-        'title' => 'Air Travel Rights for Service Dogs',
-        'description' => 'GuidePaw’s practical air travel reference for service dogs, DOT forms, and flight-day rules.',
-        'robots' => 'noindex,nofollow',
+        'title' => 'Air Travel Rights for Service Dogs — DOT Rules & DOT Forms | GuidePaw',
+        'description' => 'Practical air travel reference for service dog handlers: what airlines can require, DOT forms, SDIT rules, and what to do if your rights are denied.',
+        'robots' => 'index,follow',
         'type' => 'article',
         'image' => '/assets/brand/guidepaw-logo.png',
         'json_ld' => [
@@ -20,7 +19,7 @@ checkLogin();
                 '@context' => 'https://schema.org',
                 '@type' => 'Article',
                 'headline' => 'Air Travel Rights for Service Dogs',
-                'description' => 'GuidePaw’s practical air travel reference for service dogs, DOT forms, and flight-day rules.',
+                'description' => 'Practical air travel reference for service dog handlers: what airlines can require, DOT forms, SDIT rules, and what to do if your rights are denied.',
                 'author' => [
                     '@type' => 'Organization',
                     'name' => appShortName(),
@@ -87,7 +86,7 @@ checkLogin();
             <ul class="note-list mb-0">
                 <li>Airlines must allow a covered service dog in the cabin on flights to, within, and from the United States.</li>
                 <li>Airlines may require DOT service animal forms and may ask the two travel-specific questions.</li>
-                <li>The dog must fit in the handler’s foot space or under the seat in front of the handler when required by the airline.</li>
+                <li>The dog must fit in the handler's foot space or under the seat in front of the handler when required by the airline.</li>
             </ul>
         </div>
     </section>
@@ -123,10 +122,10 @@ checkLogin();
             <div class="mini-badge bg-dark-subtle text-dark-emphasis mb-2">Service dogs in training</div>
             <h2 class="h5">SDIT travel is different</h2>
             <p class="mb-2">
-                DOT’s air-travel rules do not treat service dogs in training as service animals for flights.
+                DOT's air-travel rules do not treat service dogs in training as service animals for flights.
             </p>
             <p class="mb-0">
-                If you are traveling with an SDIT, check the airline’s current animal policy before you book. The carrier may treat the dog as a pet or may have its own handling rules, and destination rules can also matter.
+                If you are traveling with an SDIT, check the airline's current animal policy before you book. The carrier may treat the dog as a pet or may have its own handling rules, and destination rules can also matter.
             </p>
         </div>
     </section>
@@ -151,9 +150,10 @@ checkLogin();
 <div class="sticky-actions p-3">
     <div class="container" style="max-width: 820px;">
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+            <a href="state_access_laws.php" class="btn btn-outline-success">State Access Laws</a>
             <a href="service_dog_rights.php" class="btn btn-outline-dark">Detailed ADA Notes</a>
             <a href="ada_access_card.php" class="btn btn-outline-secondary">ADA Access Card</a>
-            <a href="index.php" class="btn btn-primary">Done</a>
+            <a href="index.php" class="btn btn-primary">Home</a>
         </div>
     </div>
 </div>
