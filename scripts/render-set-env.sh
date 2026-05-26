@@ -64,6 +64,72 @@ HTTP=$(curl -s -o /tmp/render-env-response.json -w "%{http_code}" -X PUT \
 
 if [[ "$HTTP" == "200" ]]; then
   echo "[OK] Updated env vars on Render: $*"
+  # Sync changes into master.env
+  TODAY=$(date +%Y-%m-%d)
+  MASTER="$REPO_ROOT/master.env"
+  if [[ -f "$MASTER" ]]; then
+    python3 - "$MASTER" "$TODAY" "$@" <<'PYEOF'
+import sys, re, os
+
+master_path = sys.argv[1]
+today       = sys.argv[2]
+args        = sys.argv[3:]
+
+# Parse KEY=VALUE pairs from args
+updates = {}
+for arg in args:
+    if '=' in arg:
+        k, _, v = arg.partition('=')
+        updates[k.strip()] = v.strip()
+
+if not updates:
+    sys.exit(0)
+
+with open(master_path, 'r') as f:
+    lines = f.readlines()
+
+new_lines = []
+handled   = set()
+
+i = 0
+while i < len(lines):
+    line = lines[i]
+    stripped = line.strip()
+
+    # Match KEY=VALUE lines (skip comments and blanks)
+    m = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)', stripped)
+    if m:
+        key = m.group(1)
+        old_val = m.group(2).strip()
+        if key in updates and updates[key] != old_val:
+            new_lines.append(f'# was: {old_val} ({today})\n')
+            new_lines.append(f'{key}={updates[key]}\n')
+            handled.add(key)
+            i += 1
+            continue
+
+    new_lines.append(line)
+    i += 1
+
+# Append brand-new keys that weren't in the file
+new_keys = [k for k in updates if k not in handled and k not in
+            {re.match(r'^([A-Za-z_][A-Za-z0-9_]*)', l.strip()).group(1)
+             for l in lines if re.match(r'^[A-Za-z_]', l.strip())}]
+if new_keys:
+    if new_lines and new_lines[-1].strip() != '':
+        new_lines.append('\n')
+    new_lines.append('# ── Added by render-set-env.sh ──────────────────────────────\n')
+    for k in new_keys:
+        new_lines.append(f'{k}={updates[k]}\n')
+
+with open(master_path, 'w') as f:
+    f.writelines(new_lines)
+
+print(f'[master.env] synced: {list(updates.keys())}')
+PYEOF
+  else
+    echo "[WARN] master.env not found at $MASTER — skipping sync"
+  fi
 else
   echo "[ERROR] HTTP $HTTP — $(cat /tmp/render-env-response.json)"
   exit 1
