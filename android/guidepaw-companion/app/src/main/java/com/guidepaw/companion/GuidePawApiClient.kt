@@ -486,6 +486,13 @@ data class GpAppointmentsResult(
     val appointments: List<GpAppointmentItem>,
 )
 
+data class GpHealthRecord(
+    val date: String,
+    val type: String,
+    val notes: String,
+    val weightLbs: Float?,
+)
+
 data class GpMedicationItem(
     val id: Int,
     val medicationName: String,
@@ -512,15 +519,11 @@ data class GpForgotPasswordResult(
 data class GpHealthSummary(
     val dogId: Int,
     val dogName: String,
+    val lastCheckupDate: String,
     val weightLbs: Float?,
+    val healthNotes: String,
     val activeMedicationCount: Int,
-    val primaryVetClinic: String,
-    val primaryVetPhone: String,
-    val nextAppointmentAt: String?,
-    val nextAppointmentTitle: String,
-    val activeMedications: List<GpMedicationItem>,
-    val upcomingAppointments: List<GpAppointmentItem>,
-    val recentAppointments: List<GpAppointmentItem>,
+    val recentRecords: List<GpHealthRecord>,
 )
 
 class GuidePawApiException(
@@ -1332,32 +1335,29 @@ class GuidePawApiClient(
         )
     }
 
-    fun healthSummary(token: String): GpHealthSummary {
-        val response = requestJson("api/health_summary.php", "GET", token, null)
+    fun getHealthSummary(token: String): GpHealthSummary? {
+        val response = requestJson("api/dog_health_summary.php", "GET", token, null)
         ensureSuccess(response)
-        val activeMeds = response.json.optJSONArray("active_medications")
-            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toMedicationItem() } }
-            .orEmpty()
-        val upcomingAppts = response.json.optJSONArray("upcoming_appointments")
-            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toAppointmentItem() } }
-            .orEmpty()
-        val recentAppts = response.json.optJSONArray("recent_appointments")
-            ?.let { arr -> (0 until arr.length()).map { arr.getJSONObject(it).toAppointmentItem() } }
+        val records = response.json.optJSONArray("recent_records")
+            ?.let { arr -> (0 until arr.length()).mapNotNull { index ->
+                val obj = arr.optJSONObject(index) ?: return@mapNotNull null
+                GpHealthRecord(
+                    date     = obj.optString("date", ""),
+                    type     = obj.optString("type", ""),
+                    notes    = obj.optString("notes", ""),
+                    weightLbs = if (obj.isNull("weight_lbs")) null else obj.optDouble("weight_lbs").toFloat(),
+                )
+            } }
             .orEmpty()
         val weightRaw = if (response.json.isNull("weight_lbs")) null else response.json.optDouble("weight_lbs").toFloat()
-        val nextAt    = if (response.json.isNull("next_appointment_at")) null else response.json.optString("next_appointment_at")
         return GpHealthSummary(
-            dogId                  = response.json.optInt("dog_id", 0),
-            dogName                = response.json.optString("dog_name", ""),
-            weightLbs              = weightRaw,
-            activeMedicationCount  = response.json.optInt("active_medication_count", 0),
-            primaryVetClinic       = response.json.optString("primary_vet_clinic", ""),
-            primaryVetPhone        = response.json.optString("primary_vet_phone", ""),
-            nextAppointmentAt      = nextAt,
-            nextAppointmentTitle   = response.json.optString("next_appointment_title", ""),
-            activeMedications      = activeMeds,
-            upcomingAppointments   = upcomingAppts,
-            recentAppointments     = recentAppts,
+            dogId                = response.json.optInt("dog_id", 0),
+            dogName              = response.json.optString("dog_name", ""),
+            lastCheckupDate      = response.json.optString("last_checkup_date", ""),
+            weightLbs            = weightRaw,
+            healthNotes          = response.json.optString("health_notes", ""),
+            activeMedicationCount = response.json.optInt("active_medication_count", 0),
+            recentRecords        = records,
         )
     }
 

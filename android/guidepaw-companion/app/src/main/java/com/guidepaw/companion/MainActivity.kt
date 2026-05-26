@@ -46,6 +46,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.foundation.layout.padding
@@ -317,8 +318,9 @@ class MainActivity : AppCompatActivity() {
     // ── Medications state ──────────────────────────────────────────────────
     private var medicationsResult     by mutableStateOf<GpMedicationsResult?>(null)
     private var medicationsMessage    by mutableStateOf("")
-    private var healthSummaryResult   by mutableStateOf<GpHealthSummary?>(null)
-    private var healthSummaryMessage  by mutableStateOf("")
+    private var healthSummary         by mutableStateOf<GpHealthSummary?>(null)
+    private var healthMessage         by mutableStateOf("")
+    private var healthIsLoading       by mutableStateOf(false)
     private var medName            by mutableStateOf("")
     private var medDosage          by mutableStateOf("")
     private var medSchedule        by mutableStateOf("")
@@ -4941,23 +4943,27 @@ class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun HealthSummarySection() {
-        val summary = healthSummaryResult
+        val summary = healthSummary
 
         fun fmtDate(raw: String?): String {
             if (raw.isNullOrBlank()) return "—"
-            return try {
-                val iso = raw.substringBefore('T')
-                val parts = iso.split('-')
-                if (parts.size == 3) {
-                    val months = listOf("","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-                    "${months[parts[1].toInt()]} ${parts[2].trimStart('0')}, ${parts[0]}"
-                } else raw
-            } catch (_: Exception) { raw }
+            return runCatching {
+                java.time.LocalDate.parse(raw.take(10)).format(
+                    java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy"),
+                )
+            }.getOrDefault(raw)
         }
+
+        fun fmtWeight(raw: Float?): String = if (raw != null) "%.1f lbs".format(raw) else "—"
+
+        fun fmtType(raw: String): String =
+            raw.replace('_', ' ')
+                .trim()
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
         PullToRefreshBox(
             isRefreshing = isPullingToRefresh,
-            onRefresh    = { isPullingToRefresh = true; loadHealthSummary(); isPullingToRefresh = false },
+            onRefresh    = { isPullingToRefresh = true; loadHealthSummary() },
             modifier     = Modifier.fillMaxSize(),
         ) {
             Column(
@@ -4977,117 +4983,108 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
 
-                SectionMessage(healthSummaryMessage, onRetry = { loadHealthSummary() })
+                if (healthIsLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+
+                SectionMessage(healthMessage, onRetry = { loadHealthSummary() })
+
+                if (summary == null && !healthIsLoading) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("No health summary loaded", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Load the latest care summary from the More menu to see checkups, medications, and recent records.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+                            Button(onClick = { loadHealthSummary() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("Load Health Summary")
+                            }
+                        }
+                    }
+                }
 
                 if (summary != null) {
-                    // Stat cards row
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        OutlinedCard(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("⚖️ Weight", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
-                                Text(
-                                    if (summary.weightLbs != null) "%.1f lbs".format(summary.weightLbs) else "—",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                        }
-                        OutlinedCard(modifier = Modifier.weight(1f)) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text("💊 Active Meds", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
-                                Text(
-                                    summary.activeMedicationCount.toString(),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
+                        StatTile("Last Checkup", fmtDate(summary.lastCheckupDate), Modifier.weight(1f))
+                        StatTile("Weight", fmtWeight(summary.weightLbs), Modifier.weight(1f))
+                        StatTile("Active Meds", summary.activeMedicationCount.toString(), Modifier.weight(1f))
+                    }
+
+                    if (summary.healthNotes.isNotBlank()) {
+                        SummaryCard {
+                            Text("Health Notes", fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.height(4.dp))
+                            Text(summary.healthNotes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                         }
                     }
 
-                    // Vet + next appointment
+                    Text("Recent Records", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("🏥 Primary Vet", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
-                            if (summary.primaryVetClinic.isNotBlank()) {
-                                Text(summary.primaryVetClinic, fontWeight = FontWeight.SemiBold)
-                                if (summary.primaryVetPhone.isNotBlank())
-                                    Text(summary.primaryVetPhone, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 340.dp)
+                                .verticalScroll(rememberScrollState())
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (summary.recentRecords.isEmpty()) {
+                                Text(
+                                    "No recent health records yet for ${summary.dogName}.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = GpOnSurfaceVariant,
+                                )
                             } else {
-                                Text("No vet on file", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                            }
-                            if (summary.nextAppointmentAt != null) {
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                                Text("📅 Next Appointment", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
-                                Text(summary.nextAppointmentTitle, fontWeight = FontWeight.SemiBold)
-                                Text(fmtDate(summary.nextAppointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                            }
-                        }
-                    }
-
-                    // Active medications list
-                    if (summary.activeMedications.isNotEmpty()) {
-                        Text("💊 Active Medications", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        summary.activeMedications.forEach { med ->
-                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(med.medicationName, fontWeight = FontWeight.SemiBold)
-                                    if (med.dosage.isNotBlank())
-                                        Text(med.dosage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (med.scheduleText.isNotBlank())
-                                        Text(med.scheduleText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (med.refillDate.isNotBlank())
-                                        Text("Refill: ${fmtDate(med.refillDate)}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                summary.recentRecords.forEachIndexed { index, record ->
+                                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.Top,
+                                            ) {
+                                                Text(
+                                                    fmtType(record.type),
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    modifier = Modifier.weight(1f),
+                                                )
+                                                Text(
+                                                    fmtDate(record.date),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = GpOnSurfaceVariant,
+                                                )
+                                            }
+                                            if (record.notes.isNotBlank()) {
+                                                Text(record.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                            }
+                                            Text(
+                                                record.weightLbs?.let { "%.1f lbs".format(it) } ?: "Weight not recorded",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = GpOnSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    if (index != summary.recentRecords.lastIndex) {
+                                        Spacer(Modifier.height(2.dp))
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Upcoming appointments
-                    if (summary.upcomingAppointments.isNotEmpty()) {
-                        Text("📅 Upcoming Appointments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        summary.upcomingAppointments.forEach { appt ->
-                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(appt.title, fontWeight = FontWeight.SemiBold)
-                                    Text(fmtDate(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (appt.clinicName.isNotBlank())
-                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (appt.locationText.isNotBlank())
-                                        Text(appt.locationText, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                }
-                            }
-                        }
-                    }
-
-                    // Recent completed appointments
-                    if (summary.recentAppointments.isNotEmpty()) {
-                        Text("✅ Recent Visits", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        summary.recentAppointments.forEach { appt ->
-                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(appt.title, fontWeight = FontWeight.SemiBold)
-                                    Text(fmtDate(appt.appointmentAt), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (appt.clinicName.isNotBlank())
-                                        Text(appt.clinicName, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                    if (appt.notes.isNotBlank())
-                                        Text(appt.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                                }
-                            }
-                        }
-                    }
-
-                    if (summary.activeMedications.isEmpty() && summary.upcomingAppointments.isEmpty() && summary.recentAppointments.isEmpty()) {
+                    if (summary.recentRecords.isEmpty() && summary.healthNotes.isBlank()) {
                         Text(
-                            "No health records yet for ${summary.dogName}. Add medications or vet appointments from the Care menu.",
+                            "No health records yet for ${summary.dogName}. Add care records from the Care menu.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = GpOnSurfaceVariant,
                         )
                     }
 
-                    // Quick links
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -5097,9 +5094,9 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.weight(1f),
                         ) { Text("💊 Medications", fontSize = 12.sp) }
                         OutlinedButton(
-                            onClick  = { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
+                            onClick  = { loadHealthDocs(); currentSection = NavSection.HEALTH_DOCS },
                             modifier = Modifier.weight(1f),
-                        ) { Text("📅 Appointments", fontSize = 12.sp) }
+                        ) { Text("🩺 Health Docs", fontSize = 12.sp) }
                     }
                 }
             }
@@ -6181,6 +6178,9 @@ class MainActivity : AppCompatActivity() {
                     currentUnreadCount  = unreadCount
                     saveCachedDashboard()
                     renderDashboard()
+                    if (currentSection == NavSection.HEALTH_SUMMARY) {
+                        loadHealthSummary()
+                    }
                     setLoading(false, "Dashboard updated.")
                 }
             } catch (e: GuidePawApiException) {
@@ -6813,16 +6813,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadHealthSummary() {
         val token = currentToken ?: return
-        healthSummaryMessage = "Loading..."
+        healthIsLoading = true
+        healthMessage = ""
         worker.execute {
             try {
-                val result = api.healthSummary(token)
+                val result = api.getHealthSummary(token)
                 runOnUiThread {
-                    healthSummaryResult  = result
-                    healthSummaryMessage = ""
+                    healthSummary = result
+                    healthMessage = if (result?.recentRecords.isNullOrEmpty()) {
+                        result?.let { "No recent health records yet for ${it.dogName}." } ?: ""
+                    } else {
+                        ""
+                    }
+                    healthIsLoading = false
+                    isPullingToRefresh = false
                 }
             } catch (t: Throwable) {
-                runOnUiThread { healthSummaryMessage = friendlyMessage(t.message, "Could not load health summary.") }
+                runOnUiThread {
+                    healthSummary = null
+                    healthIsLoading = false
+                    healthMessage = friendlyMessage(t.message, "Could not load health summary.")
+                    isPullingToRefresh = false
+                }
             }
         }
     }
