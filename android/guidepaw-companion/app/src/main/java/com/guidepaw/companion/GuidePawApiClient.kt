@@ -34,6 +34,8 @@ data class GuidePawAppReleaseResult(
 data class GuidePawMeResult(
     val username: String,
     val activeDogId: Int?,
+    val nextAppointmentAt: String? = null,
+    val nextAppointmentTitle: String? = null,
 )
 
 data class GpDogAccessHandler(
@@ -557,6 +559,8 @@ class GuidePawApiClient(
         return GuidePawMeResult(
             username = user.optString("username", ""),
             activeDogId = optNullableInt(response.json, "active_dog_id"),
+            nextAppointmentAt    = if (response.json.isNull("next_appointment_at")) null else response.json.optString("next_appointment_at"),
+            nextAppointmentTitle = if (response.json.isNull("next_appointment_title")) null else response.json.optString("next_appointment_title"),
         )
     }
 

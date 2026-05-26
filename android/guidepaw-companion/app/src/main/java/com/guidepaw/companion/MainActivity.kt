@@ -1,6 +1,7 @@
 package com.guidepaw.companion
 
 import android.Manifest
+import androidx.compose.foundation.clickable
 import android.app.DownloadManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -844,6 +845,24 @@ class MainActivity : AppCompatActivity() {
                         style = MaterialTheme.typography.bodySmall,
                         color = GpOnSurfaceVariant,
                     )
+                    me.nextAppointmentAt?.takeIf { it.isNotBlank() }?.let { apptAt ->
+                        val daysUntil = runCatching {
+                            val apptDate = java.time.LocalDate.parse(apptAt.take(10))
+                            java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), apptDate)
+                        }.getOrNull()
+                        if (daysUntil != null && daysUntil >= 0) {
+                            val label = me.nextAppointmentTitle?.takeIf { it.isNotBlank() } ?: "Vet appointment"
+                            val when_ = if (daysUntil == 0L) "today" else if (daysUntil == 1L) "tomorrow" else "in ${daysUntil}d"
+                            Text(
+                                "📅 $label — $when_",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (daysUntil <= 3) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .clickable { loadAppointments(); currentSection = NavSection.APPOINTMENTS },
+                            )
+                        }
+                    }
                 }
             }
 

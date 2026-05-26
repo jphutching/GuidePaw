@@ -9,8 +9,8 @@ android {
         applicationId 'com.guidepaw.companion'
         minSdk 26
         targetSdk 34
-        versionCode 64
-        versionName '0.064'
+        versionCode 65
+        versionName '0.065'
     }
 
     buildTypes {
