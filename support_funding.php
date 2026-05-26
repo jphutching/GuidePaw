@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/brand_header.php';
 require_once __DIR__ . '/includes/app_config.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/stripe_checkout.php';
-checkLogin();
+// Public page — no login required; session may or may not have a user_id
 
 $supportUrl = trim((string) gpEnv('GUIDEPAW_SUPPORT_FUNDING_URL', ''));
 $merchUrl = trim((string) gpEnv('GUIDEPAW_MERCH_STORE_URL', ''));
