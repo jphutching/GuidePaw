@@ -1,5 +1,6 @@
 # render.yaml — GuidePaw Render Blueprint
-# Add to repo root, push, then in Render: New → Blueprint → connect jphutching/GuidePaw
+# Non-secret vars are hardcoded here so a service re-provision restores them automatically.
+# Secret vars use sync:false — restore them with: bash scripts/restore-render-env.sh
 #
 # Known Render URLs:
 #   Main app:   https://guidepaw-ch3y.onrender.com
@@ -12,69 +13,119 @@ services:
     runtime: docker
     plan: starter
     branch: main
+    autoDeploy: false
     envVars:
+
+      # ── Core ──────────────────────────────────────────────────────────────
       - key: APP_URL
         value: https://guidepaw.app
       - key: APP_ENV
         value: production
-      # DATABASE_URL auto-injected from the linked Render PostgreSQL service.
-      # db_connect.php parses DATABASE_URL first; falls back to individual DB_* vars.
+
+      # ── Database ──────────────────────────────────────────────────────────
+      # DATABASE_URL auto-injected when this service is linked to the Render DB.
+      # db_connect.php reads DATABASE_URL first; individual vars are the fallback.
       - key: DATABASE_URL
         fromDatabase:
           name: guidepaw_db
           property: connectionString
-      # Keep individual vars as sync:false fallback (set manually in Render dashboard if needed)
       - key: DB_HOST
-        sync: false
+        value: dpg-d7ql350g4nts73c1tqf0-a.oregon-postgres.render.com
       - key: DB_PORT
-        sync: false
+        value: "5432"
       - key: DB_DATABASE
-        sync: false
+        value: guidepaw_db_z9vv
       - key: DB_USERNAME
-        sync: false
+        value: guidepaw
       - key: DB_PASSWORD
         sync: false
-      - key: DB_DRIVER
-        sync: false
+
+      # ── Session ───────────────────────────────────────────────────────────
       - key: SESSION_SECRET
         sync: false
-      - key: ADMIN_EMAIL
+
+      # ── ZeptoMail (primary mailer) ────────────────────────────────────────
+      - key: ZEPTO_SEND_MAIL_TOKEN
         sync: false
-      - key: ADMIN_NOTIFY_EMAIL
+      - key: ZEPTO_FROM_ADDRESS
+        value: admin@guidepaw.app
+      - key: ZEPTO_FROM_NAME
+        value: GuidePaw
+      - key: ZEPTO_API_URL
+        value: https://api.zeptomail.com/v1.1/email
+      - key: ZEPTO_BOUNCE_ADDRESS
+        value: admin@bounce-zem.guidepaw.app
+
+      # ── SMTP (secondary mailer) ───────────────────────────────────────────
+      - key: SMTP_HOST
+        value: smtppro.zoho.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_SECURE
+        value: ssl
+      - key: SMTP_USERNAME
+        value: admin@guidepaw.app
+      - key: SMTP_PASSWORD
         sync: false
-      - key: SMS_NOTIFY_ENABLED
-        sync: false
-      - key: SMS_PROVIDER
-        sync: false
-      - key: FOUND_DOG_NOTIFY_SMS_ENABLED
-        sync: false
-      - key: DOG_ACCESS_NOTIFY_SMS_ENABLED
-        sync: false
-      - key: FOUND_DOG_NOTIFY_EMAIL_ENABLED
-        sync: false
-      - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
-        sync: false
-      - key: BETA_NOTIFY_TELEGRAM_ENABLED
-        sync: false
-      - key: BETA_NOTIFY_EMAIL_ENABLED
-        sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_CHAT_ID
-        sync: false
-      - key: GUIDEPAW_STRIPE_API_VERSION
-        sync: false
+      - key: SMTP_FROM
+        value: admin@guidepaw.app
+      - key: SMTP_FROM_NAME
+        value: GuidePaw
+      - key: MAIL_FROM_ADDRESS
+        value: admin@guidepaw.app
+      - key: MAIL_FROM_NAME
+        value: GuidePaw
+
+      # ── Stripe ────────────────────────────────────────────────────────────
       - key: GUIDEPAW_STRIPE_SECRET_KEY
         sync: false
       - key: GUIDEPAW_STRIPE_WEBHOOK_SECRET
         sync: false
-      - key: ZEPTO_SEND_MAIL_TOKEN
+      - key: GUIDEPAW_STRIPE_API_VERSION
         sync: false
-      # Companion version — update these when bumping the Android app version
+      - key: GUIDEPAW_STRIPE_FUNDING_MONTHLY_PRICE_ID
+        value: price_1TY9ebR9nNBPlJ2JJeu6kryi
+      - key: GUIDEPAW_STRIPE_FUNDING_ONE_TIME_PRICE_ID
+        value: price_1TY9cYR9nNBPlJ2JZZCncBfH
+
+      # ── Admin / Notifications ─────────────────────────────────────────────
+      - key: ADMIN_EMAIL
+        value: jphutching@gmail.com
+      - key: ADMIN_NOTIFY_EMAIL
+        value: jphutching@gmail.com
+      - key: SMS_NOTIFY_ENABLED
+        value: "false"
+      - key: SMS_PROVIDER
+        sync: false
+      - key: FOUND_DOG_NOTIFY_SMS_ENABLED
+        value: "false"
+      - key: DOG_ACCESS_NOTIFY_SMS_ENABLED
+        value: "false"
+      - key: FOUND_DOG_NOTIFY_EMAIL_ENABLED
+        value: "true"
+      - key: FOUND_DOG_NOTIFY_TELEGRAM_ENABLED
+        value: "true"
+      - key: BETA_NOTIFY_TELEGRAM_ENABLED
+        value: "true"
+      - key: BETA_NOTIFY_EMAIL_ENABLED
+        value: "true"
+
+      # ── Telegram ──────────────────────────────────────────────────────────
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+
+      # ── Analytics ─────────────────────────────────────────────────────────
+      - key: GUIDEPAW_GA4_MEASUREMENT_ID
+        value: G-LFW0BGZHPS
+
+      # ── Android Companion version (managed via render-set-env.sh) ─────────
+      # PHP defaults in companion_release.php cover the case where these are missing.
       - key: GUIDEPAW_COMPANION_VERSION_CODE
-        value: "60"
+        sync: false
       - key: GUIDEPAW_COMPANION_VERSION_NAME
-        value: "0.060"
+        sync: false
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
@@ -85,27 +136,32 @@ services:
     rootDir: middleware
     buildCommand: npm install
     startCommand: node server.js
+    autoDeploy: false
     envVars:
       - key: NODE_VERSION
         value: "20"
       - key: NODE_ENV
         value: production
-      - key: MIDDLEWARE_SECRET
-        sync: false
       - key: MIDDLEWARE_URL
         value: https://guidepaw-middleware-kfzu.onrender.com
-      - key: REPO_PATH
-        value: /opt/render/project/src
-      - key: DB_PATH
-        value: /tmp/guidepaw-sessions.db
       - key: RENDER_APP_URL
         value: https://guidepaw-ch3y.onrender.com
       - key: RENDER_MIDDLEWARE_URL
         value: https://guidepaw-middleware-kfzu.onrender.com
-      - key: RENDER_API_KEY
-        sync: false
       - key: RENDER_SERVICE_NAME
         value: guidepaw
+      - key: DB_PATH
+        value: /tmp/guidepaw-sessions.db
+      - key: REPO_PATH
+        value: /opt/render/project/src
+      - key: SESSION_TIMEOUT_MINUTES
+        value: "45"
+      - key: TOKEN_WARNING_THRESHOLD
+        value: "15000"
+      - key: MIDDLEWARE_SECRET
+        sync: false
+      - key: RENDER_API_KEY
+        sync: false
       - key: RENDER_DEPLOY_HOOK
         sync: false
       - key: GITHUB_DEPLOY_KEY
@@ -114,7 +170,3 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: SESSION_TIMEOUT_MINUTES
-        value: "45"
-      - key: TOKEN_WARNING_THRESHOLD
-        value: "15000"
