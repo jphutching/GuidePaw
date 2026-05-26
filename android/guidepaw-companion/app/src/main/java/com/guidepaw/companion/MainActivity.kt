@@ -30,6 +30,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.coroutines.resume
 import androidx.compose.material3.ModalBottomSheet
@@ -152,7 +153,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -552,6 +553,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.AIR_TRAVEL           -> AirTravelSection()
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
                         NavSection.STATE_ACCESS         -> StateAccessSection()
+                        NavSection.VET_FINDER           -> VetFinderSection()
                         NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
                         NavSection.TRUCKING_MODE        -> TruckingModeSection()
                         NavSection.COMMUNITY_CHALLENGES -> CommunityChallengesSection()
@@ -1672,6 +1674,330 @@ class MainActivity : AppCompatActivity() {
                 onClick  = { currentSection = NavSection.TRAINING },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("⚡ Log a Training Session") }
+        }
+    }
+
+    // ── Vet Finder section ──────────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun VetFinderSection() {
+        val context = LocalContext.current
+        val scope   = rememberCoroutineScope()
+
+        var currentLat   by remember { mutableStateOf<Double?>(null) }
+        var currentLng   by remember { mutableStateOf<Double?>(null) }
+        var locationLabel by remember { mutableStateOf("") }
+        var detecting    by remember { mutableStateOf(false) }
+        var destination  by remember { mutableStateOf("") }
+        var afterHours   by remember { mutableStateOf(false) }
+        var searching    by remember { mutableStateOf(false) }
+        var searchResult by remember { mutableStateOf<GpVetFinderResponse?>(null) }
+        var errorMsg     by remember { mutableStateOf("") }
+
+        fun doSearch(lat: Double, lng: Double) {
+            val token = currentToken ?: return
+            searching = true
+            errorMsg  = ""
+            scope.launch {
+                try {
+                    val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        api.findVets(token, lat, lng, 50, destination.trim(), afterHours)
+                    }
+                    searchResult = result
+                    if (result.vets.isEmpty()) errorMsg = "No vets found. Try increasing your search area or adjusting filters."
+                } catch (t: Throwable) {
+                    errorMsg = friendlyMessage(t.message, "Could not search for vets.")
+                } finally {
+                    searching = false
+                }
+            }
+        }
+
+        fun detectAndSearch() {
+            detecting = true
+            scope.launch {
+                val result = resolveLocation(context)
+                detecting = false
+                if (result != null) {
+                    locationLabel = result.second
+                }
+            }
+        }
+
+        val permLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { perms ->
+            if (perms[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                perms[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                detectAndSearch()
+            } else {
+                errorMsg = "Location permission denied — cannot search without a location."
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+            if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                detecting = true
+                val loc = resolveLocation(context)
+                detecting = false
+                if (loc != null) {
+                    locationLabel = loc.second
+                }
+            }
+        }
+
+        fun openNavigation(vet: GpVetFinderResult) {
+            val uri = android.net.Uri.parse("google.navigation:q=${vet.lat},${vet.lng}&mode=d")
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
+                setPackage("com.google.android.apps.maps")
+            }
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+            } else {
+                val fallback = android.net.Uri.parse("https://maps.google.com/maps?daddr=${vet.lat},${vet.lng}")
+                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, fallback))
+            }
+        }
+
+        fun callVet(phone: String) {
+            context.startActivity(android.content.Intent(android.content.Intent.ACTION_DIAL,
+                android.net.Uri.parse("tel:$phone")))
+        }
+
+        fun fmtRating(r: Float?): String = if (r != null) "★ ${"%.1f".format(r)}" else ""
+
+        PullToRefreshBox(
+            isRefreshing = searching,
+            onRefresh    = { currentLat?.let { la -> currentLng?.let { ln -> doSearch(la, ln) } } },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                    Text("🏥 Find a Vet", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+                }
+
+                // ── Location row ──────────────────────────────────────────
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Your location", style = MaterialTheme.typography.labelMedium)
+                                if (detecting) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                        Text("Detecting…", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                    }
+                                } else {
+                                    Text(
+                                        locationLabel.ifBlank { "Not detected" },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (locationLabel.isBlank()) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                                    )
+                                }
+                            }
+                            TextButton(
+                                onClick = {
+                                    val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                                    val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                                    if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                                        detectAndSearch()
+                                    } else {
+                                        permLauncher.launch(arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        ))
+                                    }
+                                },
+                                enabled = !detecting,
+                            ) { Text("📍 Refresh") }
+                        }
+
+                        OutlinedTextField(
+                            value         = destination,
+                            onValueChange = { destination = it },
+                            label         = { Text("Heading toward (optional)") },
+                            placeholder   = { Text("e.g. Dallas TX, Chicago IL") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                        )
+
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                androidx.compose.material3.Switch(
+                                    checked         = afterHours,
+                                    onCheckedChange = { afterHours = it },
+                                )
+                                Text("Emergency / after hours only", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        Button(
+                            onClick  = {
+                                val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                                val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                                if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                                    detecting = true
+                                    scope.launch {
+                                        val loc = resolveLocation(context)
+                                        detecting = false
+                                        if (loc != null) {
+                                            locationLabel = loc.second
+                                            // extract lat/lng via geocoder
+                                            val geoClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+                                            try {
+                                                geoClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                                                    .addOnSuccessListener { location ->
+                                                        if (location != null) {
+                                                            currentLat = location.latitude
+                                                            currentLng = location.longitude
+                                                            doSearch(location.latitude, location.longitude)
+                                                        } else {
+                                                            errorMsg = "Could not get precise location."
+                                                        }
+                                                    }
+                                            } catch (_: SecurityException) {
+                                                errorMsg = "Location permission required."
+                                            }
+                                        } else {
+                                            errorMsg = "Could not determine location."
+                                        }
+                                    }
+                                } else {
+                                    permLauncher.launch(arrayOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    ))
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled  = !searching && !detecting,
+                        ) {
+                            if (searching) {
+                                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Searching…")
+                            } else {
+                                Text(if (destination.isBlank()) "Search nearby" else "Search along route")
+                            }
+                        }
+                    }
+                }
+
+                SectionMessage(errorMsg)
+
+                // ── Results ───────────────────────────────────────────────
+                val vets = searchResult?.vets.orEmpty()
+                if (searchResult != null) {
+                    val dest = searchResult!!.routeDestination
+                    if (dest.isNotBlank()) {
+                        Text("Route toward $dest", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                    }
+                    Text(
+                        if (afterHours) "Emergency / after-hours results" else "Vets & animal hospitals",
+                        style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                // Group by leg label
+                val grouped = vets.groupBy { it.legLabel }
+                grouped.forEach { (legLabel, legVets) ->
+                    if (grouped.size > 1) {
+                        Text(legLabel, style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp))
+                    }
+                    legVets.forEach { vet ->
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                // Name row + badges
+                                Row(
+                                    modifier              = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment     = Alignment.Top,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(vet.name, fontWeight = FontWeight.Bold)
+                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            if (vet.isEmergency || vet.is24hr) {
+                                                Text("🚨 Emergency", style = MaterialTheme.typography.labelSmall,
+                                                    color = androidx.compose.ui.graphics.Color(0xFFB71C1C))
+                                            }
+                                            if (vet.openNow == true) {
+                                                Text("✅ Open now", style = MaterialTheme.typography.labelSmall,
+                                                    color = androidx.compose.ui.graphics.Color(0xFF2E7D32))
+                                            } else if (vet.openNow == false) {
+                                                Text("❌ Closed", style = MaterialTheme.typography.labelSmall,
+                                                    color = GpOnSurfaceVariant)
+                                            }
+                                        }
+                                    }
+                                    Text("${vet.distanceMiles} mi", style = MaterialTheme.typography.bodySmall,
+                                        color = GpOnSurfaceVariant, fontWeight = FontWeight.SemiBold)
+                                }
+
+                                // Address + hours
+                                if (vet.address.isNotBlank()) {
+                                    Text("📍 ${vet.address}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (vet.hoursToday.isNotBlank()) {
+                                    Text("🕐 Today: ${vet.hoursToday}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+                                if (vet.rating != null) {
+                                    Text("${fmtRating(vet.rating)}  (${vet.userRatingsTotal} reviews)",
+                                        style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                }
+
+                                // Action buttons
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick  = { openNavigation(vet) },
+                                        modifier = Modifier.weight(1f),
+                                    ) { Text("🧭 Navigate", fontSize = 12.sp) }
+                                    if (vet.phone.isNotBlank()) {
+                                        OutlinedButton(
+                                            onClick  = { callVet(vet.phone) },
+                                            modifier = Modifier.weight(1f),
+                                        ) { Text("📞 Call", fontSize = 12.sp) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (vets.isEmpty() && searchResult != null && errorMsg.isBlank()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            "No results found. Try turning off the after-hours filter or entering a destination city.",
+                            style    = MaterialTheme.typography.bodySmall,
+                            color    = GpOnSurfaceVariant,
+                            modifier = Modifier.padding(14.dp),
+                        )
+                    }
+                }
+
+                Text(
+                    "Results from Google Places. For truck access, look for clinics on main roads near highway exits. Always call ahead to confirm hours.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GpOnSurfaceVariant,
+                )
+            }
         }
     }
 
@@ -6104,6 +6430,7 @@ class MainActivity : AppCompatActivity() {
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "🗺️ State Access Laws" to { currentSection = NavSection.STATE_ACCESS },
+                    "🏥 Find a Vet"        to { currentSection = NavSection.VET_FINDER },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
                     "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                     "🏆 Challenges"         to { currentSection = NavSection.COMMUNITY_CHALLENGES },

@@ -516,6 +516,30 @@ data class GpForgotPasswordResult(
     val message: String,
 )
 
+data class GpVetFinderResult(
+    val placeId: String,
+    val name: String,
+    val address: String,
+    val phone: String,
+    val rating: Float?,
+    val userRatingsTotal: Int,
+    val lat: Double,
+    val lng: Double,
+    val distanceMiles: Float,
+    val openNow: Boolean?,
+    val hoursToday: String,
+    val isEmergency: Boolean,
+    val is24hr: Boolean,
+    val legLabel: String,
+    val website: String,
+)
+
+data class GpVetFinderResponse(
+    val searchType: String,
+    val routeDestination: String,
+    val vets: List<GpVetFinderResult>,
+)
+
 data class GpVetAppointment(
     val id: Int,
     val title: String,
@@ -1408,6 +1432,52 @@ class GuidePawApiClient(
             activeMedications     = parseMeds("active_medications"),
             upcomingAppointments  = parseAppts("upcoming_appointments"),
             recentAppointments    = parseAppts("recent_appointments"),
+        )
+    }
+
+    fun findVets(
+        token: String,
+        lat: Double,
+        lng: Double,
+        radiusMiles: Int = 50,
+        destination: String = "",
+        afterHoursOnly: Boolean = false,
+    ): GpVetFinderResponse {
+        val params = buildString {
+            append("lat=").append(lat)
+            append("&lng=").append(lng)
+            append("&radius_miles=").append(radiusMiles)
+            if (destination.isNotBlank()) append("&destination=").append(java.net.URLEncoder.encode(destination, "UTF-8"))
+            if (afterHoursOnly) append("&after_hours=1")
+        }
+        val response = requestJson("api/vet_finder.php?$params", "GET", token, null)
+        ensureSuccess(response)
+        val vets = response.json.optJSONArray("vets")
+            ?.let { arr -> (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                GpVetFinderResult(
+                    placeId          = o.optString("place_id", ""),
+                    name             = o.optString("name", ""),
+                    address          = o.optString("address", ""),
+                    phone            = o.optString("phone", ""),
+                    rating           = if (o.isNull("rating")) null else o.optDouble("rating").toFloat(),
+                    userRatingsTotal = o.optInt("user_ratings_total", 0),
+                    lat              = o.optDouble("lat", 0.0),
+                    lng              = o.optDouble("lng", 0.0),
+                    distanceMiles    = o.optDouble("distance_miles", 0.0).toFloat(),
+                    openNow          = if (o.isNull("open_now")) null else o.optBoolean("open_now"),
+                    hoursToday       = o.optString("hours_today", ""),
+                    isEmergency      = o.optBoolean("is_emergency", false),
+                    is24hr           = o.optBoolean("is_24hr", false),
+                    legLabel         = o.optString("leg_label", ""),
+                    website          = o.optString("website", ""),
+                )
+            } }
+            .orEmpty()
+        return GpVetFinderResponse(
+            searchType        = response.json.optString("search_type", "local"),
+            routeDestination  = response.json.optString("route_destination", ""),
+            vets              = vets,
         )
     }
 

@@ -1,6 +1,6 @@
 package com.guidepaw.companion
 
 object CompanionAppVersion {
-    const val VERSION_NAME: String = "0.071"
-    const val VERSION_CODE: Int = 71
+    const val VERSION_NAME: String = "0.072"
+    const val VERSION_CODE: Int = 72
 }
