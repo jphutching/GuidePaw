@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->prepare("INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)")
                     ->execute([$user['id'], $tokenHash, $expiresAt]);
 
-                $resetUrl = rtrim(gpAppUrl(), '/') . '/reset_password.php?token=' . urlencode($rawToken);
+                $resetUrl = rtrim(appUrl(), '/') . '/reset_password.php?token=' . urlencode($rawToken);
                 $subject  = 'GuidePaw — Password Reset';
                 $body     = "Hi {$user['username']},\n\n"
                     . "Someone requested a password reset for your GuidePaw account.\n\n"
