@@ -120,6 +120,10 @@ services:
       - key: GUIDEPAW_GA4_MEASUREMENT_ID
         value: G-LFW0BGZHPS
 
+      # ── Google APIs ───────────────────────────────────────────────────────
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+
       # ── Android Companion version (managed via render-set-env.sh) ─────────
       # PHP defaults in companion_release.php cover the case where these are missing.
       - key: GUIDEPAW_COMPANION_VERSION_CODE
