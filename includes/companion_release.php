@@ -6,8 +6,8 @@ if (!function_exists('gpCompanionReleaseInfo')) {
     function gpCompanionReleaseInfo(): array
     {
         // Update these alongside app/build.gradle when bumping the Android version
-        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.058'));
-        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '58');
+        $versionName = trim((string) gpEnv('GUIDEPAW_COMPANION_VERSION_NAME', '0.068'));
+        $versionCode = (int) gpEnv('GUIDEPAW_COMPANION_VERSION_CODE', '68');
         $apkPath = trim((string) gpEnv('GUIDEPAW_COMPANION_APK_PATH', 'downloads/GuidePaw_Companion_v' . $versionName . '.apk'));
         $downloadUrl = guidepawSeoAbsoluteUrl($apkPath);
 
@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Native Health Summary section: checkups, weight, active meds, and recent records in the Android companion.',
+            'release_notes' => 'Community Challenges, Training Ladder, Health Summary, Training History, Trucking Mode planner, streaks, medication alerts, and more.',
             'published_at' => gmdate('c'),
         ];
     }
