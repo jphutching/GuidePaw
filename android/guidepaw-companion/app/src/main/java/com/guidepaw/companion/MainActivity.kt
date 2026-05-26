@@ -841,6 +841,42 @@ class MainActivity : AppCompatActivity() {
                 ) { Text("View History") }
             }
 
+            // Streak + this-week count — computed from already-loaded logs
+            val streak = remember(currentLogs) {
+                val today = java.time.LocalDate.now()
+                val logDays = currentLogs.mapNotNull { log ->
+                    runCatching { java.time.LocalDate.parse(log.logDate.take(10)) }.getOrNull()
+                }.toSet()
+                var day = today; var count = 0
+                // Allow today to be absent (session not yet logged) — start from yesterday if today is missing
+                if (!logDays.contains(day)) day = day.minusDays(1)
+                while (logDays.contains(day)) { count++; day = day.minusDays(1) }
+                count
+            }
+            val sessionsThisWeek = remember(currentLogs) {
+                val weekAgo = java.time.LocalDate.now().minusDays(6)
+                currentLogs.count { log ->
+                    runCatching { java.time.LocalDate.parse(log.logDate.take(10)) }.getOrNull()
+                        ?.let { !it.isBefore(weekAgo) } ?: false
+                }
+            }
+            if (currentLogs.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedCard(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(if (streak > 0) "🔥 $streak" else "—", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text("day streak", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                        }
+                    }
+                    OutlinedCard(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("$sessionsThisWeek", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text("this week", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
             // Recent activity
             SummaryCard {
                 Text("Recent Activity", fontWeight = FontWeight.SemiBold)
