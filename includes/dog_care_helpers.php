@@ -18,6 +18,22 @@ function getUpcomingVetReminders(PDO $pdo, int $userId, int $limit = 5): array {
     return $stmt->fetchAll() ?: [];
 }
 
+function getUpcomingMedRefills(PDO $pdo, int $userId, int $daysAhead = 14, int $limit = 5): array {
+    $stmt = $pdo->prepare("
+        SELECT m.medication_name, m.refill_date, d.name AS dog_name
+        FROM dog_medications m
+        JOIN dogs d ON d.id = m.dog_id
+        LEFT JOIN dog_handlers dh ON dh.dog_id = d.id AND dh.user_id = ? AND dh.status = 'accepted'
+        WHERE (d.owner_user_id = ? OR dh.id IS NOT NULL)
+          AND m.status = 'active'
+          AND m.refill_date IS NOT NULL
+          AND m.refill_date <= " . dbDateAdd('CURRENT_DATE', $daysAhead, 'DAY') . "
+        ORDER BY m.refill_date ASC
+        LIMIT " . max(1, (int) $limit));
+    $stmt->execute([$userId, $userId]);
+    return $stmt->fetchAll() ?: [];
+}
+
 function getDogMedications(PDO $pdo, int $dogId): array {
     $stmt = $pdo->prepare("SELECT * FROM dog_medications WHERE dog_id = ? ORDER BY CASE status WHEN 'active' THEN 1 WHEN 'paused' THEN 2 WHEN 'completed' THEN 3 ELSE 4 END, COALESCE(reminder_time, refill_date, start_date) ASC, id DESC");
     $stmt->execute([$dogId]);

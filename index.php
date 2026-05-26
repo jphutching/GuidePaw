@@ -255,6 +255,7 @@ if (isset($_GET['set_dog'])) {
 $dogs = getAccessibleDogs($pdo, $userId);
 $activeDog = getActiveDog($pdo, $userId);
 $upcomingReminders = getUpcomingVetReminders($pdo, $userId, 4);
+$upcomingRefills   = getUpcomingMedRefills($pdo, $userId, 14, 4);
 $activeAlerts = $activeDog ? getDogAlertItems($pdo, $userId, (int) $activeDog['id']) : [];
 $incomingDogTransfers = gpDashboardIncomingDogTransfers($pdo, $userId);
 $latestCandidateAssessment = gpLatestCandidateAssessment($pdo, $userId, $activeDog ? (int) $activeDog['id'] : null);
@@ -269,7 +270,7 @@ $dailyWinPrompt = $activeDog ? gpDailyWinPromptForDate() : null;
 $dailyWinLogName = $dailyWinPrompt ? gpDailyWinLogName($dailyWinPrompt) : '';
 $dailyWinExisting = ($activeDog && $dailyWinPrompt) ? gpDailyWinExistingLog($pdo, $userId, (int) $activeDog['id'], $dailyWinLogName) : null;
 $candidateAttention = (!$latestCandidateAssessment || (int) ($latestCandidateAssessment['focus_level_recommended'] ?? 0) < 3) ? 1 : 0;
-$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($incomingDogTransfers) + $openRegressionCount + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
+$attentionCount = count($activeAlerts) + count($upcomingReminders) + count($upcomingRefills) + count($incomingDogTransfers) + $openRegressionCount + count($openCoachReviews) + count($openVideoReviews) + $candidateAttention + $unreadNotifications;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') === 'save_daily_win') {
     verifyCsrfToken($_POST['csrf_token'] ?? '');
@@ -471,7 +472,7 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
             </div>
         </summary>
         <div class="card-body">
-            <?php if (!$activeAlerts && !$upcomingReminders && !$incomingDogTransfers && !$openCoachReviews && !$openVideoReviews && $unreadNotifications === 0): ?>
+            <?php if (!$activeAlerts && !$upcomingReminders && !$upcomingRefills && !$incomingDogTransfers && !$openCoachReviews && !$openVideoReviews && $unreadNotifications === 0): ?>
                 <div class="attention-empty">✅ No active alerts, transfer requests, notifications, coach reviews, video reviews, or upcoming vet reminders right now.</div>
             <?php endif; ?>
 
@@ -517,6 +518,34 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
                                 <div class="list-group-item px-0">
                                     <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['title']) ?></div>
                                     <div class="small text-muted text-break"><?= e(date('M d, Y g:i A', strtotime($item['appointment_at']))) ?><?= !empty($item['clinic_name']) ? ' • ' . e($item['clinic_name']) : '' ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </details>
+            <?php endif; ?>
+
+            <?php if ($upcomingRefills): ?>
+                <details class="fold-card mb-2">
+                    <summary>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold">Medications</div>
+                            <h3 class="h6 mb-1">Refills Due Soon</h3>
+                            <div class="small text-muted"><?= count($upcomingRefills) ?> refill<?= count($upcomingRefills) === 1 ? '' : 's' ?> within 14 days.</div>
+                        </div>
+                        <a href="medications.php" class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation();">Medications</a>
+                    </summary>
+                    <div class="card-body pt-0">
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($upcomingRefills as $item):
+                                $daysLeft = (int) round((strtotime($item['refill_date']) - strtotime('today')) / 86400);
+                                $badge = $daysLeft <= 0 ? '<span class="badge bg-danger ms-1">Overdue</span>'
+                                       : ($daysLeft <= 3 ? '<span class="badge bg-danger ms-1">In ' . $daysLeft . 'd</span>'
+                                       : '<span class="badge bg-warning text-dark ms-1">In ' . $daysLeft . 'd</span>');
+                            ?>
+                                <div class="list-group-item px-0">
+                                    <div class="fw-semibold text-break"><?= e($item['dog_name']) ?> — <?= e($item['medication_name']) ?><?= $badge ?></div>
+                                    <div class="small text-muted">Refill by <?= e(date('M d, Y', strtotime($item['refill_date']))) ?></div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
