@@ -148,7 +148,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -515,7 +515,8 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     when (currentSection) {
                         NavSection.OVERVIEW       -> OverviewSection()
-                        NavSection.TRAINING       -> TrainingSection()
+                        NavSection.TRAINING         -> TrainingSection()
+                        NavSection.TRAINING_HISTORY -> TrainingHistorySection()
                         NavSection.DOGS           -> DogsSection()
                         NavSection.WEARABLES      -> WearablesSection()
                         NavSection.MORE           -> OverviewSection()
@@ -835,7 +836,7 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.weight(1f),
                 ) { Text("Log Training") }
                 OutlinedButton(
-                    onClick  = { currentSection = NavSection.DOGS },
+                    onClick  = { currentSection = NavSection.TRAINING_HISTORY },
                     modifier = Modifier.weight(1f),
                 ) { Text("View History") }
             }
@@ -1334,6 +1335,65 @@ class MainActivity : AppCompatActivity() {
                     onClick  = { beginEditLog(log) },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Edit") }
+            }
+        }
+    }
+
+    // ── Training History section ────────────────────────────────────────────
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun TrainingHistorySection() {
+        val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
+        val logs = currentLogs
+
+        PullToRefreshBox(
+            isRefreshing = isPullingToRefresh,
+            onRefresh    = { isPullingToRefresh = true; refreshDashboard(currentToken ?: "", currentActiveDogId); isPullingToRefresh = false },
+            modifier     = Modifier.fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                        Text(
+                            if (activeDog != null) "📋 ${activeDog.name}'s Logs" else "📋 Training History",
+                            style      = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier   = Modifier.padding(start = 4.dp),
+                        )
+                    }
+                    TextButton(onClick = { currentSection = NavSection.TRAINING }) { Text("+ Log") }
+                }
+
+                if (logs.isEmpty()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("No training logs yet.", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Pull down to refresh, or tap + Log to add your first session.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = GpOnSurfaceVariant,
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        "${logs.size} session${if (logs.size == 1) "" else "s"} (most recent first)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    logs.forEach { LogCard(it) }
+                }
             }
         }
     }
@@ -5072,6 +5132,7 @@ class MainActivity : AppCompatActivity() {
                 ), onDismiss)
                 MenuSheetSection("Training", listOf(
                     "⚡ Log Training"         to { currentSection = NavSection.TRAINING },
+                    "📋 Training History"     to { currentSection = NavSection.TRAINING_HISTORY },
                     "🎯 Goal Intake"          to { loadGoalIntake(goalIntakeFilter); currentSection = NavSection.GOAL_INTAKE },
                     "🛠️ Habit Repair"        to { loadHabitRepair(); currentSection = NavSection.HABIT_REPAIR },
                     "⚠️ Behavior Risk"        to { loadBehaviorRisk(currentActiveDogId); currentSection = NavSection.BEHAVIOR_RISK },
