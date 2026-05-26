@@ -38,6 +38,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -154,7 +155,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -570,6 +571,11 @@ class MainActivity : AppCompatActivity() {
                         NavSection.TRUCKING_MODE        -> TruckingModeSection()
                         NavSection.COMMUNITY_CHALLENGES -> CommunityChallengesSection()
                         NavSection.FORGOT_PASSWORD      -> ForgotPasswordSection()
+                        NavSection.DOG_PROFILE          -> DogProfileSection()
+                        NavSection.SETTINGS             -> SettingsSection()
+                        NavSection.AI_ASSISTANT         -> AiAssistantSection()
+                        NavSection.ESA_LEGAL            -> EsaLegalSection()
+                        NavSection.BREED_QUIZ           -> BreedQuizSection()
                     }
                 }
             }
@@ -6428,7 +6434,7 @@ class MainActivity : AppCompatActivity() {
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     OutlinedButton(
-                        onClick  = { onDismiss(); openWebPage("https://guidepaw.app/settings.php") },
+                        onClick  = { onDismiss(); currentSection = NavSection.SETTINGS },
                         modifier = Modifier.weight(1f),
                     ) { Text("⚙️ Settings") }
                     OutlinedButton(
@@ -6440,7 +6446,8 @@ class MainActivity : AppCompatActivity() {
                 MenuSheetSection("Dog & Profile", listOf(
                     "👤 Handler Profile" to { if (profileResult == null) loadProfile(); currentSection = NavSection.PROFILE },
                     "🐕 Dogs"            to { currentSection = NavSection.DOGS },
-                    "🪪 Dog Profile"     to { openWebPage("https://guidepaw.app/dog_profile.php") },
+                    "🪪 Dog Profile"     to { currentSection = NavSection.DOG_PROFILE },
+                    "🐾 Breed Finder"   to { currentSection = NavSection.BREED_QUIZ },
                     "🤝 Dog Access"      to { if (dogAccessResult == null) loadDogAccess(); currentSection = NavSection.DOG_ACCESS },
                     "📡 QR Tracking"     to { loadQrTracking(); currentSection = NavSection.QR_TRACKING },
                     "📊 Stats"           to { if (statsResult == null) loadStats(); currentSection = NavSection.STATS },
@@ -6459,6 +6466,7 @@ class MainActivity : AppCompatActivity() {
                     "🚚 Trucking Mode"        to { currentSection = NavSection.TRUCKING_MODE },
                     "🪜 Training Ladder"      to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                     "🏆 Challenges"           to { currentSection = NavSection.COMMUNITY_CHALLENGES },
+                    "🤖 AI Coach"             to { currentSection = NavSection.AI_ASSISTANT },
                 ), onDismiss, defaultExpanded = true)
                 MenuSheetSection("Care & Health", listOf(
                     "🏥 Health Summary"   to { loadHealthSummary(); currentSection = NavSection.HEALTH_SUMMARY },
@@ -6473,6 +6481,7 @@ class MainActivity : AppCompatActivity() {
                     "✈️ Air Travel Rights" to { currentSection = NavSection.AIR_TRAVEL },
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
+                    "ℹ️ ESA Legal Info"    to { currentSection = NavSection.ESA_LEGAL },
                 ), onDismiss, defaultExpanded = false)
                 MenuSheetSection("App & Account", listOf(
                     "🔔 Notifications"   to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
@@ -8595,6 +8604,533 @@ class MainActivity : AppCompatActivity() {
 
     private fun JSONArray.toStringList(): List<String> =
         (0 until length()).mapNotNull { optString(it, "").trim().takeIf { s -> s.isNotBlank() } }
+
+    // ── Dog Profile section ───────────────────────────────────────────────────
+    @Composable
+    private fun DogProfileSection() {
+        val scope = rememberCoroutineScope()
+        var profile   by remember { mutableStateOf<GpDogProfile?>(null) }
+        var loading   by remember { mutableStateOf(true) }
+        var saving    by remember { mutableStateOf(false) }
+        var errorMsg  by remember { mutableStateOf("") }
+        var successMsg by remember { mutableStateOf("") }
+
+        var name      by remember { mutableStateOf("") }
+        var breed     by remember { mutableStateOf("") }
+        var chipNum   by remember { mutableStateOf("") }
+        var weightStr by remember { mutableStateOf("") }
+        var dob       by remember { mutableStateOf("") }
+        var notes     by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { errorMsg = "Not signed in."; loading = false; return@LaunchedEffect }
+            try {
+                val p = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getDogProfile(token) }
+                profile   = p
+                name      = p.name
+                breed     = p.breed
+                chipNum   = p.chipNumber
+                weightStr = if (p.weightLbs != null) "${"%.1f".format(p.weightLbs)}" else ""
+                dob       = p.dateOfBirth
+                notes     = p.notes
+            } catch (t: Throwable) {
+                errorMsg = friendlyMessage(t.message, "Could not load dog profile.")
+            } finally {
+                loading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🪪 Dog Profile", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            if (loading) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                return@Column
+            }
+            SectionMessage(errorMsg)
+
+            if (successMsg.isNotBlank()) {
+                Text(successMsg, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp))
+            }
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = chipNum, onValueChange = { chipNum = it }, label = { Text("Microchip Number") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = weightStr, onValueChange = { weightStr = it }, label = { Text("Weight (lbs)") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal))
+                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of Birth (YYYY-MM-DD)") }, placeholder = { Text("e.g. 2020-06-15") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+
+                    Button(
+                        onClick = {
+                            val token = currentToken ?: return@Button
+                            if (name.isBlank()) { errorMsg = "Name is required."; return@Button }
+                            saving = true; errorMsg = ""; successMsg = ""
+                            scope.launch {
+                                try {
+                                    val msg = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        api.updateDogProfile(
+                                            token            = token,
+                                            name             = name.trim(),
+                                            breed            = breed.trim(),
+                                            chipNumber       = chipNum.trim(),
+                                            weightLbs        = weightStr.trim().toFloatOrNull(),
+                                            dateOfBirth      = dob.trim(),
+                                            birthIsApproximate = false,
+                                            notes            = notes.trim(),
+                                        )
+                                    }
+                                    successMsg = msg
+                                    currentDogs = currentDogs.map { d ->
+                                        if (d.id == (profile?.id ?: 0)) d.copy(name = name.trim()) else d
+                                    }
+                                } catch (t: Throwable) {
+                                    errorMsg = friendlyMessage(t.message, "Could not save.")
+                                } finally {
+                                    saving = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !saving,
+                    ) {
+                        if (saving) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
+                        Text("Save Changes")
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Settings section ─────────────────────────────────────────────────────
+    @Composable
+    private fun SettingsSection() {
+        val scope = rememberCoroutineScope()
+
+        var pwdCurrent  by remember { mutableStateOf("") }
+        var pwdNew      by remember { mutableStateOf("") }
+        var pwdConfirm  by remember { mutableStateOf("") }
+        var pwdSaving   by remember { mutableStateOf(false) }
+        var pwdMsg      by remember { mutableStateOf("") }
+        var pwdError    by remember { mutableStateOf("") }
+
+        var tokens      by remember { mutableStateOf<List<GpApiToken>>(emptyList()) }
+        var tokensLoading by remember { mutableStateOf(true) }
+        var tokensError by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { tokensError = "Not signed in."; tokensLoading = false; return@LaunchedEffect }
+            try {
+                tokens = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getApiTokens(token) }
+            } catch (t: Throwable) {
+                tokensError = friendlyMessage(t.message, "Could not load tokens.")
+            } finally {
+                tokensLoading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("⚙️ Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            // Change password
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Change Password", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(value = pwdCurrent, onValueChange = { pwdCurrent = it }, label = { Text("Current password") }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation())
+                    OutlinedTextField(value = pwdNew, onValueChange = { pwdNew = it }, label = { Text("New password") }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation())
+                    OutlinedTextField(value = pwdConfirm, onValueChange = { pwdConfirm = it }, label = { Text("Confirm new password") }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation())
+                    if (pwdError.isNotBlank()) Text(pwdError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    if (pwdMsg.isNotBlank()) Text(pwdMsg, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    Button(
+                        onClick = {
+                            val token = currentToken ?: return@Button
+                            pwdError = ""; pwdMsg = ""
+                            if (pwdCurrent.isBlank() || pwdNew.isBlank()) { pwdError = "All fields required."; return@Button }
+                            if (pwdNew != pwdConfirm) { pwdError = "New passwords don't match."; return@Button }
+                            if (pwdNew.length < 8) { pwdError = "New password must be at least 8 characters."; return@Button }
+                            pwdSaving = true
+                            scope.launch {
+                                try {
+                                    val msg = withContext(kotlinx.coroutines.Dispatchers.IO) { api.changePassword(token, pwdCurrent, pwdNew) }
+                                    pwdMsg = msg; pwdCurrent = ""; pwdNew = ""; pwdConfirm = ""
+                                } catch (t: Throwable) {
+                                    pwdError = friendlyMessage(t.message, "Could not change password.")
+                                } finally {
+                                    pwdSaving = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !pwdSaving,
+                    ) {
+                        if (pwdSaving) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
+                        Text("Update Password")
+                    }
+                }
+            }
+
+            // API tokens
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("API Tokens", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Tokens grant access to your account. Revoke any you don't recognize.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    if (tokensError.isNotBlank()) Text(tokensError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    if (tokensLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp).align(Alignment.CenterHorizontally), strokeWidth = 2.dp)
+                    } else if (tokens.isEmpty()) {
+                        Text("No tokens found.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    } else {
+                        tokens.forEach { tok ->
+                            HorizontalDivider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(tok.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                                    Text("${tok.prefix}… · ${if (tok.isActive) "Active" else "Revoked"}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                    if (tok.lastUsedAt != null) Text("Last used: ${tok.lastUsedAt}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                }
+                                if (tok.isActive) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            val token = currentToken ?: return@OutlinedButton
+                                            scope.launch {
+                                                try {
+                                                    withContext(kotlinx.coroutines.Dispatchers.IO) { api.revokeApiToken(token, tok.id) }
+                                                    tokens = tokens.map { t -> if (t.id == tok.id) t.copy(isActive = false) else t }
+                                                } catch (t: Throwable) {
+                                                    tokensError = friendlyMessage(t.message, "Could not revoke.")
+                                                }
+                                            }
+                                        },
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                    ) { Text("Revoke", style = MaterialTheme.typography.labelSmall) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Sign out
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Account", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick  = { signOut("Signed out.") },
+                        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Sign Out") }
+                }
+            }
+        }
+    }
+
+    // ── AI Training Assistant section ─────────────────────────────────────────
+    @Composable
+    private fun AiAssistantSection() {
+        val scope = rememberCoroutineScope()
+
+        var topics   by remember { mutableStateOf<List<GpAssistantTopic>>(emptyList()) }
+        var loading  by remember { mutableStateOf(true) }
+        var errorMsg by remember { mutableStateOf("") }
+
+        var selectedTopic by remember { mutableStateOf("general") }
+        var issue         by remember { mutableStateOf("") }
+        var context       by remember { mutableStateOf("") }
+        var whatTried     by remember { mutableStateOf("") }
+        var safetyFlags   by remember { mutableStateOf("") }
+        var running       by remember { mutableStateOf(false) }
+        var plan          by remember { mutableStateOf<GpTrainingPlan?>(null) }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { errorMsg = "Not signed in."; loading = false; return@LaunchedEffect }
+            try {
+                topics = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getAssistantTopics(token) }
+            } catch (t: Throwable) {
+                errorMsg = friendlyMessage(t.message, "Could not load topics.")
+            } finally {
+                loading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🤖 AI Coach", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+            Text("Describe what's going wrong and get a focused next-step plan.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+
+            if (loading) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return@Column }
+            SectionMessage(errorMsg)
+
+            if (plan != null) {
+                val p = plan!!
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("${p.icon} ${p.title}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(p.summary, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        if (p.safety.isNotEmpty()) {
+                            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text("⚠️ Safety flags", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                    p.safety.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                                }
+                            }
+                        }
+                        if (p.nextSteps.isNotEmpty()) {
+                            Text("Next steps", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            p.nextSteps.forEachIndexed { i, s -> Text("${i + 1}. $s", style = MaterialTheme.typography.bodySmall) }
+                        }
+                        if (p.avoid.isNotEmpty()) {
+                            Text("Avoid", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                            p.avoid.forEach { Text("✗ $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+                        }
+                        if (p.followUp.isNotEmpty()) {
+                            Text("Follow-up questions", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            p.followUp.forEach { Text("? $it", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                        }
+                        OutlinedButton(onClick = { plan = null; issue = ""; context = ""; whatTried = ""; safetyFlags = "" }, modifier = Modifier.fillMaxWidth()) { Text("Start Over") }
+                    }
+                }
+                return@Column
+            }
+
+            // Topic chips
+            if (topics.isNotEmpty()) {
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    topics.forEach { t ->
+                        FilterChip(
+                            selected = selectedTopic == t.key,
+                            onClick  = { selectedTopic = t.key },
+                            label    = { Text("${t.icon} ${t.label}", style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
+            }
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(value = issue, onValueChange = { issue = it }, label = { Text("Describe the issue *") }, placeholder = { Text("What is happening?") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+                    OutlinedTextField(value = context, onValueChange = { context = it }, label = { Text("Training context") }, placeholder = { Text("e.g. busy store, home, outdoors") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = whatTried, onValueChange = { whatTried = it }, label = { Text("What have you tried?") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                    OutlinedTextField(value = safetyFlags, onValueChange = { safetyFlags = it }, label = { Text("Safety concerns (optional)") }, placeholder = { Text("e.g. bite history, fear response") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+
+                    Button(
+                        onClick = {
+                            if (issue.isBlank()) { errorMsg = "Describe the issue first."; return@Button }
+                            val token = currentToken ?: return@Button
+                            running = true; errorMsg = ""
+                            scope.launch {
+                                try {
+                                    plan = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        api.runTrainingAssistant(token, selectedTopic, issue, context, whatTried, safetyFlags)
+                                    }
+                                } catch (t: Throwable) {
+                                    errorMsg = friendlyMessage(t.message, "Could not get guidance.")
+                                } finally {
+                                    running = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !running,
+                    ) {
+                        if (running) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
+                        Text("Get Guidance")
+                    }
+                }
+            }
+        }
+    }
+
+    // ── ESA Legal Info section ────────────────────────────────────────────────
+    @Composable
+    private fun EsaLegalSection() {
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.STATE_ACCESS }) { Text("← Back") }
+                Text("ℹ️ ESA Legal Info", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            data class EsaFaq(val q: String, val a: String)
+            val faqs = listOf(
+                EsaFaq("What is an ESA?", "An Emotional Support Animal (ESA) is a pet prescribed by a licensed mental health professional to provide therapeutic benefit. ESAs are not service dogs."),
+                EsaFaq("Do ESAs have ADA public-access rights?", "No. ESAs do not have ADA public-access rights. They are generally treated like pets in public spaces such as stores, restaurants, and transit."),
+                EsaFaq("Can an ESA be denied housing?", "Under the Fair Housing Act, housing providers must provide reasonable accommodations for ESAs in no-pet housing, unless doing so would cause undue hardship or a direct threat."),
+                EsaFaq("Are ESAs allowed on airplanes?", "As of 2021, major U.S. airlines are no longer required to accommodate ESAs in the cabin under DOT rules. Most airlines now treat ESAs as regular pets and charge pet fees."),
+                EsaFaq("Does an ESA need training?", "No specific task training is required for ESAs. Their presence alone provides the therapeutic benefit. However, basic manners and house training are expected."),
+                EsaFaq("What does an ESA letter include?", "A valid ESA letter is written by a licensed mental health professional on official letterhead, states the handler has a disability, and explains how the ESA helps. It does not need to be renewed annually unless the housing provider requires it."),
+                EsaFaq("Is there a national ESA registry?", "No. There is no official national registry or certification for ESAs. Websites selling ESA certificates or ID cards have no legal authority."),
+                EsaFaq("What is the difference between an ESA and a service dog?", "Service dogs are trained to perform specific tasks for a person with a disability and have broad ADA public-access rights. ESAs provide comfort through presence and have limited legal protections — primarily housing."),
+                EsaFaq("Can a landlord ask what disability I have?", "No. A landlord may ask whether you have a disability-related need and whether the animal provides disability-related assistance, but cannot ask for your diagnosis or detailed medical history."),
+                EsaFaq("What if my landlord denies my ESA?", "You may file a complaint with HUD (U.S. Department of Housing and Urban Development) or consult a tenant rights attorney if you believe you were unlawfully denied a reasonable accommodation."),
+            )
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Federal baseline", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text("ESAs are primarily protected by the Fair Housing Act. The ADA does not cover ESAs for public access. State laws vary — some states offer additional housing and employment protections.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                }
+            }
+
+            faqs.forEach { faq ->
+                var expanded by remember { mutableStateOf(false) }
+                OutlinedCard(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(faq.q, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                            Text(if (expanded) "▲" else "▼", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                        }
+                        AnimatedVisibility(visible = expanded) {
+                            Text(faq.a, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+                        }
+                    }
+                }
+            }
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("More resources", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Text("State-level access laws vary. Check our State Access Laws screen for state-by-state SDIT rules.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = { currentSection = NavSection.STATE_ACCESS }, modifier = Modifier.fillMaxWidth()) { Text("View State Access Laws") }
+                }
+            }
+        }
+    }
+
+    // ── Breed Finder section ──────────────────────────────────────────────────
+    @Composable
+    private fun BreedQuizSection() {
+        val scope = rememberCoroutineScope()
+
+        val sizeOpts       = listOf("any" to "Any size", "tiny" to "Toy / Tiny", "small" to "Small", "medium" to "Medium", "large" to "Large", "giant" to "Giant")
+        val energyOpts     = listOf("any" to "Any energy", "low" to "Low / calm", "moderate" to "Moderate", "high" to "High / athletic")
+        val purposeOpts    = listOf("any" to "Any purpose", "general" to "General service", "mobility" to "Mobility / brace", "emotional" to "Emotional support", "alert" to "Alert / task work")
+        val experienceOpts = listOf("any" to "Any experience", "new" to "New to service dogs", "experienced" to "Experienced handler")
+
+        var size       by remember { mutableStateOf("any") }
+        var energy     by remember { mutableStateOf("any") }
+        var purpose    by remember { mutableStateOf("any") }
+        var experience by remember { mutableStateOf("any") }
+
+        var searching  by remember { mutableStateOf(false) }
+        var errorMsg   by remember { mutableStateOf("") }
+        var matches    by remember { mutableStateOf<List<GpBreedMatch>?>(null) }
+        var expanded   by remember { mutableStateOf<String?>(null) }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🐾 Breed Finder", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+            Text("Answer a few questions to find breeds that may suit your service dog program.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+
+            @Composable
+            fun OptionRow(label: String, options: List<Pair<String, String>>, current: String, onSelect: (String) -> Unit) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        options.forEach { (key, display) ->
+                            FilterChip(selected = current == key, onClick = { onSelect(key) }, label = { Text(display, style = MaterialTheme.typography.labelSmall) })
+                        }
+                    }
+                }
+            }
+
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OptionRow("Size preference", sizeOpts, size) { size = it }
+                    OptionRow("Energy level", energyOpts, energy) { energy = it }
+                    OptionRow("Primary purpose", purposeOpts, purpose) { purpose = it }
+                    OptionRow("Your experience", experienceOpts, experience) { experience = it }
+
+                    SectionMessage(errorMsg)
+
+                    Button(
+                        onClick = {
+                            val token = currentToken ?: return@Button
+                            searching = true; errorMsg = ""; expanded = null
+                            scope.launch {
+                                try {
+                                    matches = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        api.getBreedMatches(token, size, energy, purpose, experience)
+                                    }
+                                } catch (t: Throwable) {
+                                    errorMsg = friendlyMessage(t.message, "Could not fetch breed matches.")
+                                } finally {
+                                    searching = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !searching,
+                    ) {
+                        if (searching) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
+                        Text("Find Matching Breeds")
+                    }
+                }
+            }
+
+            matches?.let { list ->
+                if (list.isEmpty()) {
+                    SectionMessage("No strong matches found. Try broadening your filters.")
+                } else {
+                    Text("Top ${list.size} matches", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = GpOnSurfaceVariant)
+                    list.forEachIndexed { i, m ->
+                        val isExpanded = expanded == m.breed
+                        OutlinedCard(modifier = Modifier.fillMaxWidth().clickable { expanded = if (isExpanded) null else m.breed }) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("${i + 1}. ${m.breed}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(m.group, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                    }
+                                    Text(if (isExpanded) "▲" else "▼", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                }
+                                AnimatedVisibility(visible = isExpanded) {
+                                    Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        if (m.temperament.isNotBlank()) Text("Temperament: ${m.temperament}", style = MaterialTheme.typography.bodySmall)
+                                        if (m.traits.isNotBlank()) Text("Traits: ${m.traits}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        if (m.notes.isNotBlank()) { HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp)); Text(m.notes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     companion object {
         private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")

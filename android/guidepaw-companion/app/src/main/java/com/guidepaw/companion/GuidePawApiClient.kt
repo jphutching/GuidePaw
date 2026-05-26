@@ -567,6 +567,53 @@ data class GpHealthSummary(
     val recentAppointments: List<GpVetAppointment>,
 )
 
+data class GpDogProfile(
+    val id: Int,
+    val name: String,
+    val breed: String,
+    val chipNumber: String,
+    val weightLbs: Float?,
+    val dateOfBirth: String,
+    val birthIsApproximate: Boolean,
+    val notes: String,
+    val lifecycleStatus: String,
+)
+
+data class GpApiToken(
+    val id: Int,
+    val label: String,
+    val prefix: String,
+    val createdAt: String,
+    val lastUsedAt: String?,
+    val isActive: Boolean,
+)
+
+data class GpAssistantTopic(
+    val key: String,
+    val label: String,
+    val icon: String,
+    val summary: String,
+)
+
+data class GpTrainingPlan(
+    val title: String,
+    val icon: String,
+    val summary: String,
+    val nextSteps: List<String>,
+    val avoid: List<String>,
+    val safety: List<String>,
+    val followUp: List<String>,
+)
+
+data class GpBreedMatch(
+    val breed: String,
+    val group: String,
+    val temperament: String,
+    val traits: String,
+    val notes: String,
+    val score: Int,
+)
+
 class GuidePawApiException(
     val statusCode: Int,
     message: String,
@@ -2131,6 +2178,157 @@ class GuidePawApiClient(
                 )
             }
         }
+
+    fun getDogProfile(token: String, dogId: Int? = null): GpDogProfile {
+        val path = if (dogId != null) "api/dog_profile.php?dog_id=$dogId" else "api/dog_profile.php"
+        val response = requestJson(path, "GET", token, null)
+        ensureSuccess(response)
+        val d = response.json.optJSONObject("dog")!!
+        return GpDogProfile(
+            id                 = d.optInt("id", 0),
+            name               = d.optString("name", ""),
+            breed              = d.optString("breed", ""),
+            chipNumber         = d.optString("chip_number", ""),
+            weightLbs          = if (d.isNull("weight_lbs")) null else d.optDouble("weight_lbs").toFloat(),
+            dateOfBirth        = d.optString("date_of_birth", ""),
+            birthIsApproximate = d.optBoolean("birth_is_approximate", false),
+            notes              = d.optString("notes", ""),
+            lifecycleStatus    = d.optString("lifecycle_status", "active"),
+        )
+    }
+
+    fun updateDogProfile(
+        token: String,
+        name: String,
+        breed: String,
+        chipNumber: String,
+        weightLbs: Float?,
+        dateOfBirth: String,
+        birthIsApproximate: Boolean,
+        notes: String,
+        dogId: Int? = null,
+    ): String {
+        val payload = JSONObject()
+            .put("name", name)
+            .put("breed", breed)
+            .put("chip_number", chipNumber)
+            .put("weight_lbs", if (weightLbs != null) weightLbs.toDouble() else JSONObject.NULL)
+            .put("date_of_birth", dateOfBirth)
+            .put("birth_is_approximate", birthIsApproximate)
+            .put("notes", notes)
+        if (dogId != null) payload.put("dog_id", dogId)
+        val response = requestJson("api/dog_profile.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optString("message", "Updated.")
+    }
+
+    fun changePassword(token: String, currentPassword: String, newPassword: String): String {
+        val payload = JSONObject()
+            .put("current_password", currentPassword)
+            .put("new_password", newPassword)
+        val response = requestJson("api/change_password.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optString("message", "Password changed.")
+    }
+
+    fun getApiTokens(token: String): List<GpApiToken> {
+        val response = requestJson("api/api_tokens.php", "GET", token, null)
+        ensureSuccess(response)
+        val arr = response.json.optJSONArray("tokens") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            arr.optJSONObject(i)?.let { o ->
+                GpApiToken(
+                    id          = o.optInt("id", 0),
+                    label       = o.optString("label", ""),
+                    prefix      = o.optString("prefix", ""),
+                    createdAt   = o.optString("created_at", ""),
+                    lastUsedAt  = if (o.isNull("last_used_at")) null else o.optString("last_used_at"),
+                    isActive    = o.optBoolean("is_active", false),
+                )
+            }
+        }
+    }
+
+    fun revokeApiToken(token: String, tokenId: Int): String {
+        val payload = JSONObject().put("action", "revoke").put("token_id", tokenId)
+        val response = requestJson("api/api_tokens.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optString("message", "Revoked.")
+    }
+
+    fun getAssistantTopics(token: String): List<GpAssistantTopic> {
+        val response = requestJson("api/training_assistant.php", "GET", token, null)
+        ensureSuccess(response)
+        val arr = response.json.optJSONArray("topics") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            arr.optJSONObject(i)?.let { o ->
+                GpAssistantTopic(
+                    key     = o.optString("key", "general"),
+                    label   = o.optString("label", ""),
+                    icon    = o.optString("icon", ""),
+                    summary = o.optString("summary", ""),
+                )
+            }
+        }
+    }
+
+    fun runTrainingAssistant(
+        token: String,
+        topic: String,
+        issue: String,
+        context: String,
+        whatTried: String,
+        safetyFlags: String,
+    ): GpTrainingPlan {
+        val payload = JSONObject()
+            .put("topic", topic)
+            .put("issue", issue)
+            .put("context", context)
+            .put("what_tried", whatTried)
+            .put("safety_flags", safetyFlags)
+        val response = requestJson("api/training_assistant.php", "POST", token, payload)
+        ensureSuccess(response)
+        val p = response.json.optJSONObject("plan")!!
+        fun arr(key: String) = p.optJSONArray(key)?.let { a -> (0 until a.length()).map { a.optString(it, "") } } ?: emptyList()
+        return GpTrainingPlan(
+            title     = p.optString("title", ""),
+            icon      = p.optString("icon", ""),
+            summary   = p.optString("summary", ""),
+            nextSteps = arr("next_steps"),
+            avoid     = arr("avoid"),
+            safety    = arr("safety"),
+            followUp  = arr("follow_up"),
+        )
+    }
+
+    fun getBreedMatches(
+        token: String,
+        size: String,
+        energy: String,
+        purpose: String,
+        experience: String,
+    ): List<GpBreedMatch> {
+        val payload = JSONObject()
+            .put("size", size)
+            .put("energy", energy)
+            .put("purpose", purpose)
+            .put("experience", experience)
+        val response = requestJson("api/breed_quiz.php", "POST", token, payload)
+        ensureSuccess(response)
+        val arr = response.json.optJSONArray("matches") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { i ->
+            arr.optJSONObject(i)?.let { o ->
+                GpBreedMatch(
+                    breed       = o.optString("breed", ""),
+                    group       = o.optString("group", ""),
+                    temperament = o.optString("temperament", ""),
+                    traits      = o.optString("traits", ""),
+                    notes       = o.optString("notes", ""),
+                    score       = o.optInt("score", 0),
+                )
+            }
+        }
+    }
 
     private fun sanitizeFileName(name: String): String {
         return name.trim().ifBlank { "feedback_attachment" }.replace(Regex("[\\r\\n\"]"), "_")
