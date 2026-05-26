@@ -85,6 +85,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -149,7 +150,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -549,6 +550,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.HOUSING_FAQ          -> HousingFAQSection()
                         NavSection.TACTICAL_TRAINING    -> TacticalTrainingSection()
                         NavSection.TRUCKING_MODE        -> TruckingModeSection()
+                        NavSection.COMMUNITY_CHALLENGES -> CommunityChallengesSection()
                         NavSection.FORGOT_PASSWORD      -> ForgotPasswordSection()
                     }
                 }
@@ -1498,6 +1500,174 @@ class MainActivity : AppCompatActivity() {
                     logs.forEach { LogCard(it) }
                 }
             }
+        }
+    }
+
+    // ── Community Challenges section ────────────────────────────────────────
+    @Composable
+    private fun CommunityChallengesSection() {
+        data class Challenge(
+            val key: String, val icon: String, val label: String,
+            val summary: String, val dailyTarget: String,
+            val bestFor: String, val avoid: String, val finishLine: String,
+        )
+        val challenges = remember {
+            listOf(
+                Challenge(
+                    key = "consistency_streak", icon = "🔥", label = "7-Day Consistency",
+                    summary = "Do one small training rep every day for a week and keep it easy enough to finish.",
+                    dailyTarget = "1 short rep per day",
+                    bestFor = "New routines, overdue follow-through, and handlers who need momentum.",
+                    avoid = "Turning the streak into a long session or a hard proofing grind.",
+                    finishLine = "Seven logged check-ins with at least one reward marker each day.",
+                ),
+                Challenge(
+                    key = "engagement_burst", icon = "👀", label = "Engagement Burst",
+                    summary = "Build quick eye contact, name response, and handler focus in tiny repeats.",
+                    dailyTarget = "3 focus reps",
+                    bestFor = "Dogs that know the cue but are drifting or slow to re-engage.",
+                    avoid = "Repeating cues, stacking distractions, or chasing perfect attention.",
+                    finishLine = "Three clean check-ins with fast reward delivery.",
+                ),
+                Challenge(
+                    key = "settle_reset", icon = "🧘", label = "Calm Reset",
+                    summary = "Practice mat work, crate calm, and quiet recovery after one success.",
+                    dailyTarget = "2 settle reps",
+                    bestFor = "Travel days, stressful handlers, and dogs that need off-switch practice.",
+                    avoid = "Prolonged duration work before the dog can settle quickly.",
+                    finishLine = "Dog settles within 30 seconds twice in one day.",
+                ),
+                Challenge(
+                    key = "loose_leash", icon = "🚶", label = "Leash Walking Sprint",
+                    summary = "Keep leash pressure low for a short, boring, successful walk.",
+                    dailyTarget = "1 short walk",
+                    bestFor = "Dogs ready to generalize loose leash outside the house or truck.",
+                    avoid = "Crowded settings or long walks that drain the dog before success.",
+                    finishLine = "Three pauses, three check-ins, and a calm return.",
+                ),
+                Challenge(
+                    key = "public_neutrality", icon = "🏪", label = "Public Neutrality Check",
+                    summary = "Rehearse ignoring people, carts, and noise at an easy public distance.",
+                    dailyTarget = "1 controlled outing",
+                    bestFor = "Teams already comfortable with home skills and short outings.",
+                    avoid = "Too much distance, too much duration, or asking for perfect neutrality too soon.",
+                    finishLine = "One outing where the dog stays under threshold and leaves with a reward.",
+                ),
+            )
+        }
+
+        var selectedKey by remember { mutableStateOf(prefs.getString(KEY_CHALLENGE_KEY, "consistency_streak") ?: "consistency_streak") }
+        var checkIns    by remember { mutableIntStateOf(prefs.getInt(KEY_CHALLENGE_CHECK_INS, 0)) }
+        var notes       by remember { mutableStateOf(prefs.getString(KEY_CHALLENGE_NOTES, "") ?: "") }
+        val selected = challenges.firstOrNull { it.key == selectedKey } ?: challenges.first()
+
+        fun save() {
+            prefs.edit()
+                .putString(KEY_CHALLENGE_KEY, selectedKey)
+                .putInt(KEY_CHALLENGE_CHECK_INS, checkIns)
+                .putString(KEY_CHALLENGE_NOTES, notes)
+                .apply()
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("🏆 Community Challenges", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            Text(
+                "Pick a weekly challenge and log a check-in each time you complete a rep.",
+                style = MaterialTheme.typography.bodySmall,
+                color = GpOnSurfaceVariant,
+            )
+
+            // Challenge picker grid
+            challenges.chunked(2).forEach { pair ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pair.forEach { challenge ->
+                        val isSelected = challenge.key == selectedKey
+                        OutlinedButton(
+                            onClick  = { selectedKey = challenge.key; checkIns = 0; save() },
+                            modifier = Modifier.weight(1f),
+                            colors   = if (isSelected)
+                                ButtonDefaults.outlinedButtonColors(containerColor = GpPrimaryContainer)
+                            else
+                                ButtonDefaults.outlinedButtonColors(),
+                            border   = if (isSelected)
+                                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            else
+                                ButtonDefaults.outlinedButtonBorder,
+                        ) {
+                            Text("${challenge.icon} ${challenge.label}", fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 2)
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+
+            // Plan card for selected challenge
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors   = CardDefaults.outlinedCardColors(containerColor = GpPrimaryContainer),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${selected.icon} ${selected.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text(selected.summary, style = MaterialTheme.typography.bodySmall)
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row { Text("🎯 ", style = MaterialTheme.typography.bodySmall); Text(selected.dailyTarget, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold) }
+                            Row { Text("✅ ", style = MaterialTheme.typography.bodySmall); Text(selected.bestFor, style = MaterialTheme.typography.bodySmall) }
+                            Row { Text("🚫 ", style = MaterialTheme.typography.bodySmall); Text(selected.avoid, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
+                            Row { Text("🏁 ", style = MaterialTheme.typography.bodySmall); Text(selected.finishLine, style = MaterialTheme.typography.bodySmall) }
+                        }
+                    }
+                }
+            }
+
+            // Check-in counter
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier              = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment     = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text("Check-ins", style = MaterialTheme.typography.labelMedium, color = GpOnSurfaceVariant)
+                        Text(checkIns.toString(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    }
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Button(onClick = { checkIns++; save() }) { Text("✅ Log Check-In") }
+                        if (checkIns > 0) {
+                            TextButton(onClick = { checkIns = 0; save() }) {
+                                Text("Reset", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Notes
+            OutlinedTextField(
+                value         = notes,
+                onValueChange = { notes = it; save() },
+                label         = { Text("Notes (optional)") },
+                placeholder   = { Text("Observations, wins, what to adjust…") },
+                modifier      = Modifier.fillMaxWidth(),
+                minLines      = 3,
+            )
+
+            Button(
+                onClick  = { currentSection = NavSection.TRAINING },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("⚡ Log a Training Session") }
         }
     }
 
@@ -5544,6 +5714,7 @@ class MainActivity : AppCompatActivity() {
                     "🏠 Housing & Access"  to { currentSection = NavSection.HOUSING_FAQ },
                     "✅ Certification"      to { loadCertification(); currentSection = NavSection.CERTIFICATION },
                     "🪜 Training Ladder"    to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
+                    "🏆 Challenges"         to { currentSection = NavSection.COMMUNITY_CHALLENGES },
                     "🏷️ Plans"            to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"               to { openWebPage("https://guidepaw.app/faq.php") },
                 ), onDismiss)
@@ -7636,7 +7807,10 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TOKEN               = "auth_token"
         private const val KEY_CACHE               = "dashboard_cache"
         private const val KEY_IGNORED_UPDATE_CODE = "ignored_update_code"
-        private const val KEY_TRUCKING_MODE       = "trucking_mode"
-        private const val KEY_TRUCKING_NOTES      = "trucking_notes"
+        private const val KEY_TRUCKING_MODE        = "trucking_mode"
+        private const val KEY_TRUCKING_NOTES       = "trucking_notes"
+        private const val KEY_CHALLENGE_KEY        = "challenge_key"
+        private const val KEY_CHALLENGE_CHECK_INS  = "challenge_check_ins"
+        private const val KEY_CHALLENGE_NOTES      = "challenge_notes"
     }
 }
