@@ -6416,7 +6416,6 @@ class MainActivity : AppCompatActivity() {
                     "🎖️ Tactical Training"   to { currentSection = NavSection.TACTICAL_TRAINING },
                     "🚚 Trucking Mode"        to { currentSection = NavSection.TRUCKING_MODE },
                     "🪜 Training Ladder"      to { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
-                    "🏆 Challenges"           to { currentSection = NavSection.COMMUNITY_CHALLENGES },
                 ), onDismiss, defaultExpanded = true)
                 MenuSheetSection("Care & Health", listOf(
                     "🏥 Health Summary"   to { loadHealthSummary(); currentSection = NavSection.HEALTH_SUMMARY },
@@ -6436,6 +6435,7 @@ class MainActivity : AppCompatActivity() {
                     "🔔 Notifications"   to { currentSection = NavSection.NOTIFICATIONS; if (notifResult == null) refreshNotifications() },
                     "🧠 Smart Alerts"    to { loadAlerts(); currentSection = NavSection.SMART_ALERTS },
                     "⌚ Wearable Sync"   to { if (wearableResult == null) loadWearables(); currentSection = NavSection.WEARABLES },
+                    "🏆 Challenges"      to { currentSection = NavSection.COMMUNITY_CHALLENGES },
                     "🏷️ Plans"          to { openWebPage("https://guidepaw.app/paywalls.php") },
                     "❓ FAQ"             to { openWebPage("https://guidepaw.app/faq.php") },
                     "💬 Feedback"        to { currentSection = NavSection.FEEDBACK },

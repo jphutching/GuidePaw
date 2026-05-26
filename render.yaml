@@ -127,9 +127,9 @@ services:
       # ── Android Companion version (managed via render-set-env.sh) ─────────
       # PHP defaults in companion_release.php cover the case where these are missing.
       - key: GUIDEPAW_COMPANION_VERSION_CODE
-        value: "73"
+        value: "74"
       - key: GUIDEPAW_COMPANION_VERSION_NAME
-        value: "0.073"
+        value: "0.074"
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
