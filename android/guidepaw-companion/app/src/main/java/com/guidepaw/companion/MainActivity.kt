@@ -509,7 +509,8 @@ class MainActivity : AppCompatActivity() {
                         color    = if (isStatusError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                if (currentToken == null) {
+                val preAuthSections = setOf(NavSection.FORGOT_PASSWORD, NavSection.FEEDBACK)
+                if (currentToken == null && currentSection !in preAuthSections) {
                     LoginSection()
                 } else {
                     when (currentSection) {
