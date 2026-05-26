@@ -36,6 +36,9 @@ data class GuidePawMeResult(
     val activeDogId: Int?,
     val nextAppointmentAt: String? = null,
     val nextAppointmentTitle: String? = null,
+    val nextRefillDate: String? = null,
+    val nextRefillMedName: String? = null,
+    val activeMedCount: Int = 0,
 )
 
 data class GpDogAccessHandler(
@@ -557,10 +560,13 @@ class GuidePawApiClient(
         ensureSuccess(response)
         val user = response.json.optJSONObject("user") ?: JSONObject()
         return GuidePawMeResult(
-            username = user.optString("username", ""),
-            activeDogId = optNullableInt(response.json, "active_dog_id"),
-            nextAppointmentAt    = if (response.json.isNull("next_appointment_at")) null else response.json.optString("next_appointment_at"),
+            username             = user.optString("username", ""),
+            activeDogId          = optNullableInt(response.json, "active_dog_id"),
+            nextAppointmentAt    = if (response.json.isNull("next_appointment_at"))    null else response.json.optString("next_appointment_at"),
             nextAppointmentTitle = if (response.json.isNull("next_appointment_title")) null else response.json.optString("next_appointment_title"),
+            nextRefillDate       = if (response.json.isNull("next_refill_date"))       null else response.json.optString("next_refill_date"),
+            nextRefillMedName    = if (response.json.isNull("next_refill_med_name"))   null else response.json.optString("next_refill_med_name"),
+            activeMedCount       = response.json.optInt("active_med_count", 0),
         )
     }
 

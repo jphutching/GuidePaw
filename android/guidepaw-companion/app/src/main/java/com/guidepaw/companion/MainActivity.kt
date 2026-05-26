@@ -863,6 +863,23 @@ class MainActivity : AppCompatActivity() {
                             )
                         }
                     }
+                    me.nextRefillDate?.takeIf { it.isNotBlank() }?.let { refillDate ->
+                        val daysUntil = runCatching {
+                            java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), java.time.LocalDate.parse(refillDate.take(10)))
+                        }.getOrNull()
+                        if (daysUntil != null && daysUntil <= 14) {
+                            val med = me.nextRefillMedName?.takeIf { it.isNotBlank() } ?: "Medication"
+                            val when_ = if (daysUntil <= 0) "overdue" else if (daysUntil == 1L) "tomorrow" else "in ${daysUntil}d"
+                            Text(
+                                "💊 $med refill — $when_",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (daysUntil <= 3) MaterialTheme.colorScheme.error else GpOnSurfaceVariant,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .clickable { loadMedications(); currentSection = NavSection.MEDICATIONS },
+                            )
+                        }
+                    }
                 }
             }
 
