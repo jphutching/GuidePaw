@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# render-set-env.sh — Safely set one or more Render env vars WITHOUT wiping others.
+# render-set-env.sh — Set one or more Render env vars safely.
+# Uses master.env as the source of truth so secrets are never lost.
 # Usage: ./scripts/render-set-env.sh KEY=VALUE [KEY2=VALUE2 ...]
-#
-# This script paginates through ALL current env vars before merging,
-# so it is safe to call without losing other vars.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$REPO_ROOT/middleware/.env"
+MASTER="$REPO_ROOT/master.env"
 
 [[ -f "$ENV_FILE" ]] || { echo "[ERROR] $ENV_FILE missing."; exit 1; }
+[[ -f "$MASTER"   ]] || { echo "[ERROR] master.env missing at $MASTER"; exit 1; }
+
 set -a; source "$ENV_FILE"; set +a
 
 RENDER_API_KEY="${RENDER_API_KEY:?Set RENDER_API_KEY in middleware/.env}"
@@ -18,66 +19,77 @@ RENDER_SVC_ID="srv-d8a3qidckfvc739ct2cg"
 
 [[ $# -eq 0 ]] && { echo "Usage: $0 KEY=VALUE [KEY2=VALUE2 ...]"; exit 1; }
 
-# Fetch ALL pages of current env vars
-ALL_VARS="[]"
-CURSOR=""
-while true; do
-  URL="https://api.render.com/v1/services/$RENDER_SVC_ID/env-vars?limit=100"
-  [[ -n "$CURSOR" ]] && URL="${URL}&cursor=${CURSOR}"
-  PAGE=$(curl -s "$URL" -H "Authorization: Bearer $RENDER_API_KEY" -H "Accept: application/json")
-  COUNT=$(echo "$PAGE" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
-  ALL_VARS=$(python3 -c "
-import json, sys
-existing = json.loads('$ALL_VARS')
-page = json.loads(sys.stdin.read())
-existing.extend(page)
-print(json.dumps(existing))
-" <<< "$PAGE")
-  if [[ "$COUNT" -lt 100 ]]; then break; fi
-  CURSOR=$(echo "$PAGE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[-1].get('cursor','') if d else '')")
-  [[ -z "$CURSOR" ]] && break
-done
+# Keys that live only in middleware/.env or are not Render app vars
+SKIP="RENDER_SVC_ID RENDER_MIDDLEWARE_SVC_ID RENDER_DB_ID RENDER_ENV_GROUP_ID \
+      RENDER_API_KEY RENDER_DEPLOY_HOOK RENDER_SERVICE_NAME RENDER_APP_URL \
+      RENDER_MIDDLEWARE_URL MIDDLEWARE_SECRET MIDDLEWARE_URL \
+      ANTHROPIC_API_KEY OPENAI_API_KEY \
+      DB_EXTERNAL_URL GITHUB_REPO GITHUB_BRANCH"
 
-# Merge new values into all existing vars
-UPDATES=$(printf '%s\n' "$@" | python3 -c "
-import sys, json
+python3 - "$MASTER" "$RENDER_SVC_ID" "$RENDER_API_KEY" "$SKIP" "$@" <<'PYEOF'
+import sys, re, json, urllib.request, urllib.error
 
-overrides = {}
-for line in sys.stdin:
-    line = line.strip()
-    if '=' in line:
-        k, v = line.split('=', 1)
+master_path  = sys.argv[1]
+svc_id       = sys.argv[2]
+api_key      = sys.argv[3]
+skip_keys    = set(sys.argv[4].split())
+overrides    = {}
+for arg in sys.argv[5:]:
+    if '=' in arg:
+        k, _, v = arg.partition('=')
         overrides[k.strip()] = v.strip()
 
-import os
-data = json.loads(os.environ.get('ALL_VARS_JSON', '[]'))
-existing = {item['envVar']['key']: item['envVar']['value'] for item in data}
-existing.update(overrides)
-print(json.dumps([{'key': k, 'value': v} for k, v in existing.items()]))
-" ALL_VARS_JSON="$ALL_VARS")
+if not overrides:
+    print("[WARN] No KEY=VALUE pairs found in arguments.")
+    sys.exit(0)
 
-HTTP=$(curl -s -o /tmp/render-env-response.json -w "%{http_code}" -X PUT \
-  "https://api.render.com/v1/services/$RENDER_SVC_ID/env-vars" \
-  -H "Authorization: Bearer $RENDER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d "$UPDATES")
+# Build env var map from master.env
+vars = {}
+with open(master_path) as f:
+    for line in f:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        m = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)', line)
+        if m:
+            k, v = m.group(1), m.group(2).strip()
+            if k not in skip_keys:
+                vars[k] = v
 
-if [[ "$HTTP" == "200" ]]; then
-  echo "[OK] Updated env vars on Render: $*"
-  # Sync changes into master.env
-  TODAY=$(date +%Y-%m-%d)
-  MASTER="$REPO_ROOT/master.env"
-  if [[ -f "$MASTER" ]]; then
-    python3 - "$MASTER" "$TODAY" "$@" <<'PYEOF'
-import sys, re, os
+# Apply the overrides on top
+vars.update(overrides)
+
+payload = [{'key': k, 'value': v} for k, v in vars.items()]
+print(f"Pushing {len(payload)} env vars (master.env + overrides) to Render...")
+
+data = json.dumps(payload).encode()
+req = urllib.request.Request(
+    f'https://api.render.com/v1/services/{svc_id}/env-vars',
+    data=data,
+    method='PUT',
+    headers={
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
+)
+try:
+    resp = urllib.request.urlopen(req)
+    print(f"[OK] HTTP {resp.status} — updated on Render: {list(overrides.keys())}")
+except urllib.error.HTTPError as e:
+    print(f"[ERROR] HTTP {e.code} — {e.read().decode()[:300]}")
+    sys.exit(1)
+PYEOF
+
+# Also update master.env with the new values
+TODAY=$(date +%Y-%m-%d)
+python3 - "$MASTER" "$TODAY" "$@" <<'PYEOF'
+import sys, re
 
 master_path = sys.argv[1]
 today       = sys.argv[2]
-args        = sys.argv[3:]
-
-# Parse KEY=VALUE pairs from args
-updates = {}
-for arg in args:
+updates     = {}
+for arg in sys.argv[3:]:
     if '=' in arg:
         k, _, v = arg.partition('=')
         updates[k.strip()] = v.strip()
@@ -90,14 +102,10 @@ with open(master_path, 'r') as f:
 
 new_lines = []
 handled   = set()
-
 i = 0
 while i < len(lines):
     line = lines[i]
-    stripped = line.strip()
-
-    # Match KEY=VALUE lines (skip comments and blanks)
-    m = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)', stripped)
+    m = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)', line.strip())
     if m:
         key = m.group(1)
         old_val = m.group(2).strip()
@@ -107,18 +115,16 @@ while i < len(lines):
             handled.add(key)
             i += 1
             continue
-
     new_lines.append(line)
     i += 1
 
-# Append brand-new keys that weren't in the file
-new_keys = [k for k in updates if k not in handled and k not in
-            {re.match(r'^([A-Za-z_][A-Za-z0-9_]*)', l.strip()).group(1)
-             for l in lines if re.match(r'^[A-Za-z_]', l.strip())}]
+# Append brand-new keys
+existing_keys = {re.match(r'^([A-Za-z_][A-Za-z0-9_]*)', l.strip()).group(1)
+                 for l in lines if re.match(r'^[A-Za-z_]', l.strip())}
+new_keys = [k for k in updates if k not in handled and k not in existing_keys]
 if new_keys:
-    if new_lines and new_lines[-1].strip() != '':
+    if new_lines and new_lines[-1].strip():
         new_lines.append('\n')
-    new_lines.append('# ── Added by render-set-env.sh ──────────────────────────────\n')
     for k in new_keys:
         new_lines.append(f'{k}={updates[k]}\n')
 
@@ -127,10 +133,3 @@ with open(master_path, 'w') as f:
 
 print(f'[master.env] synced: {list(updates.keys())}')
 PYEOF
-  else
-    echo "[WARN] master.env not found at $MASTER — skipping sync"
-  fi
-else
-  echo "[ERROR] HTTP $HTTP — $(cat /tmp/render-env-response.json)"
-  exit 1
-fi
