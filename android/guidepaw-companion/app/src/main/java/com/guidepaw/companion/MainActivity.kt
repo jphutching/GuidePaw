@@ -1698,7 +1698,8 @@ class MainActivity : AppCompatActivity() {
 
         var currentLat   by remember { mutableStateOf<Double?>(null) }
         var currentLng   by remember { mutableStateOf<Double?>(null) }
-        var locationLabel by remember { mutableStateOf("") }
+        var locationLabel  by remember { mutableStateOf("") }
+        var manualLocation by remember { mutableStateOf("") }
         var detecting    by remember { mutableStateOf(false) }
         var destination  by remember { mutableStateOf("") }
         var afterHours   by remember { mutableStateOf(false) }
@@ -1838,6 +1839,15 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         OutlinedTextField(
+                            value         = manualLocation,
+                            onValueChange = { manualLocation = it },
+                            label         = { Text("Your location (optional override)") },
+                            placeholder   = { Text("City, state or full address") },
+                            modifier      = Modifier.fillMaxWidth(),
+                            singleLine    = true,
+                        )
+
+                        OutlinedTextField(
                             value         = destination,
                             onValueChange = { destination = it },
                             label         = { Text("Heading toward (optional)") },
@@ -1862,40 +1872,61 @@ class MainActivity : AppCompatActivity() {
 
                         Button(
                             onClick  = {
-                                val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-                                val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-                                if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                                if (manualLocation.isNotBlank()) {
                                     detecting = true
+                                    errorMsg  = ""
                                     scope.launch {
-                                        val loc = resolveLocation(context)
+                                        @Suppress("DEPRECATION")
+                                        val addresses = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            try { Geocoder(context, Locale.getDefault()).getFromLocationName(manualLocation.trim(), 1) }
+                                            catch (_: Exception) { null }
+                                        }
                                         detecting = false
-                                        if (loc != null) {
-                                            locationLabel = loc.second
-                                            // extract lat/lng via geocoder
-                                            val geoClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
-                                            try {
-                                                geoClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
-                                                    .addOnSuccessListener { location ->
-                                                        if (location != null) {
-                                                            currentLat = location.latitude
-                                                            currentLng = location.longitude
-                                                            doSearch(location.latitude, location.longitude)
-                                                        } else {
-                                                            errorMsg = "Could not get precise location."
-                                                        }
-                                                    }
-                                            } catch (_: SecurityException) {
-                                                errorMsg = "Location permission required."
-                                            }
+                                        val addr = addresses?.firstOrNull()
+                                        if (addr != null) {
+                                            locationLabel = addr.getAddressLine(0) ?: manualLocation.trim()
+                                            currentLat = addr.latitude
+                                            currentLng = addr.longitude
+                                            doSearch(addr.latitude, addr.longitude)
                                         } else {
-                                            errorMsg = "Could not determine location."
+                                            errorMsg = "Could not find that location. Try a city name or zip code."
                                         }
                                     }
                                 } else {
-                                    permLauncher.launch(arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                                    ))
+                                    val fine   = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                                    val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+                                    if (fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED) {
+                                        detecting = true
+                                        scope.launch {
+                                            val loc = resolveLocation(context)
+                                            detecting = false
+                                            if (loc != null) {
+                                                locationLabel = loc.second
+                                                val geoClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+                                                try {
+                                                    geoClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, null)
+                                                        .addOnSuccessListener { location ->
+                                                            if (location != null) {
+                                                                currentLat = location.latitude
+                                                                currentLng = location.longitude
+                                                                doSearch(location.latitude, location.longitude)
+                                                            } else {
+                                                                errorMsg = "Could not get precise location."
+                                                            }
+                                                        }
+                                                } catch (_: SecurityException) {
+                                                    errorMsg = "Location permission required."
+                                                }
+                                            } else {
+                                                errorMsg = "Could not determine location."
+                                            }
+                                        }
+                                    } else {
+                                        permLauncher.launch(arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        ))
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),

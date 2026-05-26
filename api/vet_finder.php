@@ -165,11 +165,14 @@ if ($destination !== '') {
             $destLng = (float) $destLoc['lng'];
             $routeDestination = (string) ($geoData['results'][0]['formatted_address'] ?? $destination);
             $totalMiles = gpVetDistanceMiles($lat, $lng, $destLat, $destLng);
-            $midLat = ($lat + $destLat) / 2;
-            $midLng = ($lng + $destLng) / 2;
-            $midMiles = round($totalMiles / 2);
-            if ($totalMiles > 60) {
-                $searchPoints[] = ['lat' => $midLat, 'lng' => $midLng, 'label' => "~{$midMiles}mi ahead", 'radius' => 40000];
+            $intervalMiles = 50;
+            $numIntermediate = (int) min(floor($totalMiles / $intervalMiles), 5);
+            for ($i = 1; $i <= $numIntermediate; $i++) {
+                $fraction = ($i * $intervalMiles) / $totalMiles;
+                $iLat = $lat + ($destLat - $lat) * $fraction;
+                $iLng = $lng + ($destLng - $lng) * $fraction;
+                $miles = $i * $intervalMiles;
+                $searchPoints[] = ['lat' => $iLat, 'lng' => $iLng, 'label' => "~{$miles}mi ahead", 'radius' => 40000];
             }
             $searchPoints[] = ['lat' => $destLat, 'lng' => $destLng, 'label' => 'Near destination', 'radius' => 40000];
         }
