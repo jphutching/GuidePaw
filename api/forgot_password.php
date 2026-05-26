@@ -50,7 +50,7 @@ if ($user) {
         . $resetUrl . "\n\n"
         . "If you did not request this, you can safely ignore this email.\n\n"
         . "— GuidePaw";
-    gpSendViaZeptoMail($email, $subject, $body);
+    try { gpSendMail($email, $subject, $body); } catch (Throwable $e) { error_log('Password reset email failed: ' . $e->getMessage()); }
 }
 
 // Always return success — don't reveal whether the email is registered

@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     . $resetUrl . "\n\n"
                     . "If you did not request this, you can safely ignore this email.\n\n"
                     . "— GuidePaw";
-                gpSendViaZeptoMail($email, $subject, $body);
+                try { gpSendMail($email, $subject, $body); } catch (Throwable $e) { error_log('Password reset email failed: ' . $e->getMessage()); }
             }
 
             // Always show sent message (don't reveal whether email exists)
