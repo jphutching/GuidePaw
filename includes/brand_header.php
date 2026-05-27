@@ -26,11 +26,21 @@ if (!function_exists('guidepawBrandHeader')) {
     display: block;
     box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
 }
+.gp-shared-brand-tagline {
+    color: rgba(255,255,255,.78);
+    font-size: clamp(11px, 2.2vw, 14px);
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-align: center;
+    margin-top: 10px;
+    text-transform: uppercase;
+}
 </style>
 <div class="gp-shared-brand-wrap">
     <div class="gp-shared-brand-inner">
         <img class="gp-shared-brand-logo" src="/assets/brand/guidepaw-logo.png" alt="GuidePaw logo">
     </div>
+    <div class="gp-shared-brand-tagline">Training Trust For The Journey</div>
 </div>';
     }
 }
