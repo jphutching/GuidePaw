@@ -80,4 +80,6 @@ function checkLogin(): void {
     $_SESSION['is_admin'] = in_array($_SESSION['user_role'], ['master_admin', 'basic_admin'], true) ? 1 : 0;
 
     gpEnforceHandlerProfileCompletion($GLOBALS['pdo'], $user);
+    require_once __DIR__ . '/demo_mode.php';
+    gpCheckDemoSession($GLOBALS['pdo'], $userId);
 }

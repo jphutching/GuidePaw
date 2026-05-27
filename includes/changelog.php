@@ -4,6 +4,16 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.088',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Demo accounts & ID structure',
+                'items'   => [
+                    'Three pre-loaded demo accounts available from the login screen (demo.sarah, demo.marcus, demo.jennifer).',
+                    'Demo sessions auto-reset to original data 15 minutes after login.',
+                    'Tap "Use" next to any demo account to fill credentials instantly.',
+                ],
+            ],
+            [
                 'version' => '0.087',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Rotation fix',

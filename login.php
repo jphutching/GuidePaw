@@ -118,6 +118,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="reset_password.php" class="text-decoration-none small text-muted">Forgot Password?</a>
             <a href="register.php" class="text-decoration-none small">New Account</a>
         </div>
+        <div class="mt-3 p-3 border rounded small" style="background:#f0fdf4;border-color:#86efac!important;">
+            <div class="fw-semibold mb-2" style="color:#15803d;">Try a Demo Account</div>
+            <div class="text-muted mb-2">Explore GuidePaw with pre-loaded data. Resets automatically after 15 minutes.</div>
+            <div class="d-flex flex-column gap-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><strong>demo.sarah</strong> <span class="text-muted">— Foundation training</span></span>
+                    <button type="button" class="btn btn-outline-success btn-sm demo-fill" data-u="demo.sarah" data-p="Demo1234!!">Use</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><strong>demo.marcus</strong> <span class="text-muted">— Advanced training</span></span>
+                    <button type="button" class="btn btn-outline-success btn-sm demo-fill" data-u="demo.marcus" data-p="Demo1234!!">Use</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><strong>demo.jennifer</strong> <span class="text-muted">— Certified handler</span></span>
+                    <button type="button" class="btn btn-outline-success btn-sm demo-fill" data-u="demo.jennifer" data-p="Demo1234!!">Use</button>
+                </div>
+                <div class="text-muted mt-1" style="font-size:.75rem;">Password for all accounts: <code>Demo1234!!</code></div>
+            </div>
+        </div>
         <div class="mt-3 p-3 bg-light border rounded small">
             <div class="fw-semibold mb-1">Research a breed first?</div>
             <div class="text-muted mb-2">Use the public questionnaire with or without an account to narrow down breed ideas before you sign in.</div>
@@ -131,11 +150,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     (function () {
         var btn = document.getElementById('togglePassword');
         var input = document.getElementById('passwordInput');
-        if (!btn || !input) return;
-        btn.addEventListener('click', function () {
-            var hidden = input.type === 'password';
-            input.type = hidden ? 'text' : 'password';
-            btn.textContent = hidden ? 'Hide' : 'Show';
+        if (btn && input) {
+            btn.addEventListener('click', function () {
+                var hidden = input.type === 'password';
+                input.type = hidden ? 'text' : 'password';
+                btn.textContent = hidden ? 'Hide' : 'Show';
+            });
+        }
+        document.querySelectorAll('.demo-fill').forEach(function (el) {
+            el.addEventListener('click', function () {
+                document.querySelector('[name="username"]').value = el.dataset.u;
+                document.getElementById('passwordInput').value = el.dataset.p;
+            });
         });
     })();
     </script>

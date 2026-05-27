@@ -128,6 +128,8 @@ function requireApiUser(PDO $pdo): array {
     }
     $update = $pdo->prepare('UPDATE api_tokens SET last_used_at = CURRENT_TIMESTAMP WHERE id = ?');
     $update->execute([(int) $row['id']]);
+    require_once __DIR__ . '/demo_mode.php';
+    gpCheckDemoSession($pdo, (int) $row['user_id']);
     return ['id' => (int) $row['user_id'], 'username' => $row['username'], 'token_id' => (int) $row['id'], 'active_dog_id' => isset($row['active_dog_id']) ? (int) $row['active_dog_id'] : null];
 }
 

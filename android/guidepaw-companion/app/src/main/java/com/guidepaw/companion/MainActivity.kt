@@ -840,6 +840,43 @@ class MainActivity : AppCompatActivity() {
                 onClick  = { currentSection = NavSection.FEEDBACK },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Report an issue", fontSize = 13.sp, color = Color(0xFF6B7280)) }
+
+            HorizontalDivider()
+
+            // Demo accounts
+            Surface(
+                shape  = MaterialTheme.shapes.medium,
+                color  = Color(0xFFf0fdf4),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF86efac)),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Try a Demo Account", fontWeight = FontWeight.Bold, color = Color(0xFF15803d), fontSize = 14.sp)
+                    Text("Explore GuidePaw with pre-loaded data. Resets after 15 minutes.", fontSize = 12.sp, color = Color(0xFF6B7280))
+                    listOf(
+                        Triple("demo.sarah",    "Demo1234!!", "Foundation training"),
+                        Triple("demo.marcus",   "Demo1234!!", "Advanced training"),
+                        Triple("demo.jennifer", "Demo1234!!", "Certified handler"),
+                    ).forEach { (user, pass, label) ->
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            Column {
+                                Text(user, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                Text(label, fontSize = 11.sp, color = Color(0xFF6B7280))
+                            }
+                            OutlinedButton(
+                                onClick = { usernameText = user; passwordText = pass },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF16a34a)),
+                            ) { Text("Use", fontSize = 12.sp, color = Color(0xFF16a34a)) }
+                        }
+                    }
+                    Text("Password for all accounts: Demo1234!!", fontSize = 11.sp, color = Color(0xFF6B7280))
+                }
+            }
         }
     }
 
