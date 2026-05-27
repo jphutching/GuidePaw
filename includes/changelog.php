@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.092',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Badge & tagline update',
+                'items'   => [
+                    'Updated brand badge image in the header.',
+                    'New tagline: TRAINING TRUST FOR THE JOURNEY.',
+                ],
+            ],
+            [
                 'version' => '0.091',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Header redesign',

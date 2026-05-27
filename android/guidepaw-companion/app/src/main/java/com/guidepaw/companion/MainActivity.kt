@@ -564,7 +564,7 @@ class MainActivity : AppCompatActivity() {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Image(
-                        painter            = painterResource(R.drawable.guidepaw_logo),
+                        painter            = painterResource(R.drawable.guidepaw_badge),
                         contentDescription = null,
                         modifier           = Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)),
                     )
@@ -580,7 +580,7 @@ class MainActivity : AppCompatActivity() {
                             style      = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            "Handler tools. All in one place.",
+                            "TRAINING TRUST FOR THE JOURNEY",
                             color     = Color.White.copy(alpha = 0.78f),
                             style     = MaterialTheme.typography.bodySmall,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -10437,6 +10437,10 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.092", "May 27, 2026", "Badge & tagline update", listOf(
+                "Updated brand badge image in the header.",
+                "New tagline: TRAINING TRUST FOR THE JOURNEY.",
+            )),
             ChangelogEntry("0.091", "May 27, 2026", "Header redesign", listOf(
                 "Brand header is taller with a larger shield badge and centered GuidePaw title.",
             )),
