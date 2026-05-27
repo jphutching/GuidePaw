@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.089',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Demo mode banner',
+                'items'   => [
+                    'Amber banner shown on every screen while using a demo account.',
+                    'Banner confirms data resets after 15 minutes so users know what to expect.',
+                ],
+            ],
+            [
                 'version' => '0.088',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Demo accounts & ID structure',

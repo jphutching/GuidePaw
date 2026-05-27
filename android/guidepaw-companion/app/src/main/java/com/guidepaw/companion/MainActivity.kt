@@ -583,6 +583,7 @@ class MainActivity : AppCompatActivity() {
                 if (showWhatsNew) WhatsNewDialog()
                 selectedLogDetail?.let { LogDetailDialog(it) }
                 if (showUpdateCard) UpdateBanner()
+                if (currentMe?.username?.startsWith("demo.") == true) DemoModeBanner()
                 if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
                     Text(
@@ -725,6 +726,25 @@ class MainActivity : AppCompatActivity() {
                 Button(onClick = { showWhatsNew = false }) { Text("Got it") }
             },
         )
+    }
+
+    // ── Demo mode banner ────────────────────────────────────────────────────
+    @Composable
+    private fun DemoModeBanner() {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFEF9C3))
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "⚠ Demo mode — all data resets after 15 minutes",
+                fontSize = 12.sp,
+                color    = Color(0xFF92400E),
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 
     // ── Update banner ───────────────────────────────────────────────────────
