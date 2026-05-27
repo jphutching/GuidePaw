@@ -160,7 +160,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ, FAQ, PLANS, TRAINER_MARKETPLACE, ADD_DOG }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ, FAQ, PLANS, TRAINER_MARKETPLACE, ADD_DOG, PUBLIC_DOG_PROFILE }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -601,6 +601,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.PLANS                -> PlansSection()
                         NavSection.TRAINER_MARKETPLACE  -> TrainerMarketplaceSection()
                         NavSection.ADD_DOG              -> AddDogSection()
+                        NavSection.PUBLIC_DOG_PROFILE   -> PublicDogProfileSection()
                     }
                 }
             }
@@ -5006,11 +5007,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Web version for access management
-            OutlinedButton(
-                onClick   = { openWebPage("https://guidepaw.app/tactical_training.php") },
-                modifier  = Modifier.fillMaxWidth(),
-            ) { Text("Manage tactical access on web") }
         }
     }
 
@@ -6517,10 +6513,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                OutlinedButton(
-                    onClick  = { openWebPage("https://guidepaw.app/medications.php") },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Full medication form on web") }
             }
         }
     }
@@ -6617,10 +6609,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                OutlinedButton(
-                    onClick  = { openWebPage("https://guidepaw.app/candidate_comparison.php") },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Full score table on web") }
             }
         }
     }
@@ -8912,6 +8900,11 @@ class MainActivity : AppCompatActivity() {
                     OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of Birth (YYYY-MM-DD)") }, placeholder = { Text("e.g. 2020-06-15") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
 
+                    OutlinedButton(
+                        onClick  = { currentSection = NavSection.PUBLIC_DOG_PROFILE },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("🐾 View Public Profile") }
+
                     Button(
                         onClick = {
                             val token = currentToken ?: return@Button
@@ -8948,6 +8941,127 @@ class MainActivity : AppCompatActivity() {
                         if (saving) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
                         Text("Save Changes")
                     }
+                }
+            }
+        }
+    }
+
+    // ── Public Dog Profile section ────────────────────────────────────────────
+    @Composable
+    private fun PublicDogProfileSection() {
+        val context = LocalContext.current
+        val scope   = rememberCoroutineScope()
+        var profile  by remember { mutableStateOf<GpPublicDogProfile?>(null) }
+        var loading  by remember { mutableStateOf(true) }
+        var errorMsg by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            val token = currentToken ?: run { errorMsg = "Not signed in."; loading = false; return@LaunchedEffect }
+            try {
+                profile = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getPublicProfile(token) }
+            } catch (t: Throwable) {
+                errorMsg = friendlyMessage(t.message, "Could not load public profile.")
+            } finally {
+                loading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.DOG_PROFILE }) { Text("← Back") }
+                Text("🐾 Public Profile", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
+            }
+
+            if (loading) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return@Column }
+            SectionMessage(errorMsg)
+
+            profile?.let { p ->
+                // Identity card
+                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(p.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        if (p.breed.isNotBlank()) Text(p.breed, style = MaterialTheme.typography.bodyMedium, color = GpOnSurfaceVariant)
+                        if (p.accessRole.isNotBlank()) Text(p.accessRole.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                        if (p.supportBadge.isNotBlank()) Text(p.supportBadge, style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                    }
+                }
+
+                // Handler contact
+                if (p.handlerName.isNotBlank() || p.handlerPhone.isNotBlank() || p.handlerEmail.isNotBlank()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Handler Contact", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                            if (p.handlerName.isNotBlank()) Text(p.handlerName, style = MaterialTheme.typography.bodyMedium)
+                            if (p.handlerPhone.isNotBlank()) TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${p.handlerPhone}"))) }, contentPadding = PaddingValues(0.dp)) { Text(p.handlerPhone, style = MaterialTheme.typography.bodySmall) }
+                            if (p.handlerEmail.isNotBlank()) TextButton(onClick = { openWebPage("mailto:${p.handlerEmail}") }, contentPadding = PaddingValues(0.dp)) { Text(p.handlerEmail, style = MaterialTheme.typography.bodySmall) }
+                        }
+                    }
+                }
+
+                // Backup contact
+                if (p.backupContactName.isNotBlank() || p.backupContactPhone.isNotBlank()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Backup Contact", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                            if (p.backupContactName.isNotBlank()) Text(p.backupContactName, style = MaterialTheme.typography.bodyMedium)
+                            if (p.backupContactPhone.isNotBlank()) TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${p.backupContactPhone}"))) }, contentPadding = PaddingValues(0.dp)) { Text(p.backupContactPhone, style = MaterialTheme.typography.bodySmall) }
+                        }
+                    }
+                }
+
+                // Critical allergies (highlighted)
+                if (p.criticalAllergies.isNotBlank()) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.error)) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("⚠️ Critical Allergies", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+                            Text(p.criticalAllergies, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+
+                // Service tasks
+                if (p.serviceTasks.isNotBlank()) {
+                    SummaryCard {
+                        Text("Service Tasks", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(4.dp))
+                        Text(p.serviceTasks, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Found dog instructions
+                if (p.foundDogInstructions.isNotBlank()) {
+                    SummaryCard {
+                        Text("If Found", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(4.dp))
+                        Text(p.foundDogInstructions, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Public notes
+                if (p.publicNotes.isNotBlank()) {
+                    SummaryCard {
+                        Text("Public Notes", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(4.dp))
+                        Text(p.publicNotes, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                // Actions
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick  = { openWebPage(p.qrUrl) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("View QR Code") }
+                    Button(
+                        onClick  = {
+                            val share = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, p.publicUrl) }
+                            context.startActivity(Intent.createChooser(share, "Share public profile"))
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Share Profile") }
                 }
             }
         }
@@ -9482,12 +9596,63 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // Upgrade CTA
+                // Add-on services
+                if (b.services.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Add-ons", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+                    b.services.forEach { svc ->
+                        val priceLabel = if (svc.priceCents > 0) {
+                            val dollars = svc.priceCents / 100
+                            val cents   = svc.priceCents % 100
+                            "$${dollars}.%02d".format(cents)
+                        } else ""
+                        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(svc.label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                                    if (svc.active) Badge { Text("Active") }
+                                    else if (priceLabel.isNotBlank()) Text(priceLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 8.dp))
+                                }
+                                if (svc.summary.isNotBlank()) Text(svc.summary, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                if (!svc.active && svc.checkoutAvailable) {
+                                    val scope2 = rememberCoroutineScope()
+                                    var buying  by remember { mutableStateOf(false) }
+                                    var buyErr  by remember { mutableStateOf("") }
+                                    if (buyErr.isNotBlank()) Text(buyErr, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                    Button(
+                                        onClick = {
+                                            val token = currentToken ?: return@Button
+                                            buying = true; buyErr = ""
+                                            scope2.launch {
+                                                try {
+                                                    val url = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                        api.startBillingCheckout(token, "service", serviceSlug = svc.slug)
+                                                    }
+                                                    if (url.isNotBlank()) openWebPage(url)
+                                                    else buyErr = "Checkout unavailable."
+                                                } catch (t: Throwable) {
+                                                    buyErr = friendlyMessage(t.message, "Could not start checkout.")
+                                                } finally { buying = false }
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        enabled  = !buying,
+                                    ) {
+                                        if (buying) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(6.dp)) }
+                                        Text(if (priceLabel.isNotBlank()) "Buy — $priceLabel" else svc.actionLabel)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Upgrade plan tier
                 if (b.currentTier != "pro") {
-                    Button(
+                    OutlinedButton(
                         onClick  = { openWebPage("https://guidepaw.app/paywalls.php") },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("View Upgrade Options") }
+                    ) { Text("Upgrade Plan on Web") }
                 }
             }
         }

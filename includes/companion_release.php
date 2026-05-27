@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Brand header with GuidePaw logo and tagline now appears on every screen. Training Programs button navigates natively.',
+            'release_notes' => 'Public Dog Profile viewer, native add-on service checkout, removed remaining web-only buttons in Medications, Candidate Comparison, and Tactical Training.',
             'published_at' => gmdate('c'),
         ];
     }

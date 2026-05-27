@@ -622,11 +622,43 @@ data class GpBillingPlan(
     val isCurrent: Boolean,
 )
 
+data class GpBillingService(
+    val slug: String,
+    val label: String,
+    val summary: String,
+    val priceCents: Int,
+    val currency: String,
+    val active: Boolean,
+    val checkoutAvailable: Boolean,
+    val actionLabel: String,
+)
+
 data class GpBillingInfo(
     val currentTier: String,
     val currentTierLabel: String,
     val canCreateAnotherDog: Boolean,
     val plans: List<GpBillingPlan>,
+    val services: List<GpBillingService> = emptyList(),
+)
+
+data class GpPublicDogProfile(
+    val dogId: Int,
+    val publicUrl: String,
+    val qrUrl: String,
+    val name: String,
+    val breed: String,
+    val accessRole: String,
+    val supportBadge: String,
+    val handlerName: String,
+    val handlerPhone: String,
+    val handlerEmail: String,
+    val backupContactName: String,
+    val backupContactPhone: String,
+    val publicNotes: String,
+    val foundDogInstructions: String,
+    val criticalAllergies: String,
+    val serviceTasks: String,
+    val profilePhotoUrl: String,
 )
 
 data class GpTrainerEntry(
@@ -2406,11 +2438,62 @@ class GuidePawApiClient(
                 )
             }
         }
+        val svcArr = response.json.optJSONArray("service_rows") ?: JSONArray()
+        val services = (0 until svcArr.length()).mapNotNull { i ->
+            svcArr.optJSONObject(i)?.let { o ->
+                GpBillingService(
+                    slug             = o.optString("slug", ""),
+                    label            = o.optString("label", ""),
+                    summary          = o.optString("summary", ""),
+                    priceCents       = o.optInt("price_cents", 0),
+                    currency         = o.optString("currency", "usd"),
+                    active           = o.optBoolean("active", false),
+                    checkoutAvailable = o.optBoolean("checkout_available", false),
+                    actionLabel      = o.optString("action_label", "Buy"),
+                )
+            }
+        }
         return GpBillingInfo(
             currentTier          = response.json.optString("current_tier", "free"),
             currentTierLabel     = response.json.optString("current_tier_label", "Free"),
             canCreateAnotherDog  = response.json.optBoolean("can_create_another_dog", true),
             plans                = plans,
+            services             = services,
+        )
+    }
+
+    fun startBillingCheckout(token: String, kind: String, serviceSlug: String? = null, supportType: String? = null): String {
+        val payload = JSONObject().put("action", "start_checkout").put("kind", kind)
+        serviceSlug?.let { payload.put("service_slug", it) }
+        supportType?.let { payload.put("support_type", it) }
+        val response = requestJson("api/billing.php", "POST", token, payload)
+        ensureSuccess(response)
+        return response.json.optString("checkout_url", "")
+    }
+
+    fun getPublicProfile(token: String, dogId: Int? = null): GpPublicDogProfile {
+        val path = if (dogId != null && dogId > 0) "api/public_profile.php?dog_id=$dogId" else "api/public_profile.php"
+        val response = requestJson(path, "GET", token, null)
+        ensureSuccess(response)
+        val dog = response.json.optJSONObject("dog") ?: JSONObject()
+        return GpPublicDogProfile(
+            dogId               = response.json.optInt("dog_id", 0),
+            publicUrl           = response.json.optString("public_url", ""),
+            qrUrl               = response.json.optString("qr_url", ""),
+            name                = dog.optString("name", ""),
+            breed               = dog.optString("breed", ""),
+            accessRole          = dog.optString("access_role", ""),
+            supportBadge        = dog.optString("support_badge", ""),
+            handlerName         = dog.optString("handler_name", ""),
+            handlerPhone        = dog.optString("handler_phone", ""),
+            handlerEmail        = dog.optString("handler_email", ""),
+            backupContactName   = dog.optString("backup_contact_name", ""),
+            backupContactPhone  = dog.optString("backup_contact_phone", ""),
+            publicNotes         = dog.optString("public_notes", ""),
+            foundDogInstructions = dog.optString("found_dog_instructions", ""),
+            criticalAllergies   = dog.optString("critical_allergies", ""),
+            serviceTasks        = dog.optString("service_tasks", ""),
+            profilePhotoUrl     = dog.optString("profile_photo_url", ""),
         )
     }
 
