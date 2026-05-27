@@ -4,6 +4,17 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.086',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Native registration, log detail & UI cleanup',
+                'items'   => [
+                    'Create Account now opens a native sign-up form — no browser required.',
+                    'Tap any training log to see full notes and a focus-level indicator.',
+                    'Upgrade Plan button routes directly to the in-app Plans screen.',
+                    'Removed redundant "Open web feedback" button from the Feedback form.',
+                ],
+            ],
+            [
                 'version' => '0.085',
                 'date'    => 'May 27, 2026',
                 'title'   => "What's New dialog",

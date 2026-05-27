@@ -21,6 +21,12 @@ data class GuidePawLoginResult(
     val message: String? = null,
 )
 
+data class GuidePawRegisterResult(
+    val success: Boolean,
+    val token: String? = null,
+    val message: String? = null,
+)
+
 data class GuidePawAppReleaseResult(
     val appName: String,
     val versionName: String,
@@ -709,6 +715,35 @@ class GuidePawApiClient(
             token = token,
             requiresTwoFactor = requiresTwoFactor,
             message = message,
+        )
+    }
+
+    fun register(
+        fullName: String,
+        homeStreet: String,
+        homeApt: String,
+        homeCity: String,
+        homeState: String,
+        homeZip: String,
+        phone: String,
+        email: String,
+        password: String,
+    ): GuidePawRegisterResult {
+        val payload = JSONObject()
+            .put("full_name",   fullName)
+            .put("home_street", homeStreet)
+            .put("home_apt",    homeApt)
+            .put("home_city",   homeCity)
+            .put("home_state",  homeState)
+            .put("home_zip",    homeZip)
+            .put("phone",       phone)
+            .put("email",       email)
+            .put("password",    password)
+        val response = requestJson("api/register.php", "POST", null, payload)
+        return GuidePawRegisterResult(
+            success = response.json.optBoolean("success", false),
+            token   = response.json.optText("token"),
+            message = response.json.optText("message"),
         )
     }
 

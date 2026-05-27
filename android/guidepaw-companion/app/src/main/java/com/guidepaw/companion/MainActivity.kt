@@ -163,7 +163,7 @@ private fun GuidePawCompanionTheme(content: @Composable () -> Unit) =
     MaterialTheme(colorScheme = GpColorScheme, content = content)
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ, FAQ, PLANS, TRAINER_MARKETPLACE, ADD_DOG, PUBLIC_DOG_PROFILE }
+private enum class NavSection { OVERVIEW, TRAINING, TRAINING_HISTORY, DOGS, WEARABLES, MORE, NOTIFICATIONS, FEEDBACK, GOAL_INTAKE, GOAL_BUILDER, HABIT_REPAIR, BEHAVIOR_RISK, REGRESSION, CANDIDATE_ASSESSMENT, CANDIDATE_COMPARISON, ADA_ACCESS_CARD, AIR_TRAVEL, HOUSING_FAQ, STATE_ACCESS, VET_FINDER, TACTICAL_TRAINING, TRUCKING_MODE, COMMUNITY_CHALLENGES, MEDICATIONS, APPOINTMENTS, HEALTH_DOCS, HEALTH_SUMMARY, CERTIFICATION, TRAINING_PROGRAM, PROFILE, STATS, DOG_ACCESS, QR_TRACKING, SMART_ALERTS, FORGOT_PASSWORD, DOG_PROFILE, SETTINGS, AI_ASSISTANT, ESA_LEGAL, BREED_QUIZ, FAQ, PLANS, TRAINER_MARKETPLACE, ADD_DOG, PUBLIC_DOG_PROFILE, REGISTER }
 
 private val NAV_ITEMS = listOf(
     NavSection.OVERVIEW,
@@ -315,6 +315,22 @@ class MainActivity : AppCompatActivity() {
     private var vetIsPrimary       by mutableStateOf(false)
     private var vetShowForm        by mutableStateOf(false)
     private var showWhatsNew       by mutableStateOf(false)
+    private var selectedLogDetail  by mutableStateOf<GuidePawLogItem?>(null)
+
+    // ── Registration state ─────────────────────────────────────────────────
+    private var regFullName    by mutableStateOf("")
+    private var regStreet      by mutableStateOf("")
+    private var regApt         by mutableStateOf("")
+    private var regCity        by mutableStateOf("")
+    private var regState       by mutableStateOf("")
+    private var regZip         by mutableStateOf("")
+    private var regPhone       by mutableStateOf("")
+    private var regEmail       by mutableStateOf("")
+    private var regPassword    by mutableStateOf("")
+    private var regConfirm     by mutableStateOf("")
+    private var regLoading     by mutableStateOf(false)
+    private var regMessage     by mutableStateOf("")
+    private var regIsError     by mutableStateOf(false)
     private var docShowForm        by mutableStateOf(false)
     private var docPickUri         by mutableStateOf<Uri?>(null)
     private var docPickMime        by mutableStateOf("")
@@ -565,6 +581,7 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
                 if (showWhatsNew) WhatsNewDialog()
+                selectedLogDetail?.let { LogDetailDialog(it) }
                 if (showUpdateCard) UpdateBanner()
                 if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
@@ -575,7 +592,7 @@ class MainActivity : AppCompatActivity() {
                         color    = if (isStatusError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                val preAuthSections = setOf(NavSection.FORGOT_PASSWORD, NavSection.FEEDBACK)
+                val preAuthSections = setOf(NavSection.FORGOT_PASSWORD, NavSection.FEEDBACK, NavSection.REGISTER)
                 if (currentToken == null && currentSection !in preAuthSections) {
                     LoginSection()
                 } else {
@@ -625,6 +642,7 @@ class MainActivity : AppCompatActivity() {
                         NavSection.TRAINER_MARKETPLACE  -> TrainerMarketplaceSection()
                         NavSection.ADD_DOG              -> AddDogSection()
                         NavSection.PUBLIC_DOG_PROFILE   -> PublicDogProfileSection()
+                        NavSection.REGISTER             -> RegisterSection()
                     }
                 }
             }
@@ -815,7 +833,7 @@ class MainActivity : AppCompatActivity() {
                     currentSection = NavSection.FORGOT_PASSWORD
                 }) { Text("Forgot Password?", fontSize = 13.sp, color = Color(0xFF6B7280)) }
                 TextButton(onClick = {
-                    openWebPage("https://guidepaw.app/register.php")
+                    currentSection = NavSection.REGISTER
                 }) { Text("Create Account", fontSize = 13.sp, color = Color(0xFF6B7280)) }
             }
             TextButton(
@@ -1583,7 +1601,11 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     private fun LogCard(log: GuidePawLogItem) {
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+        OutlinedCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { selectedLogDetail = log },
+        ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
                     log.locationName.ifBlank { "Training session" },
@@ -1605,15 +1627,78 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (log.handlerNotes.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
-                    Text(log.handlerNotes.take(220), style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Text(log.handlerNotes.take(220) + if (log.handlerNotes.length > 220) "…" else "", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                 }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick  = { beginEditLog(log) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Edit") }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick  = { selectedLogDetail = log },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("View") }
+                    OutlinedButton(
+                        onClick  = { beginEditLog(log) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Edit") }
+                }
             }
         }
+    }
+
+    // ── Log detail dialog ────────────────────────────────────────────────────
+    @Composable
+    private fun LogDetailDialog(log: GuidePawLogItem) {
+        AlertDialog(
+            onDismissRequest = { selectedLogDetail = null },
+            title = {
+                Text(
+                    log.locationName.ifBlank { "Training session" },
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Column(
+                    modifier              = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement   = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        listOfNotNull(
+                            log.logDate.takeIf { it.isNotBlank() },
+                            log.locationCityState,
+                            log.locationType,
+                        ).joinToString(" • "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Focus:", style = MaterialTheme.typography.labelMedium)
+                        repeat(5) { i ->
+                            Text(
+                                if (i < log.focusLevel) "●" else "○",
+                                color = if (i < log.focusLevel) MaterialTheme.colorScheme.primary else GpOnSurfaceVariant,
+                                fontSize = 14.sp,
+                            )
+                        }
+                        Text("${log.focusLevel}/5", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                    if (log.skillsPracticed.isNotEmpty()) {
+                        HorizontalDivider()
+                        Text("Skills practiced", style = MaterialTheme.typography.labelMedium)
+                        Text(log.skillsPracticed.joinToString(" · "), style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (log.handlerNotes.isNotBlank()) {
+                        HorizontalDivider()
+                        Text("Handler notes", style = MaterialTheme.typography.labelMedium)
+                        Text(log.handlerNotes, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { selectedLogDetail = null; beginEditLog(log) }) { Text("Edit") }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedLogDetail = null }) { Text("Close") }
+            },
+        )
     }
 
     // ── Training History section ────────────────────────────────────────────
@@ -3548,11 +3633,6 @@ class MainActivity : AppCompatActivity() {
                     enabled  = !feedbackIsLoading,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Send feedback") }
-                OutlinedButton(
-                    onClick  = { openWebPage("https://guidepaw.app/feedback.php") },
-                    enabled  = !feedbackIsLoading,
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                ) { Text("Open web feedback") }
             }
         }
     }
@@ -9897,9 +9977,9 @@ class MainActivity : AppCompatActivity() {
                 // Upgrade plan tier
                 if (b.currentTier != "pro") {
                     OutlinedButton(
-                        onClick  = { openWebPage("https://guidepaw.app/paywalls.php") },
+                        onClick  = { currentSection = NavSection.PLANS },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Upgrade Plan on Web") }
+                    ) { Text("Upgrade Plan") }
                 }
             }
         }
@@ -10052,6 +10132,220 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Registration section ─────────────────────────────────────────────────
+    @Composable
+    private fun RegisterSection() {
+        val scope = rememberCoroutineScope()
+        var showPassword by remember { mutableStateOf(false) }
+        val usStates = remember {
+            listOf("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS",
+                "KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY",
+                "NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY",
+                "DC","PR","GU","VI","AS","MP")
+        }
+        var stateExpanded by remember { mutableStateOf(false) }
+
+        Column(
+            modifier            = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
+                Text("Create Account", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                "Create your handler profile. Dog profiles are added after first login.",
+                style = MaterialTheme.typography.bodySmall,
+                color = GpOnSurfaceVariant,
+            )
+
+            if (regMessage.isNotBlank()) {
+                OutlinedCard(
+                    colors   = CardDefaults.outlinedCardColors(
+                        containerColor = if (regIsError) MaterialTheme.colorScheme.errorContainer else GpPrimaryContainer,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        regMessage,
+                        modifier = Modifier.padding(12.dp),
+                        style    = MaterialTheme.typography.bodySmall,
+                        color    = if (regIsError) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (!regIsError) {
+                        Button(
+                            onClick  = { regMessage = ""; currentSection = NavSection.OVERVIEW },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        ) { Text("Go to Login") }
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value         = regFullName,
+                onValueChange = { regFullName = it },
+                label         = { Text("Handler full name") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+            )
+            OutlinedTextField(
+                value         = regStreet,
+                onValueChange = { regStreet = it },
+                label         = { Text("Street address") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+            )
+            OutlinedTextField(
+                value         = regApt,
+                onValueChange = { regApt = it },
+                label         = { Text("Apt / Suite (optional)") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value         = regCity,
+                    onValueChange = { regCity = it },
+                    label         = { Text("City") },
+                    modifier      = Modifier.weight(1f),
+                    singleLine    = true,
+                )
+                ExposedDropdownMenuBox(
+                    expanded        = stateExpanded,
+                    onExpandedChange = { stateExpanded = it },
+                    modifier        = Modifier.width(100.dp),
+                ) {
+                    OutlinedTextField(
+                        value         = regState,
+                        onValueChange = {},
+                        readOnly      = true,
+                        label         = { Text("State") },
+                        trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(stateExpanded) },
+                        modifier      = Modifier.menuAnchor(),
+                        singleLine    = true,
+                    )
+                    ExposedDropdownMenu(
+                        expanded        = stateExpanded,
+                        onDismissRequest = { stateExpanded = false },
+                    ) {
+                        usStates.forEach { code ->
+                            DropdownMenuItem(
+                                text    = { Text(code) },
+                                onClick = { regState = code; stateExpanded = false },
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value         = regZip,
+                    onValueChange = { regZip = it },
+                    label         = { Text("ZIP") },
+                    modifier      = Modifier.width(100.dp),
+                    singleLine    = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+            }
+            OutlinedTextField(
+                value         = regPhone,
+                onValueChange = { regPhone = it },
+                label         = { Text("Phone number") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            )
+            OutlinedTextField(
+                value         = regEmail,
+                onValueChange = { regEmail = it },
+                label         = { Text("Email / login") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            )
+            OutlinedTextField(
+                value         = regPassword,
+                onValueChange = { regPassword = it },
+                label         = { Text("Password (min 10 chars)") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon  = {
+                    TextButton(onClick = { showPassword = !showPassword }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text(if (showPassword) "Hide" else "Show", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
+            )
+            OutlinedTextField(
+                value         = regConfirm,
+                onValueChange = { regConfirm = it },
+                label         = { Text("Confirm password") },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                visualTransformation = PasswordVisualTransformation(),
+                supportingText = if (regConfirm.isNotBlank()) {
+                    {
+                        Text(
+                            if (regPassword == regConfirm) "Passwords match." else "Passwords do not match.",
+                            color = if (regPassword == regConfirm) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        )
+                    }
+                } else null,
+            )
+
+            Button(
+                onClick  = {
+                    if (regPassword != regConfirm) {
+                        regMessage = "Passwords do not match."; regIsError = true; return@Button
+                    }
+                    regLoading = true; regMessage = ""; regIsError = false
+                    scope.launch {
+                        try {
+                            val result = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                api.register(
+                                    fullName    = regFullName.trim(),
+                                    homeStreet  = regStreet.trim(),
+                                    homeApt     = regApt.trim(),
+                                    homeCity    = regCity.trim(),
+                                    homeState   = regState.trim(),
+                                    homeZip     = regZip.trim(),
+                                    phone       = regPhone.trim(),
+                                    email       = regEmail.trim(),
+                                    password    = regPassword,
+                                )
+                            }
+                            regIsError  = !result.success
+                            regMessage  = result.message ?: if (result.success) "Account created! You can now log in." else "Registration failed."
+                            if (result.success && result.token != null) {
+                                currentToken = result.token
+                                regMessage = ""; regIsError = false
+                                regFullName = ""; regStreet = ""; regApt = ""; regCity = ""
+                                regState = ""; regZip = ""; regPhone = ""; regEmail = ""
+                                regPassword = ""; regConfirm = ""
+                                refreshDashboard(result.token, null)
+                                currentSection = NavSection.OVERVIEW
+                            }
+                        } catch (t: Throwable) {
+                            regIsError = true
+                            regMessage = friendlyMessage(t.message, "Registration failed. Please try again.")
+                        } finally {
+                            regLoading = false
+                        }
+                    }
+                },
+                enabled  = !regLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (regLoading) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text("Create Account")
+            }
+        }
+    }
+
     companion object {
         private val locationTypes = listOf("In-Cab", "Truck Stop", "Shipper/Receiver", "Public Store", "Rest Area", "Other")
         private val skillOptions  = listOf(
@@ -10071,6 +10365,11 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.086", "May 27, 2026", "Native registration, log detail & UI cleanup", listOf(
+                "Create Account opens a native sign-up form.",
+                "Tap any training log to see full notes and focus indicator.",
+                "Upgrade Plan routes to in-app Plans screen.",
+            )),
             ChangelogEntry("0.085", "May 27, 2026", "What's New dialog", listOf(
                 "App now shows a What's New summary after each update.",
                 "Web changelog and API endpoint added.",
