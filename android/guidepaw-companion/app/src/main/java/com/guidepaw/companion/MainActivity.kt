@@ -10423,6 +10423,18 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.090", "May 27, 2026", "Bug fixes & maintenance", listOf(
+                "Under-the-hood fixes and stability improvements.",
+            )),
+            ChangelogEntry("0.089", "May 27, 2026", "Demo mode banner", listOf(
+                "Amber banner shown on every screen while using a demo account.",
+                "Banner confirms data resets after 15 minutes so users know what to expect.",
+            )),
+            ChangelogEntry("0.088", "May 27, 2026", "Demo accounts & ID structure", listOf(
+                "Three pre-loaded demo accounts available from the login screen.",
+                "Demo sessions auto-reset to original data 15 minutes after login.",
+                "Tap \"Use\" next to any demo account to fill credentials instantly.",
+            )),
             ChangelogEntry("0.087", "May 27, 2026", "Rotation fix", listOf(
                 "Rotating the phone no longer triggers a data refresh.",
             )),

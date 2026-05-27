@@ -4,6 +4,14 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.090',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Bug fixes & maintenance',
+                'items'   => [
+                    'Under-the-hood fixes and stability improvements.',
+                ],
+            ],
+            [
                 'version' => '0.089',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Demo mode banner',
