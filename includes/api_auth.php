@@ -53,6 +53,9 @@ function apiEnsureTokenActiveDogColumns(PDO $pdo): void {
 }
 
 function issueApiToken(PDO $pdo, int $userId, string $label = 'Mobile Token'): array {
+    // Revoke all existing active tokens for this user before issuing a new one
+    $pdo->prepare('UPDATE api_tokens SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = ? AND revoked_at IS NULL')->execute([$userId]);
+
     $plain = bin2hex(random_bytes(24));
     $hash = hash('sha256', $plain);
     $prefix = substr($plain, 0, 8);

@@ -9508,21 +9508,6 @@ class MainActivity : AppCompatActivity() {
         var pwdMsg      by remember { mutableStateOf("") }
         var pwdError    by remember { mutableStateOf("") }
 
-        var tokens      by remember { mutableStateOf<List<GpApiToken>>(emptyList()) }
-        var tokensLoading by remember { mutableStateOf(true) }
-        var tokensError by remember { mutableStateOf("") }
-
-        LaunchedEffect(Unit) {
-            val token = currentToken ?: run { tokensError = "Not signed in."; tokensLoading = false; return@LaunchedEffect }
-            try {
-                tokens = withContext(kotlinx.coroutines.Dispatchers.IO) { api.getApiTokens(token) }
-            } catch (t: Throwable) {
-                tokensError = friendlyMessage(t.message, "Could not load tokens.")
-            } finally {
-                tokensLoading = false
-            }
-        }
-
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -9565,51 +9550,6 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         if (pwdSaving) { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(8.dp)) }
                         Text("Update Password")
-                    }
-                }
-            }
-
-            // API tokens
-            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("API Tokens", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text("Tokens grant access to your account. Revoke any you don't recognize.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                    if (tokensError.isNotBlank()) Text(tokensError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                    if (tokensLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp).align(Alignment.CenterHorizontally), strokeWidth = 2.dp)
-                    } else if (tokens.isEmpty()) {
-                        Text("No tokens found.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
-                    } else {
-                        tokens.forEach { tok ->
-                            HorizontalDivider()
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(tok.label, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                                    Text("${tok.prefix}… · ${if (tok.isActive) "Active" else "Revoked"}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
-                                    if (tok.lastUsedAt != null) Text("Last used: ${tok.lastUsedAt}", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
-                                }
-                                if (tok.isActive) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            val token = currentToken ?: return@OutlinedButton
-                                            scope.launch {
-                                                try {
-                                                    withContext(kotlinx.coroutines.Dispatchers.IO) { api.revokeApiToken(token, tok.id) }
-                                                    tokens = tokens.map { t -> if (t.id == tok.id) t.copy(isActive = false) else t }
-                                                } catch (t: Throwable) {
-                                                    tokensError = friendlyMessage(t.message, "Could not revoke.")
-                                                }
-                                            }
-                                        },
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                                    ) { Text("Revoke", style = MaterialTheme.typography.labelSmall) }
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -10494,6 +10434,10 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.094", "May 27, 2026", "Cleaner Settings & login security", listOf(
+                "API token list removed from Settings — not relevant to end users.",
+                "Logging in now revokes all previous sessions automatically.",
+            )),
             ChangelogEntry("0.093", "May 27, 2026", "Update check & downgrade guard", listOf(
                 "Check for Update button in Settings shows current version and update status.",
                 "Update banner no longer suggests downgrades — server-side force flag required.",

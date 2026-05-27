@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.094',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Cleaner Settings & login security',
+                'items'   => [
+                    'API token list removed from Settings — not relevant to end users.',
+                    'Logging in now revokes all previous sessions automatically.',
+                ],
+            ],
+            [
                 'version' => '0.093',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Update check & downgrade guard',
