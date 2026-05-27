@@ -57,8 +57,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
+import com.guidepaw.companion.R
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -511,14 +516,30 @@ class MainActivity : AppCompatActivity() {
                     .padding(padding),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(end = 10.dp, top = 2.dp),
-                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.horizontalGradient(listOf(Color(0xFF0D6EFD), Color(0xFF2856C8))),
+                            shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
+                        )
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Image(
+                        painter            = painterResource(R.drawable.guidepaw_logo),
+                        contentDescription = null,
+                        modifier           = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("GuidePaw", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                        Text("Handler tools. All in one place.", color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.labelSmall)
+                    }
                     Text(
                         "v${CompanionAppVersion.VERSION_NAME}",
+                        color    = Color.White.copy(alpha = 0.45f),
                         style    = MaterialTheme.typography.labelSmall,
                         fontSize = 9.sp,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
                     )
                 }
                 if (showUpdateCard) UpdateBanner()
