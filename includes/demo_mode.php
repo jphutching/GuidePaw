@@ -91,7 +91,7 @@ function gpRestoreDemoUser(PDO $pdo, int $userId): void {
             $data   = $profSnaps[0];
             $fields = array_intersect(GP_DEMO_USER_FIELDS, array_keys($data));
             $sets   = implode(', ', array_map(fn($f) => "{$f} = ?", $fields));
-            $vals   = array_map(fn($f) => $data[$f], $fields);
+            $vals   = array_map(fn($f) => gpDemoCoerceVal($data[$f]), $fields);
             $vals[] = $userId;
             $pdo->prepare("UPDATE users SET {$sets} WHERE id = ?")->execute($vals);
         }
@@ -189,10 +189,18 @@ function gpDemoInsertSnapshot(PDO $pdo, int $userId, string $table, array $row):
     )->execute([$userId, $table, json_encode($row)]);
 }
 
+function gpDemoCoerceVal(mixed $v): mixed {
+    // PHP false/true from json_decode bind as '' to pgsql PDO — convert explicitly.
+    if ($v === false) return 'f';
+    if ($v === true)  return 't';
+    if ($v === '')    return null;
+    return $v;
+}
+
 function gpDemoInsertRow(PDO $pdo, string $table, array $row): void {
     $cols  = implode(', ', array_keys($row));
     $marks = implode(', ', array_fill(0, count($row), '?'));
-    $vals  = array_values($row);
+    $vals  = array_map('gpDemoCoerceVal', array_values($row));
     // OVERRIDING SYSTEM VALUE lets us re-insert with explicit identity column values
     $pdo->prepare(
         "INSERT INTO {$table} ({$cols}) OVERRIDING SYSTEM VALUE VALUES ({$marks})
