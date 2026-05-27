@@ -19,8 +19,9 @@ BASE_URL="${GUIDEPAW_BASE_URL:-https://10.147.18.184}"
 CRAWLER_MODE="${GUIDEPAW_CRAWLER_MODE:-auto}"
 ADMIN_USER="${GUIDEPAW_ADMIN_USER:-${GUIDEPAW_ADMIN_TEST_USERNAME:-admin}}"
 ADMIN_PASS="${GUIDEPAW_ADMIN_PASS:-${GUIDEPAW_ADMIN_TEST_PASSWORD:-${GUIDEPAW_SMOKE_PASSWORD:-}}}"
-REGULAR_USER="${GUIDEPAW_REGULAR_USER:-${GUIDEPAW_TEST_USERNAME:-}}"
-REGULAR_PASS="${GUIDEPAW_REGULAR_PASS:-${GUIDEPAW_TEST_PASSWORD:-${GUIDEPAW_SMOKE_PASSWORD:-}}}"
+# Demo accounts are public — use demo.sarah as the default regular crawl user
+REGULAR_USER="${GUIDEPAW_REGULAR_USER:-${GUIDEPAW_TEST_USERNAME:-demo.sarah}}"
+REGULAR_PASS="${GUIDEPAW_REGULAR_PASS:-${GUIDEPAW_TEST_PASSWORD:-${GUIDEPAW_SMOKE_PASSWORD:-Demo1234!!}}}"
 MARK_CHECKLIST="${GUIDEPAW_MARK_CHECKLIST:-no}"
 FEEDBACK_DB_HOST="${GUIDEPAW_FEEDBACK_DB_HOST:-${DB_HOST:-}}"
 FEEDBACK_DB_PORT="${GUIDEPAW_FEEDBACK_DB_PORT:-${DB_PORT:-5432}}"
@@ -70,7 +71,7 @@ case "$CRAWLER_MODE" in
     ;;
   playwright)
     echo "GUIDEPAW_CRAWLER_MODE=playwright; skipping PHP crawler." >&2
-    exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js
+    exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js tests/browser/guidepaw-demo-smoke.spec.js
     ;;
 esac
 
@@ -84,7 +85,7 @@ fi
 if grep -q 'Admin session did not survive login; falling back to Playwright crawler.' "$php_output"; then
   rm -f "$php_output"
   echo "PHP QA crawler could not keep the admin session alive; using Playwright fallback." >&2
-  exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js
+  exec npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js tests/browser/guidepaw-demo-smoke.spec.js
 fi
 
 cat "$php_output" >&2
@@ -96,4 +97,4 @@ fi
 
 rm -f "$php_output"
 echo "PHP QA crawler failed or is unavailable here; falling back to Playwright crawler." >&2
-npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js
+npm run test:e2e -- tests/browser/guidepaw-auth-crawl.spec.js tests/browser/guidepaw-admin-safe.spec.js tests/browser/guidepaw-demo-smoke.spec.js

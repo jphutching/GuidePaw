@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.095',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Demo countdown & reset',
+                'items'   => [
+                    'Demo banner now shows a live countdown to the next data reset.',
+                    'Tap "Reset Now" to restore demo data instantly at any time.',
+                ],
+            ],
+            [
                 'version' => '0.094',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Cleaner Settings & login security',

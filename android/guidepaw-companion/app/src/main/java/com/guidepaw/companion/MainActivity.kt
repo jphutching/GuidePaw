@@ -747,19 +747,64 @@ class MainActivity : AppCompatActivity() {
     // ── Demo mode banner ────────────────────────────────────────────────────
     @Composable
     private fun DemoModeBanner() {
+        val token = currentToken ?: return
+        var secondsLeft by remember { mutableStateOf(900) }
+        var resetting   by remember { mutableStateOf(false) }
+
+        LaunchedEffect(token) {
+            try {
+                secondsLeft = withContext(kotlinx.coroutines.Dispatchers.IO) { api.demoStatus(token) }
+            } catch (_: Throwable) {}
+            while (secondsLeft > 0) {
+                kotlinx.coroutines.delay(1_000L)
+                secondsLeft = maxOf(0, secondsLeft - 1)
+            }
+        }
+
+        val mins = secondsLeft / 60
+        val secs = secondsLeft % 60
+        val timeLabel = "%d:%02d".format(mins, secs)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFFEF9C3))
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                "⚠ Demo mode — all data resets after 15 minutes",
-                fontSize = 12.sp,
-                color    = Color(0xFF92400E),
-                modifier = Modifier.weight(1f),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text("⚠ Demo mode", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF92400E))
+                Text(
+                    if (secondsLeft > 0) "Resets in $timeLabel" else "Resetting data…",
+                    fontSize = 11.sp, color = Color(0xFF92400E),
+                )
+            }
+            OutlinedButton(
+                onClick = {
+                    val t = currentToken ?: return@OutlinedButton
+                    resetting = true
+                    worker.execute {
+                        try {
+                            api.demoReset(t)
+                            runOnUiThread {
+                                secondsLeft = 900
+                                resetting   = false
+                                refreshDashboard(t, null)
+                            }
+                        } catch (_: Throwable) {
+                            runOnUiThread { resetting = false }
+                        }
+                    }
+                },
+                enabled  = !resetting,
+                modifier = Modifier.padding(start = 12.dp),
+                border   = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF92400E)),
+                colors   = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF92400E)),
+            ) {
+                if (resetting) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = Color(0xFF92400E))
+                else Text("Reset Now", fontSize = 11.sp)
+            }
         }
     }
 
@@ -10434,6 +10479,10 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.095", "May 27, 2026", "Demo countdown & reset", listOf(
+                "Demo banner now shows a live countdown to the next data reset.",
+                "Tap \"Reset Now\" to restore demo data instantly at any time.",
+            )),
             ChangelogEntry("0.094", "May 27, 2026", "Cleaner Settings & login security", listOf(
                 "API token list removed from Settings — not relevant to end users.",
                 "Logging in now revokes all previous sessions automatically.",

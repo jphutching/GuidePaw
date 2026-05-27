@@ -763,6 +763,17 @@ class GuidePawApiClient(
         )
     }
 
+    fun demoStatus(token: String): Int {
+        val response = requestJson("api/demo_status.php", "GET", token, null)
+        ensureSuccess(response)
+        return response.json.optInt("seconds_remaining", 900)
+    }
+
+    fun demoReset(token: String) {
+        val response = requestJson("api/demo_reset.php", "POST", token, JSONObject())
+        ensureSuccess(response)
+    }
+
     fun me(token: String): GuidePawMeResult {
         val response = requestJson("api/me.php", "GET", token, null)
         ensureSuccess(response)
