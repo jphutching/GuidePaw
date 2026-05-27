@@ -1466,6 +1466,49 @@ class GuidePawApiClient(
         ensureSuccess(response)
     }
 
+    fun uploadLogMedia(
+        token: String,
+        logId: Int,
+        attachment: GuidePawFeedbackAttachmentInput,
+        contentResolver: ContentResolver,
+    ) {
+        val response = requestMultipartSingleFile(
+            path            = "api/log_media.php",
+            token           = token,
+            fields          = mapOf("log_id" to logId.toString()),
+            fieldName       = "training_media",
+            attachment      = attachment,
+            contentResolver = contentResolver,
+        )
+        ensureSuccess(response)
+    }
+
+    fun uploadHealthDocument(
+        token: String,
+        docType: String,
+        title: String,
+        providerName: String,
+        notes: String,
+        attachment: GuidePawFeedbackAttachmentInput,
+        contentResolver: ContentResolver,
+    ) {
+        val response = requestMultipartSingleFile(
+            path            = "api/health_docs.php",
+            token           = token,
+            fields          = mapOf(
+                "action"        to "add_document",
+                "doc_type"      to docType,
+                "title"         to title,
+                "provider_name" to providerName,
+                "notes"         to notes,
+            ),
+            fieldName       = "document_file",
+            attachment      = attachment,
+            contentResolver = contentResolver,
+        )
+        ensureSuccess(response)
+    }
+
     fun healthDocs(token: String): GpHealthDocsResult {
         val response = requestJson("api/health_docs.php", "GET", token, null)
         ensureSuccess(response)
@@ -1806,6 +1849,55 @@ class GuidePawApiClient(
                     os.write(body.toString().toByteArray(StandardCharsets.UTF_8))
                 }
             }
+        }
+
+        val status = connection.responseCode
+        val responseText = connection.responseText()
+        val json = try {
+            if (responseText.isBlank()) JSONObject() else JSONObject(responseText)
+        } catch (_: Throwable) {
+            JSONObject().put("raw", responseText)
+        }
+        connection.disconnect()
+        return ApiResponse(status, json, responseText)
+    }
+
+    private fun requestMultipartSingleFile(
+        path: String,
+        token: String?,
+        fields: Map<String, String>,
+        fieldName: String,
+        attachment: GuidePawFeedbackAttachmentInput,
+        contentResolver: ContentResolver,
+    ): ApiResponse {
+        val resolvedPath = if (token.isNullOrBlank()) {
+            path
+        } else {
+            val separator = if (path.contains('?')) '&' else '?'
+            path + separator + "access_token=" + URLEncoder.encode(token, StandardCharsets.UTF_8.name())
+        }
+        val endpoint = URL(baseUrl.trimEnd('/') + "/" + resolvedPath.trimStart('/'))
+        val boundary = "----GuidePaw" + UUID.randomUUID().toString().replace("-", "")
+        val connection = (endpoint.openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 15_000
+            readTimeout    = 60_000
+            doInput  = true
+            doOutput = true
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+            if (!token.isNullOrBlank()) {
+                setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("X-API-TOKEN", token)
+            }
+            setChunkedStreamingMode(0)
+        }
+
+        DataOutputStream(BufferedOutputStream(connection.outputStream)).use { out ->
+            fields.forEach { (key, value) -> writeMultipartField(out, boundary, key, value) }
+            writeMultipartFile(out, boundary, fieldName, attachment, contentResolver)
+            out.writeBytes("--$boundary--\r\n")
+            out.flush()
         }
 
         val status = connection.responseCode

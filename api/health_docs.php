@@ -115,4 +115,32 @@ if ($action === 'add_vet') {
     apiJson(['success' => true, 'message' => 'Vet saved.']);
 }
 
+if ($action === 'add_document') {
+    require_once __DIR__ . '/../includes/validation.php';
+    if (empty($_FILES['document_file']) || $_FILES['document_file']['error'] === UPLOAD_ERR_NO_FILE) {
+        apiJson(['success' => false, 'message' => 'No file uploaded.'], 422);
+    }
+    $docType      = trim((string) ($input['doc_type'] ?? 'vet_record'));
+    $title        = trim((string) ($input['title'] ?? ''));
+    $providerName = trim((string) ($input['provider_name'] ?? ''));
+    $notes        = trim((string) ($input['notes'] ?? ''));
+
+    if ($title === '') {
+        apiJson(['success' => false, 'message' => 'Document title is required.'], 422);
+    }
+
+    try {
+        [$relativePath, $mimeType] = handleDogDocumentUpload($_FILES['document_file'], dirname(__DIR__));
+    } catch (RuntimeException $e) {
+        apiJson(['success' => false, 'message' => $e->getMessage()], 422);
+    }
+
+    $pdo->prepare("
+        INSERT INTO dog_documents (dog_id, uploaded_by_user_id, doc_type, title, provider_name, notes, file_path, mime_type)
+        VALUES (?,?,?,?,?,?,?,?)
+    ")->execute([$dogId, $userId, $docType ?: 'vet_record', $title, $providerName ?: null, $notes ?: null, $relativePath, $mimeType]);
+
+    apiJson(['success' => true, 'message' => 'Document uploaded.']);
+}
+
 apiJson(['success' => false, 'message' => 'Unknown action.'], 422);

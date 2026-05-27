@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Public Dog Profile viewer, native add-on service checkout, removed remaining web-only buttons in Medications, Candidate Comparison, and Tactical Training.',
+            'release_notes' => 'Native photo/video capture for training logs; native document upload (PDF/image) for health records — no web browser required.',
             'published_at' => gmdate('c'),
         ];
     }

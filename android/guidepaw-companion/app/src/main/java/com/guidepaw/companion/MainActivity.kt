@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import androidx.compose.animation.AnimatedVisibility
@@ -311,6 +313,16 @@ class MainActivity : AppCompatActivity() {
     private var vetNotes           by mutableStateOf("")
     private var vetIsPrimary       by mutableStateOf(false)
     private var vetShowForm        by mutableStateOf(false)
+    private var docShowForm        by mutableStateOf(false)
+    private var docPickUri         by mutableStateOf<Uri?>(null)
+    private var docPickMime        by mutableStateOf("")
+    private var docPickName        by mutableStateOf("")
+    private var docPickType        by mutableStateOf("vet_record")
+    private var docPickTitle       by mutableStateOf("")
+    private var docPickProvider    by mutableStateOf("")
+    private var docPickNotes       by mutableStateOf("")
+    private var docPickMessage     by mutableStateOf("")
+    private var docPickLoading     by mutableStateOf(false)
 
     // ── Appointments state ─────────────────────────────────────────────────
     private var appointmentsResult  by mutableStateOf<GpAppointmentsResult?>(null)
@@ -415,6 +427,9 @@ class MainActivity : AppCompatActivity() {
     private var selectedSkills by mutableStateOf<Set<String>>(emptySet())
     private var trainMessage   by mutableStateOf("")
     private var saveLogLabel   by mutableStateOf("Save training log")
+    private var logMediaUri    by mutableStateOf<Uri?>(null)
+    private var logMediaMime   by mutableStateOf("")
+    private var logMediaName   by mutableStateOf("")
 
     // ── Download receiver (unchanged) ───────────────────────────────────────
     private val updateDownloadReceiver = object : BroadcastReceiver() {
@@ -1168,7 +1183,56 @@ class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
     @Composable
     private fun TrainingSection() {
-        var dropdownExpanded by remember { mutableStateOf(false) }
+        var dropdownExpanded    by remember { mutableStateOf(false) }
+        var cameraOutputUri     by remember { mutableStateOf<Uri?>(null) }
+        var pendingCameraType   by remember { mutableStateOf("") }
+        val context = LocalContext.current
+
+        val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                val att = feedbackResolveAttachment(it)
+                logMediaUri  = it
+                logMediaMime = att?.mimeType ?: contentResolver.getType(it).orEmpty()
+                logMediaName = att?.displayName ?: "media"
+            }
+        }
+        val takePictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
+            if (saved) cameraOutputUri?.let { logMediaUri = it; logMediaMime = "image/jpeg"; logMediaName = "photo_${System.currentTimeMillis()}.jpg" }
+        }
+        val captureVideoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CaptureVideo()) { saved ->
+            if (saved) cameraOutputUri?.let { logMediaUri = it; logMediaMime = "video/mp4"; logMediaName = "video_${System.currentTimeMillis()}.mp4" }
+        }
+        val cameraPermLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) { trainMessage = "Camera permission required."; return@rememberLauncherForActivityResult }
+            val dir = File(context.cacheDir, "camera_captures").also { it.mkdirs() }
+            if (pendingCameraType == "photo") {
+                val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
+                val uri  = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                cameraOutputUri = uri; takePictureLauncher.launch(uri)
+            } else {
+                val file = File(dir, "video_${System.currentTimeMillis()}.mp4")
+                val uri  = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                cameraOutputUri = uri; captureVideoLauncher.launch(uri)
+            }
+        }
+
+        fun launchCamera(type: String) {
+            pendingCameraType = type
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                val dir = File(context.cacheDir, "camera_captures").also { it.mkdirs() }
+                if (type == "photo") {
+                    val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
+                    val uri  = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                    cameraOutputUri = uri; takePictureLauncher.launch(uri)
+                } else {
+                    val file = File(dir, "video_${System.currentTimeMillis()}.mp4")
+                    val uri  = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                    cameraOutputUri = uri; captureVideoLauncher.launch(uri)
+                }
+            } else {
+                cameraPermLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
         val activeDog = currentDogs.firstOrNull { it.id == currentActiveDogId }
         val isEditing = currentEditingLogId != null
 
@@ -1309,6 +1373,24 @@ class MainActivity : AppCompatActivity() {
                 minLines      = 3,
                 modifier      = Modifier.fillMaxWidth(),
             )
+
+            // Media attachment
+            if (logMediaUri != null) {
+                Row(
+                    modifier          = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text("📎 ${logMediaName.take(40)}", fontSize = 12.sp, modifier = Modifier.weight(1f), color = GpOnSurfaceVariant)
+                    TextButton(onClick = { logMediaUri = null; logMediaMime = ""; logMediaName = "" }) { Text("Remove") }
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedButton(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.weight(1f)) { Text("Gallery", fontSize = 12.sp) }
+                    OutlinedButton(onClick = { launchCamera("photo") }, modifier = Modifier.weight(1f)) { Text("Photo", fontSize = 12.sp) }
+                    OutlinedButton(onClick = { launchCamera("video") }, modifier = Modifier.weight(1f)) { Text("Record", fontSize = 12.sp) }
+                }
+            }
 
             Button(
                 onClick  = { submitTrainingLog() },
@@ -5706,6 +5788,18 @@ class MainActivity : AppCompatActivity() {
     @Composable
     private fun HealthDocsSection() {
         val result = healthDocsResult
+        var docTypeExpanded by remember { mutableStateOf(false) }
+        val docTypeOptions = listOf("vet_record" to "Vet Record", "esa_letter" to "ESA Letter", "service_dog_letter" to "Service Dog Letter")
+        val selectedDocTypeLabel = docTypeOptions.firstOrNull { it.first == docPickType }?.second ?: "Vet Record"
+
+        val docGalleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                val att = feedbackResolveAttachment(it)
+                docPickUri  = it
+                docPickMime = att?.mimeType ?: contentResolver.getType(it).orEmpty()
+                docPickName = att?.displayName ?: "document"
+            }
+        }
 
         PullToRefreshBox(
             isRefreshing = isPullingToRefresh,
@@ -5855,10 +5949,68 @@ class MainActivity : AppCompatActivity() {
                     SummaryCard { Text("No documents uploaded yet.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) }
                 }
 
+                // Native document upload
                 OutlinedButton(
-                    onClick  = { openWebPage("https://guidepaw.app/dog_health.php") },
+                    onClick  = { docShowForm = !docShowForm; if (!docShowForm) { docPickUri = null; docPickMessage = "" } },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Upload documents on web") }
+                ) { Text(if (docShowForm) "Cancel" else "+ Upload Document") }
+
+                if (docShowForm) {
+                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Upload Document", fontWeight = FontWeight.SemiBold)
+
+                            // File picker
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = { docGalleryLauncher.launch("*/*") }, modifier = Modifier.weight(1f)) {
+                                    Text(if (docPickUri == null) "Choose File" else "Change File", fontSize = 13.sp)
+                                }
+                                if (docPickUri != null) {
+                                    Text(docPickName.take(30), fontSize = 12.sp, color = GpOnSurfaceVariant, modifier = Modifier.weight(1f))
+                                }
+                            }
+
+                            // Doc type dropdown
+                            ExposedDropdownMenuBox(expanded = docTypeExpanded, onExpandedChange = { docTypeExpanded = it }) {
+                                OutlinedTextField(
+                                    value         = selectedDocTypeLabel,
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Document type") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(docTypeExpanded) },
+                                    modifier      = Modifier.fillMaxWidth().menuAnchor(),
+                                )
+                                ExposedDropdownMenu(expanded = docTypeExpanded, onDismissRequest = { docTypeExpanded = false }) {
+                                    docTypeOptions.forEach { (value, label) ->
+                                        DropdownMenuItem(text = { Text(label) }, onClick = { docPickType = value; docTypeExpanded = false })
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = docPickTitle, onValueChange = { docPickTitle = it },
+                                label = { Text("Title *") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                            )
+                            OutlinedTextField(
+                                value = docPickProvider, onValueChange = { docPickProvider = it },
+                                label = { Text("Provider / clinic") }, modifier = Modifier.fillMaxWidth(), singleLine = true,
+                            )
+                            OutlinedTextField(
+                                value = docPickNotes, onValueChange = { docPickNotes = it },
+                                label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 2,
+                            )
+
+                            if (docPickMessage.isNotBlank()) {
+                                Text(docPickMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            }
+                            Button(
+                                onClick  = { submitDocUpload() },
+                                enabled  = !docPickLoading && docPickUri != null,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text(if (docPickLoading) "Uploading…" else "Upload Document") }
+                        }
+                    }
+                }
             }
         }
     }
@@ -8428,6 +8580,10 @@ class MainActivity : AppCompatActivity() {
         val dogId = currentActiveDogId ?: return
         if (logLocation.isBlank()) { trainMessage = "Location name is required."; return }
 
+        val mediaUri  = logMediaUri
+        val mediaMime = logMediaMime
+        val mediaName = logMediaName
+
         setLoading(true, "Saving training log...")
         worker.execute {
             try {
@@ -8442,10 +8598,23 @@ class MainActivity : AppCompatActivity() {
                     skills       = selectedSkills.toList(),
                     notes        = logNotes,
                 )
+                if (mediaUri != null && response.logId != null) {
+                    runCatching {
+                        api.uploadLogMedia(
+                            token           = token,
+                            logId           = response.logId,
+                            attachment      = GuidePawFeedbackAttachmentInput(mediaUri, mediaName, mediaMime),
+                            contentResolver = contentResolver,
+                        )
+                    }
+                }
                 runOnUiThread {
                     trainMessage   = response.message ?: "Training log saved."
                     logNotes       = ""
                     selectedSkills = emptySet()
+                    logMediaUri    = null
+                    logMediaMime   = ""
+                    logMediaName   = ""
                     clearEditLog()
                     refreshDashboard(token, dogId)
                 }
@@ -8459,6 +8628,44 @@ class MainActivity : AppCompatActivity() {
                     trainMessage = friendlyMessage(t.message, "Could not save training log.")
                     setLoading(false, null)
                 }
+            }
+        }
+    }
+
+    private fun submitDocUpload() {
+        val token = currentToken ?: return
+        val uri   = docPickUri ?: return
+        if (docPickTitle.isBlank()) { docPickMessage = "Document title is required."; return }
+
+        docPickLoading = true
+        docPickMessage = ""
+        worker.execute {
+            try {
+                api.uploadHealthDocument(
+                    token           = token,
+                    docType         = docPickType,
+                    title           = docPickTitle,
+                    providerName    = docPickProvider,
+                    notes           = docPickNotes,
+                    attachment      = GuidePawFeedbackAttachmentInput(uri, docPickName, docPickMime),
+                    contentResolver = contentResolver,
+                )
+                runOnUiThread {
+                    docPickLoading  = false
+                    docPickMessage  = "Document uploaded."
+                    docPickUri      = null
+                    docPickMime     = ""
+                    docPickName     = ""
+                    docPickTitle    = ""
+                    docPickProvider = ""
+                    docPickNotes    = ""
+                    docShowForm     = false
+                    loadHealthDocs()
+                }
+            } catch (e: GuidePawApiException) {
+                runOnUiThread { docPickLoading = false; docPickMessage = friendlyMessage(e.message, "Upload failed.") }
+            } catch (t: Throwable) {
+                runOnUiThread { docPickLoading = false; docPickMessage = friendlyMessage(t.message, "Upload failed.") }
             }
         }
     }
