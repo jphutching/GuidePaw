@@ -4,6 +4,14 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.091',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Header redesign',
+                'items'   => [
+                    'Brand header is taller with a larger shield badge and centered GuidePaw title.',
+                ],
+            ],
+            [
                 'version' => '0.090',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Bug fixes & maintenance',

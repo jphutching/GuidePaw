@@ -560,22 +560,36 @@ class MainActivity : AppCompatActivity() {
                             brush = Brush.horizontalGradient(listOf(Color(0xFF0D6EFD), Color(0xFF2856C8))),
                             shape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp),
                         )
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Image(
                         painter            = painterResource(R.drawable.guidepaw_logo),
                         contentDescription = null,
-                        modifier           = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)),
+                        modifier           = Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)),
                     )
-                    Spacer(Modifier.width(10.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("GuidePaw", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                        Text("Handler tools. All in one place.", color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.width(14.dp))
+                    Column(
+                        modifier            = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            "GuidePaw",
+                            color      = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style      = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            "Handler tools. All in one place.",
+                            color     = Color.White.copy(alpha = 0.78f),
+                            style     = MaterialTheme.typography.bodySmall,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
                     }
+                    Spacer(Modifier.width(6.dp))
                     Text(
                         "v${CompanionAppVersion.VERSION_NAME}",
-                        color    = Color.White.copy(alpha = 0.45f),
+                        color    = Color.White.copy(alpha = 0.40f),
                         style    = MaterialTheme.typography.labelSmall,
                         fontSize = 9.sp,
                     )
@@ -10423,6 +10437,9 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.091", "May 27, 2026", "Header redesign", listOf(
+                "Brand header is taller with a larger shield badge and centered GuidePaw title.",
+            )),
             ChangelogEntry("0.090", "May 27, 2026", "Bug fixes & maintenance", listOf(
                 "Under-the-hood fixes and stability improvements.",
             )),
