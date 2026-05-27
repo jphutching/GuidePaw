@@ -193,6 +193,7 @@ $faqSchema = [
                     <li><a href="support_funding.php">Support GuidePaw</a></li>
                     <li><a href="service_dog_rights.php">Service Dog Rights</a></li>
                     <li><a href="air_travel_rights.php">Air Travel Rights</a></li>
+                    <li><a href="changelog.php">What's New (App Changelog)</a></li>
                 </ul>
             </div>
         </div>

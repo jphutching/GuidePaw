@@ -66,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.painterResource
 import com.guidepaw.companion.R
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -313,6 +314,7 @@ class MainActivity : AppCompatActivity() {
     private var vetNotes           by mutableStateOf("")
     private var vetIsPrimary       by mutableStateOf(false)
     private var vetShowForm        by mutableStateOf(false)
+    private var showWhatsNew       by mutableStateOf(false)
     private var docShowForm        by mutableStateOf(false)
     private var docPickUri         by mutableStateOf<Uri?>(null)
     private var docPickMime        by mutableStateOf("")
@@ -466,6 +468,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val seenVersion = prefs.getInt(KEY_SEEN_WHATS_NEW, 0)
+        if (CompanionAppVersion.VERSION_CODE > seenVersion) {
+            showWhatsNew = true
+            prefs.edit().putInt(KEY_SEEN_WHATS_NEW, CompanionAppVersion.VERSION_CODE).apply()
+        }
         checkForAppUpdate()
 
         pendingLaunchSection = intent?.getStringExtra(GuidePawNavigation.EXTRA_OPEN_SECTION)
@@ -557,6 +564,7 @@ class MainActivity : AppCompatActivity() {
                         fontSize = 9.sp,
                     )
                 }
+                if (showWhatsNew) WhatsNewDialog()
                 if (showUpdateCard) UpdateBanner()
                 if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
@@ -667,6 +675,38 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+    }
+
+    // ── What's New dialog ───────────────────────────────────────────────────
+    @Composable
+    private fun WhatsNewDialog() {
+        AlertDialog(
+            onDismissRequest = { showWhatsNew = false },
+            title = { Text("What's New", fontWeight = FontWeight.Bold) },
+            text  = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    CHANGELOG.take(5).forEachIndexed { index, entry ->
+                        if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+                        Row(
+                            modifier              = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment     = Alignment.CenterVertically,
+                        ) {
+                            Text("v${entry.versionName}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(entry.date, fontSize = 11.sp, color = GpOnSurfaceVariant)
+                        }
+                        Text(entry.title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Spacer(Modifier.height(4.dp))
+                        entry.items.forEach { item ->
+                            Text("• $item", fontSize = 12.sp, color = GpOnSurfaceVariant)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showWhatsNew = false }) { Text("Got it") }
+            },
+        )
     }
 
     // ── Update banner ───────────────────────────────────────────────────────
@@ -10027,5 +10067,52 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_CHALLENGE_KEY        = "challenge_key"
         private const val KEY_CHALLENGE_CHECK_INS  = "challenge_check_ins"
         private const val KEY_CHALLENGE_NOTES      = "challenge_notes"
+        private const val KEY_SEEN_WHATS_NEW        = "seen_whats_new_code"
+
+        private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
+        private val CHANGELOG = listOf(
+            ChangelogEntry("0.085", "May 27, 2026", "What's New dialog", listOf(
+                "App now shows a What's New summary after each update.",
+                "Web changelog and API endpoint added.",
+            )),
+            ChangelogEntry("0.084", "May 27, 2026", "Phone-first uploads", listOf(
+                "Gallery, Take Photo, and Record Video on training logs.",
+                "Native health document upload — PDF and images without a browser.",
+            )),
+            ChangelogEntry("0.083", "May 27, 2026", "Public Dog Profile & native billing", listOf(
+                "Public Dog Profile viewer — share ID, contacts, and found-dog info.",
+                "Native Stripe checkout for add-on services.",
+                "Removed remaining web-only action buttons.",
+            )),
+            ChangelogEntry("0.082", "May 27, 2026", "Brand header", listOf(
+                "GuidePaw logo and tagline shown at the top of every screen.",
+            )),
+            ChangelogEntry("0.081", "May 27, 2026", "Navigation fix", listOf(
+                "Training Programs opens natively instead of launching a browser.",
+            )),
+            ChangelogEntry("0.080", "May 27, 2026", "State Access Laws restored", listOf(
+                "Full state-by-state access law requirements reinstated.",
+            )),
+            ChangelogEntry("0.079", "May 26, 2026", "FAQ, Add Dog, Plans & Trainer Marketplace", listOf(
+                "Native FAQ, Add Dog wizard, Plans tier cards.",
+                "Trainer Marketplace listings in-app.",
+            )),
+            ChangelogEntry("0.078", "May 26, 2026", "Five new native screens", listOf(
+                "Dog Profile editor, Settings, AI Coach, ESA Legal info, Breed Finder.",
+            )),
+            ChangelogEntry("0.077", "May 26, 2026", "Find a Vet", listOf(
+                "Manual location entry with up to 250-mile route coverage.",
+            )),
+            ChangelogEntry("0.073", "May 26, 2026", "Collapsible grouped menu", listOf(
+                "Navigation reorganised into collapsible sections.",
+            )),
+            ChangelogEntry("0.070", "May 26, 2026", "State Access Laws", listOf(
+                "State-by-state service dog and ESA access rules.",
+            )),
+            ChangelogEntry("0.060", "May 25, 2026", "First public release", listOf(
+                "Training logs, goal intake, behavior risk, regression tracking.",
+                "Wearables, medications, appointments, and notifications.",
+            )),
+        )
     }
 }
