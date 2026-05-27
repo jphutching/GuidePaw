@@ -4,6 +4,14 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.087',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Rotation fix',
+                'items'   => [
+                    'Rotating the phone no longer triggers a data refresh.',
+                ],
+            ],
+            [
                 'version' => '0.086',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Native registration, log detail & UI cleanup',

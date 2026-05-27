@@ -10365,6 +10365,9 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.087", "May 27, 2026", "Rotation fix", listOf(
+                "Rotating the phone no longer triggers a data refresh.",
+            )),
             ChangelogEntry("0.086", "May 27, 2026", "Native registration, log detail & UI cleanup", listOf(
                 "Create Account opens a native sign-up form.",
                 "Tap any training log to see full notes and focus indicator.",
