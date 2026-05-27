@@ -18,7 +18,7 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'version_code' => $versionCode,
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
-            'release_notes' => 'Native photo/video capture for training logs; native document upload (PDF/image) for health records — no web browser required.',
+            'release_notes' => 'Updated brand badge and new tagline. Demo accounts with auto-reset sandbox. Native registration, training log detail, and What\'s New dialog.',
             'published_at' => gmdate('c'),
         ];
     }
