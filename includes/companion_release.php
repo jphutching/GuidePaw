@@ -19,7 +19,8 @@ if (!function_exists('gpCompanionReleaseInfo')) {
             'apk_url' => $downloadUrl,
             'apk_file' => basename($apkPath),
             'release_notes' => 'Updated brand badge and new tagline. Demo accounts with auto-reset sandbox. Native registration, training log detail, and What\'s New dialog.',
-            'published_at' => gmdate('c'),
+            'force_update'  => false,
+            'published_at'  => gmdate('c'),
         ];
     }
 }

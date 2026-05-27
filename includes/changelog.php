@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.093',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Update check & downgrade guard',
+                'items'   => [
+                    'Check for Update button in Settings shows current version and update status.',
+                    'Update banner no longer suggests downgrades — server-side force flag required.',
+                ],
+            ],
+            [
                 'version' => '0.092',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Badge & tagline update',

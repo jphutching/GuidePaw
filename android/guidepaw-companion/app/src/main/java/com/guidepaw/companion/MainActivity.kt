@@ -210,6 +210,8 @@ class MainActivity : AppCompatActivity() {
     private var forgotPasswordSent    by mutableStateOf(false)
     private var showUpdateCard   by mutableStateOf(false)
     private var updateStatusText by mutableStateOf("")
+    private var updateChecking   by mutableStateOf(false)
+    private var updateCheckResult by mutableStateOf("")
     private var showMenu         by mutableStateOf(false)
     private var pendingLaunchSection by mutableStateOf<String?>(null)
     private var qrResult         by mutableStateOf<GpQrResult?>(null)
@@ -9054,9 +9056,9 @@ class MainActivity : AppCompatActivity() {
                     currentRelease = release
                     val local   = CompanionAppVersion.VERSION_CODE
                     val ignored = prefs.getInt(KEY_IGNORED_UPDATE_CODE, -1)
-                    if (release.versionCode != local && release.versionCode != ignored) {
-                        val direction = if (release.versionCode < local) "downgrade to" else "update to"
-                        updateStatusText = "v${release.versionName} available — tap to $direction it. (${release.apkFile})"
+                    val shouldShow = (release.versionCode > local || release.forceUpdate) && release.versionCode != ignored
+                    if (shouldShow) {
+                        updateStatusText = "v${release.versionName} available — tap to update. (${release.apkFile})"
                         showUpdateCard   = true
                     } else {
                         hideUpdateNotice()
@@ -9068,11 +9070,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun checkUpdateManually() {
+        updateChecking = true
+        updateCheckResult = ""
+        worker.execute {
+            try {
+                val release = api.appRelease()
+                runOnUiThread {
+                    currentRelease = release
+                    val local   = CompanionAppVersion.VERSION_CODE
+                    val ignored = prefs.getInt(KEY_IGNORED_UPDATE_CODE, -1)
+                    val shouldShow = (release.versionCode > local || release.forceUpdate) && release.versionCode != ignored
+                    if (shouldShow) {
+                        updateStatusText  = "v${release.versionName} available — tap to update. (${release.apkFile})"
+                        showUpdateCard    = true
+                        updateCheckResult = "Update available: v${release.versionName}"
+                    } else {
+                        updateCheckResult = "You're up to date (v${CompanionAppVersion.VERSION_NAME})"
+                    }
+                    updateChecking = false
+                }
+            } catch (_: Throwable) {
+                runOnUiThread {
+                    updateCheckResult = "Could not check for updates."
+                    updateChecking    = false
+                }
+            }
+        }
+    }
+
     private fun syncUpdateCardVisibility() {
         val release = currentRelease ?: return
         val local   = CompanionAppVersion.VERSION_CODE
         val ignored = prefs.getInt(KEY_IGNORED_UPDATE_CODE, -1)
-        showUpdateCard = release.versionCode != local && release.versionCode != ignored
+        showUpdateCard = (release.versionCode > local || release.forceUpdate) && release.versionCode != ignored
     }
 
     private fun hideUpdateNotice() {
@@ -9579,6 +9610,32 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // App version & update check
+            OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("App Version", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Installed: v${CompanionAppVersion.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    if (updateCheckResult.isNotBlank()) {
+                        Text(
+                            updateCheckResult,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (updateCheckResult.startsWith("Update")) MaterialTheme.colorScheme.primary else GpOnSurfaceVariant,
+                        )
+                    }
+                    Button(
+                        onClick  = { checkUpdateManually() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled  = !updateChecking,
+                    ) {
+                        if (updateChecking) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text("Check for Update")
                     }
                 }
             }
@@ -10437,6 +10494,10 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.093", "May 27, 2026", "Update check & downgrade guard", listOf(
+                "Check for Update button in Settings shows current version and update status.",
+                "Update banner no longer suggests downgrades — server-side force flag required.",
+            )),
             ChangelogEntry("0.092", "May 27, 2026", "Badge & tagline update", listOf(
                 "Updated brand badge image in the header.",
                 "New tagline: TRAINING TRUST FOR THE JOURNEY.",

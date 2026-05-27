@@ -35,6 +35,7 @@ data class GuidePawAppReleaseResult(
     val apkFile: String,
     val releaseNotes: String?,
     val publishedAt: String?,
+    val forceUpdate: Boolean,
 )
 
 data class GuidePawMeResult(
@@ -758,6 +759,7 @@ class GuidePawApiClient(
             apkFile = response.json.optString("apk_file", "GuidePaw_Companion.apk"),
             releaseNotes = response.json.optText("release_notes"),
             publishedAt = response.json.optText("published_at"),
+            forceUpdate = response.json.optBoolean("force_update", false),
         )
     }
 
