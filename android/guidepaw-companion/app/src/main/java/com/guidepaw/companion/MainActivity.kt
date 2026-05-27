@@ -4898,7 +4898,7 @@ class MainActivity : AppCompatActivity() {
                         modifier  = Modifier.weight(1f),
                     ) { Text("Candidate Assessment") }
                     OutlinedButton(
-                        onClick   = { openWebPage("https://guidepaw.app/training_program.php") },
+                        onClick   = { loadTrainingProgram(); currentSection = NavSection.TRAINING_PROGRAM },
                         modifier  = Modifier.weight(1f),
                     ) { Text("Training Programs") }
                 }
