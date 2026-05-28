@@ -1,5 +1,7 @@
 # 🤝 GuidePaw AI Handoff Document
 
+> ⚠️ **Handoff reason:** `session_kill`
+
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -12,37 +14,26 @@
 | **From** | CLAUDE |
 | **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `claude-1779987130663` |
-| **Timestamp** | `2026-05-28T16:55:27.628Z` |
+| **Session ID** | `claude-1779996048522` |
+| **Timestamp** | `2026-05-28T19:37:53.973Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Built complete Claude↔Codex dev infrastructure: dashboard at /dashboard (mobile-responsive, dark/light, session timer, progress bar, warning banner at 80%/90%, force handoff, xterm terminal, 14 quick commands), three-file handoff system (HANDOFF.md auto-generated, PROJECT_STATE.md persistent source of truth, DEVLOG.md append-only log), CLAUDE_BOOT.md + CODEX_BOOT.md + CODEX_RULES.md, updated start-claude.sh and start-codex.sh to inject all 5 context files, 90% auto-save watchdog, systemd service managing middleware. Full system test: 30/30 passed.
+Session killed manually — work complete — version fix and middleware improvements done. Check git log for any uncommitted work.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `middleware/dashboard.html`
-- `middleware/server.js`
-- `CLAUDE_BOOT.md`
-- `CODEX_BOOT.md`
-- `CODEX_RULES.md`
-- `PROJECT_STATE.md`
-- `DEVLOG.md`
-- `scripts/start-claude.sh`
-- `scripts/start-codex.sh`
-- `.codex/system_prompt.md`
-- `AGENTS.md`
-- `.claude/CLAUDE.md`
+- *(run `git diff --name-only HEAD~1` to see recent changes)*
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-Submit app to Google Play Store — follow play-store/SUBMIT.md step by step. AAB is at play-store/GuidePaw_Companion_v0.098_release.aab. All store listing copy, data safety answers, graphics, and privacy policy are ready.
+Fix version display and session feedback
 
 ---
 
@@ -56,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"Submit app to Google Play Store — follow play-store/SUBMIT.md step by step. AAB is at play-store/GuidePaw_Companion_v0.098_release.aab. All store listing copy, data safety answers, graphics, and privacy policy are ready.","branch":"main"}'
+  -d '{"ai":"codex","task":"Fix version display and session feedback","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
