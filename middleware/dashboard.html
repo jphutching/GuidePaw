@@ -144,11 +144,58 @@
   #toast { position: fixed; bottom: 20px; right: 20px; background: var(--toast-bg); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; display: none; z-index: 999; }
   #toast.show { display: block; }
   #toast.err  { background: var(--toast-err); }
+
+  /* ── Mobile hamburger (hidden on desktop) ── */
+  #menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 2px 6px; line-height: 1; }
+  #sidebar-close { display: none; }
+  #sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 199; }
+  #sidebar-backdrop.show { display: block; }
+
+  /* ── Mobile layout ── */
+  @media (max-width: 767px) {
+    #menu-btn { display: block; }
+    #current-task, #last-update { display: none; }
+    header { gap: 8px; padding: 8px 10px; }
+    header h1 { font-size: 14px; }
+
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+      width: 88vw; max-width: 320px; min-width: unset;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      border-right: none;
+      box-shadow: 4px 0 24px rgba(0,0,0,.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    #sidebar-close {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      flex-shrink: 0;
+    }
+    #sidebar-close button {
+      background: none; border: none; color: var(--muted);
+      font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px;
+    }
+    #sidebar-close button:hover { color: var(--text); }
+
+    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { padding: 10px 14px; font-size: 12px; }
+
+    #cmd-body.open { flex-direction: column; }
+    #cmd-buttons { min-width: unset; }
+    #cmd-output { max-height: 120px; }
+
+    .tab-panel pre { font-size: 11px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
+  <button id="menu-btn" onclick="openSidebar()" title="Menu">☰</button>
   <h1>🐾 GuidePaw Dev</h1>
   <span id="session-badge" class="badge-idle">idle</span>
   <span id="current-task" style="font-size:12px;color:#8b949e;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -157,10 +204,16 @@
   <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
 </header>
 
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <div class="main">
 
   <!-- ── Sidebar ── -->
   <div class="sidebar">
+    <div id="sidebar-close">
+      <span>Menu</span>
+      <button onclick="closeSidebar()">✕</button>
+    </div>
 
     <div class="sidebar-section">
       <h3>Session State</h3>
@@ -358,6 +411,7 @@ function loadAll() {
 
 /* ── Tabs ── */
 function switchTab(name) {
+  if (window.innerWidth <= 767) closeSidebar();
   document.querySelectorAll('.tab').forEach((t,i) => {
     const names = ['handoff','devlog','project','boot','rules','terminal'];
     t.classList.toggle('active', names[i] === name);
@@ -489,6 +543,18 @@ function initTerminal() {
     }
   });
 }
+/* ── Mobile sidebar ── */
+function openSidebar() {
+  document.querySelector('.sidebar').classList.add('open');
+  document.getElementById('sidebar-backdrop').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
 /* ── Theme ── */
 function applyTheme(light) {
   document.documentElement.classList.toggle('light', light);
