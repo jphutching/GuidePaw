@@ -229,11 +229,8 @@ if (empty($_SESSION['user_id'])) {
 
         <section class="landing-card p-4">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <h2 class="h5 mb-0">Ready to get started?</h2>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-primary fw-bold" href="login.php">Sign in</a>
-                    <a class="btn btn-outline-primary fw-bold" href="register.php">Create account</a>
-                </div>
+                <h2 class="h5 mb-0">New to GuidePaw?</h2>
+                <a class="btn btn-primary fw-bold" href="register.php">Create a free account</a>
             </div>
         </section>
     </main>
