@@ -5,6 +5,14 @@
 
 ---
 
+## 📖 READ THESE FIRST (in order)
+```bash
+cat CODEX_BOOT.md     # who you are and how to think
+cat CODEX_RULES.md    # 10 rules from past screwups — do not skip
+```
+
+---
+
 ## ✅ CURRENT STATE — FULLY SYNCED
 
 | Item | Value |

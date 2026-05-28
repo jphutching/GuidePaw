@@ -1,6 +1,6 @@
 # CODEX_RULES.md
 # Strict operational rules for Codex CLI on GuidePaw.
-# Read this file completely before touching any code.
+# Read CODEX_BOOT.md first, then this file, before touching any code.
 # These rules exist because previous Codex sessions caused hours of cleanup work.
 
 ---
