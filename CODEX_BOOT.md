@@ -203,11 +203,14 @@ curl -s -X POST $MIDDLEWARE_URL/milestone \
 
 ### If you need to ask James a question before continuing:
 
+Always include a `context` field — what file you are in, what you have already done,
+and why the decision matters. James cannot safely answer without it.
+
 ```bash
 QRESP=$(curl -s -X POST $MIDDLEWARE_URL/question \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","text":"YOUR QUESTION — be specific, include context and options"}')
+  -d '{"ai":"codex","text":"YOUR QUESTION — name the options clearly","context":"File: X. Done so far: Y. This matters because: Z."}')
 QID=$(echo $QRESP | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
 echo "Question posted (id=$QID) — waiting for James to answer on the dashboard..."
 until python3 -c "

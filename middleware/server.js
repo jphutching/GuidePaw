@@ -35,6 +35,9 @@ const SESSION_TIMEOUT_MINUTES = parseInt(process.env.SESSION_TIMEOUT_MINUTES || 
 const DB_PATH = process.env.DB_PATH || "/home/james/guidepaw-middleware/sessions.db";
 const db = new Database(DB_PATH);
 
+// Schema migrations — safe to run on every startup
+try { db.exec("ALTER TABLE questions ADD COLUMN context TEXT"); } catch {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +61,7 @@ db.exec(`
     session_id TEXT,
     ai TEXT NOT NULL,
     text TEXT NOT NULL,
+    context TEXT,
     answered INTEGER DEFAULT 0,
     answer TEXT,
     ts DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -234,11 +238,12 @@ app.post("/handoff", auth, (req, res) => {
 });
 
 app.post("/question", auth, (req, res) => {
-  const { ai, text, session_id } = req.body;
+  const { ai, text, session_id, context } = req.body;
   if (!text) return res.status(400).json({ error: "text required" });
   const state = readState();
   const sid = session_id || state.session_id;
-  const result = db.prepare("INSERT INTO questions (session_id,ai,text) VALUES (?,?,?)").run(sid, ai || state.active_ai || "unknown", text);
+  const ctx = context || null;
+  const result = db.prepare("INSERT INTO questions (session_id,ai,text,context) VALUES (?,?,?,?)").run(sid, ai || state.active_ai || "unknown", text, ctx);
   logEvent(sid, ai || state.active_ai || "unknown", "question", { text, question_id: result.lastInsertRowid });
   console.log(`[QUESTION] ${(ai||'?').toUpperCase()}: ${text}`);
   res.json({ ok: true, id: result.lastInsertRowid, text, answered: false });
@@ -252,7 +257,7 @@ app.get("/question/pending", auth, (req, res) => {
 app.get("/question/:id", auth, (req, res) => {
   const row = db.prepare("SELECT * FROM questions WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
-  res.json({ ok: true, id: row.id, text: row.text, answered: !!row.answered, answer: row.answer || null, ts: row.ts, answered_at: row.answered_at });
+  res.json({ ok: true, id: row.id, text: row.text, context: row.context || null, answered: !!row.answered, answer: row.answer || null, ts: row.ts, answered_at: row.answered_at });
 });
 
 app.post("/question/:id/answer", auth, (req, res) => {
