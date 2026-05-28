@@ -25,15 +25,14 @@ if ! curl -sf "$MIDDLEWARE_URL/health" > /dev/null 2>&1; then
   cd "$REPO_ROOT"
 fi
 
-# ── Extract task from HANDOFF.md (everything after "Next Task" heading until
-#    the next heading, ignoring blank lines) ──────────────────────────────────
+# ── Extract task from HANDOFF.md ─────────────────────────────────────────────
 extract_task() {
   awk '/^## .*Next Task/{found=1; next} found && /^#/{exit} found && NF{print}' \
     "$REPO_ROOT/HANDOFF.md" 2>/dev/null | head -10 | tr '\n' ' ' | sed 's/[[:space:]]*$//'
 }
 
 TASK="${1:-$(extract_task)}"
-[[ -z "$TASK" ]] && TASK="Read HANDOFF.md carefully and implement the next task end-to-end. Do not stop until the task is complete, the APK is built, and git push is done."
+[[ -z "$TASK" ]] && TASK="Read CODEX_BOOT.md, CODEX_RULES.md, PROJECT_STATE.md, DEVLOG.md, and HANDOFF.md. Then implement the next task end-to-end. Do not stop until the task is complete, deployed, and pushed to git."
 
 echo ""
 echo "╔══════════════════════════════════════════════════╗"
@@ -42,36 +41,69 @@ echo "╚═══════════════════════�
 echo "  Task : $TASK"
 echo ""
 
-# Register session with middleware
+# ── Register session with middleware ─────────────────────────────────────────
 curl -s -X POST "$MIDDLEWARE_URL/session/start" \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
   -d "{\"ai\":\"codex\",\"task\":$(python3 -c "import json,sys; print(json.dumps(sys.argv[1]))" "$TASK"),\"branch\":\"main\"}" \
   -o /dev/null
 
-SYSPROMPT=$(cat "$REPO_ROOT/.codex/system_prompt.md" 2>/dev/null || echo "You are a senior engineer on the GuidePaw project.")
+# ── Build full context — all 5 key files injected into the prompt ────────────
+SYSPROMPT=$(cat "$REPO_ROOT/.codex/system_prompt.md" 2>/dev/null || echo "You are a senior engineer on GuidePaw.")
+BOOT=$(cat "$REPO_ROOT/CODEX_BOOT.md" 2>/dev/null || echo "")
+RULES=$(cat "$REPO_ROOT/CODEX_RULES.md" 2>/dev/null || echo "")
+PROJECT=$(cat "$REPO_ROOT/PROJECT_STATE.md" 2>/dev/null || echo "")
+DEVLOG=$(tail -80 "$REPO_ROOT/DEVLOG.md" 2>/dev/null || echo "")
 HANDOFF=$(cat "$REPO_ROOT/HANDOFF.md" 2>/dev/null || echo "No handoff yet.")
 
 PROMPT="$SYSPROMPT
 
----
-## HANDOFF FROM PREVIOUS SESSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## CODEX_BOOT.md — READ THIS FULLY BEFORE ANY CODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$BOOT
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## CODEX_RULES.md — 10 RULES FROM PAST SCREWUPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$RULES
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PROJECT_STATE.md — CURRENT VERSION & ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$PROJECT
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## DEVLOG.md — RECENT SESSION HISTORY (last 80 lines)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$DEVLOG
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## HANDOFF.md — WHAT THE LAST AI DID AND WHAT'S NEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 $HANDOFF
 
----
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## YOUR TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 $TASK
 
----
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ## MANDATORY COMPLETION STEPS
-When your task is fully done (code written, built, tested, pushed to git):
-1. Call POST $MIDDLEWARE_URL/session/end with your summary and next_task
-2. The middleware will update HANDOFF.md automatically
-3. Do NOT stop early. A no-op session is a failure.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Lint PHP: php -l path/to/file.php
+2. Deploy: bash scripts/deploy_local.sh
+3. Git push: git push origin main
+4. Call session/end:
+   curl -s -X POST $MIDDLEWARE_URL/session/end \\
+     -H 'Authorization: Bearer $MIDDLEWARE_SECRET' \\
+     -H 'Content-Type: application/json' \\
+     -d '{\"ai\":\"codex\",\"summary\":\"WHAT_YOU_DID\",\"files_changed\":[\"file\"],\"next_task\":\"SPECIFIC_NEXT_TASK\"}'
+5. Final output: 🤝 HANDOFF COMPLETE — Claude can now pick up.
 
 MIDDLEWARE_URL=$MIDDLEWARE_URL
-MIDDLEWARE_SECRET is in middleware/.env — source it with: set -a; source middleware/.env; set +a
-REPO=/home/james/projects/guidepaw
+Source secrets: set -a; source middleware/.env; set +a
+REPO=$REPO_ROOT
 "
 
 printf '%s' "$PROMPT" | codex exec --dangerously-bypass-approvals-and-sandbox -

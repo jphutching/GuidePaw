@@ -1,5 +1,19 @@
 # Repository Guidelines
 
+## MANDATORY — Read These Files Before Writing Any Code
+
+```bash
+cat CODEX_BOOT.md      # identity, reasoning, how to approach this codebase
+cat CODEX_RULES.md     # 10 rules derived from real past mistakes — non-negotiable
+cat PROJECT_STATE.md   # current version, architecture, demo accounts, load-bearing files
+cat DEVLOG.md | tail -60  # recent session history
+cat HANDOFF.md         # what was last done and what's next
+```
+
+These files contain the full project context. Skipping them causes the same mistakes that already happened and had to be cleaned up. Read them every session without exception.
+
+---
+
 ## Project Structure & Module Organization
 
 GuidePaw is a PHP/PostgreSQL web app with a native Android companion build.
