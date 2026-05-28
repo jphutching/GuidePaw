@@ -24,6 +24,7 @@ const MIDDLEWARE_SECRET = process.env.MIDDLEWARE_SECRET;
 const REPO_PATH = process.env.REPO_PATH || "/home/james/projects/guidepaw";
 const STATE_FILE = path.join(REPO_PATH, "SESSION_STATE.json");
 const HANDOFF_FILE = path.join(REPO_PATH, "HANDOFF.md");
+const DEVLOG_FILE = path.join(REPO_PATH, "DEVLOG.md");
 const SESSION_TIMEOUT_MINUTES = parseInt(process.env.SESSION_TIMEOUT_MINUTES || "45");
 
 const DB_PATH = process.env.DB_PATH || "/home/james/guidepaw-middleware/sessions.db";
@@ -132,6 +133,10 @@ app.post("/session/end", auth, (req, res) => {
   });
 
   fs.writeFileSync(HANDOFF_FILE, doc);
+
+  const devlogEntry = `\n## ${new Date().toISOString().slice(0,10)} | ${(ai||"").toUpperCase()} | Session end\n\n${summary || "No summary."}\n\n**Files:** ${(files_changed || state.files_in_progress || []).join(", ") || "see git log"}\n\n**Next:** ${next_task || "See HANDOFF.md"}\n\n---\n`;
+  try { fs.appendFileSync(DEVLOG_FILE, devlogEntry); } catch {}
+
   state.active_ai = null;
   state.last_handoff_at = new Date().toISOString();
   state.files_in_progress = [];
@@ -156,6 +161,9 @@ app.post("/milestone", auth, (req, res) => {
 
   const note = `\n\n---\n## ✅ Milestone: ${title}\n**Time:** ${new Date().toISOString()}\n**AI:** ${ai}\n\n${description || ""}\n\n**Files:** ${(files_changed || []).join(", ") || "see git diff"}\n`;
   try { fs.appendFileSync(HANDOFF_FILE, note); } catch {}
+
+  const devlogMilestone = `\n## ${new Date().toISOString().slice(0,10)} | ${(ai||"").toUpperCase()} | Milestone: ${title}\n\n${description || ""}\n\n**Files:** ${(files_changed || []).join(", ") || "see git diff"}\n\n---\n`;
+  try { fs.appendFileSync(DEVLOG_FILE, devlogMilestone); } catch {}
 
   if (trigger_handoff) {
     syncToGit(REPO_PATH, `milestone: ${title}`).catch(console.error);

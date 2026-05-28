@@ -9,6 +9,13 @@ function buildHandoffDoc({ from_ai, to_ai, summary, files_changed = [], next_tas
 
   return `# 🤝 GuidePaw AI Handoff Document
 ${reasonBlock}
+> **Read these first (in order):**
+> 1. \`cat CODEX_BOOT.md\` — who you are and how to think
+> 2. \`cat CODEX_RULES.md\` — 10 rules from past screwups
+> 3. \`cat PROJECT_STATE.md\` — persistent source of truth (version, architecture, accounts)
+> 4. \`cat DEVLOG.md | tail -60\` — recent session history
+> This file (HANDOFF.md) is auto-generated and overwritten every session — use it for "what just happened" only.
+
 | Field | Value |
 |---|---|
 | **From** | ${fromLabel} |
