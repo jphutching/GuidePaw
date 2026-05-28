@@ -53,6 +53,16 @@ db.exec(`
     files_changed TEXT,
     ts DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT,
+    ai TEXT NOT NULL,
+    text TEXT NOT NULL,
+    answered INTEGER DEFAULT 0,
+    answer TEXT,
+    ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+    answered_at DATETIME
+  );
 `);
 
 function auth(req, res, next) {
@@ -221,6 +231,39 @@ app.post("/handoff", auth, (req, res) => {
   syncToGit(REPO_PATH, `handoff: ${reason || "forced"}`).catch(console.error);
 
   res.json({ ok: true, handoff_written: true });
+});
+
+app.post("/question", auth, (req, res) => {
+  const { ai, text, session_id } = req.body;
+  if (!text) return res.status(400).json({ error: "text required" });
+  const state = readState();
+  const sid = session_id || state.session_id;
+  const result = db.prepare("INSERT INTO questions (session_id,ai,text) VALUES (?,?,?)").run(sid, ai || state.active_ai || "unknown", text);
+  logEvent(sid, ai || state.active_ai || "unknown", "question", { text, question_id: result.lastInsertRowid });
+  console.log(`[QUESTION] ${(ai||'?').toUpperCase()}: ${text}`);
+  res.json({ ok: true, id: result.lastInsertRowid, text, answered: false });
+});
+
+app.get("/question/pending", auth, (req, res) => {
+  const rows = db.prepare("SELECT * FROM questions WHERE answered=0 ORDER BY ts DESC").all();
+  res.json({ pending: rows });
+});
+
+app.get("/question/:id", auth, (req, res) => {
+  const row = db.prepare("SELECT * FROM questions WHERE id=?").get(req.params.id);
+  if (!row) return res.status(404).json({ error: "not found" });
+  res.json({ ok: true, id: row.id, text: row.text, answered: !!row.answered, answer: row.answer || null, ts: row.ts, answered_at: row.answered_at });
+});
+
+app.post("/question/:id/answer", auth, (req, res) => {
+  const { answer } = req.body;
+  if (!answer) return res.status(400).json({ error: "answer required" });
+  const row = db.prepare("SELECT * FROM questions WHERE id=?").get(req.params.id);
+  if (!row) return res.status(404).json({ error: "not found" });
+  db.prepare("UPDATE questions SET answered=1, answer=?, answered_at=CURRENT_TIMESTAMP WHERE id=?").run(answer, req.params.id);
+  logEvent(row.session_id, "user", "answer", { question_id: row.id, answer });
+  console.log(`[ANSWER] Q${req.params.id}: ${answer}`);
+  res.json({ ok: true, id: row.id, answer });
 });
 
 app.post("/note", auth, (req, res) => {

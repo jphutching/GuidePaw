@@ -182,6 +182,18 @@
   .milestone-title { font-size: 12px; font-weight: 600; color: var(--yellow); }
   .milestone-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
+  /* ── Question alert ── */
+  #question-alert { display:none; background:#1a1000; border-bottom:2px solid var(--yellow); padding:12px 16px; flex-shrink:0; }
+  #question-alert.show { display:block; }
+  html.light #question-alert { background:#fff8c5; }
+  .q-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:13px; font-weight:700; color:var(--yellow); }
+  .q-text { font-size:14px; color:var(--text); margin-bottom:10px; line-height:1.5; }
+  .q-answer-row { display:flex; gap:8px; }
+  .q-answer-row input { flex:1; background:var(--bg0); border:1px solid var(--yellow); color:var(--text); padding:7px 10px; border-radius:6px; font-size:13px; font-family:inherit; }
+  .q-answer-row input:focus { outline:none; border-color:var(--accent); }
+  .q-answer-row button { padding:7px 16px; border-radius:6px; border:none; background:var(--yellow); color:#000; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .q-answer-row button:hover { opacity:.85; }
+
   /* ── Session warning banner ── */
   #warn-banner { display:none; padding: 10px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); align-items: center; gap: 10px; flex-shrink: 0; }
   #warn-banner.show { display: flex; }
@@ -256,6 +268,15 @@
   <button id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
   <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
 </header>
+
+<div id="question-alert">
+  <div class="q-header">❓ <span id="q-ai">AI</span> is asking a question</div>
+  <div id="q-text" class="q-text"></div>
+  <div class="q-answer-row">
+    <input type="text" id="q-answer" placeholder="Type your answer…" onkeydown="if(event.key==='Enter')submitAnswer()">
+    <button onclick="submitAnswer()">Answer</button>
+  </div>
+</div>
 
 <div id="warn-banner">
   <span id="warn-icon">⚠️</span>
@@ -596,6 +617,9 @@ const EVENT_LABELS = {
   milestone:     '✦ milestone',
   token_warning: '⚠ token_warning',
   force_handoff: '⚡ force_handoff',
+  question:      '❓ question',
+  answer:        '✓ answer',
+  note:          '📝 note',
 };
 
 function eventDetail(event, payload) {
@@ -608,6 +632,9 @@ function eventDetail(event, payload) {
     if (event === 'milestone')      return p.title  || '';
     if (event === 'token_warning')  return p.tokens_used ? `~${p.tokens_used} tokens` : '';
     if (event === 'force_handoff')  return p.pct != null ? `at ${p.pct}%` : '';
+    if (event === 'question')       return p.text   || '';
+    if (event === 'answer')         return p.answer || '';
+    if (event === 'note')           return p.text   || '';
     return JSON.stringify(p);
   } catch { return ''; }
 }
@@ -645,6 +672,47 @@ async function loadEvents() {
   } catch(e) { console.error('loadEvents:', e); }
 }
 
+let _pendingQuestionId = null;
+async function loadQuestions() {
+  try {
+    const r = await fetch(BASE + '/question/pending', { headers: authHeaders() });
+    const d = await r.json();
+    const alert = document.getElementById('question-alert');
+    if (d.pending && d.pending.length > 0) {
+      const q = d.pending[0];
+      if (_pendingQuestionId !== q.id) {
+        _pendingQuestionId = q.id;
+        document.getElementById('q-ai').textContent = (q.ai || 'AI').toUpperCase();
+        document.getElementById('q-text').textContent = q.text;
+        document.getElementById('q-answer').value = '';
+        alert.className = 'show';
+        document.getElementById('q-answer').focus();
+      }
+    } else {
+      _pendingQuestionId = null;
+      alert.className = '';
+    }
+  } catch(e) { console.error('loadQuestions:', e); }
+}
+
+async function submitAnswer() {
+  const answer = document.getElementById('q-answer').value.trim();
+  if (!answer || !_pendingQuestionId) return;
+  try {
+    const r = await fetch(BASE + '/question/' + _pendingQuestionId + '/answer', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify({ answer })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('Answer sent');
+      document.getElementById('question-alert').className = '';
+      _pendingQuestionId = null;
+      loadEvents();
+    } else toast(JSON.stringify(d), true);
+  } catch(e) { toast(e.message, true); }
+}
+
 async function sendNote() {
   const input = document.getElementById('ac-note');
   const text = input.value.trim();
@@ -672,6 +740,7 @@ async function loadFile(name, elId) {
 function loadAll() {
   loadState();
   loadEvents();
+  loadQuestions();
   loadFile('HANDOFF.md',      'content-handoff');
   loadFile('DEVLOG.md',       'content-devlog');
   loadFile('PROJECT_STATE.md','content-project');
@@ -916,7 +985,7 @@ applyTheme(localStorage.getItem('gp-theme') === 'light');
 </script>
 <script>
 loadAll();
-setInterval(() => { loadState(); loadEvents(); }, 5000);
+setInterval(() => { loadState(); loadEvents(); loadQuestions(); }, 5000);
 toggleCmdPanel();
 </script>
 </body>

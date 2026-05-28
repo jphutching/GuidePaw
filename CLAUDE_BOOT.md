@@ -123,12 +123,32 @@ You already know these. This is a reminder for cold-start sessions:
 
 ## MIDDLEWARE — YOUR COMMANDS
 
+James watches the dashboard in real time. Post milestones frequently — after every distinct step, not just at the end of a task. He should never see silence for more than a few minutes.
+
+Post after: reading existing code, forming a plan, completing each file change, running lint/deploy, finding a bug, finishing a test. If you are about to do something that will take more than 2 minutes, post a milestone first so James knows you are working.
+
 ```bash
-# After each logical unit of work
+# After EACH logical step — read, plan, implement, test, deploy
 curl -s -X POST $MIDDLEWARE_URL/milestone \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","title":"TITLE","description":"WHAT_YOU_DID","files_changed":["file"]}'
+  -d '{"ai":"claude","title":"TITLE","description":"WHAT_YOU_DID_OR_FOUND","files_changed":["file"]}'
+
+# When you need James to answer a question before you can continue
+QRESP=$(curl -s -X POST $MIDDLEWARE_URL/question \
+  -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"ai":"claude","text":"YOUR QUESTION — be specific, include context and options"}')
+QID=$(echo $QRESP | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+echo "Question posted (id=$QID) — waiting for James to answer on the dashboard..."
+# Poll every 20 seconds until answered:
+until python3 -c "
+import urllib.request, json, os, sys
+req = urllib.request.Request('$MIDDLEWARE_URL/question/$QID', headers={'Authorization':'Bearer $MIDDLEWARE_SECRET'})
+d = json.load(urllib.request.urlopen(req))
+if d['answered']: print(d['answer']); sys.exit(0)
+sys.exit(1)
+" 2>/dev/null; do sleep 20; done
 
 # When ~15k tokens remain
 curl -s -X POST $MIDDLEWARE_URL/token-warning \

@@ -189,13 +189,37 @@ cat CODEX_RULES.md
 git log --oneline -5
 ```
 
-### During session — after each logical unit of work:
+### During session — post a milestone after EACH logical step:
+
+James watches the dashboard. He should never see silence for more than a few minutes.
+Post after: reading existing code, forming a plan, completing each file change, running lint/deploy, finding a bug, finishing a test.
+
 ```bash
 curl -s -X POST $MIDDLEWARE_URL/milestone \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","title":"TITLE","description":"WHAT_YOU_DID","files_changed":["file"]}'
+  -d '{"ai":"codex","title":"TITLE","description":"WHAT_YOU_DID_OR_FOUND","files_changed":["file"]}'
 ```
+
+### If you need to ask James a question before continuing:
+
+```bash
+QRESP=$(curl -s -X POST $MIDDLEWARE_URL/question \
+  -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"ai":"codex","text":"YOUR QUESTION — be specific, include context and options"}')
+QID=$(echo $QRESP | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+echo "Question posted (id=$QID) — waiting for James to answer on the dashboard..."
+until python3 -c "
+import urllib.request, json, sys
+req = urllib.request.Request('$MIDDLEWARE_URL/question/$QID', headers={'Authorization':'Bearer $MIDDLEWARE_SECRET'})
+d = json.load(urllib.request.urlopen(req))
+if d['answered']: print(d['answer']); sys.exit(0)
+sys.exit(1)
+" 2>/dev/null; do sleep 20; done
+```
+
+Do not guess when uncertain. Post the question, wait for the answer, then proceed.
 
 ### End of session — mandatory, never skip:
 ```bash
