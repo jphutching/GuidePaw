@@ -46,3 +46,21 @@
 - Brand header updated — larger, centered title
 
 ---
+
+## 2026-05-28 | CODEX | Milestone: TEST milestone
+
+Testing that DEVLOG.md gets appended
+
+**Files:** test_file.php
+
+---
+
+## 2026-05-28 | CODEX | Session end
+
+TEST session — verified milestone and DEVLOG appending work correctly
+
+**Files:** DEVLOG.md, HANDOFF.md
+
+**Next:** Submit app to Google Play Store following play-store/SUBMIT.md — AAB is at play-store/GuidePaw_Companion_v0.098_release.aab
+
+---
