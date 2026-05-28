@@ -119,11 +119,8 @@ app.post("/session/start", auth, (req, res) => {
   writeState(state);
   logEvent(session_id, ai, "session_start", { task });
 
-  let handoff = "No previous handoff.";
-  try { handoff = fs.readFileSync(HANDOFF_FILE, "utf8"); } catch {}
-
   console.log(`[START] ${ai.toUpperCase()} session ${session_id}`);
-  res.json({ session_id, state, handoff });
+  res.json({ ok: true, session_id, ai, task: state.current_task, branch: state.branch, started_at: state.session_started_at });
 });
 
 app.post("/session/end", auth, (req, res) => {

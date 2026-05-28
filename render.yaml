@@ -125,11 +125,13 @@ services:
         sync: false
 
       # ── Android Companion version (managed via render-set-env.sh) ─────────
-      # PHP defaults in companion_release.php cover the case where these are missing.
+      # sync:false — values are managed via render-set-env.sh, not render.yaml
       - key: GUIDEPAW_COMPANION_VERSION_CODE
-        value: "80"
+        sync: false
       - key: GUIDEPAW_COMPANION_VERSION_NAME
-        value: "0.080"
+        sync: false
+      - key: GUIDEPAW_COMPANION_APK_PATH
+        sync: false
 
   # ── AI Middleware ─────────────────────────────────────────────────────────
   - type: web
