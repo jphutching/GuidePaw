@@ -294,6 +294,16 @@
       <button class="btn red" onclick="endSession()">■ End Session</button>
     </div>
 
+    <div class="sidebar-section" id="kill-section">
+      <h3 style="color:var(--red)">Kill Session</h3>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Force-clears the active session. Writes handoff + DEVLOG + pushes git.</div>
+      <div class="form-group">
+        <label>Next Task (optional)</label>
+        <textarea id="k-next" rows="2" placeholder="Leave blank to keep current task"></textarea>
+      </div>
+      <button class="btn red" onclick="killSession()">🛑 Kill Session</button>
+    </div>
+
     <div class="sidebar-section">
       <h3>Log Milestone</h3>
       <div class="form-group">
@@ -592,6 +602,29 @@ async function endSession() {
   } catch(e) { toast(e.message, true); }
 }
 
+async function killSession() {
+  const next_task = document.getElementById('k-next').value.trim();
+  const btn = document.querySelector('#kill-section .btn.red');
+  btn.textContent = '⟳ Killing…'; btn.disabled = true;
+  try {
+    const body = { reason: 'killed from dashboard' };
+    if (next_task) body.next_task = next_task;
+    const r = await fetch(BASE + '/session/kill', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast('Session killed — handoff written');
+      document.getElementById('k-next').value = '';
+      loadAll();
+    } else {
+      toast(JSON.stringify(d), true);
+    }
+  } catch(e) { toast(e.message, true); }
+  btn.textContent = '🛑 Kill Session'; btn.disabled = false;
+}
+
 async function logMilestone() {
   const ai = document.getElementById('m-ai').value;
   const title = document.getElementById('m-title').value.trim();
@@ -721,7 +754,7 @@ applyTheme(localStorage.getItem('gp-theme') === 'light');
 </script>
 <script>
 loadAll();
-setInterval(loadState, 15000);
+setInterval(loadState, 5000);
 toggleCmdPanel();
 </script>
 </body>

@@ -223,6 +223,40 @@ app.post("/handoff", auth, (req, res) => {
   res.json({ ok: true, handoff_written: true });
 });
 
+app.post("/session/kill", auth, (req, res) => {
+  const state = readState();
+  const ai = state.active_ai || req.body.ai || "unknown";
+  const next_task = req.body.next_task || state.current_task || "Review git log and continue previous task.";
+  const reason = req.body.reason || "killed from dashboard";
+
+  const doc = buildHandoffDoc({
+    from_ai: ai,
+    to_ai: ai === "claude" ? "codex" : "claude",
+    summary: `Session killed manually — ${reason}. Check git log for any uncommitted work.`,
+    files_changed: state.files_in_progress || [],
+    next_task,
+    branch: state.branch || "main",
+    session_id: state.session_id,
+    reason: "session_kill"
+  });
+
+  fs.writeFileSync(HANDOFF_FILE, doc);
+
+  const devlogEntry = `\n## ${new Date().toISOString().slice(0,10)} | ${ai.toUpperCase()} | 🛑 Session killed\n\nManually killed: ${reason}\n\n**Next:** ${next_task}\n\n---\n`;
+  try { fs.appendFileSync(DEVLOG_FILE, devlogEntry); } catch {}
+
+  logEvent(state.session_id, ai, "session_kill", { reason });
+  state.active_ai = null;
+  state.last_handoff_at = new Date().toISOString();
+  state.files_in_progress = [];
+  state.handoff_saved_at_90 = false;
+  writeState(state);
+  syncToGit(REPO_PATH, `handoff: session killed — ${ai}`).catch(console.error);
+
+  console.log(`[KILL] ${ai.toUpperCase()} session killed — ${reason}`);
+  res.json({ ok: true, ai, reason, next_task });
+});
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 const DASH_HTML = path.join(__dirname, "dashboard.html");
