@@ -99,13 +99,19 @@ if (empty($_SESSION['user_id'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f1f5f9; color: #0f172a; }
-        .landing-shell { max-width: 1100px; margin: 0 auto; padding: 1rem 1rem 3rem; }
-        .landing-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 28px; padding: 1.5rem; box-shadow: 0 12px 28px rgba(15,23,42,.18); }
-        .landing-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); background: #fff; }
-        .landing-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-        .landing-pill { display:inline-flex; align-items:center; gap:.45rem; border-radius:999px; padding:.45rem .75rem; background: rgba(255,255,255,.12); font-weight:700; }
-        .landing-example { border: 1px solid rgba(15,23,42,.08); border-radius: 16px; padding: 1rem; background: #fff; height: 100%; }
+        .landing-shell { max-width: 760px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+        .landing-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 20px; padding: 1.5rem; box-shadow: 0 8px 20px rgba(15,23,42,.18); }
+        .landing-card { border: 1px solid rgba(15,23,42,.08); border-radius: 16px; box-shadow: 0 4px 12px rgba(15,23,42,.06); background: #fff; }
+        .landing-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .landing-example { border: 1px solid rgba(15,23,42,.08); border-radius: 12px; padding: .85rem 1rem; background: #fff; }
         .landing-faq summary { cursor: pointer; font-weight: 700; }
+        .landing-collapse { border: 1px solid rgba(15,23,42,.08); border-radius: 16px; background: #fff; box-shadow: 0 4px 12px rgba(15,23,42,.06); margin-bottom: .75rem; overflow: hidden; }
+        .landing-collapse > summary { list-style: none; cursor: pointer; padding: 1rem 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-weight: 700; font-size: 1rem; color: #0f172a; }
+        .landing-collapse > summary::-webkit-details-marker { display: none; }
+        .landing-collapse > summary::after { content: '⌄'; color: #94a3b8; font-size: 1.1rem; transition: transform .15s; flex-shrink: 0; }
+        .landing-collapse[open] > summary::after { transform: rotate(180deg); }
+        .landing-collapse > summary .lc-meta { font-size: .8rem; color: #64748b; font-weight: 500; }
+        .landing-collapse-body { padding: 0 1rem 1rem; }
     </style>
     </head>
     <body>
@@ -122,110 +128,50 @@ if (empty($_SESSION['user_id'])) {
             </div>
         </section>
 
-        <section class="mb-4">
-            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
-                <div>
-                    <div class="text-uppercase fw-semibold small" style="color:#0d9488;">No account needed</div>
-                    <h2 class="h3 mb-0">Service Dog &amp; Handler Rights</h2>
+        <details class="landing-collapse">
+            <summary>⚖️ Service Dog &amp; Handler Rights <span class="lc-meta">ADA, air travel, housing, state laws — no account needed</span></summary>
+            <div class="landing-collapse-body">
+                <div class="landing-grid">
+                    <a class="landing-example text-decoration-none text-dark" href="state_access_laws.php"><div class="fw-bold mb-1">🗺️ State Access Laws</div><div class="text-muted small">Public access rights and key statutes for all 50 states.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php"><div class="fw-bold mb-1">🪪 ADA Quick Ref</div><div class="text-muted small">What staff may ask, what they may not, and a calm response script.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php"><div class="fw-bold mb-1">📋 Service Dog &amp; ESA Legal Info</div><div class="text-muted small">Plain-language guide covering service dogs, ESAs, and housing.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="air_travel_rights.php"><div class="fw-bold mb-1">✈️ Air Travel Rights</div><div class="text-muted small">DOT forms, what airlines can require, and what to do at the gate.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php"><div class="fw-bold mb-1">🏠 Housing &amp; Access FAQ</div><div class="text-muted small">When a landlord or HOA asks for paperwork or certification.</div></a>
                 </div>
-                <a href="state_access_laws.php" class="btn btn-sm fw-semibold" style="background:#0d9488;color:#fff;">All 50 States →</a>
             </div>
-            <div class="landing-grid">
-                <a class="landing-example text-decoration-none text-dark" href="state_access_laws.php" style="border-top: 3px solid #0d9488;">
-                    <div class="fw-bold mb-1">🗺️ State Access Laws</div>
-                    <div class="text-muted small">SDIT public access rights, misrepresentation laws, and key statutes for all 50 states and DC. Searchable and filterable.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="service_dog_rights.php" style="border-top: 3px solid #0d6efd;">
-                    <div class="fw-bold mb-1">🪪 ADA Handler Quick Ref</div>
-                    <div class="text-muted small">What staff may ask, what they may not ask, when access can be denied, and a calm response script.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="service_dog_esa_legal_info.php" style="border-top: 3px solid #7c3aed;">
-                    <div class="fw-bold mb-1">📋 Service Dog &amp; ESA Legal Info</div>
-                    <div class="text-muted small">Plain-language guide covering service dogs, ESAs, housing rights, and air travel basics.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="air_travel_rights.php" style="border-top: 3px solid #ea580c;">
-                    <div class="fw-bold mb-1">✈️ Air Travel Rights</div>
-                    <div class="text-muted small">DOT forms, what airlines can require, SDIT rules, and what to do if access is denied at the gate.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="housing_access_faq.php" style="border-top: 3px solid #0891b2;">
-                    <div class="fw-bold mb-1">🏠 Housing &amp; Access FAQ</div>
-                    <div class="text-muted small">What to do when a landlord, HOA, or business asks for paperwork, certification, or proof of training.</div>
-                </a>
-            </div>
-        </section>
+        </details>
 
-        <section class="mb-4">
-            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
-                <div>
-                    <div class="text-uppercase text-muted fw-semibold small">Public tools &amp; guides</div>
-                    <h2 class="h3 mb-0">Browse without an account</h2>
+        <details class="landing-collapse">
+            <summary>🔍 Browse Without an Account <span class="lc-meta">Breed tools, public profiles, companion app</span></summary>
+            <div class="landing-collapse-body">
+                <div class="landing-grid">
+                    <a class="landing-example text-decoration-none text-dark" href="breed_questionnaire.php"><div class="fw-bold mb-1">Breed Questionnaire</div><div class="text-muted small">Size, focus, and family matching to narrow breeds worth researching.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="breed_comparison_hub.php"><div class="fw-bold mb-1">Breed Comparison Hub</div><div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="breed_family_guide.php"><div class="fw-bold mb-1">Breed Family Guide</div><div class="text-muted small">Family-level overview before comparing exact breeds.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="app.php"><div class="fw-bold mb-1">Companion App</div><div class="text-muted small">Native Android app — training logs, goal intake, and wearable data.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="dogs.php"><div class="fw-bold mb-1">Public Dog Profile</div><div class="text-muted small">Shareable profile and found-dog contact details via QR or direct link.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="faq.php"><div class="fw-bold mb-1">FAQ</div><div class="text-muted small">Common questions about breed research, support, and the app.</div></a>
+                    <a class="landing-example text-decoration-none text-dark" href="support_funding.php"><div class="fw-bold mb-1">Support GuidePaw</div><div class="text-muted small">One-time, monthly, or à la carte services like QR tracking.</div></a>
                 </div>
             </div>
-            <div class="landing-grid">
-                <a class="landing-example text-decoration-none text-dark" href="breed_questionnaire.php">
-                    <div class="fw-bold mb-1">Breed Questionnaire</div>
-                    <div class="text-muted small">Size, focus, family, and nickname matching to help narrow breeds worth researching.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="dogs.php">
-                    <div class="fw-bold mb-1">Public Dog Profile</div>
-                    <div class="text-muted small">A shareable profile for contact details, found-dog reports, and public notes. Shared via QR or direct link.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="app.php">
-                    <div class="fw-bold mb-1">GuidePaw Companion App</div>
-                    <div class="text-muted small">Native Android app — training logs, goal intake, habit repair, behavior tracking, and wearable data. No browser wrappers.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="breed_comparison_hub.php">
-                    <div class="fw-bold mb-1">Breed Comparison Hub</div>
-                    <div class="text-muted small">Cavalier, retriever, poodle, corgi, and compact companion comparisons.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="breed_family_guide.php">
-                    <div class="fw-bold mb-1">Breed Family Guide</div>
-                    <div class="text-muted small">Broad family-level overview before you compare exact breeds.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="faq.php">
-                    <div class="fw-bold mb-1">GuidePaw FAQ</div>
-                    <div class="text-muted small">Public questions about breed research, support, and what the app actually does.</div>
-                </a>
-                <a class="landing-example text-decoration-none text-dark" href="support_funding.php">
-                    <div class="fw-bold mb-1">Support Options</div>
-                    <div class="text-muted small">One-time support, monthly support, and a la carte services like QR tracking.</div>
-                </a>
-            </div>
-        </section>
+        </details>
 
-        <section class="row g-3 mb-4">
-            <div class="col-lg-7">
-                <div class="landing-card p-4 h-100">
-                    <div class="text-uppercase text-muted fw-semibold small mb-2">How it works</div>
-                    <h2 class="h3">A straightforward path from research to daily use</h2>
-                    <ol class="mt-3 mb-0">
-                        <li>Research a breed before you commit.</li>
-                        <li>Create a handler account and add your dogs.</li>
-                        <li>Track training in the app or on the web, and share a public dog profile.</li>
-                        <li>Use built-in tools — goal intake, habit repair, and behavior tracking — as the dog's work develops.</li>
-                    </ol>
-                </div>
+        <details class="landing-collapse">
+            <summary>❓ How It Works &amp; Common Questions <span class="lc-meta">4 steps, 3 FAQs</span></summary>
+            <div class="landing-collapse-body">
+                <div class="text-uppercase text-muted fw-semibold small mb-2">How it works</div>
+                <ol class="mb-4">
+                    <li class="mb-1">Research a breed before you commit.</li>
+                    <li class="mb-1">Create a handler account and add your dogs.</li>
+                    <li class="mb-1">Track training in the app or on the web, and share a public dog profile.</li>
+                    <li>Use built-in tools — goal intake, habit repair, and behavior tracking — as the dog's work develops.</li>
+                </ol>
+                <div class="text-uppercase text-muted fw-semibold small mb-2">Common questions</div>
+                <details class="mb-2"><summary class="landing-faq">Is the breed questionnaire public?</summary><p class="text-muted small mt-2 mb-0">Yes. It is meant for people researching a dog before they create an account.</p></details>
+                <details class="mb-2"><summary class="landing-faq">Do I need an account to browse?</summary><p class="text-muted small mt-2 mb-0">No. The public landing, breed tool, and support page are all readable without signing in.</p></details>
+                <details><summary class="landing-faq">What is the dashboard for?</summary><p class="text-muted small mt-2 mb-0">The dashboard is for logged-in handlers to manage dogs, training, and support tools.</p></details>
             </div>
-            <div class="col-lg-5">
-                <div class="landing-card p-4 h-100">
-                    <div class="text-uppercase text-muted fw-semibold small mb-2">Common questions</div>
-                    <div class="landing-faq accordion accordion-flush" id="gpFaq">
-                        <details class="mb-3">
-                            <summary>Is the breed questionnaire public?</summary>
-                            <p class="text-muted mt-2 mb-0">Yes. It is meant for people researching a dog before they create an account.</p>
-                        </details>
-                        <details class="mb-3">
-                            <summary>Do I need an account to browse the examples?</summary>
-                            <p class="text-muted mt-2 mb-0">No. The public landing, breed tool, and support page are all readable without signing in.</p>
-                        </details>
-                        <details>
-                            <summary>What is the main dashboard for?</summary>
-                            <p class="text-muted mt-2 mb-0">The dashboard is for logged-in handlers to manage dogs, training, and support tools.</p>
-                        </details>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </details>
 
         <section class="landing-card p-4">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
