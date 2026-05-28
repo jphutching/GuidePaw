@@ -3681,7 +3681,7 @@ class MainActivity : AppCompatActivity() {
                     value           = feedbackPageWorkflow,
                     onValueChange   = { feedbackPageWorkflow = it },
                     label           = { Text("Page or workflow") },
-                    placeholder     = { Text("dogs.php, login, training log", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
+                    placeholder     = { Text("e.g. Training Logs, Dog Profile, Settings", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
                     singleLine      = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier        = Modifier.fillMaxWidth(),
@@ -3698,7 +3698,7 @@ class MainActivity : AppCompatActivity() {
                     value           = feedbackDetails,
                     onValueChange   = { feedbackDetails = it },
                     label           = { Text("Details") },
-                    placeholder     = { Text("What happened, what you expected, steps to reproduce.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
+                    placeholder     = { Text("Describe what happened and what you were trying to do.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant) },
                     minLines        = 5,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, capitalization = KeyboardCapitalization.Sentences),
                     modifier        = Modifier.fillMaxWidth(),
@@ -6930,7 +6930,7 @@ class MainActivity : AppCompatActivity() {
 
             if (result == null) {
                 SummaryCard {
-                    Text("Load candidate data to compare your dogs.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                    Text("Compare your dogs' assessment scores side by side.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = { loadCandidateAssessments() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Load Comparison")
@@ -7256,7 +7256,7 @@ class MainActivity : AppCompatActivity() {
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("No QR tracking loaded yet.", fontWeight = FontWeight.SemiBold)
-                            Text("Load the active dog's public QR code and recent scan activity.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                            Text("Your dog's public QR code and recent scan history.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                             Button(onClick = { loadQrTracking() }, modifier = Modifier.fillMaxWidth()) { Text("Load QR Tracking") }
                         }
                     }
@@ -10135,7 +10135,7 @@ class MainActivity : AppCompatActivity() {
                 TextButton(onClick = { currentSection = NavSection.OVERVIEW }) { Text("← Back") }
                 Text("🤝 My Trainers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp))
             }
-            Text("Trainers associated with your dogs via dog training profiles.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+            Text("Trainers connected to your dogs.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
 
             if (loading) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }; return@Column }
             SectionMessage(errorMsg)

@@ -90,7 +90,7 @@ function getTrainingSuggestions(PDO $pdo, int $userId, int $dogId): array {
     $items = getDogTrainingItems($pdo, $dogId);
     $suggestions = [];
     if (!$items) {
-        $suggestions[] = 'Load the starter training ladder so the app can coach next steps, candidate screening, and test-track benchmarks.';
+        $suggestions[] = 'Add a training program to start getting personalized coaching suggestions.';
         return $suggestions;
     }
 
@@ -111,7 +111,7 @@ function getTrainingSuggestions(PDO $pdo, int $userId, int $dogId): array {
 
     $candidateStage = $profile['candidate_stage'] ?? 'prospect';
     if (in_array($candidateStage, ['prospect', 'foundation'], true) && $candidateItems && $candidateMastered < 5) {
-        $suggestions[] = 'Candidate screen first: keep checking recovery, neutrality, handling tolerance, and resilience before piling on specialized service tasks.';
+        $suggestions[] = 'Build the foundation first — focus on recovery, neutrality, and handling tolerance before adding specialized service tasks.';
     }
     if ($candidateItems && $candidateStarted === 0) {
         $suggestions[] = 'Start with one candidate-screen session this week so you know whether this dog is building the right raw material for service work.';

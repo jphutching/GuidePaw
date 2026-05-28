@@ -96,7 +96,7 @@ function getDogAlertItems(PDO $pdo, int $userId, int $dogId): array {
     else { $total = count($items); $proficient = count(array_filter($items, fn($i) => ($i['status'] ?? '') === 'proficient')); if ($total > 0 && ($proficient / $total) < 0.5) $alerts[] = ['level'=>'warning','title'=>'Certification progress under 50%','detail'=>$proficient . ' of ' . $total . ' checklist items are marked proficient.','action_url'=>'certification.php','action_label'=>'Open certification']; }
     $trainingItems = getDogTrainingItems($pdo, $dogId);
     if (!$trainingItems) {
-        $alerts[] = ['level'=>'info','title'=>'Training ladder not loaded','detail'=>'Load the starter training ladder to track candidate screening, commands, CGC items, and service-task progression.','action_url'=>'training_program.php','action_label'=>'Open training'];
+        $alerts[] = ['level'=>'info','title'=>'Training ladder not loaded','detail'=>'Start your training program to track commands, skills, and service-task progress.','action_url'=>'training_program.php','action_label'=>'Open training'];
     } else {
         $inProgress = count(array_filter($trainingItems, fn($i) => in_array(($i['status'] ?? ''), ['in_progress','proofing'], true)));
         $mastered = count(array_filter($trainingItems, fn($i) => ($i['status'] ?? '') === 'mastered'));
