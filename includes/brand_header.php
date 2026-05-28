@@ -6,11 +6,11 @@ if (!function_exists('guidepawBrandHeader')) {
 <style>
 .gp-shared-brand-wrap {
     background: linear-gradient(135deg, #0d6efd 0%, #2856c8 100%);
-    border-bottom-left-radius: 28px;
-    border-bottom-right-radius: 28px;
-    box-shadow: 0 8px 18px rgba(15, 40, 90, .18);
-    padding: clamp(22px, 6vw, 42px) 18px;
-    margin: 0 0 clamp(20px, 5vw, 34px);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    box-shadow: 0 4px 12px rgba(15, 40, 90, .18);
+    padding: clamp(10px, 2.5vw, 16px) 16px clamp(12px, 2.5vw, 16px);
+    margin: 0 0 clamp(12px, 3vw, 20px);
 }
 .gp-shared-brand-inner {
     display: flex;
@@ -20,19 +20,19 @@ if (!function_exists('guidepawBrandHeader')) {
     flex-wrap: nowrap;
 }
 .gp-shared-brand-logo {
-    width: clamp(210px, 44vw, 360px);
+    width: clamp(120px, 26vw, 190px);
     height: auto;
-    border-radius: 18px;
+    border-radius: 10px;
     display: block;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, .12);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .12);
 }
 .gp-shared-brand-tagline {
-    color: rgba(255,255,255,.78);
-    font-size: clamp(11px, 2.2vw, 14px);
+    color: rgba(255,255,255,.65);
+    font-size: clamp(9px, 1.6vw, 11px);
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: .1em;
     text-align: center;
-    margin-top: 10px;
+    margin-top: 5px;
     text-transform: uppercase;
 }
 </style>

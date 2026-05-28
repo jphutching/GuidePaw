@@ -326,8 +326,9 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="styles.css" rel="stylesheet">
 <style>
-    .dashboard-hero { background: linear-gradient(135deg, #0d6efd, #0f766e); color: #fff; border-radius: 0 0 28px 28px; padding: 1.25rem 1rem 1.5rem; box-shadow: 0 10px 24px rgba(15,23,42,.18); }
-    .dashboard-hero .btn-outline-light { border-color: rgba(255,255,255,.45); }
+    .dashboard-dog-strip { padding: .5rem 0 .75rem; display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+    .dashboard-dog-strip h1 { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0; }
+    .dashboard-dog-strip .dog-meta { font-size: .8rem; color: #64748b; }
     .command-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 8px 20px rgba(15,23,42,.07); overflow: hidden; }
     .command-title { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; flex-wrap:wrap; }
     .today-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -351,27 +352,13 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
 <?php require_once 'includes/beta_banner.php'; ?>
 <?php require_once 'includes/mobile_nav.php'; ?>
 
-<header class="dashboard-hero">
-    <div class="container px-0" style="max-width: 960px;">
-        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-            <div class="min-w-0">
-                <div class="small opacity-75"><?= e(appName()) ?> • Signed in as <?= e($user['username'] ?? 'handler') ?></div>
-                <h1 class="h2 mb-1 text-break">🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h1>
-                <div class="small opacity-75 text-break">
-                    <?php if ($activeDog): ?>
-                        <?= e($activeDog['breed'] ?: 'Breed Not Set') ?>
-                        <?= !empty($activeDog['weight_lbs']) ? ' • ' . e((string) $activeDog['weight_lbs']) . ' lbs' : '' ?>
-                        • <?= e(ucfirst($activeDog['access_role'])) ?> access
-                    <?php else: ?>
-                        Add a dog profile to start logging.
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
+<main class="page-shell">
+    <div class="dashboard-dog-strip">
+        <h1>🐾 <?= e($activeDog['name'] ?? 'No active dog selected') ?></h1>
+        <?php if ($activeDog): ?>
+            <span class="dog-meta"><?= e($activeDog['breed'] ?: 'Breed Not Set') ?><?= !empty($activeDog['weight_lbs']) ? ' · ' . e((string) $activeDog['weight_lbs']) . ' lbs' : '' ?></span>
+        <?php endif; ?>
     </div>
-</header>
-
-<main class="page-shell mt-3">
     <?php if (($_GET['msg'] ?? '') === 'setup_complete'): ?>
         <div class="alert alert-success mb-3">Setup complete. You can use the dashboard now.</div>
     <?php endif; ?>
@@ -387,10 +374,6 @@ $dailyWinSavedToday = (bool) $dailyWinExisting;
     <?php if (($_GET['msg'] ?? '') === 'daily_win_missing'): ?>
         <div class="alert alert-warning mb-3">Pick an active dog before saving today's quick win.</div>
     <?php endif; ?>
-
-    <div class="home-utility mb-3">
-        <span data-network-status class="badge bg-secondary">Checking...</span>
-    </div>
 
     <?php if ($unreadNotifications > 0): ?>
         <section class="notification-summary mb-3">
