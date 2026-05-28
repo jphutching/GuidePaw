@@ -325,17 +325,19 @@
       <div class="tab active" onclick="switchTab('handoff')">HANDOFF</div>
       <div class="tab" onclick="switchTab('devlog')">DEVLOG</div>
       <div class="tab" onclick="switchTab('project')">PROJECT STATE</div>
+      <div class="tab" onclick="switchTab('claudeboot')">CLAUDE BOOT</div>
       <div class="tab" onclick="switchTab('boot')">CODEX BOOT</div>
       <div class="tab" onclick="switchTab('rules')">RULES</div>
       <div class="tab" onclick="switchTab('terminal')">TERMINAL</div>
     </div>
 
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
-      <div id="tab-handoff" class="tab-panel active"><pre id="content-handoff">Loading…</pre></div>
-      <div id="tab-devlog"  class="tab-panel"><pre id="content-devlog">Loading…</pre></div>
-      <div id="tab-project" class="tab-panel"><pre id="content-project">Loading…</pre></div>
-      <div id="tab-boot"    class="tab-panel"><pre id="content-boot">Loading…</pre></div>
-      <div id="tab-rules"   class="tab-panel"><pre id="content-rules">Loading…</pre></div>
+      <div id="tab-handoff"   class="tab-panel active"><pre id="content-handoff">Loading…</pre></div>
+      <div id="tab-devlog"    class="tab-panel"><pre id="content-devlog">Loading…</pre></div>
+      <div id="tab-project"   class="tab-panel"><pre id="content-project">Loading…</pre></div>
+      <div id="tab-claudeboot"class="tab-panel"><pre id="content-claudeboot">Loading…</pre></div>
+      <div id="tab-boot"      class="tab-panel"><pre id="content-boot">Loading…</pre></div>
+      <div id="tab-rules"     class="tab-panel"><pre id="content-rules">Loading…</pre></div>
       <div id="term-panel">
         <div id="terminal-container"></div>
       </div>
@@ -501,6 +503,7 @@ function loadAll() {
   loadFile('HANDOFF.md',      'content-handoff');
   loadFile('DEVLOG.md',       'content-devlog');
   loadFile('PROJECT_STATE.md','content-project');
+  loadFile('CLAUDE_BOOT.md',  'content-claudeboot');
   loadFile('CODEX_BOOT.md',   'content-boot');
   loadFile('CODEX_RULES.md',  'content-rules');
 }
@@ -509,7 +512,7 @@ function loadAll() {
 function switchTab(name) {
   if (window.innerWidth <= 767) closeSidebar();
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['handoff','devlog','project','boot','rules','terminal'];
+    const names = ['handoff','devlog','project','claudeboot','boot','rules','terminal'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));

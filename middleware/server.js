@@ -229,7 +229,7 @@ app.post("/handoff", auth, (req, res) => {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 const DASH_HTML = path.join(__dirname, "dashboard.html");
-const ALLOWED_FILES = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CODEX_BOOT.md","CODEX_RULES.md"];
+const ALLOWED_FILES = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CLAUDE_BOOT.md","CODEX_BOOT.md","CODEX_RULES.md"];
 const ALLOWED_CMDS = [
   "git log --oneline -10",
   "git status --short",
