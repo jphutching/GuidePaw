@@ -92,3 +92,9 @@ Prefixes: `feat:` `fix:` `refactor:` `docs:` `chore:` `test:`
 - Never push broken code without noting it in HANDOFF.md
 - Never make the repo public
 - Always `git pull` before starting work
+
+---
+
+## Codex Rules
+
+When Codex CLI is working on this project, it must read `CODEX_RULES.md` in the repo root before writing any code. That file documents 10 specific rules derived from actual past screwups — broken version bumps, developer language in user UI, PostgreSQL boolean errors, content truncation, and more. Claude should enforce these rules when reviewing Codex's output.
