@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuidePaw Dev Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  header { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  header h1 { font-size: 16px; font-weight: 600; color: #58a6ff; }
+  #session-badge { font-size: 12px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+  .badge-idle    { background: #21262d; color: #8b949e; }
+  .badge-claude  { background: #1f4a8a; color: #79c0ff; }
+  .badge-codex   { background: #1a3a2a; color: #56d364; }
+  #last-update   { margin-left: auto; font-size: 11px; color: #8b949e; }
+  #refresh-btn   { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  #refresh-btn:hover { background: #30363d; }
+
+  /* ── Layout ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .sidebar { width: 280px; min-width: 280px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; overflow-y: auto; }
+  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Sidebar sections ── */
+  .sidebar-section { padding: 12px 14px; border-bottom: 1px solid #21262d; }
+  .sidebar-section h3 { font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .state-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+  .state-label { color: #8b949e; }
+  .state-val   { color: #e6edf3; text-align: right; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .state-val.green { color: #56d364; }
+  .state-val.blue  { color: #79c0ff; }
+  .state-val.yellow { color: #e3b341; }
+
+  /* ── Buttons ── */
+  .btn { display: block; width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #e6edf3; cursor: pointer; font-size: 13px; text-align: left; margin-bottom: 5px; transition: background .15s; }
+  .btn:hover  { background: #30363d; }
+  .btn.green  { border-color: #238636; background: #1a3a2a; color: #56d364; }
+  .btn.green:hover  { background: #238636; color: #fff; }
+  .btn.blue   { border-color: #1f4a8a; background: #1c2d40; color: #79c0ff; }
+  .btn.blue:hover   { background: #1f4a8a; color: #fff; }
+  .btn.red    { border-color: #6e1a1a; background: #2a1a1a; color: #f85149; }
+  .btn.red:hover    { background: #6e1a1a; color: #fff; }
+  .btn.orange { border-color: #6e4600; background: #2a2010; color: #e3b341; }
+  .btn.orange:hover { background: #6e4600; color: #fff; }
+
+  /* ── Session form ── */
+  .form-group { margin-bottom: 6px; }
+  .form-group label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 3px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e6edf3;
+    padding: 5px 8px; border-radius: 6px; font-size: 12px; font-family: inherit;
+  }
+  .form-group textarea { resize: vertical; min-height: 50px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #58a6ff; }
+
+  /* ── Tabs (file viewer) ── */
+  .tabs { display: flex; background: #161b22; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: #8b949e; white-space: nowrap; }
+  .tab:hover   { color: #e6edf3; }
+  .tab.active  { color: #e6edf3; border-bottom-color: #58a6ff; }
+  .tab-panel   { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+  .tab-panel.active { display: block; }
+  .tab-panel pre { white-space: pre-wrap; word-break: break-word; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; line-height: 1.6; color: #e6edf3; }
+
+  /* ── Command runner ── */
+  #cmd-panel { flex-shrink: 0; background: #161b22; border-top: 1px solid #30363d; }
+  #cmd-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 14px; cursor: pointer; font-size: 12px; color: #8b949e; user-select: none; }
+  #cmd-toggle:hover { color: #e6edf3; }
+  #cmd-toggle .arrow { transition: transform .2s; }
+  #cmd-toggle.open .arrow { transform: rotate(180deg); }
+  #cmd-body { display: none; padding: 10px 14px 14px; }
+  #cmd-body.open { display: flex; gap: 10px; }
+  #cmd-buttons { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; min-width: 220px; }
+  .cmd-btn { padding: 5px 10px; background: #21262d; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace; }
+  .cmd-btn:hover { background: #30363d; }
+  #cmd-output { flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; min-height: 100px; max-height: 180px; overflow-y: auto; color: #56d364; white-space: pre-wrap; word-break: break-word; }
+  #cmd-output.err { color: #f85149; }
+
+  /* ── Terminal ── */
+  #term-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  #term-panel.active { display: flex; }
+  #terminal-container { flex: 1; padding: 8px; overflow: hidden; }
+
+  /* ── Milestone list ── */
+  .milestone-item { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+  .milestone-title { font-size: 12px; font-weight: 600; color: #e3b341; }
+  .milestone-meta  { font-size: 11px; color: #8b949e; margin-top: 2px; }
+
+  /* ── Toast ── */
+  #toast { position: fixed; bottom: 20px; right: 20px; background: #1f4a8a; color: #e6edf3; padding: 10px 16px; border-radius: 8px; font-size: 13px; display: none; z-index: 999; }
+  #toast.show { display: block; }
+  #toast.err  { background: #6e1a1a; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🐾 GuidePaw Dev</h1>
+  <span id="session-badge" class="badge-idle">idle</span>
+  <span id="current-task" style="font-size:12px;color:#8b949e;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+  <span id="last-update" style="margin-left:auto"></span>
+  <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+</header>
+
+<div class="main">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <h3>Session State</h3>
+      <div class="state-row"><span class="state-label">Active AI</span><span id="s-ai" class="state-val">—</span></div>
+      <div class="state-row"><span class="state-label">Version</span><span id="s-ver" class="state-val blue">—</span></div>
+      <div class="state-row"><span class="state-label">Branch</span><span id="s-branch" class="state-val">—</span></div>
+      <div class="state-row"><span class="state-label">Last Milestone</span><span id="s-milestone" class="state-val yellow">—</span></div>
+      <div class="state-row"><span class="state-label">Last Handoff</span><span id="s-handoff" class="state-val">—</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Start Session</h3>
+      <div class="form-group">
+        <label>AI</label>
+        <select id="f-ai"><option value="claude">Claude</option><option value="codex">Codex</option></select>
+      </div>
+      <div class="form-group">
+        <label>Task</label>
+        <textarea id="f-task" rows="2" placeholder="What are you working on?"></textarea>
+      </div>
+      <button class="btn green" onclick="startSession()">▶ Start Session</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>End Session</h3>
+      <div class="form-group">
+        <label>AI</label>
+        <select id="e-ai"><option value="claude">Claude</option><option value="codex">Codex</option></select>
+      </div>
+      <div class="form-group">
+        <label>Summary</label>
+        <textarea id="e-summary" rows="2" placeholder="What was done?"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Next Task</label>
+        <textarea id="e-next" rows="2" placeholder="Specific next task for the other AI..."></textarea>
+      </div>
+      <button class="btn red" onclick="endSession()">■ End Session</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Log Milestone</h3>
+      <div class="form-group">
+        <label>AI</label>
+        <select id="m-ai"><option value="claude">Claude</option><option value="codex">Codex</option></select>
+      </div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="m-title" placeholder="e.g. v0.099 QR fix">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="m-desc" rows="2" placeholder="What was accomplished?"></textarea>
+      </div>
+      <button class="btn orange" onclick="logMilestone()">✦ Log Milestone</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Recent Milestones</h3>
+      <div id="milestone-list"><span style="color:#8b949e;font-size:12px">Loading…</span></div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ── Content ── -->
+  <div class="content">
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('handoff')">HANDOFF</div>
+      <div class="tab" onclick="switchTab('devlog')">DEVLOG</div>
+      <div class="tab" onclick="switchTab('project')">PROJECT STATE</div>
+      <div class="tab" onclick="switchTab('boot')">CODEX BOOT</div>
+      <div class="tab" onclick="switchTab('rules')">RULES</div>
+      <div class="tab" onclick="switchTab('terminal')">TERMINAL</div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
+      <div id="tab-handoff" class="tab-panel active"><pre id="content-handoff">Loading…</pre></div>
+      <div id="tab-devlog"  class="tab-panel"><pre id="content-devlog">Loading…</pre></div>
+      <div id="tab-project" class="tab-panel"><pre id="content-project">Loading…</pre></div>
+      <div id="tab-boot"    class="tab-panel"><pre id="content-boot">Loading…</pre></div>
+      <div id="tab-rules"   class="tab-panel"><pre id="content-rules">Loading…</pre></div>
+      <div id="term-panel">
+        <div id="terminal-container"></div>
+      </div>
+    </div>
+
+    <!-- ── Command Runner ── -->
+    <div id="cmd-panel">
+      <div id="cmd-toggle" onclick="toggleCmdPanel()">
+        <span class="arrow">▲</span>
+        <span>Quick Commands</span>
+        <span style="margin-left:8px;font-size:11px;color:#56d364" id="cmd-status"></span>
+      </div>
+      <div id="cmd-body">
+        <div id="cmd-buttons">
+          <button class="cmd-btn" onclick="runCmd('git log --oneline -10')">git log</button>
+          <button class="cmd-btn" onclick="runCmd('git status --short')">git status</button>
+          <button class="cmd-btn" onclick="runCmd('git diff --stat HEAD')">git diff stat</button>
+          <button class="cmd-btn" onclick="runCmd('git pull origin main')">git pull</button>
+          <button class="cmd-btn" onclick="runCmd('bash scripts/deploy_local.sh')">deploy</button>
+          <button class="cmd-btn" onclick="runCmd('php -l includes/db_connect.php')">lint db_connect</button>
+          <button class="cmd-btn" onclick="runCmd('systemctl status nginx --no-pager -l')">nginx status</button>
+          <button class="cmd-btn" onclick="runCmd('systemctl status php8.5-fpm --no-pager -l')">php-fpm status</button>
+          <button class="cmd-btn" onclick="runCmd('systemctl status postgresql --no-pager -l')">postgres status</button>
+          <button class="cmd-btn" onclick="runCmd('curl -sk https://10.147.18.184/api/me.php | python3 -m json.tool 2>/dev/null || echo no response')">ping API</button>
+          <button class="cmd-btn" onclick="runCmd('tail -20 /var/log/nginx/error.log 2>/dev/null || echo no log')">nginx errors</button>
+          <button class="cmd-btn" onclick="runCmd('sudo -u postgres psql guidepaw -c \\'SELECT version FROM users LIMIT 1;\\' 2>/dev/null || echo check db')">ping DB</button>
+          <button class="cmd-btn" onclick="runCmd('ls -lh downloads/*.apk 2>/dev/null | tail -5')">apk list</button>
+          <button class="cmd-btn" onclick="runCmd('cat /tmp/middleware.log 2>/dev/null | tail -20')">middleware log</button>
+        </div>
+        <pre id="cmd-output">Click a command…</pre>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script>
+const BASE = window.location.origin;
+let termInit = false, ws, xterm, fitAddon;
+
+/* ── Utilities ── */
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  setTimeout(() => t.className = '', 3000);
+}
+
+function fmt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── State ── */
+async function loadState() {
+  try {
+    const r = await fetch(BASE + '/api/dash/state');
+    const d = await r.json();
+    const s = d.state;
+
+    const ai = s.active_ai || 'idle';
+    const badge = document.getElementById('session-badge');
+    badge.textContent = ai;
+    badge.className = ai === 'idle' ? 'badge-idle' : ai === 'claude' ? 'badge-claude' : 'badge-codex';
+
+    document.getElementById('current-task').textContent = s.current_task || '';
+    document.getElementById('s-ai').textContent = s.active_ai || 'none';
+    document.getElementById('s-ai').className = 'state-val ' + (s.active_ai === 'claude' ? 'blue' : s.active_ai === 'codex' ? 'green' : '');
+    document.getElementById('s-ver').textContent = s.app_version || '—';
+    document.getElementById('s-branch').textContent = s.branch || '—';
+    document.getElementById('s-milestone').textContent = s.last_milestone || '—';
+    document.getElementById('s-handoff').textContent = fmt(s.last_handoff_at);
+    document.getElementById('last-update').textContent = 'Updated ' + fmt(new Date().toISOString());
+
+    const ml = document.getElementById('milestone-list');
+    if (d.recent_milestones && d.recent_milestones.length) {
+      ml.innerHTML = d.recent_milestones.map(m => `
+        <div class="milestone-item">
+          <div class="milestone-title">${m.title}</div>
+          <div class="milestone-meta">${m.ai?.toUpperCase()} · ${fmt(m.ts)}</div>
+        </div>`).join('');
+    } else {
+      ml.innerHTML = '<span style="color:#8b949e;font-size:12px">No milestones yet</span>';
+    }
+  } catch(e) { console.error(e); }
+}
+
+/* ── File loading ── */
+async function loadFile(name, elId) {
+  try {
+    const r = await fetch(BASE + '/api/dash/file/' + name);
+    const d = await r.json();
+    document.getElementById(elId).textContent = d.content || '(empty)';
+  } catch(e) { document.getElementById(elId).textContent = 'Error loading ' + name; }
+}
+
+function loadAll() {
+  loadState();
+  loadFile('HANDOFF.md',      'content-handoff');
+  loadFile('DEVLOG.md',       'content-devlog');
+  loadFile('PROJECT_STATE.md','content-project');
+  loadFile('CODEX_BOOT.md',   'content-boot');
+  loadFile('CODEX_RULES.md',  'content-rules');
+}
+
+/* ── Tabs ── */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['handoff','devlog','project','boot','rules','terminal'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('term-panel').classList.remove('active');
+
+  if (name === 'terminal') {
+    document.getElementById('term-panel').classList.add('active');
+    if (!termInit) initTerminal();
+  } else {
+    const panel = document.getElementById('tab-' + name);
+    if (panel) panel.classList.add('active');
+  }
+}
+
+/* ── Command runner ── */
+let cmdOpen = false;
+function toggleCmdPanel() {
+  cmdOpen = !cmdOpen;
+  document.getElementById('cmd-toggle').classList.toggle('open', cmdOpen);
+  document.getElementById('cmd-body').classList.toggle('open', cmdOpen);
+}
+
+async function runCmd(cmd) {
+  const out = document.getElementById('cmd-output');
+  const status = document.getElementById('cmd-status');
+  out.textContent = '$ ' + cmd + '\n\nRunning…';
+  out.className = '';
+  status.textContent = '⟳ running';
+  try {
+    const r = await fetch(BASE + '/api/dash/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ cmd })
+    });
+    const d = await r.json();
+    out.textContent = '$ ' + cmd + '\n\n' + (d.output || '(no output)');
+    out.className = d.exitCode !== 0 ? 'err' : '';
+    status.textContent = d.exitCode === 0 ? '✓ ok' : '✗ error';
+    if (!cmdOpen) toggleCmdPanel();
+  } catch(e) {
+    out.textContent = 'Request failed: ' + e.message;
+    out.className = 'err';
+    status.textContent = '✗ failed';
+  }
+}
+
+/* ── Session actions ── */
+async function startSession() {
+  const ai = document.getElementById('f-ai').value;
+  const task = document.getElementById('f-task').value.trim();
+  if (!task) { toast('Enter a task description', true); return; }
+  try {
+    const r = await fetch(BASE + '/session/start', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify({ ai, task, branch: 'main' })
+    });
+    const d = await r.json();
+    if (d.session_id) { toast('Session started: ' + ai); loadAll(); document.getElementById('f-task').value = ''; }
+    else toast(JSON.stringify(d), true);
+  } catch(e) { toast(e.message, true); }
+}
+
+async function endSession() {
+  const ai = document.getElementById('e-ai').value;
+  const summary = document.getElementById('e-summary').value.trim();
+  const next_task = document.getElementById('e-next').value.trim();
+  if (!summary) { toast('Enter a summary', true); return; }
+  if (!next_task) { toast('Enter a next task', true); return; }
+  try {
+    const r = await fetch(BASE + '/session/end', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify({ ai, summary, next_task })
+    });
+    const d = await r.json();
+    if (d.ok) { toast('Session ended — handoff written'); loadAll(); document.getElementById('e-summary').value = ''; document.getElementById('e-next').value = ''; }
+    else toast(JSON.stringify(d), true);
+  } catch(e) { toast(e.message, true); }
+}
+
+async function logMilestone() {
+  const ai = document.getElementById('m-ai').value;
+  const title = document.getElementById('m-title').value.trim();
+  const description = document.getElementById('m-desc').value.trim();
+  if (!title) { toast('Enter a title', true); return; }
+  try {
+    const r = await fetch(BASE + '/milestone', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify({ ai, title, description })
+    });
+    const d = await r.json();
+    if (d.ok) { toast('Milestone logged'); loadAll(); document.getElementById('m-title').value = ''; document.getElementById('m-desc').value = ''; }
+    else toast(JSON.stringify(d), true);
+  } catch(e) { toast(e.message, true); }
+}
+
+/* ── Terminal ── */
+function initTerminal() {
+  termInit = true;
+  xterm = new Terminal({
+    theme: { background:'#0d1117', foreground:'#e6edf3', cursor:'#58a6ff',
+             black:'#0d1117', red:'#f85149', green:'#56d364', yellow:'#e3b341',
+             blue:'#58a6ff', magenta:'#bc8cff', cyan:'#39c5cf', white:'#e6edf3' },
+    fontFamily: "'SFMono-Regular', Consolas, monospace",
+    fontSize: 13, cursorBlink: true, scrollback: 2000
+  });
+  fitAddon = new FitAddon.FitAddon();
+  xterm.loadAddon(fitAddon);
+  xterm.open(document.getElementById('terminal-container'));
+  fitAddon.fit();
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(proto + '://' + location.host + '/terminal?token=' + encodeURIComponent(DASH_TOKEN));
+
+  ws.onopen = () => { xterm.write('\r\n\x1b[32mConnected to GuidePaw shell\x1b[0m\r\n'); };
+  ws.onmessage = e => xterm.write(e.data);
+  ws.onclose = () => xterm.write('\r\n\x1b[31m[disconnected]\x1b[0m\r\n');
+  ws.onerror = () => xterm.write('\r\n\x1b[31m[connection error]\x1b[0m\r\n');
+
+  xterm.onData(data => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
+
+  window.addEventListener('resize', () => {
+    if (fitAddon) {
+      fitAddon.fit();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'resize', cols: xterm.cols, rows: xterm.rows }));
+      }
+    }
+  });
+}
+/* DASH_TOKEN injected by server */
+</script>
+<script>
+loadAll();
+setInterval(loadState, 15000);
+toggleCmdPanel();
+</script>
+</body>
+</html>

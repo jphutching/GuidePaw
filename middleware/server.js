@@ -9,14 +9,19 @@
 
 require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const path = require("path");
 const fs = require("fs");
+const { execFile, spawn } = require("child_process");
 const Database = require("better-sqlite3");
 const cron = require("node-cron");
+const { WebSocketServer } = require("ws");
+const pty = require("node-pty");
 const { syncToGit } = require("./git-sync");
 const { buildHandoffDoc } = require("./handoff-template");
 
 const app = express();
+const httpServer = http.createServer(app);
 app.use(express.json());
 
 const PORT = process.env.PORT || 3333;
@@ -220,6 +225,104 @@ app.post("/handoff", auth, (req, res) => {
   res.json({ ok: true, handoff_written: true });
 });
 
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+const DASH_HTML = path.join(__dirname, "dashboard.html");
+const ALLOWED_FILES = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CODEX_BOOT.md","CODEX_RULES.md"];
+const ALLOWED_CMDS = [
+  "git log --oneline -10",
+  "git status --short",
+  "git diff --stat HEAD",
+  "git pull origin main",
+  "bash scripts/deploy_local.sh",
+  "php -l includes/db_connect.php",
+  "systemctl status nginx --no-pager -l",
+  "systemctl status php8.5-fpm --no-pager -l",
+  "systemctl status postgresql --no-pager -l",
+  "ls -lh downloads/*.apk",
+  "tail -20 /var/log/nginx/error.log",
+  "cat /tmp/middleware.log",
+  "sudo -u postgres psql guidepaw -c 'SELECT version FROM users LIMIT 1;'",
+  "curl -sk https://10.147.18.184/api/me.php | python3 -m json.tool",
+];
+
+app.get("/dashboard", (req, res) => {
+  let html = fs.readFileSync(DASH_HTML, "utf8");
+  html = html.replace("/* DASH_TOKEN injected by server */",
+    `const DASH_TOKEN = ${JSON.stringify(MIDDLEWARE_SECRET || "")};`);
+  res.setHeader("Content-Type", "text/html");
+  res.send(html);
+});
+
+app.get("/api/dash/state", auth, (req, res) => {
+  const state = readState();
+  const recent_milestones = db.prepare("SELECT * FROM milestones ORDER BY ts DESC LIMIT 6").all();
+  // inject app version from master.env if readable
+  try {
+    const env = fs.readFileSync(path.join(REPO_PATH, "master.env"), "utf8");
+    const m = env.match(/^GUIDEPAW_COMPANION_VERSION_NAME=(.+)$/m);
+    if (m) state.app_version = m[1].trim();
+  } catch {}
+  res.json({ state, recent_milestones });
+});
+
+app.get("/api/dash/file/:name", auth, (req, res) => {
+  const name = req.params.name;
+  if (!ALLOWED_FILES.includes(name))
+    return res.status(403).json({ error: "File not allowed" });
+  try {
+    const content = fs.readFileSync(path.join(REPO_PATH, name), "utf8");
+    res.json({ content });
+  } catch {
+    res.json({ content: `(${name} not found)` });
+  }
+});
+
+app.post("/api/dash/run", auth, (req, res) => {
+  const { cmd } = req.body || {};
+  if (!cmd || !ALLOWED_CMDS.includes(cmd))
+    return res.status(403).json({ error: "Command not in allowlist" });
+  const child = spawn("bash", ["-c", cmd], { cwd: REPO_PATH, env: { ...process.env, TERM: "xterm" } });
+  let output = "", exitCode = 0;
+  child.stdout.on("data", d => { output += d.toString(); });
+  child.stderr.on("data", d => { output += d.toString(); });
+  child.on("close", code => { exitCode = code || 0; res.json({ output: output.slice(0, 8000), exitCode }); });
+  setTimeout(() => { try { child.kill(); } catch {} }, 30000);
+});
+
+// ── WebSocket Terminal ─────────────────────────────────────────────────────────
+
+const wss = new WebSocketServer({ server: httpServer, path: "/terminal" });
+
+wss.on("connection", (ws, req) => {
+  // simple token check via query param ?token=...
+  const url = new URL(req.url, "http://localhost");
+  const token = url.searchParams.get("token") || req.headers["x-token"] || "";
+  if (MIDDLEWARE_SECRET && token !== MIDDLEWARE_SECRET) {
+    ws.send("\r\n\x1b[31mUnauthorized\x1b[0m\r\n");
+    ws.close();
+    return;
+  }
+
+  const shell = process.env.SHELL || "/bin/bash";
+  const term = pty.spawn(shell, [], {
+    name: "xterm-color", cols: 120, rows: 36,
+    cwd: REPO_PATH, env: { ...process.env, TERM: "xterm-256color" }
+  });
+
+  term.onData(data => { try { ws.send(data); } catch {} });
+  ws.on("message", raw => {
+    try {
+      const msg = JSON.parse(raw);
+      if (msg.type === "resize") { term.resize(msg.cols, msg.rows); return; }
+    } catch {}
+    term.write(raw);
+  });
+  ws.on("close", () => term.kill());
+  term.onExit(() => { try { ws.close(); } catch {} });
+  console.log(`[TERMINAL] new session from ${req.socket.remoteAddress}`);
+});
+
 // ── Watchdog ──────────────────────────────────────────────────────────────────
 cron.schedule("*/5 * * * *", () => {
   const state = readState();
@@ -243,7 +346,7 @@ cron.schedule("*/5 * * * *", () => {
   }
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════╗
 ║        GuidePaw AI Middleware — RUNNING              ║
