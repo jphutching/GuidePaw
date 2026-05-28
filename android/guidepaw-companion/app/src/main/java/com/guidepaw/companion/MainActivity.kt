@@ -317,6 +317,7 @@ class MainActivity : AppCompatActivity() {
     private var vetIsPrimary       by mutableStateOf(false)
     private var vetShowForm        by mutableStateOf(false)
     private var showWhatsNew       by mutableStateOf(false)
+    private var remoteChangelog    by mutableStateOf<List<GpRemoteChangelogEntry>>(emptyList())
     private var selectedLogDetail  by mutableStateOf<GuidePawLogItem?>(null)
 
     // ── Registration state ─────────────────────────────────────────────────
@@ -599,7 +600,7 @@ class MainActivity : AppCompatActivity() {
                 if (showWhatsNew) WhatsNewDialog()
                 selectedLogDetail?.let { LogDetailDialog(it) }
                 if (showUpdateCard) UpdateBanner()
-                if (currentMe?.username?.startsWith("demo.") == true) DemoModeBanner()
+                if (currentMe?.username?.let { it.startsWith("demo.") || it.startsWith("demo_") } == true) DemoModeBanner()
                 if (isLoading && !isPullingToRefresh) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 if (statusMessage.isNotBlank()) {
                     Text(
@@ -715,12 +716,17 @@ class MainActivity : AppCompatActivity() {
     // ── What's New dialog ───────────────────────────────────────────────────
     @Composable
     private fun WhatsNewDialog() {
+        val entries = if (remoteChangelog.isNotEmpty()) {
+            remoteChangelog.take(5).map { r -> ChangelogEntry(r.version, r.date, r.title, r.items) }
+        } else {
+            CHANGELOG.take(5)
+        }
         AlertDialog(
             onDismissRequest = { showWhatsNew = false },
             title = { Text("What's New", fontWeight = FontWeight.Bold) },
             text  = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    CHANGELOG.take(5).forEachIndexed { index, entry ->
+                    entries.forEachIndexed { index, entry ->
                         if (index > 0) HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                         Row(
                             modifier              = Modifier.fillMaxWidth(),
@@ -786,9 +792,9 @@ class MainActivity : AppCompatActivity() {
                     resetting = true
                     worker.execute {
                         try {
-                            api.demoReset(t)
+                            val resetSeconds = api.demoReset(t)
                             runOnUiThread {
-                                secondsLeft = 900
+                                secondsLeft = resetSeconds
                                 resetting   = false
                                 refreshDashboard(t, null)
                             }
@@ -7332,6 +7338,70 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     }
+
+                    // Found-dog reports
+                    SummaryCard {
+                        Text("Found dog reports", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Someone who finds your dog can submit a location report via your public QR profile.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GpOnSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        if (result.foundDogReports.isEmpty()) {
+                            Text("No reports received.", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                        } else {
+                            result.foundDogReports.forEach { report ->
+                                val statusColor = when (report.status) {
+                                    "new"      -> MaterialTheme.colorScheme.error
+                                    "resolved" -> Color(0xFF16a34a)
+                                    else       -> GpOnSurfaceVariant
+                                }
+                                OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(
+                                            modifier              = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment     = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                report.createdAt.take(10).ifBlank { "Unknown date" },
+                                                fontWeight = FontWeight.Medium,
+                                                style      = MaterialTheme.typography.bodySmall,
+                                            )
+                                            Text(
+                                                report.status.replaceFirstChar { it.uppercase() },
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = statusColor,
+                                            )
+                                        }
+                                        if (report.finderLocation.isNotBlank()) {
+                                            Text("📍 ${report.finderLocation}", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                        if (report.finderName.isNotBlank()) {
+                                            Text("👤 ${report.finderName}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        }
+                                        if (report.finderPhone.isNotBlank()) {
+                                            val ctx = LocalContext.current
+                                            TextButton(
+                                                onClick = {
+                                                    val intent = android.content.Intent(android.content.Intent.ACTION_DIAL, android.net.Uri.parse("tel:${report.finderPhone}"))
+                                                    ctx.startActivity(intent)
+                                                },
+                                                contentPadding = PaddingValues(0.dp),
+                                            ) {
+                                                Text("📞 ${report.finderPhone}", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                        }
+                                        if (report.finderMessage.isNotBlank()) {
+                                            Text(report.finderMessage, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -7603,6 +7673,7 @@ class MainActivity : AppCompatActivity() {
                     if (currentSection == NavSection.HEALTH_SUMMARY) {
                         loadHealthSummary()
                     }
+                    loadChangelog()
                     setLoading(false, "Dashboard updated.")
                 }
             } catch (e: GuidePawApiException) {
@@ -8444,6 +8515,15 @@ class MainActivity : AppCompatActivity() {
                     qrMessage = friendlyMessage(t.message, "Could not load QR tracking.")
                 }
             }
+        }
+    }
+
+    private fun loadChangelog() {
+        worker.execute {
+            try {
+                val entries = api.getChangelog(10)
+                if (entries.isNotEmpty()) runOnUiThread { remoteChangelog = entries }
+            } catch (_: Throwable) {}
         }
     }
 
@@ -10479,6 +10559,12 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.097", "May 28, 2026", "Found dog reports, live changelog & demo fix", listOf(
+                "QR Tracking now shows found-dog location reports submitted by anyone who scans your dog's QR code.",
+                "What's New dialog now pulls live release notes from the server.",
+                "Demo mode banner now appears correctly for all three demo accounts.",
+                "Demo reset timer syncs with the server's actual interval after each reset.",
+            )),
             ChangelogEntry("0.096", "May 27, 2026", "Cleaner labels & plain language", listOf(
                 "Button labels and screen descriptions now use plain, user-friendly language throughout.",
                 "Date fields show example dates instead of technical format codes.",

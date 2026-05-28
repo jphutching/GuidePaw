@@ -90,6 +90,15 @@ data class GpDogAccessResult(
 )
 
 data class GpQrScanEvent(val viewedAt: String, val device: String, val referrer: String)
+data class GpFoundDogReport(
+    val id: Int,
+    val finderLocation: String,
+    val finderName: String,
+    val finderPhone: String,
+    val finderMessage: String,
+    val status: String,
+    val createdAt: String,
+)
 data class GpQrResult(
     val dogId: Int,
     val dogName: String,
@@ -97,7 +106,9 @@ data class GpQrResult(
     val totalViews: Int,
     val lastViewed: String,
     val recentViews: List<GpQrScanEvent>,
+    val foundDogReports: List<GpFoundDogReport>,
 )
+data class GpRemoteChangelogEntry(val version: String, val date: String, val title: String, val items: List<String>)
 
 data class GpAlert(
     val level: String,
@@ -769,9 +780,29 @@ class GuidePawApiClient(
         return response.json.optInt("seconds_remaining", 900)
     }
 
-    fun demoReset(token: String) {
+    fun demoReset(token: String): Int {
         val response = requestJson("api/demo_reset.php", "POST", token, JSONObject())
         ensureSuccess(response)
+        return response.json.optInt("reset_seconds", 900)
+    }
+
+    fun getChangelog(limit: Int = 10): List<GpRemoteChangelogEntry> {
+        val response = requestJson("api/changelog.php?limit=$limit", "GET", null, null)
+        ensureSuccess(response)
+        return response.json.optJSONArray("entries")?.let { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                val items = o.optJSONArray("items")?.let { ia ->
+                    (0 until ia.length()).map { j -> ia.optString(j, "") }.filter { it.isNotBlank() }
+                }.orEmpty()
+                GpRemoteChangelogEntry(
+                    version = o.optString("version", ""),
+                    date    = o.optString("date", ""),
+                    title   = o.optString("title", ""),
+                    items   = items,
+                )
+            }
+        }.orEmpty()
     }
 
     fun me(token: String): GuidePawMeResult {
@@ -1002,13 +1033,28 @@ class GuidePawApiClient(
                 )
             }
         }.orEmpty()
+        val reports = response.json.optJSONArray("found_dog_reports")?.let { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                GpFoundDogReport(
+                    id             = o.optInt("id"),
+                    finderLocation = o.optString("finder_location", ""),
+                    finderName     = o.optString("finder_name", ""),
+                    finderPhone    = o.optString("finder_phone", ""),
+                    finderMessage  = o.optString("finder_message", ""),
+                    status         = o.optString("status", "new"),
+                    createdAt      = o.optString("created_at", ""),
+                )
+            }
+        }.orEmpty()
         return GpQrResult(
-            dogId      = response.json.optInt("dog_id"),
-            dogName    = response.json.optString("dog_name", ""),
-            publicUrl  = response.json.optString("public_url", ""),
-            totalViews = response.json.optInt("total_views"),
-            lastViewed = response.json.optString("last_viewed", ""),
-            recentViews = views,
+            dogId           = response.json.optInt("dog_id"),
+            dogName         = response.json.optString("dog_name", ""),
+            publicUrl       = response.json.optString("public_url", ""),
+            totalViews      = response.json.optInt("total_views"),
+            lastViewed      = response.json.optString("last_viewed", ""),
+            recentViews     = views,
+            foundDogReports = reports,
         )
     }
 

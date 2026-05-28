@@ -4,6 +4,17 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.097',
+                'date'    => 'May 28, 2026',
+                'title'   => 'Found dog reports, live changelog & demo fix',
+                'items'   => [
+                    'QR Tracking now shows found-dog location reports submitted via your dog\'s public QR profile.',
+                    'What\'s New dialog pulls live release notes from the server.',
+                    'Demo mode banner now appears correctly for all demo accounts.',
+                    'Demo reset timer syncs with the server\'s actual interval after each reset.',
+                ],
+            ],
+            [
                 'version' => '0.096',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Isolated demo sessions',
