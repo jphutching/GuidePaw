@@ -1,7 +1,5 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `auto_save_90pct`
-
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -15,25 +13,33 @@
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1780001821633` |
-| **Timestamp** | `2026-05-28T21:38:00.229Z` |
+| **Timestamp** | `2026-05-28T23:31:29.873Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-AUTO-SAVE at 91% — session still running. AI approaching context limit. Check terminal.
+Navigation and layout polish session: slimmed brand header, removed duplicate gradient dashboard-hero, reorganised menu (Account / Rights & Resources / Admin sections), landing page collapsible sections, Sign In button prominent in header and hero, demo account auto-fill links, fixed logout cookie bug, fixed demo account missing public_email on local and Render DB, deployed all changes to Render.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- *(run `git diff --name-only HEAD~1` to see recent changes)*
+- `includes/brand_header.php`
+- `includes/mobile_nav.php`
+- `index.php`
+- `login.php`
+- `logout.php`
+- `middleware/server.js`
+- `middleware/dashboard.html`
+- `CLAUDE_BOOT.md`
+- `CODEX_BOOT.md`
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-In the website. Navigation and pages still feels clunky. How can we polish it more? As it stands it feels overwhelming
+Submit app to Google Play Store — follow play-store/SUBMIT.md step by step. AAB is at play-store/GuidePaw_Companion_v0.098_release.aab. All store listing copy, data safety answers, graphics, and privacy policy are ready.
 
 ---
 
@@ -47,7 +53,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"In the website. Navigation and pages still feels clunky. How can we polish it more? As it stands it feels overwhelming","branch":"main"}'
+  -d '{"ai":"codex","task":"Submit app to Google Play Store — follow play-store/SUBMIT.md step by step. AAB is at play-store/GuidePaw_Companion_v0.098_release.aab. All store listing copy, data safety answers, graphics, and privacy policy are ready.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
