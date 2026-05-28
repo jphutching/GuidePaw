@@ -173,6 +173,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 document.getElementById('passwordInput').value = el.dataset.p;
             });
         });
+        var demoParam = new URLSearchParams(window.location.search).get('demo');
+        if (demoParam) {
+            var demoBtn = document.querySelector('.demo-fill[data-u="demo.' + demoParam + '"]');
+            if (demoBtn) demoBtn.click();
+        }
     })();
     </script>
     <script src="app.js"></script>

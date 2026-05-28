@@ -120,11 +120,18 @@ if (empty($_SESSION['user_id'])) {
         <section class="landing-hero mb-4">
             <h1 class="display-6 fw-bold mb-2">GuidePaw keeps handler work organized.</h1>
             <p class="mb-4" style="color:rgba(255,255,255,.82);font-size:1rem;">Research dog breeds, track training, manage profiles, and keep service dog paperwork in one place.</p>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
                 <a class="btn btn-light btn-lg fw-bold" href="login.php">Sign In</a>
                 <a class="btn btn-outline-light btn-lg fw-bold" href="register.php">Create an account</a>
                 <a class="btn btn-outline-light" href="breed_questionnaire.php">Research a breed</a>
                 <a class="btn btn-outline-light" href="app.php">Companion App</a>
+            </div>
+            <div style="background:rgba(255,255,255,.12);border-radius:12px;padding:.75rem 1rem;font-size:.85rem;color:rgba(255,255,255,.9);">
+                <strong style="color:#fff;">Try a demo account</strong> — tap to sign in instantly.<br>
+                <a href="login.php?demo=sarah" style="color:#fff;font-weight:700;">demo.sarah</a> (free) &nbsp;·&nbsp;
+                <a href="login.php?demo=marcus" style="color:#fff;font-weight:700;">demo.marcus</a> (plus) &nbsp;·&nbsp;
+                <a href="login.php?demo=jennifer" style="color:#fff;font-weight:700;">demo.jennifer</a> (pro)
+                <br><span style="color:rgba(255,255,255,.6);font-size:.8rem;">Password pre-filled. Sandbox resets every 30 minutes.</span>
             </div>
         </section>
 
