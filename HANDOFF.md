@@ -14,8 +14,8 @@
 | **From** | CODEX |
 | **To** | CLAUDE |
 | **Branch** | `main` |
-| **Session ID** | `codex-1779999158756` |
-| **Timestamp** | `2026-05-28T20:12:45.393Z` |
+| **Session ID** | `codex-1779999846686` |
+| **Timestamp** | `2026-05-28T20:24:13.332Z` |
 
 ---
 
@@ -33,7 +33,7 @@ Session killed manually — test. Check git log for any uncommitted work.
 
 ## 🎯 Next Task for CLAUDE
 
-Implementing the training log feature
+Add mark-complete button to training log entries
 
 ---
 
@@ -47,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Implementing the training log feature","branch":"main"}'
+  -d '{"ai":"claude","task":"Add mark-complete button to training log entries","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
