@@ -250,9 +250,13 @@ function fmt(iso) {
 }
 
 /* ── State ── */
+function authHeaders(extra) {
+  return Object.assign({ 'Authorization': 'Bearer ' + DASH_TOKEN }, extra || {});
+}
+
 async function loadState() {
   try {
-    const r = await fetch(BASE + '/api/dash/state');
+    const r = await fetch(BASE + '/api/dash/state', { headers: authHeaders() });
     const d = await r.json();
     const s = d.state;
 
@@ -286,7 +290,7 @@ async function loadState() {
 /* ── File loading ── */
 async function loadFile(name, elId) {
   try {
-    const r = await fetch(BASE + '/api/dash/file/' + name);
+    const r = await fetch(BASE + '/api/dash/file/' + name, { headers: authHeaders() });
     const d = await r.json();
     document.getElementById(elId).textContent = d.content || '(empty)';
   } catch(e) { document.getElementById(elId).textContent = 'Error loading ' + name; }
@@ -336,7 +340,7 @@ async function runCmd(cmd) {
   try {
     const r = await fetch(BASE + '/api/dash/run', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: authHeaders({'Content-Type':'application/json'}),
       body: JSON.stringify({ cmd })
     });
     const d = await r.json();
