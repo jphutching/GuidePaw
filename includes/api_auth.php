@@ -53,6 +53,24 @@ function apiEnsureTokenActiveDogColumns(PDO $pdo): void {
 }
 
 function issueApiToken(PDO $pdo, int $userId, string $label = 'Mobile Token'): array {
+    apiEnsureTokenActiveDogColumns($pdo);
+
+    // Carry forward active_dog_id from the most-recently-used active token
+    $prevDogId = null;
+    if (apiTokensColumnExists($pdo, 'active_dog_id')) {
+        $s = $pdo->prepare('SELECT active_dog_id FROM api_tokens WHERE user_id = ? AND revoked_at IS NULL ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 1');
+        $s->execute([$userId]);
+        $val = $s->fetchColumn();
+        $prevDogId = ($val !== false && $val !== null) ? (int) $val : null;
+    }
+    // If no previous token had a dog, fall back to user's first dog
+    if ($prevDogId === null) {
+        $s = $pdo->prepare('SELECT id FROM dogs WHERE owner_user_id = ? ORDER BY id ASC LIMIT 1');
+        $s->execute([$userId]);
+        $val = $s->fetchColumn();
+        $prevDogId = ($val !== false) ? (int) $val : null;
+    }
+
     // Revoke all existing active tokens for this user before issuing a new one
     $pdo->prepare('UPDATE api_tokens SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = ? AND revoked_at IS NULL')->execute([$userId]);
 
@@ -63,13 +81,11 @@ function issueApiToken(PDO $pdo, int $userId, string $label = 'Mobile Token'): a
     $ttlDays = max(1, (int) appEnv('API_TOKEN_TTL_DAYS', '90'));
     $expiresAt = (new DateTimeImmutable('now'))->modify('+' . $ttlDays . ' days')->format('Y-m-d H:i:s');
 
-    apiEnsureTokenActiveDogColumns($pdo);
-
     $columns = ['user_id', 'token_label', 'token_prefix', 'token_hash', 'last_used_at', 'expires_at', 'revoked_at'];
     $values = [$userId, $label, $prefix, $hash, null, $expiresAt, null];
     if (apiTokensColumnExists($pdo, 'active_dog_id')) {
         $columns[] = 'active_dog_id';
-        $values[] = null;
+        $values[] = $prevDogId;
     }
     if (apiTokensColumnExists($pdo, 'active_dog_updated_at')) {
         $columns[] = 'active_dog_updated_at';
