@@ -222,6 +222,29 @@
       <div class="state-row"><span class="state-label">Branch</span><span id="s-branch" class="state-val">—</span></div>
       <div class="state-row"><span class="state-label">Last Milestone</span><span id="s-milestone" class="state-val yellow">—</span></div>
       <div class="state-row"><span class="state-label">Last Handoff</span><span id="s-handoff" class="state-val">—</span></div>
+
+      <!-- session timer -->
+      <div id="timer-block" style="display:none;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+          <span style="color:var(--muted)">Session time</span>
+          <span id="s-countdown" style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--text)">—</span>
+        </div>
+        <div style="background:var(--bg2);border-radius:4px;height:6px;overflow:hidden;">
+          <div id="s-progress" style="height:100%;width:0%;background:var(--green);border-radius:4px;transition:width .5s,background .5s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;">
+          <span id="s-elapsed">0 min elapsed</span>
+          <span id="s-timeout">/ 45 min</span>
+        </div>
+      </div>
+
+      <!-- counts -->
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bg2);">
+        <div class="state-row"><span class="state-label">Total sessions</span><span id="s-total" class="state-val">—</span></div>
+        <div class="state-row"><span class="state-label">Claude sessions</span><span id="s-claude-ct" class="state-val blue">—</span></div>
+        <div class="state-row"><span class="state-label">Codex sessions</span><span id="s-codex-ct" class="state-val green">—</span></div>
+        <div class="state-row"><span class="state-label">Watchdog resets</span><span id="s-resets" class="state-val yellow">—</span></div>
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -358,6 +381,32 @@ function authHeaders(extra) {
   return Object.assign({ 'Authorization': 'Bearer ' + DASH_TOKEN }, extra || {});
 }
 
+let _timerInterval = null;
+let _sessionStart = null, _timeoutMin = 45, _warnMin = 40;
+
+function fmtCountdown(remainingMin) {
+  if (remainingMin <= 0) return '00:00';
+  const totalSec = Math.round(remainingMin * 60);
+  const m = Math.floor(totalSec / 60), s = totalSec % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function tickTimer() {
+  if (!_sessionStart) return;
+  const elapsed = (Date.now() - _sessionStart) / 60000;
+  const remaining = Math.max(0, _timeoutMin - elapsed);
+  const pct = Math.min(100, (elapsed / _timeoutMin) * 100);
+  const bar = document.getElementById('s-progress');
+  const countdown = document.getElementById('s-countdown');
+  const elapsedEl = document.getElementById('s-elapsed');
+  if (!bar) return;
+  bar.style.width = pct + '%';
+  bar.style.background = pct >= 90 ? 'var(--red)' : pct >= 75 ? 'var(--yellow)' : 'var(--green)';
+  countdown.textContent = fmtCountdown(remaining) + ' left';
+  countdown.style.color = pct >= 90 ? 'var(--red)' : pct >= 75 ? 'var(--yellow)' : 'var(--text)';
+  elapsedEl.textContent = Math.round(elapsed) + ' min elapsed';
+}
+
 async function loadState() {
   try {
     const r = await fetch(BASE + '/api/dash/state', { headers: authHeaders() });
@@ -378,6 +427,33 @@ async function loadState() {
     document.getElementById('s-handoff').textContent = fmt(s.last_handoff_at);
     document.getElementById('last-update').textContent = 'Updated ' + fmt(new Date().toISOString());
 
+    // timing
+    const t = d.timing || {};
+    const timerBlock = document.getElementById('timer-block');
+    if (s.active_ai && t.started_at) {
+      timerBlock.style.display = 'block';
+      _sessionStart = new Date(t.started_at).getTime();
+      _timeoutMin   = t.timeout_min || 45;
+      _warnMin      = t.warn_min    || 40;
+      document.getElementById('s-timeout').textContent = '/ ' + _timeoutMin + ' min';
+      if (_timerInterval) clearInterval(_timerInterval);
+      _timerInterval = setInterval(tickTimer, 1000);
+      tickTimer();
+    } else {
+      timerBlock.style.display = 'none';
+      _sessionStart = null;
+      if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+      document.getElementById('s-progress').style.width = '0%';
+      document.getElementById('s-countdown').textContent = '—';
+    }
+
+    // counts
+    const c = d.counts || {};
+    document.getElementById('s-total').textContent     = c.total_sessions   ?? '—';
+    document.getElementById('s-claude-ct').textContent = c.claude_sessions  ?? '—';
+    document.getElementById('s-codex-ct').textContent  = c.codex_sessions   ?? '—';
+    document.getElementById('s-resets').textContent    = c.watchdog_resets  ?? '—';
+
     const ml = document.getElementById('milestone-list');
     if (d.recent_milestones && d.recent_milestones.length) {
       ml.innerHTML = d.recent_milestones.map(m => `
@@ -386,7 +462,7 @@ async function loadState() {
           <div class="milestone-meta">${m.ai?.toUpperCase()} · ${fmt(m.ts)}</div>
         </div>`).join('');
     } else {
-      ml.innerHTML = '<span style="color:#8b949e;font-size:12px">No milestones yet</span>';
+      ml.innerHTML = '<span style="color:var(--muted);font-size:12px">No milestones yet</span>';
     }
   } catch(e) { console.error(e); }
 }

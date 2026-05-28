@@ -257,13 +257,35 @@ app.get("/dashboard", (req, res) => {
 app.get("/api/dash/state", auth, (req, res) => {
   const state = readState();
   const recent_milestones = db.prepare("SELECT * FROM milestones ORDER BY ts DESC LIMIT 6").all();
+
   // inject app version from master.env if readable
   try {
     const env = fs.readFileSync(path.join(REPO_PATH, "master.env"), "utf8");
     const m = env.match(/^GUIDEPAW_COMPANION_VERSION_NAME=(.+)$/m);
     if (m) state.app_version = m[1].trim();
   } catch {}
-  res.json({ state, recent_milestones });
+
+  // session timing
+  const timeout_min = SESSION_TIMEOUT_MINUTES;
+  const warn_min    = SESSION_TIMEOUT_MINUTES - 5;
+  let elapsed_min = 0, remaining_min = timeout_min, percent = 0;
+  if (state.active_ai && state.session_started_at) {
+    elapsed_min   = (Date.now() - new Date(state.session_started_at).getTime()) / 60000;
+    remaining_min = Math.max(0, timeout_min - elapsed_min);
+    percent       = Math.min(100, Math.round((elapsed_min / timeout_min) * 100));
+  }
+
+  // session history counts
+  const total_sessions   = db.prepare("SELECT COUNT(*) as n FROM sessions WHERE event='session_start'").get().n;
+  const watchdog_resets  = db.prepare("SELECT COUNT(*) as n FROM sessions WHERE event='session_end' AND payload LIKE '%watchdog%'").get().n;
+  const claude_sessions  = db.prepare("SELECT COUNT(*) as n FROM sessions WHERE event='session_start' AND ai='claude'").get().n;
+  const codex_sessions   = db.prepare("SELECT COUNT(*) as n FROM sessions WHERE event='session_start' AND ai='codex'").get().n;
+
+  res.json({
+    state, recent_milestones,
+    timing: { elapsed_min: Math.round(elapsed_min * 10) / 10, remaining_min: Math.round(remaining_min * 10) / 10, percent, timeout_min, warn_min, started_at: state.session_started_at },
+    counts: { total_sessions, watchdog_resets, claude_sessions, codex_sessions }
+  });
 });
 
 app.get("/api/dash/file/:name", auth, (req, res) => {
