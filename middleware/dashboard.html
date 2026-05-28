@@ -315,12 +315,12 @@
 
     <div class="sidebar-section" id="kill-section">
       <h3 style="color:var(--red)">Kill Session</h3>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Force-clears the active session. Writes handoff + DEVLOG + pushes git.</div>
+      <div id="kill-status" style="font-size:11px;margin-bottom:8px;color:var(--muted)">No active session</div>
       <div class="form-group">
         <label>Next Task (optional)</label>
         <textarea id="k-next" rows="2" placeholder="Leave blank to keep current task"></textarea>
       </div>
-      <button class="btn red" onclick="killSession()">🛑 Kill Session</button>
+      <button class="btn red" id="kill-btn" onclick="killSession()" disabled style="opacity:.45;cursor:not-allowed;">🛑 Kill Session</button>
     </div>
 
     <div class="sidebar-section">
@@ -498,6 +498,23 @@ async function loadState() {
       document.getElementById('s-progress').style.width = '0%';
       document.getElementById('s-countdown').textContent = '—';
       document.getElementById('warn-banner').className = '';
+    }
+
+    // kill button state
+    const killBtn = document.getElementById('kill-btn');
+    const killStatus = document.getElementById('kill-status');
+    if (s.active_ai) {
+      killBtn.disabled = false;
+      killBtn.style.opacity = '1';
+      killBtn.style.cursor = 'pointer';
+      const aiColor = s.active_ai === 'claude' ? 'var(--blue)' : 'var(--green)';
+      killStatus.innerHTML = `Active: <strong style="color:${aiColor}">${s.active_ai.toUpperCase()}</strong> — ${(s.current_task||'').slice(0,50)}`;
+    } else {
+      killBtn.disabled = true;
+      killBtn.style.opacity = '.45';
+      killBtn.style.cursor = 'not-allowed';
+      killStatus.textContent = 'No active session';
+      killStatus.style.color = 'var(--muted)';
     }
 
     // counts
