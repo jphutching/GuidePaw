@@ -1,7 +1,5 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `force_handoff_dashboard`
-
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -11,17 +9,17 @@
 
 | Field | Value |
 |---|---|
-| **From** | CODEX |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `codex-1779987127464` |
-| **Timestamp** | `2026-05-28T16:52:07.489Z` |
+| **Session ID** | `claude-1779987130663` |
+| **Timestamp** | `2026-05-28T16:52:16.222Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Force-saved from dashboard at 0% session usage — AI may still be running. Check terminal and git log for any uncommitted work.
+Full system test complete
 
 ---
 
@@ -31,13 +29,13 @@ Force-saved from dashboard at 0% session usage — AI may still be running. Chec
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Full system test task
+Submit app to Google Play Store following play-store/SUBMIT.md
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -47,7 +45,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Full system test task","branch":"main"}'
+  -d '{"ai":"codex","task":"Submit app to Google Play Store following play-store/SUBMIT.md","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -59,9 +57,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
