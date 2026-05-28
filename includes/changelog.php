@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.096',
+                'date'    => 'May 27, 2026',
+                'title'   => 'Isolated demo sessions',
+                'items'   => [
+                    'Each demo login creates a private isolated session — simultaneous users never interfere with each other.',
+                    'Demo sessions auto-delete 30 minutes after last reset, keeping the server clean.',
+                ],
+            ],
+            [
                 'version' => '0.095',
                 'date'    => 'May 27, 2026',
                 'title'   => 'Demo countdown & reset',

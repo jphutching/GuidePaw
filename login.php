@@ -38,6 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit;
         }
 
+        // Template demo accounts spawn an isolated ephemeral clone per login.
+        require_once __DIR__ . '/includes/demo_mode.php';
+        if (gpIsTemplateDemoUser($pdo, (int) $user['id'])) {
+            gpCleanupExpiredDemoUsers($pdo);
+            $ephemeral = gpCreateEphemeralDemoUser($pdo, (int) $user['id']);
+            $s = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+            $s->execute([$ephemeral['user_id']]);
+            $user = $s->fetch();
+        }
+
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['dog_name'] = $user['dog_name'];

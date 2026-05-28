@@ -35,13 +35,24 @@ if (!empty($user['is_2fa_enabled'])) {
     }
 }
 
-$issued = issueApiToken($pdo, (int) $user['id'], $label);
+// Template demo accounts are never used directly — clone an ephemeral session.
+require_once __DIR__ . '/../includes/demo_mode.php';
+$loginUserId   = (int) $user['id'];
+$loginUsername = $user['username'];
+if (gpIsTemplateDemoUser($pdo, $loginUserId)) {
+    gpCleanupExpiredDemoUsers($pdo);
+    $ephemeral    = gpCreateEphemeralDemoUser($pdo, $loginUserId);
+    $loginUserId   = $ephemeral['user_id'];
+    $loginUsername = $ephemeral['username'];
+}
+
+$issued = issueApiToken($pdo, $loginUserId, $label);
 apiJson([
     'success' => true,
     'token' => $issued['token'],
     'expires_at' => $issued['expires_at'],
     'user' => [
-        'id' => (int) $user['id'],
-        'username' => $user['username'],
+        'id' => $loginUserId,
+        'username' => $loginUsername,
     ],
 ]);
