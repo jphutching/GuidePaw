@@ -223,6 +223,15 @@ app.post("/handoff", auth, (req, res) => {
   res.json({ ok: true, handoff_written: true });
 });
 
+app.post("/note", auth, (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: "text required" });
+  const state = readState();
+  logEvent(state.session_id || "standalone", state.active_ai || "user", "note", { text });
+  console.log(`[NOTE] ${text}`);
+  res.json({ ok: true });
+});
+
 app.post("/session/kill", auth, (req, res) => {
   const state = readState();
   const ai = state.active_ai || req.body.ai || "unknown";

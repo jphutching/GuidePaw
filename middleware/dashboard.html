@@ -136,23 +136,46 @@
   #terminal-container { flex: 1; padding: 8px; overflow: hidden; }
 
   /* ── Activity feed ── */
-  .activity-feed { display: flex; flex-direction: column; gap: 4px; }
-  .activity-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 6px; background: var(--bg1); border: 1px solid var(--bg2); font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace; }
-  .activity-row:first-child { border-color: var(--border); }
-  .activity-ts   { color: var(--muted); white-space: nowrap; min-width: 115px; }
-  .activity-ai   { font-weight: 700; min-width: 48px; }
-  .activity-ai.claude { color: var(--blue); }
-  .activity-ai.codex  { color: var(--green); }
-  .activity-ai.unknown { color: var(--muted); }
-  .activity-event { font-weight: 600; min-width: 110px; }
-  .ev-session_start  { color: var(--green); }
-  .ev-session_end    { color: var(--muted); }
-  .ev-session_kill   { color: var(--red); }
-  .ev-milestone      { color: var(--yellow); }
-  .ev-token_warning  { color: var(--yellow); }
-  .ev-force_handoff  { color: var(--red); }
-  .ev-other          { color: var(--text); }
-  .activity-detail { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .activity-feed { display: flex; flex-direction: column; gap: 6px; }
+
+  /* active session card */
+  #active-card { display:none; border-radius:8px; border:2px solid var(--accent); background:var(--bg1); padding:14px 16px; margin-bottom:10px; }
+  #active-card.show { display:block; }
+  #active-card.claude { border-color: var(--blue); }
+  #active-card.codex  { border-color: var(--green); }
+  .active-card-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .active-card-ai { font-size:13px; font-weight:700; }
+  .active-card-ai.claude { color:var(--blue); }
+  .active-card-ai.codex  { color:var(--green); }
+  .active-card-elapsed { font-size:12px; color:var(--muted); margin-left:auto; font-variant-numeric:tabular-nums; }
+  .active-card-task { font-size:13px; color:var(--text); margin-bottom:10px; line-height:1.5; word-break:break-word; }
+  .active-card-note { display:flex; gap:6px; }
+  .active-card-note input { flex:1; background:var(--bg0); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:6px; font-size:12px; font-family:inherit; }
+  .active-card-note input:focus { outline:none; border-color:var(--accent); }
+  .active-card-note button { padding:6px 12px; border-radius:6px; border:1px solid var(--btn-blue-border); background:var(--btn-blue-bg); color:var(--btn-blue-text); font-size:12px; cursor:pointer; white-space:nowrap; }
+  .active-card-note button:hover { background:var(--btn-blue-border); color:#fff; }
+  #pulse-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse-dot 1.5s ease-in-out infinite; flex-shrink:0; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(0.7)} }
+
+  .activity-row { display:flex; flex-direction:column; gap:3px; padding:10px 12px; border-radius:6px; background:var(--bg1); border:1px solid var(--bg2); }
+  .activity-row:first-child { border-color:var(--border); }
+  .activity-row-top { display:flex; align-items:center; gap:8px; }
+  .activity-ts   { color:var(--muted); white-space:nowrap; font-size:11px; margin-left:auto; }
+  .activity-ai   { font-size:12px; font-weight:700; }
+  .activity-ai.claude { color:var(--blue); }
+  .activity-ai.codex  { color:var(--green); }
+  .activity-ai.user   { color:var(--yellow); }
+  .activity-ai.unknown { color:var(--muted); }
+  .activity-event { font-size:12px; font-weight:600; }
+  .ev-session_start  { color:var(--green); }
+  .ev-session_end    { color:var(--muted); }
+  .ev-session_kill   { color:var(--red); }
+  .ev-milestone      { color:var(--yellow); }
+  .ev-token_warning  { color:var(--yellow); }
+  .ev-force_handoff  { color:var(--red); }
+  .ev-note           { color:var(--accent); }
+  .ev-other          { color:var(--text); }
+  .activity-detail { font-size:12px; color:var(--text); line-height:1.4; word-break:break-word; padding-left:2px; }
 
   /* ── Milestone list ── */
   .milestone-item { background: var(--bg0); border: 1px solid var(--bg2); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
@@ -362,7 +385,22 @@
     </div>
 
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
-      <div id="tab-activity"  class="tab-panel active"><div id="activity-feed" class="activity-feed"><span style="color:var(--muted);font-size:12px">Loading…</span></div></div>
+      <div id="tab-activity"  class="tab-panel active">
+        <div id="active-card">
+          <div class="active-card-header">
+            <div id="pulse-dot"></div>
+            <span id="ac-ai" class="active-card-ai claude">CLAUDE</span>
+            <span style="font-size:12px;color:var(--muted)">running</span>
+            <span id="ac-elapsed" class="active-card-elapsed">0:00</span>
+          </div>
+          <div id="ac-task" class="active-card-task"></div>
+          <div class="active-card-note">
+            <input type="text" id="ac-note" placeholder="Send a note into the session log…" onkeydown="if(event.key==='Enter')sendNote()">
+            <button onclick="sendNote()">Send</button>
+          </div>
+        </div>
+        <div id="activity-feed" class="activity-feed"><span style="color:var(--muted);font-size:12px">Loading…</span></div>
+      </div>
       <div id="tab-handoff"   class="tab-panel"><pre id="content-handoff">Loading…</pre></div>
       <div id="tab-devlog"    class="tab-panel"><pre id="content-devlog">Loading…</pre></div>
       <div id="tab-project"   class="tab-panel"><pre id="content-project">Loading…</pre></div>
@@ -455,6 +493,8 @@ function tickTimer() {
   countdown.textContent = fmtCountdown(remaining) + ' left';
   countdown.style.color = pct >= 90 ? 'var(--red)' : pct >= 75 ? 'var(--yellow)' : 'var(--text)';
   elapsedEl.textContent = Math.round(elapsed) + ' min elapsed';
+  const acElapsed = document.getElementById('ac-elapsed');
+  if (acElapsed) acElapsed.textContent = Math.floor(elapsed) + 'm ' + String(Math.round((elapsed % 1) * 60)).padStart(2,'0') + 's elapsed';
   updateBanner(Math.round(pct), remaining, _activeAi);
 }
 
@@ -498,6 +538,17 @@ async function loadState() {
       document.getElementById('s-progress').style.width = '0%';
       document.getElementById('s-countdown').textContent = '—';
       document.getElementById('warn-banner').className = '';
+    }
+
+    // active session card
+    const card = document.getElementById('active-card');
+    if (s.active_ai && t.started_at) {
+      card.className = 'show ' + s.active_ai;
+      document.getElementById('ac-ai').textContent = s.active_ai.toUpperCase();
+      document.getElementById('ac-ai').className = 'active-card-ai ' + s.active_ai;
+      document.getElementById('ac-task').textContent = s.current_task || '(no task set)';
+    } else {
+      card.className = '';
     }
 
     // kill button state
@@ -575,21 +626,38 @@ async function loadEvents() {
     const d = await r.json();
     const feed = document.getElementById('activity-feed');
     if (!feed || !d.events) return;
-    if (_lastEventId === (d.events[0]?.id ?? null)) return; // no change
+    if (_lastEventId === (d.events[0]?.id ?? null)) return;
     _lastEventId = d.events[0]?.id ?? null;
     feed.innerHTML = d.events.map(ev => {
       const evClass = Object.keys(EVENT_LABELS).includes(ev.event) ? ev.event : 'other';
-      const aiClass = ['claude','codex'].includes(ev.ai) ? ev.ai : 'unknown';
+      const aiClass = ['claude','codex','user'].includes(ev.ai) ? ev.ai : 'unknown';
       const label   = EVENT_LABELS[ev.event] || ev.event;
       const detail  = eventDetail(ev.event, ev.payload);
       return `<div class="activity-row">
-        <span class="activity-ts">${fmtTs(ev.ts)}</span>
-        <span class="activity-ai ${aiClass}">${(ev.ai||'?').toUpperCase()}</span>
-        <span class="activity-event ev-${evClass}">${label}</span>
-        <span class="activity-detail" title="${detail}">${detail}</span>
+        <div class="activity-row-top">
+          <span class="activity-ai ${aiClass}">${(ev.ai||'?').toUpperCase()}</span>
+          <span class="activity-event ev-${evClass}">${label}</span>
+          <span class="activity-ts">${fmtTs(ev.ts)}</span>
+        </div>
+        ${detail ? `<div class="activity-detail">${detail}</div>` : ''}
       </div>`;
     }).join('') || '<span style="color:var(--muted);font-size:12px">No events yet</span>';
   } catch(e) { console.error('loadEvents:', e); }
+}
+
+async function sendNote() {
+  const input = document.getElementById('ac-note');
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    const r = await fetch(BASE + '/note', {
+      method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer ' + DASH_TOKEN},
+      body: JSON.stringify({ text })
+    });
+    const d = await r.json();
+    if (d.ok) { input.value = ''; loadEvents(); }
+    else toast(JSON.stringify(d), true);
+  } catch(e) { toast(e.message, true); }
 }
 
 /* ── File loading ── */
