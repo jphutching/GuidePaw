@@ -140,6 +140,17 @@
   .milestone-title { font-size: 12px; font-weight: 600; color: var(--yellow); }
   .milestone-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
+  /* ── Session warning banner ── */
+  #warn-banner { display:none; padding: 10px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); align-items: center; gap: 10px; flex-shrink: 0; }
+  #warn-banner.show { display: flex; }
+  #warn-banner.yellow { background: #2d2400; color: var(--yellow); border-color: #6e4600; }
+  #warn-banner.red    { background: #2a0a0a; color: var(--red);    border-color: #8b0000; animation: pulse-bg 1.5s ease-in-out infinite; }
+  html.light #warn-banner.yellow { background: #fff8c5; color: #7d4e00; border-color: #bf8700; }
+  html.light #warn-banner.red    { background: #ffebe9; color: #a40e26; border-color: #cf222e; }
+  @keyframes pulse-bg { 0%,100% { opacity:1; } 50% { opacity:.7; } }
+  #warn-banner button { margin-left: auto; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; background: var(--red); color: #fff; white-space: nowrap; }
+  #warn-banner button:hover { opacity: .85; }
+
   /* ── Toast ── */
   #toast { position: fixed; bottom: 20px; right: 20px; background: var(--toast-bg); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; display: none; z-index: 999; }
   #toast.show { display: block; }
@@ -203,6 +214,12 @@
   <button id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
   <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
 </header>
+
+<div id="warn-banner">
+  <span id="warn-icon">⚠️</span>
+  <span id="warn-text">Session approaching limit</span>
+  <button onclick="forceHandoff()">⚡ Force Handoff Now</button>
+</div>
 
 <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
@@ -382,7 +399,7 @@ function authHeaders(extra) {
 }
 
 let _timerInterval = null;
-let _sessionStart = null, _timeoutMin = 45, _warnMin = 40;
+let _sessionStart = null, _timeoutMin = 45, _warnMin = 40, _activeAi = null;
 
 function fmtCountdown(remainingMin) {
   if (remainingMin <= 0) return '00:00';
@@ -405,6 +422,7 @@ function tickTimer() {
   countdown.textContent = fmtCountdown(remaining) + ' left';
   countdown.style.color = pct >= 90 ? 'var(--red)' : pct >= 75 ? 'var(--yellow)' : 'var(--text)';
   elapsedEl.textContent = Math.round(elapsed) + ' min elapsed';
+  updateBanner(Math.round(pct), remaining, _activeAi);
 }
 
 async function loadState() {
@@ -432,6 +450,7 @@ async function loadState() {
     const timerBlock = document.getElementById('timer-block');
     if (s.active_ai && t.started_at) {
       timerBlock.style.display = 'block';
+      _activeAi     = s.active_ai;
       _sessionStart = new Date(t.started_at).getTime();
       _timeoutMin   = t.timeout_min || 45;
       _warnMin      = t.warn_min    || 40;
@@ -441,10 +460,11 @@ async function loadState() {
       tickTimer();
     } else {
       timerBlock.style.display = 'none';
-      _sessionStart = null;
+      _sessionStart = null; _activeAi = null;
       if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
       document.getElementById('s-progress').style.width = '0%';
       document.getElementById('s-countdown').textContent = '—';
+      document.getElementById('warn-banner').className = '';
     }
 
     // counts
@@ -619,6 +639,47 @@ function initTerminal() {
     }
   });
 }
+/* ── Warning banner ── */
+function updateBanner(pct, remainingMin, ai) {
+  const banner = document.getElementById('warn-banner');
+  const text   = document.getElementById('warn-text');
+  const icon   = document.getElementById('warn-icon');
+  if (!ai || pct < 80) {
+    banner.className = '';  // hide
+    return;
+  }
+  const mins = Math.round(remainingMin);
+  if (pct >= 90) {
+    banner.className = 'show red';
+    icon.textContent = '🚨';
+    text.textContent = `${ai.toUpperCase()} session at ${pct}% — ${mins} min left. Auto-save triggered. Force handoff to be safe.`;
+  } else {
+    banner.className = 'show yellow';
+    icon.textContent = '⚠️';
+    text.textContent = `${ai.toUpperCase()} session at ${pct}% — ${mins} min remaining. Consider wrapping up.`;
+  }
+}
+
+async function forceHandoff() {
+  const btn = document.querySelector('#warn-banner button');
+  btn.textContent = '⟳ Saving…'; btn.disabled = true;
+  try {
+    const r = await fetch(BASE + '/api/dash/force-handoff', {
+      method: 'POST', headers: authHeaders({'Content-Type':'application/json'}),
+      body: JSON.stringify({})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast(`✓ Handoff saved at ${d.pct}% — pushed to GitHub`);
+      document.getElementById('warn-banner').className = '';
+      loadAll();
+    } else {
+      toast(JSON.stringify(d), true);
+    }
+  } catch(e) { toast(e.message, true); }
+  btn.textContent = '⚡ Force Handoff Now'; btn.disabled = false;
+}
+
 /* ── Mobile sidebar ── */
 function openSidebar() {
   document.querySelector('.sidebar').classList.add('open');

@@ -115,6 +115,7 @@ app.post("/session/start", auth, (req, res) => {
   state.session_started_at = new Date().toISOString();
   state.current_task = task || state.current_task;
   state.branch = branch || state.branch;
+  state.handoff_saved_at_90 = false;
   writeState(state);
   logEvent(session_id, ai, "session_start", { task });
 
@@ -345,28 +346,99 @@ wss.on("connection", (ws, req) => {
   console.log(`[TERMINAL] new session from ${req.socket.remoteAddress}`);
 });
 
+// ── Force handoff (dashboard button) ──────────────────────────────────────────
+app.post("/api/dash/force-handoff", auth, (req, res) => {
+  const state = readState();
+  const ai = state.active_ai || req.body.ai || "unknown";
+  const pct = state.session_started_at
+    ? Math.round(((Date.now() - new Date(state.session_started_at).getTime()) / 60000 / SESSION_TIMEOUT_MINUTES) * 100)
+    : 0;
+
+  const doc = buildHandoffDoc({
+    from_ai: ai,
+    to_ai: ai === "claude" ? "codex" : "claude",
+    summary: `Force-saved from dashboard at ${pct}% session usage — AI may still be running. Check terminal and git log for any uncommitted work.`,
+    files_changed: state.files_in_progress || [],
+    next_task: state.current_task || "Review git log, check for uncommitted changes, then continue previous task.",
+    branch: state.branch || "main",
+    session_id: state.session_id,
+    reason: "force_handoff_dashboard"
+  });
+
+  fs.writeFileSync(HANDOFF_FILE, doc);
+  const devlogEntry = `\n## ${new Date().toISOString().slice(0,10)} | ${ai.toUpperCase()} | ⚡ Force handoff at ${pct}%\n\nDashboard force-handoff triggered at ${pct}% session usage.\n\n**Next:** ${state.current_task || "See HANDOFF.md"}\n\n---\n`;
+  try { fs.appendFileSync(DEVLOG_FILE, devlogEntry); } catch {}
+
+  state.last_handoff_at = new Date().toISOString();
+  state.active_ai = null;
+  writeState(state);
+  logEvent(state.session_id, ai, "force_handoff", { pct });
+  syncToGit(REPO_PATH, `handoff: force-saved at ${pct}% — ${ai}`).catch(console.error);
+
+  console.log(`[FORCE HANDOFF] ${ai.toUpperCase()} at ${pct}%`);
+  res.json({ ok: true, pct, message: `Handoff saved at ${pct}%. Pushed to GitHub.` });
+});
+
 // ── Watchdog ──────────────────────────────────────────────────────────────────
-cron.schedule("*/5 * * * *", () => {
+const WARN_PCT  = 80;  // yellow banner on dashboard
+const FORCE_PCT = 90;  // auto-save + push, red banner
+
+cron.schedule("*/1 * * * *", () => {   // check every minute
   const state = readState();
   if (!state.active_ai || !state.session_started_at) return;
   const mins = (Date.now() - new Date(state.session_started_at).getTime()) / 60000;
-  if (mins >= SESSION_TIMEOUT_MINUTES - 5) {
-    console.log(`[WATCHDOG] ${mins.toFixed(1)}min elapsed — triggering handoff`);
+  const pct  = (mins / SESSION_TIMEOUT_MINUTES) * 100;
+
+  // 90% — auto-save handoff + push, but keep session alive so AI can finish
+  if (pct >= FORCE_PCT && !state.handoff_saved_at_90) {
+    console.log(`[WATCHDOG] ${pct.toFixed(0)}% — auto-saving handoff`);
     const doc = buildHandoffDoc({
       from_ai: state.active_ai,
       to_ai: state.active_ai === "claude" ? "codex" : "claude",
-      summary: `Watchdog auto-handoff after ${SESSION_TIMEOUT_MINUTES}min`,
-      files_changed: state.files_in_progress,
-      next_task: state.current_task,
-      branch: state.branch, session_id: state.session_id, reason: "watchdog_timeout"
+      summary: `AUTO-SAVE at ${pct.toFixed(0)}% — session still running. AI approaching context limit. Check terminal.`,
+      files_changed: state.files_in_progress || [],
+      next_task: state.current_task || "Review git log for last work, then continue.",
+      branch: state.branch || "main",
+      session_id: state.session_id,
+      reason: "auto_save_90pct"
+    });
+    fs.writeFileSync(HANDOFF_FILE, doc);
+    const devlogEntry = `\n## ${new Date().toISOString().slice(0,10)} | ${state.active_ai.toUpperCase()} | ⚠️ Auto-save at ${pct.toFixed(0)}%\n\nWatchdog auto-saved handoff. Session still running.\n\n---\n`;
+    try { fs.appendFileSync(DEVLOG_FILE, devlogEntry); } catch {}
+    state.handoff_saved_at_90 = true;  // only fire once per session
+    state.last_handoff_at = new Date().toISOString();
+    writeState(state);
+    syncToGit(REPO_PATH, `handoff: auto-save at ${pct.toFixed(0)}%`).catch(console.error);
+  }
+
+  // 100% hard timeout — force end
+  if (mins >= SESSION_TIMEOUT_MINUTES) {
+    console.log(`[WATCHDOG] ${mins.toFixed(1)}min — hard timeout, ending session`);
+    const doc = buildHandoffDoc({
+      from_ai: state.active_ai,
+      to_ai: state.active_ai === "claude" ? "codex" : "claude",
+      summary: `Hard timeout after ${SESSION_TIMEOUT_MINUTES}min. Session force-ended.`,
+      files_changed: state.files_in_progress || [],
+      next_task: state.current_task || "Review git log and continue previous task.",
+      branch: state.branch || "main",
+      session_id: state.session_id,
+      reason: "watchdog_timeout"
     });
     fs.writeFileSync(HANDOFF_FILE, doc);
     state.last_handoff_at = new Date().toISOString();
     state.active_ai = null;
+    state.handoff_saved_at_90 = false;
     writeState(state);
-    syncToGit(REPO_PATH, `handoff: watchdog timeout`).catch(console.error);
+    logEvent(state.session_id, state.active_ai, "session_end", { reason: "watchdog_timeout" });
+    syncToGit(REPO_PATH, `handoff: watchdog hard timeout`).catch(console.error);
   }
 });
+
+// clear the 90% flag when a new session starts (already in /session/start but belt+suspenders)
+function clearWatchdogFlags(state) {
+  state.handoff_saved_at_90 = false;
+  return state;
+}
 
 httpServer.listen(PORT, () => {
   console.log(`
