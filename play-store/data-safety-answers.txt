@@ -1,0 +1,86 @@
+===============================================================
+GUIDEPAW COMPANION — DATA SAFETY FORM ANSWERS
+Play Console → App content → Data safety
+Answer each question as shown below.
+===============================================================
+
+SECTION 1: Data collection and security
+----------------------------------------
+Q: Does your app collect or share any of the required user data types?
+A: YES
+
+Q: Is all of the user data collected by your app encrypted in transit?
+A: YES
+
+Q: Do you provide a way for users to request that their data is deleted?
+A: YES  (via email to admin@guidepaw.app, stated in privacy policy)
+
+
+SECTION 2: Data types collected
+---------------------------------
+
+── LOCATION ──
+Approximate location:  YES — collected, not shared
+Precise location:      YES — collected, not shared
+  Purpose: App functionality (navigation features, found-dog location reports)
+  Required or optional: Optional (user grants permission)
+  Collected in background: NO
+
+── PERSONAL INFO ──
+Name:           YES — collected, not shared
+Email address:  YES — collected, not shared
+User IDs:       YES — collected, not shared
+  Purpose: Account management, app functionality
+  Required: YES
+
+── HEALTH AND FITNESS ──
+Health info:    YES — collected, not shared
+  (vet records, medications, health documents for the service dog)
+  Purpose: App functionality
+  Required: Optional
+
+── PHOTOS AND VIDEOS ──
+Photos:         YES — collected, not shared
+  (dog profile photos, training media attachments)
+  Purpose: App functionality
+  Required: Optional
+
+── AUDIO ──
+Audio files:    YES — collected, not shared
+  (training session audio attachments)
+  Purpose: App functionality
+  Required: Optional
+
+── FILES AND DOCS ──
+Files and docs: YES — collected, not shared
+  (certification documents, vet records PDFs)
+  Purpose: App functionality
+  Required: Optional
+
+── APP ACTIVITY ──
+App interactions: YES — collected, not shared
+  Purpose: Analytics (aggregate, anonymized via Google Analytics 4)
+  Required: YES
+
+── DEVICE OR OTHER IDs ──
+Device or other IDs: NO
+
+
+SECTION 3: Data sharing
+------------------------
+Q: Does your app share any of the collected data with third parties?
+A: NO  (payment processing via Stripe is initiated outside the app in the system browser — no payment data passes through the app)
+
+
+SECTION 4: Data handling practices
+------------------------------------
+Q: Is the data collected required for your app, or can users choose whether it's collected?
+A: Location, photos, audio, health info — OPTIONAL
+   Name, email, user IDs — REQUIRED for account
+
+
+NOTES FOR REVIEWER
+-------------------
+- Camera is used to take dog photos and scan QR codes. No camera data is stored or transmitted without explicit user action.
+- Location is never collected in the background.
+- No payment card data ever passes through the app. All purchases open guidepaw.app in the system browser.

@@ -9164,6 +9164,9 @@ class MainActivity : AppCompatActivity() {
     private fun openWebPage(url: String) =
         GuidePawNavigation.openUrl(this, url, accessToken = currentToken)
 
+    private fun openInSystemBrowser(url: String) =
+        startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)))
+
     private fun setLoading(loading: Boolean, message: String?) {
         isLoading = loading
         if (!loading) isPullingToRefresh = false
@@ -10135,31 +10138,16 @@ class MainActivity : AppCompatActivity() {
                                 }
                                 if (svc.summary.isNotBlank()) Text(svc.summary, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                                 if (!svc.active && svc.checkoutAvailable) {
-                                    val scope2 = rememberCoroutineScope()
-                                    var buying  by remember { mutableStateOf(false) }
-                                    var buyErr  by remember { mutableStateOf("") }
-                                    if (buyErr.isNotBlank()) Text(buyErr, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                    Text(
+                                        "Purchases are completed securely on our website.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = GpOnSurfaceVariant,
+                                    )
                                     Button(
-                                        onClick = {
-                                            val token = currentToken ?: return@Button
-                                            buying = true; buyErr = ""
-                                            scope2.launch {
-                                                try {
-                                                    val url = withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                        api.startBillingCheckout(token, "service", serviceSlug = svc.slug)
-                                                    }
-                                                    if (url.isNotBlank()) openWebPage(url)
-                                                    else buyErr = "Checkout unavailable."
-                                                } catch (t: Throwable) {
-                                                    buyErr = friendlyMessage(t.message, "Could not start checkout.")
-                                                } finally { buying = false }
-                                            }
-                                        },
+                                        onClick  = { openInSystemBrowser("https://guidepaw.app/plans") },
                                         modifier = Modifier.fillMaxWidth(),
-                                        enabled  = !buying,
                                     ) {
-                                        if (buying) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary); Spacer(Modifier.width(6.dp)) }
-                                        Text(if (priceLabel.isNotBlank()) "Buy — $priceLabel" else svc.actionLabel)
+                                        Text(if (priceLabel.isNotBlank()) "Upgrade on guidepaw.app — $priceLabel" else "Upgrade on guidepaw.app")
                                     }
                                 }
                             }
@@ -10169,10 +10157,16 @@ class MainActivity : AppCompatActivity() {
 
                 // Upgrade plan tier
                 if (b.currentTier != "pro") {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Plan upgrades are managed on our website.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GpOnSurfaceVariant,
+                    )
                     OutlinedButton(
-                        onClick  = { currentSection = NavSection.PLANS },
+                        onClick  = { openInSystemBrowser("https://guidepaw.app/plans") },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Upgrade Plan") }
+                    ) { Text("Upgrade Plan on guidepaw.app →") }
                 }
             }
         }
@@ -10559,6 +10553,10 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.098", "May 28, 2026", "Google Play ready — web checkout, privacy policy", listOf(
+                "Plan upgrades and add-on purchases now open securely in your web browser.",
+                "Privacy policy added at guidepaw.app/privacy.",
+            )),
             ChangelogEntry("0.097", "May 28, 2026", "Found dog reports, live changelog & demo fix", listOf(
                 "QR Tracking now shows found-dog location reports submitted by anyone who scans your dog's QR code.",
                 "What's New dialog now pulls live release notes from the server.",

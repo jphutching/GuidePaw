@@ -4,6 +4,15 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.098',
+                'date'    => 'May 28, 2026',
+                'title'   => 'Google Play ready — web checkout, privacy policy',
+                'items'   => [
+                    'Plan upgrades and add-on purchases now open securely in your web browser.',
+                    'Privacy policy added at guidepaw.app/privacy.',
+                ],
+            ],
+            [
                 'version' => '0.097',
                 'date'    => 'May 28, 2026',
                 'title'   => 'Found dog reports, live changelog & demo fix',

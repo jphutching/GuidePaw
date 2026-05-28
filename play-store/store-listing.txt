@@ -1,0 +1,97 @@
+===============================================================
+GUIDEPAW COMPANION — GOOGLE PLAY STORE LISTING COPY
+Copy and paste each field directly into the Play Console.
+===============================================================
+
+APP TITLE (30 chars max)
+------------------------
+GuidePaw Companion
+
+
+SHORT DESCRIPTION (80 chars max)
+---------------------------------
+Service dog training, health tracking & handler tools for visually impaired users.
+
+
+FULL DESCRIPTION (4000 chars max — paste as-is)
+-------------------------------------------------
+GuidePaw Companion is the official mobile app for GuidePaw — the all-in-one platform built for service dog handlers, trainers, and visually impaired individuals who rely on their dogs every day.
+
+Whether you're logging training sessions, managing vet appointments, or preparing for travel, GuidePaw Companion puts everything in one place — designed to be simple, accessible, and always with you.
+
+─────────────────────────────────────
+WHAT'S INCLUDED
+─────────────────────────────────────
+
+🐾 Training Log
+Track every session with notes, duration, exercises, and media attachments. Build a complete history you can share with your trainer or certifying organization.
+
+📋 Health & Vet Records
+Log medications, appointments, and health documents. Never lose track of vaccines, check-ups, or prescriptions.
+
+🆔 ADA Access Card
+Generate a digital ADA information card for your service dog — ready to show at restaurants, hotels, and businesses.
+
+✈️ Air Travel Prep
+Step-by-step airline documentation checklists built for DOT compliance.
+
+🏠 Housing Rights FAQ
+Know your rights under the Fair Housing Act. Built-in guidance for service dog handlers navigating housing situations.
+
+📍 QR Dog Tag Tracking
+See when and where your dog's QR tag is scanned. If someone finds your dog, they can submit a location report directly through the public QR profile.
+
+🔔 Smart Alerts
+Get notified about important events — vaccination due dates, training milestones, and more.
+
+🤝 Trainer Marketplace
+Connect with certified service dog trainers linked to your dog's profile.
+
+🎯 Goal Builder & Habit Repair
+Set training goals and track habit correction progress week by week.
+
+─────────────────────────────────────
+SUBSCRIPTION PLANS
+─────────────────────────────────────
+
+GuidePaw offers a free core tier plus Plus and Pro plans that unlock additional features and support ongoing development. All subscriptions are managed at guidepaw.app — no in-app purchases required.
+
+─────────────────────────────────────
+ABOUT GUIDEPAW
+─────────────────────────────────────
+
+GuidePaw is built by handlers, for handlers. Our mission is to make every aspect of living and working with a service dog simpler, more organized, and more accessible.
+
+Visit us at guidepaw.app
+Privacy policy: guidepaw.app/privacy
+Support: admin@guidepaw.app
+
+
+CATEGORY
+---------
+Health & Fitness
+
+
+CONTENT RATING
+---------------
+Everyone
+
+
+PRIVACY POLICY URL
+-------------------
+https://guidepaw.app/privacy
+
+
+WEBSITE URL
+------------
+https://guidepaw.app
+
+
+EMAIL (support contact shown on Play listing)
+----------------------------------------------
+admin@guidepaw.app
+
+
+PHONE NUMBER (optional, leave blank)
+--------------------------------------
+(leave blank)
