@@ -135,6 +135,25 @@
   #term-panel.active { display: flex; }
   #terminal-container { flex: 1; padding: 8px; overflow: hidden; }
 
+  /* ── Activity feed ── */
+  .activity-feed { display: flex; flex-direction: column; gap: 4px; }
+  .activity-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border-radius: 6px; background: var(--bg1); border: 1px solid var(--bg2); font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace; }
+  .activity-row:first-child { border-color: var(--border); }
+  .activity-ts   { color: var(--muted); white-space: nowrap; min-width: 115px; }
+  .activity-ai   { font-weight: 700; min-width: 48px; }
+  .activity-ai.claude { color: var(--blue); }
+  .activity-ai.codex  { color: var(--green); }
+  .activity-ai.unknown { color: var(--muted); }
+  .activity-event { font-weight: 600; min-width: 110px; }
+  .ev-session_start  { color: var(--green); }
+  .ev-session_end    { color: var(--muted); }
+  .ev-session_kill   { color: var(--red); }
+  .ev-milestone      { color: var(--yellow); }
+  .ev-token_warning  { color: var(--yellow); }
+  .ev-force_handoff  { color: var(--red); }
+  .ev-other          { color: var(--text); }
+  .activity-detail { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+
   /* ── Milestone list ── */
   .milestone-item { background: var(--bg0); border: 1px solid var(--bg2); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
   .milestone-title { font-size: 12px; font-weight: 600; color: var(--yellow); }
@@ -332,7 +351,8 @@
   <div class="content">
 
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('handoff')">HANDOFF</div>
+      <div class="tab active" onclick="switchTab('activity')">ACTIVITY</div>
+      <div class="tab" onclick="switchTab('handoff')">HANDOFF</div>
       <div class="tab" onclick="switchTab('devlog')">DEVLOG</div>
       <div class="tab" onclick="switchTab('project')">PROJECT STATE</div>
       <div class="tab" onclick="switchTab('claudeboot')">CLAUDE BOOT</div>
@@ -342,7 +362,8 @@
     </div>
 
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
-      <div id="tab-handoff"   class="tab-panel active"><pre id="content-handoff">Loading…</pre></div>
+      <div id="tab-activity"  class="tab-panel active"><div id="activity-feed" class="activity-feed"><span style="color:var(--muted);font-size:12px">Loading…</span></div></div>
+      <div id="tab-handoff"   class="tab-panel"><pre id="content-handoff">Loading…</pre></div>
       <div id="tab-devlog"    class="tab-panel"><pre id="content-devlog">Loading…</pre></div>
       <div id="tab-project"   class="tab-panel"><pre id="content-project">Loading…</pre></div>
       <div id="tab-claudeboot"class="tab-panel"><pre id="content-claudeboot">Loading…</pre></div>
@@ -499,6 +520,61 @@ async function loadState() {
   } catch(e) { console.error(e); }
 }
 
+/* ── Activity feed ── */
+const EVENT_LABELS = {
+  session_start: '▶ session_start',
+  session_end:   '■ session_end',
+  session_kill:  '🛑 session_kill',
+  milestone:     '✦ milestone',
+  token_warning: '⚠ token_warning',
+  force_handoff: '⚡ force_handoff',
+};
+
+function eventDetail(event, payload) {
+  try {
+    const p = typeof payload === 'string' ? JSON.parse(payload) : payload;
+    if (!p) return '';
+    if (event === 'session_start')  return p.task  || '';
+    if (event === 'session_end')    return p.summary || p.reason || '';
+    if (event === 'session_kill')   return p.reason || '';
+    if (event === 'milestone')      return p.title  || '';
+    if (event === 'token_warning')  return p.tokens_used ? `~${p.tokens_used} tokens` : '';
+    if (event === 'force_handoff')  return p.pct != null ? `at ${p.pct}%` : '';
+    return JSON.stringify(p);
+  } catch { return ''; }
+}
+
+function fmtTs(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts + (ts.includes('T') ? '' : ' UTC'));
+  return d.toLocaleDateString([], {month:'2-digit',day:'2-digit'}) + ' '
+       + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+let _lastEventId = null;
+async function loadEvents() {
+  try {
+    const r = await fetch(BASE + '/api/dash/events', { headers: authHeaders() });
+    const d = await r.json();
+    const feed = document.getElementById('activity-feed');
+    if (!feed || !d.events) return;
+    if (_lastEventId === (d.events[0]?.id ?? null)) return; // no change
+    _lastEventId = d.events[0]?.id ?? null;
+    feed.innerHTML = d.events.map(ev => {
+      const evClass = Object.keys(EVENT_LABELS).includes(ev.event) ? ev.event : 'other';
+      const aiClass = ['claude','codex'].includes(ev.ai) ? ev.ai : 'unknown';
+      const label   = EVENT_LABELS[ev.event] || ev.event;
+      const detail  = eventDetail(ev.event, ev.payload);
+      return `<div class="activity-row">
+        <span class="activity-ts">${fmtTs(ev.ts)}</span>
+        <span class="activity-ai ${aiClass}">${(ev.ai||'?').toUpperCase()}</span>
+        <span class="activity-event ev-${evClass}">${label}</span>
+        <span class="activity-detail" title="${detail}">${detail}</span>
+      </div>`;
+    }).join('') || '<span style="color:var(--muted);font-size:12px">No events yet</span>';
+  } catch(e) { console.error('loadEvents:', e); }
+}
+
 /* ── File loading ── */
 async function loadFile(name, elId) {
   try {
@@ -510,6 +586,7 @@ async function loadFile(name, elId) {
 
 function loadAll() {
   loadState();
+  loadEvents();
   loadFile('HANDOFF.md',      'content-handoff');
   loadFile('DEVLOG.md',       'content-devlog');
   loadFile('PROJECT_STATE.md','content-project');
@@ -522,7 +599,7 @@ function loadAll() {
 function switchTab(name) {
   if (window.innerWidth <= 767) closeSidebar();
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['handoff','devlog','project','claudeboot','boot','rules','terminal'];
+    const names = ['activity','handoff','devlog','project','claudeboot','boot','rules','terminal'];
     t.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -754,7 +831,7 @@ applyTheme(localStorage.getItem('gp-theme') === 'light');
 </script>
 <script>
 loadAll();
-setInterval(loadState, 5000);
+setInterval(() => { loadState(); loadEvents(); }, 5000);
 toggleCmdPanel();
 </script>
 </body>

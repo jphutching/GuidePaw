@@ -320,6 +320,11 @@ app.get("/api/dash/state", auth, (req, res) => {
   });
 });
 
+app.get("/api/dash/events", auth, (req, res) => {
+  const rows = db.prepare("SELECT * FROM sessions ORDER BY ts DESC LIMIT 40").all();
+  res.json({ events: rows });
+});
+
 app.get("/api/dash/file/:name", auth, (req, res) => {
   const name = req.params.name;
   if (!ALLOWED_FILES.includes(name))
