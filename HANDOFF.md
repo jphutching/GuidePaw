@@ -11,11 +11,11 @@
 
 | Field | Value |
 |---|---|
-| **From** | UNKNOWN |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `claude-1779996048522` |
-| **Timestamp** | `2026-05-28T19:46:19.906Z` |
+| **Session ID** | `claude-1779997892300` |
+| **Timestamp** | `2026-05-28T19:53:15.034Z` |
 
 ---
 
@@ -31,13 +31,13 @@ Session killed manually — killed from dashboard. Check git log for any uncommi
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Fix version display and session feedback
+Improvement to middleware dashboard. Where are we
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -47,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Fix version display and session feedback","branch":"main"}'
+  -d '{"ai":"codex","task":"Improvement to middleware dashboard. Where are we","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -59,9 +59,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
