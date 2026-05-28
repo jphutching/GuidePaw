@@ -1,6 +1,6 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `session_kill`
+> ⚠️ **Handoff reason:** `auto_save_90pct`
 
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
@@ -14,14 +14,14 @@
 | **From** | CLAUDE |
 | **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `claude-1780000481068` |
-| **Timestamp** | `2026-05-28T20:41:10.641Z` |
+| **Session ID** | `claude-1780001821633` |
+| **Timestamp** | `2026-05-28T21:38:00.229Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Session killed manually — test session — answer received, killing cleanly. Check git log for any uncommitted work.
+AUTO-SAVE at 91% — session still running. AI approaching context limit. Check terminal.
 
 ---
 
@@ -33,7 +33,7 @@ Session killed manually — test session — answer received, killing cleanly. C
 
 ## 🎯 Next Task for CODEX
 
-Add GPS location tracking to dog profile page
+In the website. Navigation and pages still feels clunky. How can we polish it more? As it stands it feels overwhelming
 
 ---
 
@@ -47,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"Add GPS location tracking to dog profile page","branch":"main"}'
+  -d '{"ai":"codex","task":"In the website. Navigation and pages still feels clunky. How can we polish it more? As it stands it feels overwhelming","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
