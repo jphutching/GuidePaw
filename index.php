@@ -112,28 +112,13 @@ if (empty($_SESSION['user_id'])) {
     <?php guidepawBrandHeader(); ?>
     <main class="landing-shell">
         <section class="landing-hero mb-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-                <div class="flex-grow-1" style="min-width: 260px;">
-                    <div class="landing-pill mb-3">Dog training logs • service dog profiles • breed research • Guide Paw</div>
-                    <h1 class="display-6 fw-bold mb-3">GuidePaw keeps handler work organized.</h1>
-                    <p class="lead mb-4">Research dog breeds, track training sessions, manage dog profiles, and keep service dog paperwork organized — all in one place.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a class="btn btn-light btn-lg fw-bold" href="breed_questionnaire.php">Research a breed</a>
-                        <a class="btn btn-outline-light btn-lg fw-bold" href="app.php">GuidePaw Companion App</a>
-                        <a class="btn btn-outline-light btn-lg fw-bold" href="register.php">Create an account</a>
-                        <a class="btn btn-outline-light btn-lg fw-bold" href="support_funding.php">Support GuidePaw</a>
-                    </div>
-                </div>
-                <div class="landing-card p-3 text-dark" style="min-width: 280px; max-width: 360px; width: 100%;">
-                    <div class="small text-uppercase text-muted fw-semibold">What people use it for</div>
-                    <ul class="mt-3 mb-0 ps-3">
-                        <li>Track training sessions, reminders, and quick wins.</li>
-                        <li>Share a public dog profile and found-dog contact details.</li>
-                        <li>Compare breeds before committing to a dog.</li>
-                        <li>Keep ADA, travel, and support notes in one place.</li>
-                        <li>Use the companion app for native training tools, goal intake, behavior tracking, and wearable data.</li>
-                    </ul>
-                </div>
+            <h1 class="display-6 fw-bold mb-2">GuidePaw keeps handler work organized.</h1>
+            <p class="mb-4" style="color:rgba(255,255,255,.82);font-size:1rem;">Research dog breeds, track training, manage profiles, and keep service dog paperwork in one place.</p>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a class="btn btn-light btn-lg fw-bold" href="login.php">Sign In</a>
+                <a class="btn btn-outline-light btn-lg fw-bold" href="register.php">Create an account</a>
+                <a class="btn btn-outline-light" href="breed_questionnaire.php">Research a breed</a>
+                <a class="btn btn-outline-light" href="app.php">Companion App</a>
             </div>
         </section>
 
@@ -244,13 +229,10 @@ if (empty($_SESSION['user_id'])) {
 
         <section class="landing-card p-4">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div>
-                    <div class="text-uppercase text-muted fw-semibold small mb-1">Next step</div>
-                    <h2 class="h4 mb-0">Start with the breed questionnaire or sign in to your dashboard.</h2>
-                </div>
+                <h2 class="h5 mb-0">Ready to get started?</h2>
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Open breed tool</a>
-                    <a class="btn btn-outline-primary fw-bold" href="login.php">Sign in</a>
+                    <a class="btn btn-primary fw-bold" href="login.php">Sign in</a>
+                    <a class="btn btn-outline-primary fw-bold" href="register.php">Create account</a>
                 </div>
             </div>
         </section>
