@@ -2556,8 +2556,8 @@ class MainActivity : AppCompatActivity() {
             if (result == null && !dogAccessIsLoading) {
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Not loaded", fontWeight = FontWeight.SemiBold)
-                        Button(onClick = { loadDogAccess() }, modifier = Modifier.fillMaxWidth()) { Text("Load Dog Access") }
+                        Text("Access permissions not yet loaded.", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadDogAccess() }, modifier = Modifier.fillMaxWidth()) { Text("View Access Permissions") }
                     }
                 }
             }
@@ -2711,7 +2711,7 @@ class MainActivity : AppCompatActivity() {
                                 OutlinedTextField(
                                     value         = dogAccessInviteEnds,
                                     onValueChange = { dogAccessInviteEnds = it },
-                                    label         = { Text("Access ends (YYYY-MM-DD, optional)") },
+                                    label         = { Text("Access end date (optional)") },
                                     modifier      = Modifier.fillMaxWidth(),
                                     singleLine    = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -2856,8 +2856,8 @@ class MainActivity : AppCompatActivity() {
             if (stats == null && !statsIsLoading) {
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("No stats loaded", fontWeight = FontWeight.SemiBold)
-                        Button(onClick = { loadStats() }, modifier = Modifier.fillMaxWidth()) { Text("Load Stats") }
+                        Text("Training stats not yet loaded.", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadStats() }, modifier = Modifier.fillMaxWidth()) { Text("View Training Stats") }
                     }
                 }
             }
@@ -2995,8 +2995,8 @@ class MainActivity : AppCompatActivity() {
             if (profile == null && !profileIsLoading) {
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Profile not loaded", fontWeight = FontWeight.SemiBold)
-                        Button(onClick = { loadProfile() }, modifier = Modifier.fillMaxWidth()) { Text("Load Profile") }
+                        Text("Profile not yet loaded.", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadProfile() }, modifier = Modifier.fillMaxWidth()) { Text("View My Profile") }
                     }
                 }
             }
@@ -3192,8 +3192,8 @@ class MainActivity : AppCompatActivity() {
             if (result == null && !wearableIsLoading) {
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Not loaded", fontWeight = FontWeight.SemiBold)
-                        Button(onClick = { loadWearables() }, modifier = Modifier.fillMaxWidth()) { Text("Load Wearables") }
+                        Text("Device data not yet loaded.", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = { loadWearables() }, modifier = Modifier.fillMaxWidth()) { Text("View Connected Devices") }
                     }
                 }
             }
@@ -5648,7 +5648,7 @@ class MainActivity : AppCompatActivity() {
                             Text(candidate.recommendation, style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)
                         }
                         if (candidate.safetyFlags.isNotBlank()) {
-                            Text("Safety flags: ${candidate.safetyFlags}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB91C1C))
+                            Text("⚠️ ${candidate.safetyFlags}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB91C1C))
                         }
                     }
                 }
@@ -5979,7 +5979,7 @@ class MainActivity : AppCompatActivity() {
                             Text("New assessment", fontWeight = FontWeight.SemiBold)
                             OutlinedTextField(
                                 value = certAsmDate, onValueChange = { certAsmDate = it },
-                                label = { Text("Date") }, placeholder = { Text("YYYY-MM-DD") },
+                                label = { Text("Date") }, placeholder = { Text("e.g. 2024-06-15") },
                                 modifier = Modifier.fillMaxWidth(), singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
@@ -6587,7 +6587,7 @@ class MainActivity : AppCompatActivity() {
                                 value         = apptAt,
                                 onValueChange = { apptAt = it },
                                 label         = { Text("Appointment time *") },
-                                placeholder   = { Text("YYYY-MM-DD HH:MM") },
+                                placeholder   = { Text("e.g. 2024-06-15 09:00") },
                                 modifier      = Modifier.fillMaxWidth(),
                                 singleLine    = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -6596,7 +6596,7 @@ class MainActivity : AppCompatActivity() {
                                 value         = apptReminderAt,
                                 onValueChange = { apptReminderAt = it },
                                 label         = { Text("Reminder time") },
-                                placeholder   = { Text("YYYY-MM-DD HH:MM") },
+                                placeholder   = { Text("e.g. 2024-06-15 09:00") },
                                 modifier      = Modifier.fillMaxWidth(),
                                 singleLine    = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -6799,7 +6799,7 @@ class MainActivity : AppCompatActivity() {
                                 value         = medRefillDate,
                                 onValueChange = { medRefillDate = it },
                                 label         = { Text("Refill date") },
-                                placeholder   = { Text("YYYY-MM-DD") },
+                                placeholder   = { Text("e.g. 2024-06-15") },
                                 modifier      = Modifier.fillMaxWidth(),
                                 singleLine    = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -7877,7 +7877,7 @@ class MainActivity : AppCompatActivity() {
                     OutlinedTextField(
                         value         = candidateSafetyFlags,
                         onValueChange = { candidateSafetyFlags = it },
-                        label         = { Text("Safety flags") },
+                        label         = { Text("Safety concerns") },
                         placeholder   = { Text("Bite history, severe fear, shutdown, uncontrolled lunging") },
                         minLines      = 2,
                         modifier      = Modifier.fillMaxWidth().padding(top = 4.dp),
@@ -9371,7 +9371,7 @@ class MainActivity : AppCompatActivity() {
                     OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = chipNum, onValueChange = { chipNum = it }, label = { Text("Microchip Number") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = weightStr, onValueChange = { weightStr = it }, label = { Text("Weight (lbs)") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal))
-                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of Birth (YYYY-MM-DD)") }, placeholder = { Text("e.g. 2020-06-15") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of Birth") }, placeholder = { Text("e.g. 2020-06-15") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
 
                     OutlinedButton(
@@ -9690,7 +9690,7 @@ class MainActivity : AppCompatActivity() {
                         if (p.safety.isNotEmpty()) {
                             OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text("⚠️ Safety flags", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                    Text("⚠️ Safety notes", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                                     p.safety.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
                                 }
                             }
@@ -10211,7 +10211,7 @@ class MainActivity : AppCompatActivity() {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Dog's name *") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = breed, onValueChange = { breed = it }, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of birth (YYYY-MM-DD)") }, placeholder = { Text("e.g. 2021-03-10") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    OutlinedTextField(value = dob, onValueChange = { dob = it }, label = { Text("Date of birth") }, placeholder = { Text("e.g. 2021-03-10") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
 
                     Button(
@@ -10479,6 +10479,11 @@ class MainActivity : AppCompatActivity() {
 
         private data class ChangelogEntry(val versionName: String, val date: String, val title: String, val items: List<String>)
         private val CHANGELOG = listOf(
+            ChangelogEntry("0.096", "May 27, 2026", "Cleaner labels & plain language", listOf(
+                "Button labels and screen descriptions now use plain, user-friendly language throughout.",
+                "Date fields show example dates instead of technical format codes.",
+                "Safety information labels updated to be clearer and less clinical.",
+            )),
             ChangelogEntry("0.095", "May 27, 2026", "Demo countdown & reset", listOf(
                 "Demo banner now shows a live countdown to the next data reset.",
                 "Tap \"Reset Now\" to restore demo data instantly at any time.",

@@ -130,10 +130,15 @@ $publicContact = gpDogPublicContactDefaults($pdo, $dog);
             </div>
         </div>
         <div class="col-md-4">
+            <?php
+            $sourceLabels = ['dog_profile' => 'Dog Profile', 'handler_profile' => 'Handler Profile', 'owner_account' => 'Account Settings', 'missing' => 'Not set'];
+            $emailSourceLabel = $sourceLabels[$publicContact['handler_email_source'] ?? 'missing'] ?? 'Not set';
+            $phoneSourceLabel = $sourceLabels[$publicContact['handler_phone_source'] ?? 'missing'] ?? 'Not set';
+            ?>
             <div class="stat">
-                <span class="text-muted small">Public contact source</span>
-                <strong><?= e((string) ($publicContact['handler_email_source'] ?? 'missing')) ?></strong>
-                <div class="small text-muted"><?= e((string) ($publicContact['handler_phone_source'] ?? 'missing')) ?> phone source</div>
+                <span class="text-muted small">Contact info from</span>
+                <strong>Email: <?= e($emailSourceLabel) ?></strong>
+                <div class="small text-muted">Phone: <?= e($phoneSourceLabel) ?></div>
             </div>
         </div>
     </div>
