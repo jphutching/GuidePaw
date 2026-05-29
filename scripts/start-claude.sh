@@ -17,6 +17,7 @@ unset OPENAI_API_KEY 2>/dev/null || true
 
 cd "$REPO_ROOT"
 echo "[GIT] Pulling latest..."
+git checkout HEAD -- HANDOFF.md SESSION_STATE.json DEVLOG.md 2>/dev/null || true
 git pull origin main --quiet
 
 # ── Ensure middleware is running ────────────────────────────────────────────

@@ -15,6 +15,8 @@ export MIDDLEWARE_SECRET="${MIDDLEWARE_SECRET:?Set MIDDLEWARE_SECRET in middlewa
 export OPENAI_API_KEY="${OPENAI_API_KEY:?Set OPENAI_API_KEY in middleware/.env}"
 
 cd "$REPO_ROOT"
+# Reset middleware-managed files so git pull never aborts on local writes
+git checkout HEAD -- HANDOFF.md SESSION_STATE.json DEVLOG.md 2>/dev/null || true
 git pull origin main --quiet
 
 # ── Ensure middleware is running ────────────────────────────────────────────
