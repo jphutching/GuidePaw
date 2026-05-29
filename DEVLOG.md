@@ -188,3 +188,21 @@ Verified /plans redirect live on production (301 → paywalls.php). Marked Brave
 **Next:** Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
 
 ---
+
+## 2026-05-29 | CLAUDE | Milestone: Fixed production 500s: privacy.php + qr_tracking.php, added /privacy clean URL
+
+privacy.php was fatal (undefined guidepawBrandHeader/Footer, no HTML scaffolding) -> fixed, returns 200. Added .htaccess rewrite so extensionless /privacy resolves. Found and fixed a latent headers-already-sent bug in qr_tracking.php (beta_banner.php/mobile_nav.php were required before checkLogin(); they emit output on include, breaking the logged-out login redirect when the beta banner flag is on). Verified fix locally with the flag enabled (clean 302). Swept all 115 root PHP pages on prod: no remaining 5xx. Closed feedback #74 and #75 in the Render DB. 3 commits deployed to Render and verified live.
+
+**Files:** privacy.php, .htaccess, qr_tracking.php
+
+---
+
+## 2026-05-29 | CLAUDE | Session end
+
+Resolved both open production error reports. (1) privacy.php returned 500 (called undefined guidepawBrandHeader()/guidepawBrandFooter() and had no <!doctype>/<html>/<body> scaffolding) -> rebuilt to match the paywalls.php convention, now 200. (2) Added .htaccess rewrite so extensionless /privacy serves privacy.php. (3) qr_tracking.php had a latent headers-already-sent bug: beta_banner.php and mobile_nav.php render output on include, but were required BEFORE checkLogin(); with the beta_banner_enabled flag on, the banner printed before the logged-out login redirect and killed the header() call (require_once made the correct in-body includes no-ops). Removed the premature top-level requires; verified locally with the flag enabled (clean 302 to login.php). Commits c6bf34a, a1f76b1, 24db814 pushed and each deployed+verified on Render. Swept all 115 root PHP pages on prod: zero 5xx. Closed feedback #74 and #75 as fixed in the Render DB.
+
+**Files:** privacy.php, .htaccess, qr_tracking.php
+
+**Next:** Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.
+
+---
