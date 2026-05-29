@@ -319,6 +319,7 @@ app.post("/session/kill", auth, (req, res) => {
 const DASH_HTML = path.join(__dirname, "dashboard.html");
 const ALLOWED_FILES = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CLAUDE_BOOT.md","CODEX_BOOT.md","CODEX_RULES.md"];
 const ALLOWED_CMDS = [
+  "bash scripts/start-codex.sh",
   "git log --oneline -10",
   "git status --short",
   "git diff --stat HEAD",
