@@ -178,3 +178,13 @@ Fixed /plans 404 on production. Added .htaccess rewrite so /plans (extensionless
 **Next:** Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
 
 ---
+
+## 2026-05-29 | CLAUDE | Session end
+
+Verified /plans redirect live on production (301 → paywalls.php). Marked Brave Search submission and /plans redirect as done in TODO.md. Session ended cleanly.
+
+**Files:** TODO.md
+
+**Next:** Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
+
+---
