@@ -9,17 +9,17 @@
 
 | Field | Value |
 |---|---|
-| **From** | CODEX |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `codex-1780019647491` |
-| **Timestamp** | `2026-05-29T01:54:51.202Z` |
+| **Timestamp** | `2026-05-29T01:55:44.818Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Confirmed the repo is up to date and identified the next actionable task from the handoff trail: Play Store submission using play-store/SUBMIT.md.
+Identified that Android app links to https://guidepaw.app/plans which returns 404. Real page is paywalls.php.
 
 ---
 
@@ -29,13 +29,13 @@ Confirmed the repo is up to date and identified the next actionable task from th
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Complete Play Store submission: finish Google Play Console account/app setup, upload downloads/GuidePaw_Companion_v0.098_release.aab, paste store listing from play-store/store-listing.txt, and upload phone screenshots in the production listing.
+Create plans.php as a 301 redirect to paywalls.php. The Android companion app links to https://guidepaw.app/plans but that page does not exist — the real plans page is paywalls.php. Fix: create /home/james/projects/guidepaw/plans.php with a single 301 redirect header to paywalls.php. Then: php -l plans.php, bash scripts/deploy_local.sh, git add plans.php, git commit, git push. Nothing else — do not touch any other files.
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -45,7 +45,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Complete Play Store submission: finish Google Play Console account/app setup, upload downloads/GuidePaw_Companion_v0.098_release.aab, paste store listing from play-store/store-listing.txt, and upload phone screenshots in the production listing.","branch":"main"}'
+  -d '{"ai":"codex","task":"Create plans.php as a 301 redirect to paywalls.php. The Android companion app links to https://guidepaw.app/plans but that page does not exist — the real plans page is paywalls.php. Fix: create /home/james/projects/guidepaw/plans.php with a single 301 redirect header to paywalls.php. Then: php -l plans.php, bash scripts/deploy_local.sh, git add plans.php, git commit, git push. Nothing else — do not touch any other files.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -57,9 +57,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
