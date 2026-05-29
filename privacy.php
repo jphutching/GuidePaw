@@ -1,7 +1,21 @@
 <?php
-require_once 'includes/db_connect.php';
-guidepawBrandHeader('Privacy Policy', ['showNav' => false]);
+require_once __DIR__ . '/includes/db_connect.php';
+require_once __DIR__ . '/includes/brand_header.php';
 ?>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy Policy | <?= e(appName()) ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        body { background:#f4f7fb; }
+    </style>
+</head>
+<body>
+<?php guidepawBrandHeader(); ?>
 <div class="container" style="max-width:860px;margin:40px auto;padding:0 20px 60px;">
   <h1>Privacy Policy</h1>
   <p style="color:#666;">Last updated: May 28, 2026</p>
@@ -63,4 +77,5 @@ guidepawBrandHeader('Privacy Policy', ['showNav' => false]);
   <p>GuidePaw<br>
   Email: <a href="mailto:admin@guidepaw.app">admin@guidepaw.app</a></p>
 </div>
-<?php guidepawBrandFooter(); ?>
+</body>
+</html>
