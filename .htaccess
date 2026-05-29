@@ -2,3 +2,6 @@ RewriteEngine On
 
 # /plans (no extension) — Android app links to this URL
 RewriteRule ^plans$ plans.php [L]
+
+# /privacy (no extension) — clean URL for Play Store privacy policy
+RewriteRule ^privacy$ privacy.php [L]
