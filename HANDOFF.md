@@ -13,21 +13,18 @@
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1780020611932` |
-| **Timestamp** | `2026-05-29T03:02:52.042Z` |
+| **Timestamp** | `2026-05-29T03:18:00.017Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Fixed /plans 404 on production. Added .htaccess rewrite so /plans (extensionless) maps to plans.php which 301s to paywalls.php. Added Bing and Yandex SEO verification meta tags to seo.php. Created TODO.md with Play Store submission checklist. Two Render deploys completed and verified.
+Verified /plans redirect live on production (301 → paywalls.php). Marked Brave Search submission and /plans redirect as done in TODO.md. Session ended cleanly.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `plans.php`
-- `.htaccess`
-- `includes/seo.php`
 - `TODO.md`
 
 ---
