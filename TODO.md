@@ -1,9 +1,12 @@
 # GuidePaw — TODO
-Last updated: 2026-05-29
+Last updated: 2026-05-29 (updated 03:05 UTC)
 
 ---
 
 ## Render / SEO
+
+- [x] **Submit guidepaw.app to Brave Search** ✓ 2026-05-29
+  - Brave uses HTML file verification (not a meta tag) — already submitted
 
 - [ ] **Set Bing verification env var on Render**
   - Get code from https://www.bing.com/webmasters → Add site → HTML meta tag method
@@ -16,9 +19,8 @@ Last updated: 2026-05-29
   - Set `GUIDEPAW_YANDEX_VERIFICATION=<code>` on Render
   - Also update `master.env`
 
-- [ ] **Verify /plans redirect works on production**
-  - `curl -I https://guidepaw.app/plans` — expect 301 → /paywalls.php
-  - Also open in Android companion app to confirm no 404
+- [x] **Verify /plans redirect works on production** ✓ 2026-05-29
+  - `curl -I https://guidepaw.app/plans` → 301 → paywalls.php confirmed
 
 ---
 
