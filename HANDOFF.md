@@ -1,5 +1,7 @@
 # 🤝 GuidePaw AI Handoff Document
 
+> ⚠️ **Handoff reason:** `auto_save_90pct`
+
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -9,33 +11,33 @@
 
 | Field | Value |
 |---|---|
-| **From** | CODEX |
-| **To** | CLAUDE |
+| **From** | CLAUDE |
+| **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `codex-1780019829220` |
-| **Timestamp** | `2026-05-29T01:58:01.117Z` |
+| **Session ID** | `claude-1780020611932` |
+| **Timestamp** | `2026-05-29T02:51:00.576Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Created plans.php as a minimal 301 redirect to paywalls.php, verified it with php -l and scripts/deploy_local.sh, then committed and pushed the change.
+AUTO-SAVE at 91% — session still running. AI approaching context limit. Check terminal.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `plans.php`
+- *(run `git diff --name-only HEAD~1` to see recent changes)*
 
 ---
 
-## 🎯 Next Task for CLAUDE
+## 🎯 Next Task for CODEX
 
-Verify https://guidepaw.app/plans now redirects to /paywalls.php and confirm the companion app opens the real plans page.
+SEO audit for Bing, DuckDuckGo, Yahoo, and Brave — check robots.txt, sitemap, meta tags, structured data, and verification tags. Fix what can be fixed in code.
 
 ---
 
-## 🚀 Pickup Instructions for CLAUDE
+## 🚀 Pickup Instructions for CODEX
 
 ```bash
 # 1. Pull latest (includes this HANDOFF.md)
@@ -45,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"claude","task":"Verify https://guidepaw.app/plans now redirects to /paywalls.php and confirm the companion app opens the real plans page.","branch":"main"}'
+  -d '{"ai":"codex","task":"SEO audit for Bing, DuckDuckGo, Yahoo, and Brave — check robots.txt, sitemap, meta tags, structured data, and verification tags. Fix what can be fixed in code.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
@@ -57,9 +59,9 @@ curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
 
 | Action | Command |
 |--------|---------|
-| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","title":"TITLE","files_changed":["file"]}'` |
-| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","tokens_used":N,"last_completed_task":"TASK"}'` |
-| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"claude","summary":"SUMMARY","next_task":"TASK"}'` |
+| Mark milestone | `curl -X POST $MIDDLEWARE_URL/milestone -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","title":"TITLE","files_changed":["file"]}'` |
+| Token warning | `curl -X POST $MIDDLEWARE_URL/token-warning -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","tokens_used":N,"last_completed_task":"TASK"}'` |
+| End session | `curl -X POST $MIDDLEWARE_URL/session/end -H "Authorization: Bearer $MIDDLEWARE_SECRET" -H "Content-Type: application/json" -d '{"ai":"codex","summary":"SUMMARY","next_task":"TASK"}'` |
 
 ---
 
