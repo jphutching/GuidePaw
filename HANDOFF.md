@@ -13,25 +13,27 @@
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1780020611932` |
-| **Timestamp** | `2026-05-29T03:18:00.017Z` |
+| **Timestamp** | `2026-05-29T17:10:42.294Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Verified /plans redirect live on production (301 → paywalls.php). Marked Brave Search submission and /plans redirect as done in TODO.md. Session ended cleanly.
+Resolved both open production error reports. (1) privacy.php returned 500 (called undefined guidepawBrandHeader()/guidepawBrandFooter() and had no <!doctype>/<html>/<body> scaffolding) -> rebuilt to match the paywalls.php convention, now 200. (2) Added .htaccess rewrite so extensionless /privacy serves privacy.php. (3) qr_tracking.php had a latent headers-already-sent bug: beta_banner.php and mobile_nav.php render output on include, but were required BEFORE checkLogin(); with the beta_banner_enabled flag on, the banner printed before the logged-out login redirect and killed the header() call (require_once made the correct in-body includes no-ops). Removed the premature top-level requires; verified locally with the flag enabled (clean 302 to login.php). Commits c6bf34a, a1f76b1, 24db814 pushed and each deployed+verified on Render. Swept all 115 root PHP pages on prod: zero 5xx. Closed feedback #74 and #75 as fixed in the Render DB.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `TODO.md`
+- `privacy.php`
+- `.htaccess`
+- `qr_tracking.php`
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
+Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.
 
 ---
 
@@ -45,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).","branch":"main"}'
+  -d '{"ai":"codex","task":"Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
