@@ -128,3 +128,53 @@ Built complete Claude↔Codex dev infrastructure: dashboard at /dashboard (mobil
 **Next:** Submit app to Google Play Store — follow play-store/SUBMIT.md step by step. AAB is at play-store/GuidePaw_Companion_v0.098_release.aab. All store listing copy, data safety answers, graphics, and privacy policy are ready.
 
 ---
+
+## 2026-05-29 | CODEX | Milestone: Added plans redirect
+
+Created plans.php with a 301 redirect to paywalls.php and verified it with lint and local deploy smoke checks.
+
+**Files:** plans.php
+
+---
+
+## 2026-05-29 | CODEX | Session end
+
+Created plans.php as a minimal 301 redirect to paywalls.php, verified it with php -l and scripts/deploy_local.sh, then committed and pushed the change.
+
+**Files:** plans.php
+
+**Next:** Verify https://guidepaw.app/plans now redirects to /paywalls.php and confirm the companion app opens the real plans page.
+
+---
+
+## 2026-05-29 | CLAUDE | Milestone: SEO audit complete
+
+robots.txt exists, sitemap.php returns 200, og: tags present, twitter: tags present, canonical tags present. Missing: Bing site verification tag (msvalidate.01), Brave verification, Bravembot not explicitly allowed in robots.txt. DuckDuckGo and Yahoo covered by Bing index. No static sitemap.xml — only dynamic sitemap.php which is fine.
+
+**Files:** see git diff
+
+---
+
+## 2026-05-29 | CLAUDE | Milestone: SEO verification tags added and pushed
+
+seo.php now outputs Bing (msvalidate.01) and Yandex verification meta tags when env vars are set. Brave Search uses HTML file upload method. master.env updated with placeholder vars and console URLs.
+
+**Files:** see git diff
+
+---
+
+## 2026-05-29 | CLAUDE | ⚠️ Auto-save at 91%
+
+Watchdog auto-saved handoff. Session still running.
+
+---
+
+## 2026-05-29 | CLAUDE | Session end
+
+Fixed /plans 404 on production. Added .htaccess rewrite so /plans (extensionless) maps to plans.php which 301s to paywalls.php. Added Bing and Yandex SEO verification meta tags to seo.php. Created TODO.md with Play Store submission checklist. Two Render deploys completed and verified.
+
+**Files:** plans.php, .htaccess, includes/seo.php, TODO.md
+
+**Next:** Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
+
+---
