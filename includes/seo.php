@@ -112,6 +112,20 @@ if (!function_exists('guidepawSeoHead')) {
             }
         }
 
+        // ── Search engine site verification tags ──────────────────────────────
+        // Set these env vars once you verify ownership in each webmaster console.
+        // Bing Webmaster Tools → https://www.bing.com/webmasters (covers Yahoo, DuckDuckGo, Ecosia)
+        $bingVerification = trim((string) gpEnv('GUIDEPAW_BING_VERIFICATION', ''));
+        if ($bingVerification !== '') {
+            echo '<meta name="msvalidate.01" content="' . htmlspecialchars($bingVerification, ENT_QUOTES, 'UTF-8') . '">' . PHP_EOL;
+        }
+        // Yandex Webmaster → https://webmaster.yandex.com
+        $yandexVerification = trim((string) gpEnv('GUIDEPAW_YANDEX_VERIFICATION', ''));
+        if ($yandexVerification !== '') {
+            echo '<meta name="yandex-verification" content="' . htmlspecialchars($yandexVerification, ENT_QUOTES, 'UTF-8') . '">' . PHP_EOL;
+        }
+        // Brave Search → https://search.brave.com/webmaster (uses HTML file upload, not a meta tag)
+
         if ($measurementId !== '') {
             $gaId = htmlspecialchars($measurementId, ENT_QUOTES, 'UTF-8');
             echo '<script async src="https://www.googletagmanager.com/gtag/js?id=' . $gaId . '"></script>' . PHP_EOL;
