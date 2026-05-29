@@ -1,7 +1,5 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `auto_save_90pct`
-
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -15,25 +13,28 @@
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1780020611932` |
-| **Timestamp** | `2026-05-29T02:51:00.576Z` |
+| **Timestamp** | `2026-05-29T03:02:52.042Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-AUTO-SAVE at 91% — session still running. AI approaching context limit. Check terminal.
+Fixed /plans 404 on production. Added .htaccess rewrite so /plans (extensionless) maps to plans.php which 301s to paywalls.php. Added Bing and Yandex SEO verification meta tags to seo.php. Created TODO.md with Play Store submission checklist. Two Render deploys completed and verified.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- *(run `git diff --name-only HEAD~1` to see recent changes)*
+- `plans.php`
+- `.htaccess`
+- `includes/seo.php`
+- `TODO.md`
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-SEO audit for Bing, DuckDuckGo, Yahoo, and Brave — check robots.txt, sitemap, meta tags, structured data, and verification tags. Fix what can be fixed in code.
+Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).
 
 ---
 
@@ -47,7 +48,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"SEO audit for Bing, DuckDuckGo, Yahoo, and Brave — check robots.txt, sitemap, meta tags, structured data, and verification tags. Fix what can be fixed in code.","branch":"main"}'
+  -d '{"ai":"codex","task":"Set GUIDEPAW_BING_VERIFICATION and GUIDEPAW_YANDEX_VERIFICATION env vars on Render with real codes from Bing Webmaster Tools and Yandex Webmaster. Then begin Play Store submission following play-store/SUBMIT.md step 1 (pay $25 fee).","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
