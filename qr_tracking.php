@@ -1,8 +1,10 @@
 <?php
 require_once 'includes/db_connect.php';
 require_once 'includes/brand_header.php';
-require_once 'includes/beta_banner.php';
-require_once 'includes/mobile_nav.php';
+// beta_banner.php and mobile_nav.php render output on include; they are
+// required inside <body> (after checkLogin) below, not here — including them
+// before checkLogin() emits the banner early and breaks the login redirect
+// with "headers already sent" (feedback #74).
 require_once 'includes/public_dog_profile_token.php';
 require_once 'includes/public_contact_defaults.php';
 require_once 'includes/qr_tracking.php';
