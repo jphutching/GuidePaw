@@ -33,7 +33,7 @@ GuidePaw is a PHP/PostgreSQL web app with a native Android companion build.
 - `bash scripts/run_local_qa_crawler.sh` runs the GuidePaw local QA crawler.
 - `GUIDEPAW_CHECK_API_ROUTES=yes bash scripts/run_local_qa_crawler.sh` includes API route checks.
 - `npm run test:e2e` runs Playwright browser tests.
-- `cd android/guidepaw-companion && GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon :app:assembleDebug` builds the Android debug APK.
+- `cd android/guidepaw-companion && GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleRelease` builds the Android release APK.
 
 ## Coding Style & Naming Conventions
 

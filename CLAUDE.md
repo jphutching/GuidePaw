@@ -30,8 +30,8 @@ npm run test:e2e:headed    # headed mode
 # Run a single Playwright test file
 npx playwright test tests/browser/guidepaw-auth-crawl.spec.js
 
-# Android debug APK (clean required — build cache causes stale versionCode)
-cd android/guidepaw-companion && GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleDebug
+# Android release APK (clean required — build cache causes stale versionCode)
+cd android/guidepaw-companion && GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleRelease
 
 # DB shell / dump
 sudo -u postgres psql guidepaw

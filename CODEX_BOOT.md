@@ -157,7 +157,7 @@ bash scripts/deploy_local.sh
 If you changed any Android file:
 ```bash
 cd android/guidepaw-companion
-GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleDebug
+GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleRelease
 ```
 
 A failed lint or failed build means: **do not commit**. Fix the problem first.
@@ -172,8 +172,8 @@ Every version bump requires all of these, in the same commit:
 3. `master.env` — bump both vars, add `# was: X.XXX (DATE)` comment
 4. `includes/changelog.php` — add new entry at the top of the array
 5. Push env to Render: `bash scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=XX GUIDEPAW_COMPANION_VERSION_NAME=0.0XX`
-6. Build the APK: `./gradlew --no-daemon clean :app:assembleDebug`
-7. Copy APK to `downloads/GuidePaw_Companion_vX.XXX.apk`
+6. Build the APK: `./gradlew --no-daemon clean :app:assembleRelease`
+7. Copy APK from `app/build/outputs/apk/release/app-release.apk` to `downloads/GuidePaw_Companion_vX.XXX_release.apk`
 
 Miss any one of these and the version will be out of sync. Check the last versionCode before picking the next one — never skip or reuse a number.
 

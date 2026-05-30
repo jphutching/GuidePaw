@@ -141,7 +141,7 @@ If `deploy_local.sh` reports any errors, fix them before committing. Never commi
 If any Android (Kotlin/Gradle) file changed, also build the APK:
 ```bash
 cd android/guidepaw-companion
-GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleDebug
+GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleRelease
 ```
 A failed Gradle build means do not commit.
 

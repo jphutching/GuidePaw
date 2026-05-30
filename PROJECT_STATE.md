@@ -127,7 +127,7 @@ bash scripts/deploy_local.sh
 
 # After any Android change:
 cd android/guidepaw-companion
-GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleDebug
+GRADLE_USER_HOME=$PWD/.gradle ./gradlew --no-daemon clean :app:assembleRelease
 
 # Push Render env var:
 bash scripts/render-set-env.sh KEY=VALUE
