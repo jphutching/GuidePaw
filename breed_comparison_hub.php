@@ -124,6 +124,12 @@ body { background:#f1f5f9; color:#0f172a; }
                     </a>
                 </div>
             <?php endforeach; ?>
+            <div class="col-md-6 col-lg-4">
+                <a class="comp-card text-decoration-none text-dark d-block p-3 h-100" href="breed_gallery.php" style="border-color:rgba(13,110,253,.18); background:linear-gradient(135deg,#eff6ff,#f0fdf4);">
+                    <div class="fw-bold mb-1">🐕 Breed Photo Gallery</div>
+                    <div class="muted small">Browse photos and full profiles for 56 breeds. Filter by group or search by name.</div>
+                </a>
+            </div>
         </div>
     </section>
 
