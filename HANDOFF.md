@@ -1,6 +1,6 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `auto_save_90pct`
+> ⚠️ **Handoff reason:** `force_handoff_dashboard`
 
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
@@ -15,13 +15,13 @@
 | **To** | CODEX |
 | **Branch** | `main` |
 | **Session ID** | `claude-1780168184940` |
-| **Timestamp** | `2026-05-30T19:51:00.663Z` |
+| **Timestamp** | `2026-05-30T19:54:13.471Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-AUTO-SAVE at 92% — session still running. AI approaching context limit. Check terminal.
+Force-saved from dashboard at 99% session usage — AI may still be running. Check terminal and git log for any uncommitted work.
 
 ---
 
