@@ -211,12 +211,16 @@ html.light #kill-confirm{background:#ffebe9}
 /* ── Mobile ── */
 @media(max-width:600px){
   #last-update{display:none}
-  #ap-idle{flex-direction:column}
-  .ap-row{flex-direction:column}
-  .btn-start{height:auto;padding:10px}
+  #ap-idle{flex-direction:column;align-items:stretch}
+  .ap-row{flex-direction:column;align-items:stretch}
+  #ap-idle select{width:100%}
+  .btn-start{height:auto;padding:10px;width:100%}
   .note-row{min-width:unset;margin-left:0;width:100%}
   .session-actions{flex-direction:column;align-items:stretch}
   .session-actions .act-btn{text-align:center}
+  #stats-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #stats-bar::-webkit-scrollbar{display:none}
+  #stats-bar span{white-space:nowrap;flex-shrink:0}
   #cmd-body.open{flex-direction:column}
   #cmd-buttons{min-width:unset}
   #cmd-output{max-height:110px}
