@@ -108,12 +108,13 @@ function gpCreateEphemeralDemoUser(PDO $pdo, int $templateUserId): array {
         $profileCols  = GP_DEMO_USER_FIELDS;
         $profileVals  = array_map(fn($f) => gpDemoCoerceVal($tpl[$f] ?? null), $profileCols);
 
-        $allCols = array_merge(['username','password_hash','dog_name','recovery_key','account_status'], $profileCols);
+        $allCols = array_merge(['username','password_hash','dog_name','recovery_key','account_status','onboarding_completed_at'], $profileCols);
         $allVals = array_merge([
             $username, $passwordHash,
             $tpl['dog_name'] ?? 'Demo Dog',
             $recoveryKey,
             'active',
+            date('Y-m-d H:i:s'),
         ], $profileVals);
 
         $cols   = implode(', ', $allCols);
