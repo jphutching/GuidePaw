@@ -206,3 +206,81 @@ Resolved both open production error reports. (1) privacy.php returned 500 (calle
 **Next:** Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.
 
 ---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** Verify dashboard redesign — test session
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** Test mobile layout
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** Test mobile layout
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: cleanup before screenshot
+
+**Next:** on render the demo accounts are still not saving edits, unable to add new training logs, make changes,etc
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** Test mobile layout
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** on render the demo accounts are still not saving edits, unable to add new training logs, make changes, etc
+
+---
+
+## 2026-05-30 | CLAUDE | 🛑 Session killed
+
+Manually killed: killed from dashboard
+
+**Next:** what is the current build tasks
+
+---
+
+## 2026-05-30 | CLAUDE | Milestone: feat: breed photos on web + Android native (v0.099)
+
+Added breed photo support end-to-end. SQL migration creates breed_images cache table and breed_photos_enabled feature flag. includes/breed_photos.php maps breed names to Dog CEO API slugs + getBreedPhotoUrlCached(). api/breed_photo.php is a new public endpoint (no auth) that lazy-fetches and caches URLs. api/breed_quiz.php now includes photo_url in each match result (bulk cache lookup, then Dog CEO fetch for uncached). breed_questionnaire.php lazy-loads photos via JS fetch. Android: Coil 2.7.0 added, GpBreedMatch.photoUrl field added, AsyncImage renders in expanded breed card. Version bumped 98->99 / 0.098->0.099. Feature flag toggle at admin_feature_flags.php instantly disables all photos sitewide.
+
+**Files:** sql/migrations/pgsql/20260530_breed_images.sql, includes/breed_photos.php, api/breed_photo.php, api/breed_quiz.php, breed_questionnaire.php, android/guidepaw-companion/app/build.gradle, android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt, android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawApiClient.kt, android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt, master.env
+
+---
+
+## 2026-05-30 | CLAUDE | ⚠️ Auto-save at 92%
+
+Watchdog auto-saved handoff. Session still running.
+
+---
+
+## 2026-05-30 | CLAUDE | ⚡ Force handoff at 99%
+
+Dashboard force-handoff triggered at 99% session usage.
+
+**Next:** Check render feedback log. Look at the request pertaining breed pictures. What can we do about this?
+
+---
