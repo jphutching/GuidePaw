@@ -1,5 +1,7 @@
 # 🤝 GuidePaw AI Handoff Document
 
+> ⚠️ **Handoff reason:** `session_kill`
+
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
 > 2. `cat CODEX_RULES.md` — 10 rules from past screwups
@@ -12,28 +14,26 @@
 | **From** | CLAUDE |
 | **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `claude-1780020611932` |
-| **Timestamp** | `2026-05-29T17:10:42.294Z` |
+| **Session ID** | `claude-1780116758847` |
+| **Timestamp** | `2026-05-30T04:52:42.613Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Resolved both open production error reports. (1) privacy.php returned 500 (called undefined guidepawBrandHeader()/guidepawBrandFooter() and had no <!doctype>/<html>/<body> scaffolding) -> rebuilt to match the paywalls.php convention, now 200. (2) Added .htaccess rewrite so extensionless /privacy serves privacy.php. (3) qr_tracking.php had a latent headers-already-sent bug: beta_banner.php and mobile_nav.php render output on include, but were required BEFORE checkLogin(); with the beta_banner_enabled flag on, the banner printed before the logged-out login redirect and killed the header() call (require_once made the correct in-body includes no-ops). Removed the premature top-level requires; verified locally with the flag enabled (clean 302 to login.php). Commits c6bf34a, a1f76b1, 24db814 pushed and each deployed+verified on Render. Swept all 115 root PHP pages on prod: zero 5xx. Closed feedback #74 and #75 as fixed in the Render DB.
+Session killed manually — killed from dashboard. Check git log for any uncommitted work.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- `privacy.php`
-- `.htaccess`
-- `qr_tracking.php`
+- *(run `git diff --name-only HEAD~1` to see recent changes)*
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.
+Verify dashboard redesign — test session
 
 ---
 
@@ -47,7 +47,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"Audit for the same include-order bug class proactively: beta_banner.php and mobile_nav.php emit output at include time, so any page controller that require_once-es either of them BEFORE checkLogin()/requireAdmin()/requireRole() will 500 with headers-already-sent for unauthenticated users when beta_banner_enabled is on. qr_tracking.php was the only current offender, but enforce the rule going forward: these two includes belong INSIDE <body> after guidepawBrandHeader(), never in the top require block (see dog_profile.php for the correct pattern). Consider adding a check to scripts/deploy_local.sh that greps page controllers and fails if beta_banner.php/mobile_nav.php is required on a line before the first checkLogin/requireAdmin/requireRole call.","branch":"main"}'
+  -d '{"ai":"codex","task":"Verify dashboard redesign — test session","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
