@@ -1,78 +1,311 @@
 <?php
 /**
  * Maps GuidePaw breed catalog names to Dog CEO API slugs.
- * Returns null for breeds not covered by Dog CEO — the caller skips the photo.
+ * Returns null for breeds not covered — the caller falls back to Wikipedia.
  * Dog CEO API: https://dog.ceo/dog-api/ (CC0, no key required)
  */
 function breedPhotoSlug(string $breedName): ?string
 {
     static $map = [
-        'Labrador Retriever'                   => 'labrador',
-        'Golden Retriever'                     => 'retriever/golden',
-        'German Shepherd Dog'                  => 'germanshepherd',
-        'Standard Poodle'                      => 'poodle/standard',
-        'Miniature Poodle'                     => 'poodle/miniature',
-        'Toy Poodle'                           => 'poodle/toy',
-        'Boxer'                                => 'boxer',
-        'Doberman Pinscher'                    => 'doberman',
-        'Rottweiler'                           => 'rottweiler',
-        'Bernese Mountain Dog'                 => 'mountain/bernese',
-        'Great Dane'                           => 'dane/great',
-        'Australian Shepherd'                  => 'shepherd/australian',
-        'Miniature American Shepherd'          => 'shepherd/australian',
-        'Border Collie'                        => 'collie/border',
-        'Rough Collie'                         => 'collie',
-        'Pembroke Welsh Corgi'                 => 'corgi/pembroke',
-        'Cardigan Welsh Corgi'                 => 'corgi/cardigan',
-        'Belgian Malinois'                     => 'malinois',
-        'Vizsla'                               => 'vizsla',
-        'Weimaraner'                           => 'weimaraner',
-        'Beagle'                               => 'beagle',
-        'Bloodhound'                           => 'bloodhound',
-        'Cocker Spaniel'                       => 'spaniel/cocker',
-        'American Cocker Spaniel'              => 'spaniel/cocker',
-        'English Cocker Spaniel'               => 'spaniel/cocker',
-        'English Springer Spaniel'             => 'spaniel/springer',
-        'Cavalier King Charles Spaniel'        => 'spaniel/cavalier',
-        'Irish Setter'                         => 'setter/irish',
-        'Gordon Setter'                        => 'setter/gordon',
-        'English Setter'                       => 'setter/english',
-        'Flat-Coated Retriever'                => 'retriever/flatcoated',
-        'Chesapeake Bay Retriever'             => 'retriever/chesapeake',
-        'Nova Scotia Duck Tolling Retriever'   => 'retriever/duck',
-        'German Shorthaired Pointer'           => 'pointer/germanlonghair',
-        'Miniature Schnauzer'                  => 'schnauzer/miniature',
-        'Giant Schnauzer'                      => 'schnauzer/giant',
-        'Standard Schnauzer'                   => 'schnauzer',
-        'Cairn Terrier'                        => 'cairn',
-        'West Highland White Terrier'          => 'terrier/westhighland',
-        'Scottish Terrier'                     => 'terrier/scottish',
-        'Bull Terrier'                         => 'terrier/bull',
-        'Airedale Terrier'                     => 'airedale',
-        'Pomeranian'                           => 'pomeranian',
-        'Maltese'                              => 'maltese',
-        'Pug'                                  => 'pug',
-        'French Bulldog'                       => 'bulldog/french',
-        'Boston Terrier'                       => 'boston',
-        'Newfoundland'                         => 'newfoundland',
-        'Great Pyrenees'                       => 'pyrenees/great',
-        'Saint Bernard'                        => 'stbernard',
-        'Akita'                                => 'akita',
-        'Siberian Husky'                       => 'husky',
-        'Alaskan Malamute'                     => 'malamute/alaskan',
-        'Samoyed'                              => 'samoyed',
-        'Poodle'                               => 'poodle/standard',
-        'Dachshund'                            => 'dachshund',
-        'Chihuahua'                            => 'chihuahua',
+        // ── Retrievers ───────────────────────────────────────────────────────
+        'Labrador Retriever'                 => 'labrador',
+        'Golden Retriever'                   => 'retriever/golden',
+        'Chesapeake Bay Retriever'           => 'retriever/chesapeake',
+        'Flat-Coated Retriever'             => 'retriever/flatcoated',
+        'Curly-Coated Retriever'            => 'retriever/curly',
+        'Nova Scotia Duck Tolling Retriever' => 'retriever/duck',
+
+        // ── Poodles ──────────────────────────────────────────────────────────
+        'Poodle'                             => 'poodle/standard',
+        'Standard Poodle'                    => 'poodle/standard',
+        'Miniature Poodle'                   => 'poodle/miniature',
+        'Toy Poodle'                         => 'poodle/toy',
+
+        // ── Shepherds / Herding ──────────────────────────────────────────────
+        'German Shepherd Dog'                => 'german/shepherd',
+        'Australian Shepherd'                => 'australian/shepherd',
+        'Miniature American Shepherd'        => 'australian/shepherd',
+        'Border Collie'                      => 'collie/border',
+        'Rough Collie'                       => 'rough/collie',
+        'Collie'                             => 'rough/collie',
+        'Belgian Malinois'                   => 'malinois',
+        'Belgian Tervuren'                   => 'tervuren',
+        'Belgian Sheepdog'                   => 'groenendael',
+        'Bouvier des Flandres'               => 'bouvier',
+        'Briard'                             => 'briard',
+        'Old English Sheepdog'               => 'sheepdog/english',
+        'Shetland Sheepdog'                  => 'sheepdog/shetland',
+        'Australian Cattle Dog'              => 'cattledog/australian',
+        'Australian Stumpy Tail Cattle Dog'  => 'cattledog/australian',
+        'Australian Kelpie'                  => 'australian/kelpie',
+
+        // ── Corgis ───────────────────────────────────────────────────────────
+        'Pembroke Welsh Corgi'               => 'pembroke',
+        'Cardigan Welsh Corgi'               => 'corgi/cardigan',
+        'Corgi'                              => 'pembroke',
+
+        // ── Working ──────────────────────────────────────────────────────────
+        'Boxer'                              => 'boxer',
+        'Doberman Pinscher'                  => 'doberman',
+        'Rottweiler'                         => 'rottweiler',
+        'Bernese Mountain Dog'               => 'mountain/bernese',
+        'Greater Swiss Mountain Dog'         => 'mountain/swiss',
+        'Great Dane'                         => 'dane/great',
+        'Newfoundland'                       => 'newfoundland',
+        'Saint Bernard'                      => 'stbernard',
+        'Great Pyrenees'                     => 'pyrenees',
+        'Akita'                              => 'akita',
+        'Siberian Husky'                     => 'husky',
+        'Alaskan Malamute'                   => 'malamute',
+        'Samoyed'                            => 'samoyed',
+        'Kuvasz'                             => 'kuvasz',
+        'Komondor'                           => 'komondor',
+        'Leonberger'                         => 'leonberg',
+        'Bullmastiff'                        => 'mastiff/bull',
+        'Mastiff'                            => 'mastiff/english',
+        'Tibetan Mastiff'                    => 'mastiff/tibetan',
+        'Boerboel'                           => 'mastiff/english',
+        'Caucasian Shepherd Dog'             => 'ovcharka/caucasian',
+        'Entlebucher Mountain Dog'           => 'entlebucher',
+        'Appenzeller Sennenhund'             => 'appenzeller',
+
+        // ── Spaniels ─────────────────────────────────────────────────────────
+        'Cocker Spaniel'                     => 'spaniel/cocker',
+        'American Cocker Spaniel'            => 'spaniel/cocker',
+        'English Cocker Spaniel'             => 'spaniel/cocker',
+        'English Springer Spaniel'           => 'springer/english',
+        'Welsh Springer Spaniel'             => 'spaniel/welsh',
+        'Irish Water Spaniel'                => 'spaniel/irish',
+        'Clumber Spaniel'                    => 'clumber',
+        'Sussex Spaniel'                     => 'spaniel/sussex',
+        'Brittany'                           => 'spaniel/brittany',
+        'English Toy Spaniel'                => 'spaniel/blenheim',
+        'King Charles Spaniel'               => 'spaniel/blenheim',
+        'Japanese Chin'                      => 'spaniel/japanese',
+
+        // ── Setters / Pointers ───────────────────────────────────────────────
+        'Irish Setter'                       => 'setter/irish',
+        'Gordon Setter'                      => 'setter/gordon',
+        'English Setter'                     => 'setter/english',
+        'German Shorthaired Pointer'         => 'pointer/german',
+        'German Longhaired Pointer'          => 'pointer/germanlonghair',
+
+        // ── Hounds ───────────────────────────────────────────────────────────
+        'Beagle'                             => 'beagle',
+        'Bloodhound'                         => 'hound/blood',
+        'Basset Hound'                       => 'hound/basset',
+        'Afghan Hound'                       => 'hound/afghan',
+        'Ibizan Hound'                       => 'hound/ibizan',
+        'Rhodesian Ridgeback'                => 'ridgeback/rhodesian',
+        'Greyhound'                          => 'greyhound/italian',
+        'Italian Greyhound'                  => 'greyhound/italian',
+        'Whippet'                            => 'whippet',
+        'Borzoi'                             => 'borzoi',
+        'Saluki'                             => 'saluki',
+        'Irish Wolfhound'                    => 'wolfhound/irish',
+        'Scottish Deerhound'                 => 'deerhound/scottish',
+        'Norwegian Elkhound'                 => 'elkhound/norwegian',
+        'Plott Hound'                        => 'hound/plott',
+        'Redbone Coonhound'                  => 'redbone',
+        'Bluetick Coonhound'                 => 'bluetick',
+        'Treeing Walker Coonhound'           => 'hound/walker',
+        'American English Coonhound'         => 'coonhound',
+        'English Foxhound'                   => 'hound/english',
+        'Basenji'                            => 'basenji',
+        'Vizsla'                             => 'vizsla',
+        'Weimaraner'                         => 'weimaraner',
+
+        // ── Terriers ─────────────────────────────────────────────────────────
+        'Airedale Terrier'                   => 'airedale',
+        'Cairn Terrier'                      => 'terrier/cairn',
+        'West Highland White Terrier'        => 'terrier/westhighland',
+        'Scottish Terrier'                   => 'terrier/scottish',
+        'Bull Terrier'                       => 'terrier/fox',
+        'Staffordshire Bull Terrier'         => 'bullterrier/staffordshire',
+        'American Staffordshire Terrier'     => 'terrier/american',
+        'Miniature Bull Terrier'             => 'bullterrier/staffordshire',
+        'Miniature Schnauzer'                => 'schnauzer/miniature',
+        'Giant Schnauzer'                    => 'schnauzer/giant',
+        'Border Terrier'                     => 'terrier/border',
+        'Australian Terrier'                 => 'terrier/australian',
+        'Irish Terrier'                      => 'terrier/irish',
+        'Kerry Blue Terrier'                 => 'terrier/kerryblue',
+        'Welsh Terrier'                      => 'terrier/welsh',
+        'Lakeland Terrier'                   => 'terrier/lakeland',
+        'Norfolk Terrier'                    => 'terrier/norfolk',
+        'Norwich Terrier'                    => 'terrier/norwich',
+        'Bedlington Terrier'                 => 'terrier/bedlington',
+        'Dandie Dinmont Terrier'             => 'terrier/dandie',
+        'Smooth Fox Terrier'                 => 'terrier/fox',
+        'Wire Fox Terrier'                   => 'terrier/fox',
+        'Parson Russell Terrier'             => 'terrier/russell',
+        'Russell Terrier'                    => 'terrier/russell',
+        'Silky Terrier'                      => 'terrier/silky',
+        'Soft Coated Wheaten Terrier'        => 'terrier/wheaten',
+        'Tibetan Terrier'                    => 'terrier/tibetan',
+        'Sealyham Terrier'                   => 'terrier/sealyham',
+        'Toy Fox Terrier'                    => 'terrier/toy',
+
+        // ── Toy / Companion ──────────────────────────────────────────────────
+        'Chihuahua'                          => 'chihuahua',
+        'Pomeranian'                         => 'pomeranian',
+        'Maltese'                            => 'maltese',
+        'Pug'                                => 'pug',
+        'Pekingese'                          => 'pekinese',
+        'Bichon Frise'                       => 'frise/bichon',
+        'Papillon'                           => 'papillon',
+        'Miniature Pinscher'                 => 'pinscher/miniature',
+        'Affenpinscher'                      => 'affenpinscher',
+        'Brussels Griffon'                   => 'brabancon',
+        'Havanese'                           => 'havanese',
+
+        // ── Non-Sporting / Misc ──────────────────────────────────────────────
+        'French Bulldog'                     => 'bulldog/french',
+        'Bulldog'                            => 'bulldog/english',
+        'Boston Terrier'                     => 'bulldog/boston',
+        'Dalmatian'                          => 'dalmatian',
+        'Chow Chow'                          => 'chow',
+        'Lhasa Apso'                         => 'lhasa',
+        'Shih Tzu'                           => 'shihtzu',
+        'Chinese Shar-Pei'                   => 'sharpei',
+        'Keeshond'                           => 'keeshond',
+        'Schipperke'                         => 'schipperke',
+        'Xoloitzcuintli'                     => 'mexicanhairless',
+        'American Eskimo Dog'                => 'eskimo',
+        'Coton de Tulear'                    => 'cotondetulear',
+        'Finnish Lapphund'                   => 'finnish/lapphund',
+        'Norwegian Buhund'                   => 'buhund/norwegian',
+        'Shiba Inu'                          => 'shiba',
+        'Dachshund'                          => 'dachshund',
+        'Otterhound'                         => 'otterhound',
+        'Spanish Water Dog'                  => 'waterdog/spanish',
+        'Danish-Swedish Farmdog'             => 'danish/swedish',
+
+        // ── Doodles in Dog CEO ───────────────────────────────────────────────
+        'Labradoodle'                        => 'labradoodle',
+        'Cockapoo'                           => 'cockapoo',
+        'Cavapoo'                            => 'cavapoo',
+        'Puggle'                             => 'puggle',
+
+        // ── Mixed / catch-all ────────────────────────────────────────────────
+        'Mixed Breed'                        => 'mix',
+        'Mixed Breed - Large'                => 'mix',
+        'Mixed Breed - Medium'               => 'mix',
+        'Mixed Breed - Small'                => 'mix',
     ];
 
     return $map[$breedName] ?? null;
 }
 
 /**
- * Returns a cached photo URL for $breedName, fetching from Dog CEO on first request.
- * Returns null when: feature disabled, breed not mapped, Dog CEO unavailable,
- * or breed_images table not yet migrated.
+ * Returns the Wikipedia article title to use for breeds not in Dog CEO.
+ * Returns null for categories that have no useful Wikipedia photo
+ * (mixed breeds, generics, placeholders).
+ */
+function breedWikipediaTitle(string $breedName): ?string
+{
+    static $skip = [
+        'Unknown Breed', 'Unknown / Rescue Mix', 'Other / Custom', 'Other / Not Listed',
+        'Custom Designer Breed / Hybrid', 'Poodle Cross / Doodle Mix',
+        'Mixed Breed', 'Mixed Breed - Large', 'Mixed Breed - Medium', 'Mixed Breed - Small',
+    ];
+    if (in_array($breedName, $skip, true)) {
+        return null;
+    }
+
+    // Overrides where the Wikipedia article title differs from our catalog name
+    static $overrides = [
+        'Poodle (Standard)'                           => 'Standard Poodle',
+        'Poodle (Miniature)'                          => 'Miniature Poodle',
+        'Poodle (Toy)'                                => 'Toy Poodle',
+        'Labrador Retriever / Golden Retriever Cross' => 'Goldador',
+        'Aussiedoodle'                                => 'Aussiedoodle',
+        'Bernedoodle'                                 => 'Bernedoodle',
+        'Cavachon'                                    => 'Cavachon',
+        'Cavador'                                     => 'Cavador',
+        'Double Doodle'                               => 'Double Doodle',
+        'Doxiepoo'                                    => 'Doxiepoo',
+        'Frenchton'                                   => 'Frenchton',
+        'Gerberian Shepsky'                           => 'Gerberian Shepsky',
+        'Goldendoodle'                                => 'Goldendoodle',
+        'Golden Mountain Doodle'                      => 'Golden Mountain Doodle',
+        'Golden Shepherd'                             => 'Golden Shepherd',
+        'Huskydoodle'                                 => 'Huskydoodle',
+        'Irish Doodle'                                => 'Irish Doodle',
+        'Maltipoo'                                    => 'Maltipoo',
+        'Miniature Goldendoodle'                      => 'Miniature Goldendoodle',
+        'Miniature Labradoodle'                       => 'Miniature Labradoodle',
+        'Morkie'                                      => 'Morkie',
+        'Newfypoo'                                    => 'Newfypoo',
+        'Pitsky'                                      => 'Pitsky',
+        'Pomapoo'                                     => 'Pomapoo',
+        'Pomchi'                                      => 'Pomchi',
+        'Pomsky'                                      => 'Pomsky',
+        'Portuguese Water Dog'                        => 'Portuguese Water Dog',
+        'Rottle'                                      => 'Rottle',
+        'Saint Berdoodle'                             => 'Saint Berdoodle',
+        'Schnoodle'                                   => 'Schnoodle',
+        'Sheepadoodle'                                => 'Sheepadoodle',
+        'Shih-Poo'                                    => 'Shih-Poo',
+        'Shorkie'                                     => 'Shorkie',
+        'Springerdoodle'                              => 'Springerdoodle',
+        'Vizsladoodle'                                => 'Vizsladoodle',
+        'Weimardoodle'                                => 'Weimardoodle',
+        'Whoodle'                                     => 'Whoodle',
+        'Yorkipoo'                                    => 'Yorkipoo',
+        'Beaglier'                                    => 'Beaglier',
+        'Bichpoo'                                     => 'Bichoopoo',
+        'Bordoodle'                                   => 'Border Collie',
+        'Boxador'                                     => 'Boxador',
+        'Chiweenie'                                   => 'Chiweenie',
+        'Chorkie'                                     => 'Chorkie',
+        'Cockalier'                                   => 'Cockalier',
+        'Corgipoo'                                    => 'Corgipoo',
+        'Danoodle'                                    => 'Great Dane',
+        'Doxiepoo'                                    => 'Doxiepoo',
+        'Havapoo'                                     => 'Havapoo',
+        'Jackapoo'                                    => 'Jackapoo',
+        'Labrastaff'                                  => 'Labrastaff',
+        'Poochon'                                     => 'Poochon',
+        'Peekapoo'                                    => 'Peekapoo',
+        'Aussalier'                                   => 'Australian Shepherd',
+    ];
+
+    return $overrides[$breedName] ?? $breedName;
+}
+
+/**
+ * Fetch photo URL from Wikipedia REST API (free, no key).
+ * Returns the thumbnail URL or empty string on failure.
+ */
+function fetchWikipediaPhoto(string $articleTitle): string
+{
+    $url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . rawurlencode($articleTitle);
+    $ch  = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 6,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app; breed photo lookup)',
+        CURLOPT_FOLLOWLOCATION => true,
+    ]);
+    $raw  = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($raw === false || $code !== 200) {
+        return '';
+    }
+    $data = json_decode($raw, true);
+    $src  = $data['thumbnail']['source'] ?? '';
+    // Upgrade to larger size if available (Wikipedia serves /320px- by default)
+    return is_string($src) ? preg_replace('/\/\d+px-/', '/640px-', $src) : '';
+}
+
+/**
+ * Returns a cached photo URL for $breedName.
+ * Tries Dog CEO first, then Wikipedia, then gives up.
+ * Returns null when feature is disabled, table missing, or no photo found.
  */
 function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
 {
@@ -86,6 +319,7 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         return null;
     }
 
+    // Serve from cache
     $stmt = $pdo->prepare('SELECT image_url FROM breed_images WHERE breed_name = ? AND color_variant = \'\' LIMIT 1');
     $stmt->execute([$breedName]);
     $cached = $stmt->fetchColumn();
@@ -93,33 +327,51 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         return $cached !== '' ? $cached : null;
     }
 
-    $slug = breedPhotoSlug($breedName);
-    if ($slug === null) {
-        $pdo->prepare('INSERT INTO breed_images (breed_name, color_variant, image_url, source) VALUES (?, \'\', \'\', \'not_mapped\') ON CONFLICT (breed_name, color_variant) DO NOTHING')->execute([$breedName]);
-        return null;
-    }
-
-    $ch = curl_init('https://dog.ceo/api/breed/' . $slug . '/images/random');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 5,
-        CURLOPT_CONNECTTIMEOUT => 3,
-        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
-        CURLOPT_FOLLOWLOCATION => true,
-    ]);
-    $raw  = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
+    // Try Dog CEO
+    $slug     = breedPhotoSlug($breedName);
     $imageUrl = '';
-    if ($raw !== false && $code === 200) {
-        $data = json_decode($raw, true);
-        if (isset($data['status'], $data['message']) && $data['status'] === 'success' && is_string($data['message'])) {
-            $imageUrl = $data['message'];
+    $source   = 'not_mapped';
+
+    if ($slug !== null) {
+        $ch = curl_init('https://dog.ceo/api/breed/' . $slug . '/images/random');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 5,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+        $raw  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw !== false && $code === 200) {
+            $data = json_decode($raw, true);
+            if (isset($data['status'], $data['message']) && $data['status'] === 'success' && is_string($data['message'])) {
+                $imageUrl = $data['message'];
+                $source   = 'dog_ceo';
+            }
         }
     }
 
-    $pdo->prepare('INSERT INTO breed_images (breed_name, color_variant, image_url, source) VALUES (?, \'\', ?, \'dog_ceo\') ON CONFLICT (breed_name, color_variant) DO UPDATE SET image_url = EXCLUDED.image_url, fetched_at = CURRENT_TIMESTAMP')->execute([$breedName, $imageUrl]);
+    // Fallback to Wikipedia if Dog CEO had nothing
+    if ($imageUrl === '') {
+        $wikiTitle = breedWikipediaTitle($breedName);
+        if ($wikiTitle !== null) {
+            $imageUrl = fetchWikipediaPhoto($wikiTitle);
+            if ($imageUrl !== '') {
+                $source = 'wikipedia';
+            }
+        }
+    }
+
+    // Cache result (empty string = tried but unavailable)
+    $pdo->prepare(
+        'INSERT INTO breed_images (breed_name, color_variant, image_url, source)
+         VALUES (?, \'\', ?, ?)
+         ON CONFLICT (breed_name, color_variant)
+         DO UPDATE SET image_url = EXCLUDED.image_url, source = EXCLUDED.source, fetched_at = CURRENT_TIMESTAMP'
+    )->execute([$breedName, $imageUrl, $source]);
 
     return $imageUrl !== '' ? $imageUrl : null;
 }
