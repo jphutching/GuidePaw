@@ -992,6 +992,7 @@ $resultReady = $_SERVER['REQUEST_METHOD'] === 'POST';
 body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 auto;padding:1rem 1rem 4rem}.hero{background:linear-gradient(135deg,#0d6efd,#0f766e);color:#fff;border-radius:0 0 28px 28px;padding:1.1rem 1rem 1.35rem;box-shadow:0 10px 24px rgba(15,23,42,.18)}.hero h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900;line-height:1.05}.card-soft{border:1px solid rgba(15,23,42,.08);border-radius:18px;box-shadow:0 8px 18px rgba(15,23,42,.08)}.question-grid{display:grid;gap:1rem}@media(min-width:960px){.question-grid{grid-template-columns:1.1fr .9fr}}.form-select,.form-control{border-radius:14px}.result-grid{display:grid;gap:1rem}@media(min-width:900px){.result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.result-item{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.rank{display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;border-radius:999px;background:#e0f2fe;color:#075985;font-weight:900;margin-right:.65rem;flex:0 0 auto}.subtle{color:#64748b}.pill{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:.75rem;font-weight:900;background:#eef2ff;color:#4338ca}.family-card{border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:1rem;background:#fff}.list-tight{margin-bottom:0;padding-left:1.1rem}.question-note{border-left:4px solid #0d6efd;background:#eff6ff;border-radius:14px;padding:.85rem}.badge-line{display:flex;flex-wrap:wrap;gap:.35rem}
 .breed-live{display:grid;gap:.5rem}.breed-live-item{display:block;width:100%;text-align:left;border:1px solid rgba(15,23,42,.08);background:#fff;border-radius:14px;padding:.75rem .85rem;box-shadow:0 4px 10px rgba(15,23,42,.04)}.breed-live-item:hover,.breed-live-item:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12);outline:0}.breed-live-name{font-weight:800;color:#0f172a}.breed-live-meta{font-size:.8rem;color:#64748b;margin-top:.1rem}.breed-live-best{font-size:.8rem;color:#0f766e;font-weight:800;margin-top:.1rem}.breed-live-note{font-size:.85rem;color:#334155;margin-top:.2rem;line-height:1.25}.breed-focus-group{display:inline-flex;flex-wrap:wrap;gap:.35rem;padding:.35rem;background:#eef6ff;border:1px solid rgba(13,110,253,.16);border-radius:999px}.breed-focus-btn{border-radius:999px !important;min-width:0;padding:.4rem .75rem;line-height:1}.breed-focus-btn.active{background:#0d6efd !important;border-color:#0d6efd !important;color:#fff !important;box-shadow:0 4px 10px rgba(13,110,253,.16)}.breed-focus-btn:not(.active){background:#fff;color:#0d6efd;border-color:rgba(13,110,253,.2)}.breed-focus-count{font-size:.75rem;font-weight:700;color:#64748b;margin-left:.25rem}
 .breed-advanced{border:1px solid rgba(15,23,42,.1);border-radius:16px;background:#f8fafc;padding:1rem}.breed-advanced summary{cursor:pointer;list-style:none}.breed-advanced summary::-webkit-details-marker{display:none}.breed-advanced summary::after{content:"";display:inline-block;width:.55rem;height:.55rem;margin-left:.5rem;border-right:2px solid #475569;border-bottom:2px solid #475569;transform:rotate(45deg) translateY(-1px);transition:transform .15s ease}.breed-advanced[open] summary::after{transform:rotate(-135deg) translateY(1px)}.breed-advanced-note{color:#64748b;font-size:.9rem;margin-top:.35rem}
+.breed-thumb{width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:.75rem;display:block}
 </style>
 </head>
 <body>
@@ -1174,7 +1175,7 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
                 <h2 class="h5 mb-3">Top breed ideas</h2>
                 <div class="result-grid">
                     <?php foreach ($topBreeds as $index => $match): ?>
-                        <article class="result-item">
+                        <article class="result-item" data-breed-photo="<?= e($match['breed']) ?>">
                             <div class="d-flex align-items-start gap-2 mb-2">
                                 <div class="rank"><?= (int) ($index + 1) ?></div>
                                 <div>
@@ -1402,6 +1403,29 @@ body{background:#f1f5f9;color:#0f172a}.question-shell{max-width:1080px;margin:0 
     input.addEventListener('change', render);
     render();
 })();
+</script>
+<script>
+(function () {
+    const cards = document.querySelectorAll('[data-breed-photo]');
+    if (!cards.length) return;
+    cards.forEach(function (card) {
+        const breed = card.dataset.breedPhoto;
+        if (!breed) return;
+        fetch('/api/breed_photo.php?breed=' + encodeURIComponent(breed))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !data.url) return;
+                const img = document.createElement('img');
+                img.src = data.url;
+                img.alt = breed;
+                img.className = 'breed-thumb';
+                img.loading = 'lazy';
+                img.onerror = function () { img.remove(); };
+                card.insertBefore(img, card.firstChild);
+            })
+            .catch(function () {});
+    });
+}());
 </script>
 </body>
 </html>

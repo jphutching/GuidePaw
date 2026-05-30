@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/api_auth.php';
 require_once __DIR__ . '/../includes/dog_breeds_catalog.php';
+require_once __DIR__ . '/../includes/feature_flags.php';
+require_once __DIR__ . '/../includes/breed_photos.php';
 
 requireApiUser($pdo);
 
@@ -100,9 +102,37 @@ foreach ($catalog as $breedName => $info) {
 }
 
 usort($results, static fn($a, $b) => $b['score'] <=> $a['score']);
+$top = array_slice($results, 0, 10);
+
+// Attach cached photo URLs when the feature is enabled.
+// Bulk-query the cache for all top breeds, then fetch any uncached ones individually.
+$photosEnabled = featureEnabled($pdo, 'breed_photos_enabled') && tableExists($pdo, 'breed_images');
+if ($photosEnabled && count($top) > 0) {
+    $breedNames   = array_column($top, 'breed');
+    $placeholders = implode(',', array_fill(0, count($breedNames), '?'));
+    $cached       = $pdo->prepare("SELECT breed_name, image_url FROM breed_images WHERE breed_name IN ($placeholders) AND color_variant = ''");
+    $cached->execute($breedNames);
+    $photoMap = [];
+    foreach ($cached->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $photoMap[$row['breed_name']] = $row['image_url'] !== '' ? $row['image_url'] : null;
+    }
+    foreach ($top as &$match) {
+        if (array_key_exists($match['breed'], $photoMap)) {
+            $match['photo_url'] = $photoMap[$match['breed']];
+        } else {
+            $match['photo_url'] = getBreedPhotoUrlCached($pdo, $match['breed']);
+        }
+    }
+    unset($match);
+} else {
+    foreach ($top as &$match) {
+        $match['photo_url'] = null;
+    }
+    unset($match);
+}
 
 apiJson([
     'success'      => true,
-    'matches'      => array_slice($results, 0, 10),
+    'matches'      => $top,
     'total_breeds' => count($catalog),
 ]);

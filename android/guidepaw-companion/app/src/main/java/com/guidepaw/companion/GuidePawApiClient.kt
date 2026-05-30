@@ -630,6 +630,7 @@ data class GpBreedMatch(
     val traits: String,
     val notes: String,
     val score: Int,
+    val photoUrl: String?,
 )
 
 data class GpBillingPlan(
@@ -2570,6 +2571,7 @@ class GuidePawApiClient(
                     traits      = o.optString("traits", ""),
                     notes       = o.optString("notes", ""),
                     score       = o.optInt("score", 0),
+                    photoUrl    = o.optString("photo_url").takeIf { it.isNotBlank() },
                 )
             }
         }

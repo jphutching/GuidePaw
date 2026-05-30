@@ -15,8 +15,8 @@ android {
         applicationId 'com.guidepaw.companion'
         minSdk 26
         targetSdk 34
-        versionCode 98
-        versionName '0.098'
+        versionCode 99
+        versionName '0.099'
     }
 
     signingConfigs {
@@ -67,5 +67,6 @@ dependencies {
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.activity:activity-compose:1.9.0'
     implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'io.coil-kt:coil-compose:2.7.0'
     debugImplementation 'androidx.compose.ui:ui-tooling'
 }
