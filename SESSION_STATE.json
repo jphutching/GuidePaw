@@ -1,13 +1,24 @@
 {
-  "active_ai": null,
-  "session_id": "claude-1780123242891",
-  "session_started_at": "2026-05-30T06:40:42.891Z",
-  "last_milestone": "Fixed production 500s: privacy.php + qr_tracking.php, added /privacy clean URL",
-  "last_handoff_at": "2026-05-30T06:42:43.633Z",
-  "current_task": "what is the current build tasks",
-  "files_in_progress": [],
+  "active_ai": "claude",
+  "session_id": "claude-1780168184940",
+  "session_started_at": "2026-05-30T19:09:44.941Z",
+  "last_milestone": "feat: breed photos on web + Android native (v0.099)",
+  "last_handoff_at": "2026-05-30T19:51:00.665Z",
+  "current_task": "Check render feedback log. Look at the request pertaining breed pictures. What can we do about this?",
+  "files_in_progress": [
+    "sql/migrations/pgsql/20260530_breed_images.sql",
+    "includes/breed_photos.php",
+    "api/breed_photo.php",
+    "api/breed_quiz.php",
+    "breed_questionnaire.php",
+    "android/guidepaw-companion/app/build.gradle",
+    "android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt",
+    "android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawApiClient.kt",
+    "android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt",
+    "master.env"
+  ],
   "branch": "main",
-  "updated_at": "2026-05-30T06:42:43.633Z",
+  "updated_at": "2026-05-30T19:51:00.665Z",
   "_note": "Auto-managed by GuidePaw Middleware. Do not edit manually.",
-  "handoff_saved_at_90": false
+  "handoff_saved_at_90": true
 }

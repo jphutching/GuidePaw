@@ -1,6 +1,6 @@
 # 🤝 GuidePaw AI Handoff Document
 
-> ⚠️ **Handoff reason:** `session_kill`
+> ⚠️ **Handoff reason:** `auto_save_90pct`
 
 > **Read these first (in order):**
 > 1. `cat CODEX_BOOT.md` — who you are and how to think
@@ -14,26 +14,35 @@
 | **From** | CLAUDE |
 | **To** | CODEX |
 | **Branch** | `main` |
-| **Session ID** | `claude-1780123242891` |
-| **Timestamp** | `2026-05-30T06:42:43.613Z` |
+| **Session ID** | `claude-1780168184940` |
+| **Timestamp** | `2026-05-30T19:51:00.663Z` |
 
 ---
 
 ## 📋 Summary of Work Completed
 
-Session killed manually — killed from dashboard. Check git log for any uncommitted work.
+AUTO-SAVE at 92% — session still running. AI approaching context limit. Check terminal.
 
 ---
 
 ## 📁 Files Changed This Session
 
-- *(run `git diff --name-only HEAD~1` to see recent changes)*
+- `sql/migrations/pgsql/20260530_breed_images.sql`
+- `includes/breed_photos.php`
+- `api/breed_photo.php`
+- `api/breed_quiz.php`
+- `breed_questionnaire.php`
+- `android/guidepaw-companion/app/build.gradle`
+- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt`
+- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/GuidePawApiClient.kt`
+- `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/MainActivity.kt`
+- `master.env`
 
 ---
 
 ## 🎯 Next Task for CODEX
 
-what is the current build tasks
+Check render feedback log. Look at the request pertaining breed pictures. What can we do about this?
 
 ---
 
@@ -47,7 +56,7 @@ git pull origin main
 curl -s -X POST $MIDDLEWARE_URL/session/start \
   -H "Authorization: Bearer $MIDDLEWARE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"ai":"codex","task":"what is the current build tasks","branch":"main"}'
+  -d '{"ai":"codex","task":"Check render feedback log. Look at the request pertaining breed pictures. What can we do about this?","branch":"main"}'
 
 # 3. Check state
 curl -s $MIDDLEWARE_URL/status | python3 -m json.tool
