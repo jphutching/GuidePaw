@@ -71,7 +71,8 @@ db.exec(`
 
 function auth(req, res, next) {
   if (!MIDDLEWARE_SECRET) return next();
-  const token = (req.headers["authorization"] || "").replace("Bearer ", "");
+  const token = (req.headers["authorization"] || "").replace("Bearer ", "").trim()
+             || (req.query && req.query.token) || "";
   if (token !== MIDDLEWARE_SECRET) return res.status(401).json({ error: "Unauthorized" });
   next();
 }
@@ -474,6 +475,42 @@ app.post("/api/dash/force-handoff", auth, (req, res) => {
 
   console.log(`[FORCE HANDOFF] ${ai.toUpperCase()} at ${pct}%`);
   res.json({ ok: true, pct, message: `Handoff saved at ${pct}%. Pushed to GitHub.` });
+});
+
+// ── Live event stream (SSE) ───────────────────────────────────────────────────
+// Streams new session events and state changes as they happen.
+// EventSource can't set headers, so auth falls back to ?token= query param.
+
+app.get("/api/dash/stream", auth, (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");  // prevent nginx from buffering the stream
+  res.flushHeaders();
+
+  let lastId      = db.prepare("SELECT COALESCE(MAX(id),0) AS n FROM sessions").get().n;
+  let lastStateTs = "";
+
+  const tick = () => {
+    try {
+      // Push any new event rows
+      const rows = db.prepare("SELECT * FROM sessions WHERE id > ? ORDER BY id ASC LIMIT 20").all(lastId);
+      for (const row of rows) {
+        lastId = row.id;
+        res.write(`data: ${JSON.stringify({ type: "event", row })}\n\n`);
+      }
+      // Push state only when it actually changed
+      const state = readState();
+      if (state.updated_at !== lastStateTs) {
+        lastStateTs = state.updated_at;
+        res.write(`data: ${JSON.stringify({ type: "state", state })}\n\n`);
+      }
+    } catch { /* client disconnected — interval will be cleared below */ }
+  };
+
+  const iv = setInterval(tick, 800);
+  req.on("close", () => { clearInterval(iv); console.log("[SSE] client disconnected"); });
+  console.log(`[SSE] client connected from ${req.socket.remoteAddress}`);
 });
 
 // ── Watchdog ──────────────────────────────────────────────────────────────────
