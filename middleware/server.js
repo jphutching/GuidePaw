@@ -138,8 +138,11 @@ app.post("/session/start", auth, (req, res) => {
 });
 
 app.post("/session/end", auth, (req, res) => {
-  const { ai, session_id, summary, files_changed, next_task } = req.body;
+  const { session_id, summary, files_changed, next_task } = req.body;
   const state = readState();
+  // AI is derived from the active session when the caller doesn't specify it,
+  // so the dashboard never has to ask "which AI?" mid-session.
+  const ai = req.body.ai || state.active_ai || "claude";
   logEvent(session_id || state.session_id, ai, "session_end", { summary });
 
   const doc = buildHandoffDoc({
@@ -165,8 +168,9 @@ app.post("/session/end", auth, (req, res) => {
 });
 
 app.post("/milestone", auth, (req, res) => {
-  const { ai, session_id, title, description, files_changed, trigger_handoff } = req.body;
+  const { session_id, title, description, files_changed, trigger_handoff } = req.body;
   const state = readState();
+  const ai = req.body.ai || state.active_ai || "claude";
 
   db.prepare("INSERT INTO milestones (session_id,ai,title,description,files_changed) VALUES (?,?,?,?,?)")
     .run(session_id || state.session_id, ai, title, description, JSON.stringify(files_changed || []));
@@ -316,30 +320,28 @@ app.post("/session/kill", auth, (req, res) => {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-const DASH_HTML = path.join(__dirname, "dashboard.html");
-const ALLOWED_FILES = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CLAUDE_BOOT.md","CODEX_BOOT.md","CODEX_RULES.md"];
-const ALLOWED_CMDS = [
-  "bash scripts/start-codex.sh",
-  "git log --oneline -10",
-  "git status --short",
-  "git diff --stat HEAD",
-  "git pull origin main",
-  "bash scripts/deploy_local.sh",
-  "php -l includes/db_connect.php",
-  "systemctl status nginx --no-pager -l",
-  "systemctl status php8.5-fpm --no-pager -l",
-  "systemctl status postgresql --no-pager -l",
-  "ls -lh downloads/*.apk",
-  "tail -20 /var/log/nginx/error.log",
-  "cat /tmp/middleware.log",
-  "sudo -u postgres psql guidepaw -c 'SELECT version FROM users LIMIT 1;'",
-  "curl -sk https://10.147.18.184/api/me.php | python3 -m json.tool",
-];
+const DASH_HTML      = path.join(__dirname, "dashboard.html");
+const COMMANDS_FILE  = path.join(__dirname, "commands.json");
+const ALLOWED_FILES  = ["HANDOFF.md","DEVLOG.md","PROJECT_STATE.md","CLAUDE_BOOT.md","CODEX_BOOT.md","CODEX_RULES.md"];
+
+// Read commands.json fresh on every call — edit the file and reload the browser, no restart needed.
+function loadCommands() {
+  try { return JSON.parse(fs.readFileSync(COMMANDS_FILE, "utf8")); }
+  catch(e) { console.error("[COMMANDS] Failed to read commands.json:", e.message); return []; }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
 
 app.get("/dashboard", (req, res) => {
   let html = fs.readFileSync(DASH_HTML, "utf8");
   html = html.replace("/* DASH_TOKEN injected by server */",
     `const DASH_TOKEN = ${JSON.stringify(MIDDLEWARE_SECRET || "")};`);
+  const btnHtml = loadCommands().map(({cmd, label}) =>
+    `<button class="cmd-btn" data-cmd="${escHtml(cmd)}">${escHtml(label)}</button>`
+  ).join("\n      ");
+  html = html.replace("<!-- CMD_BUTTONS -->", btnHtml);
   res.setHeader("Content-Type", "text/html");
   res.send(html);
 });
@@ -397,7 +399,8 @@ app.get("/api/dash/file/:name", auth, (req, res) => {
 
 app.post("/api/dash/run", auth, (req, res) => {
   const { cmd } = req.body || {};
-  if (!cmd || !ALLOWED_CMDS.includes(cmd))
+  const allowed = loadCommands().map(c => c.cmd);
+  if (!cmd || !allowed.includes(cmd))
     return res.status(403).json({ error: "Command not in allowlist" });
   const child = spawn("bash", ["-c", cmd], { cwd: REPO_PATH, env: { ...process.env, TERM: "xterm" } });
   let output = "", exitCode = 0;

@@ -1,0 +1,17 @@
+[
+  { "label": "git log",       "cmd": "git log --oneline -10" },
+  { "label": "git status",    "cmd": "git status --short" },
+  { "label": "git diff stat", "cmd": "git diff --stat HEAD" },
+  { "label": "git diff HEAD", "cmd": "git diff HEAD" },
+  { "label": "git pull",      "cmd": "git pull origin main" },
+  { "label": "deploy",        "cmd": "bash scripts/deploy_local.sh" },
+  { "label": "nginx",         "cmd": "systemctl status nginx --no-pager -l" },
+  { "label": "php-fpm",       "cmd": "systemctl status php8.5-fpm --no-pager -l" },
+  { "label": "postgres",      "cmd": "systemctl status postgresql --no-pager -l" },
+  { "label": "ping API",      "cmd": "curl -sk https://10.147.18.184/api/me.php | python3 -m json.tool" },
+  { "label": "nginx errors",  "cmd": "tail -20 /var/log/nginx/error.log" },
+  { "label": "php errors",    "cmd": "tail -20 /var/log/php8.5-fpm.log" },
+  { "label": "ping DB",       "cmd": "sudo -u postgres psql guidepaw -c 'SELECT version FROM users LIMIT 1;'" },
+  { "label": "apk list",      "cmd": "ls -lh downloads/*.apk" },
+  { "label": "smoke test",    "cmd": "curl -sk https://10.147.18.184/ | grep -c '<html>'" }
+]
