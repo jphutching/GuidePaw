@@ -76,8 +76,14 @@ body { background: #f1f5f9; color: #0f172a; }
 .breed-card-name { font-size: .85rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: .2rem; }
 .breed-card-group { font-size: .72rem; color: #64748b; font-weight: 600; }
 /* Modal */
-.modal-photo { width: 100%; max-height: 300px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem; display: block; }
+.modal-photo { width: 100%; max-height: 55vh; object-fit: contain; border-radius: 12px; margin-bottom: .25rem; display: block; background: #f1f5f9; cursor: zoom-in; }
+.modal-photo-hint { font-size: .72rem; color: #64748b; text-align: center; margin-bottom: .75rem; }
 .modal-photo-placeholder { width: 100%; height: 200px; background: #e8f0fe; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #94a3b8; margin-bottom: 1rem; }
+/* Lightbox */
+.photo-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 2000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+.photo-lightbox.open { display: flex; }
+.photo-lightbox img { max-width: 100vw; max-height: 100vh; object-fit: contain; border-radius: 4px; }
+.photo-lightbox-close { position: absolute; top: 1rem; right: 1.25rem; color: #fff; font-size: 2.2rem; cursor: pointer; background: none; border: none; line-height: 1; opacity: .8; }
 .info-row { margin-bottom: .6rem; }
 .info-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; color: #64748b; }
 .info-value { font-size: .9rem; color: #334155; margin-top: .1rem; }
@@ -168,6 +174,7 @@ body { background: #f1f5f9; color: #0f172a; }
             <div class="modal-body pt-2">
                 <div id="modal-photo-placeholder" class="modal-photo-placeholder">🐕</div>
                 <img id="modal-photo" class="modal-photo" src="" alt="" style="display:none;">
+                <div id="modal-photo-hint" class="modal-photo-hint" style="display:none;">Tap photo to expand full size</div>
                 <div class="info-row">
                     <div class="info-label">Group</div>
                     <div class="info-value" id="modal-group"></div>
@@ -191,6 +198,12 @@ body { background: #f1f5f9; color: #0f172a; }
             </div>
         </div>
     </div>
+</div>
+
+<!-- Full-size lightbox -->
+<div class="photo-lightbox" id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Full size breed photo">
+    <button class="photo-lightbox-close" id="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightbox-img" src="" alt="">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -330,6 +343,33 @@ body { background: #f1f5f9; color: #0f172a; }
             const card = e.target.closest('.breed-card');
             if (card) { e.preventDefault(); openModal(card); }
         }
+    });
+
+    // ── Lightbox ──────────────────────────────────────────────────────────────
+    const lightbox      = document.getElementById('photo-lightbox');
+    const lightboxImg   = document.getElementById('lightbox-img');
+    const lightboxClose = document.getElementById('lightbox-close');
+
+    function openLightbox(src, alt) {
+        lightboxImg.src = src;
+        lightboxImg.alt = alt || '';
+        lightbox.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('modal-photo').addEventListener('click', function () {
+        if (this.src) openLightbox(this.src, this.alt);
+    });
+    lightbox.addEventListener('click', function (e) {
+        if (e.target !== lightboxImg) closeLightbox();
+    });
+    lightboxClose.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLightbox();
     });
 
     // ── Admin pre-fetch ───────────────────────────────────────────────────────
