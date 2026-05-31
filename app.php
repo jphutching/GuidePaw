@@ -64,10 +64,10 @@ $schema = [
                 <p class="muted mb-3">All screens are pure Compose. Training tools, risk assessment, regression tracking, and candidate scoring are fully native — no web views for handler work.</p>
                 <div class="d-grid gap-2">
                     <a class="btn btn-primary fw-bold" href="breed_questionnaire.php">Start with breed research</a>
-                    <a class="btn btn-outline-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download debug APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
+                    <a class="btn btn-outline-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>
                     <a class="btn btn-outline-primary fw-bold" href="training_program.php">See training tools</a>
                 </div>
-                <p class="small mt-3 mb-0 text-secondary">Because this is a sideloaded test build, Android or your browser may warn that the APK is not from a verified store. That warning is expected until we publish a signed release build or Play Store release.</p>
+                <p class="small mt-3 mb-0 text-secondary">This is a signed release build. Android or your browser may warn that the APK is not from the Play Store — that is expected for sideloaded apps. The app is fully functional and safe to install.</p>
             </div>
         </div>
     </section>
@@ -106,8 +106,8 @@ $schema = [
             <div class="text-uppercase text-muted fw-semibold small mb-2">Download</div>
             <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div style="min-width:260px; max-width:720px;">
-                    <h2 class="h3 mb-2">GuidePaw Companion debug APK</h2>
-                    <p class="mb-0">This is the current test build. It is not a Google Play release — sideloading is required. The app is fully native Compose: training logs, all five training-tool screens, wearables, notifications, and feedback — no XML layouts and no web views.</p>
+                    <h2 class="h3 mb-2">GuidePaw Companion APK</h2>
+                    <p class="mb-0">This is the current signed release build. It is not a Google Play release — sideloading is required. The app is fully native Compose: training logs, all five training-tool screens, wearables, notifications, and feedback — no XML layouts and no web views.</p>
                 </div>
                 <div>
                     <a class="btn btn-primary fw-bold" href="<?php echo htmlspecialchars($apkFile, ENT_QUOTES); ?>">Download APK v<?php echo htmlspecialchars($apkVersion, ENT_QUOTES); ?></a>

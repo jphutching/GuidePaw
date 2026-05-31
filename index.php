@@ -118,6 +118,7 @@ if (empty($_SESSION['user_id'])) {
     <?php guidepawBrandHeader(); ?>
     <main class="landing-shell">
         <section class="landing-hero mb-4">
+            <img src="assets/brand/guidepaw-logo.png" alt="GuidePaw" style="height:52px;width:auto;margin-bottom:.75rem;display:block;">
             <h1 class="display-6 fw-bold mb-2">GuidePaw keeps handler work organized.</h1>
             <p class="mb-4" style="color:rgba(255,255,255,.82);font-size:1rem;">Research dog breeds, track training, manage profiles, and keep service dog paperwork in one place.</p>
             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">

@@ -89,6 +89,7 @@ $csrf = generateCsrfToken();
             <a class="btn" href="export_backup.php?format=package">Backup Snapshot</a>
             <a class="btn" href="backup.php">Backup Tools</a>
             <a class="btn" href="admin_audit_log.php">Audit Log</a>
+            <a class="btn" href="beta_qa_checklist.php">QA Checklist</a>
         </div>
     </details>
 
