@@ -525,11 +525,23 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
     $attribution = null;
 
     // ── Source 1: Wikipedia / Wikimedia ──────────────────────────────────────
-    $wikiTitle = breedWikipediaTitle($breedName);
-    if ($wikiTitle !== null) {
+    // Try the canonical title first, then any catalog aliases as fallback Wikipedia searches
+    $catalog  = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
+    $aliases  = (array) ($catalog[$breedName]['aliases'] ?? []);
+    $wikiTitlesToTry = [];
+    $wt = breedWikipediaTitle($breedName);
+    if ($wt !== null) {
+        $wikiTitlesToTry[] = $wt;
+    }
+    foreach ($aliases as $alias) {
+        $wikiTitlesToTry[] = $alias;
+        $wikiTitlesToTry[] = $alias . ' dog';
+    }
+    foreach ($wikiTitlesToTry as $wikiTitle) {
         $imageUrl = fetchWikipediaPhoto($wikiTitle);
         if ($imageUrl !== '') {
             $source = 'wikipedia';
+            break;
         }
     }
 
@@ -558,13 +570,10 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // Build search terms: primary name + common aliases from catalog
+    // Build search terms: primary name + common aliases (catalog already loaded above)
     $searchTerms = [$breedName];
-    $catalog = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
-    if (!empty($catalog[$breedName]['aliases'])) {
-        foreach ((array) $catalog[$breedName]['aliases'] as $alias) {
-            $searchTerms[] = $alias;
-        }
+    foreach ($aliases as $alias) {
+        $searchTerms[] = $alias;
     }
 
     // ── Source 3: Unsplash ────────────────────────────────────────────────────
