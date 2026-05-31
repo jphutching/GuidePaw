@@ -16,6 +16,7 @@
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once __DIR__ . '/../includes/breed_photos.php';
 
+set_time_limit(0);
 header('Content-Type: application/json');
 
 if (!gpCurrentUserIsAdmin($pdo)) {
@@ -204,12 +205,25 @@ foreach ($rows as $row) {
     $breedName = $row['breed_name'];
     $result    = ['breed' => $breedName, 'score' => null, 'correct' => null, 'replaced' => false, 'notes' => ''];
 
-    // Download our image
+    // Download our image — if URL is broken, swap in a fresh one without deleting the row
     $ourImg = bpvImageToBase64($row['image_url']);
     if ($ourImg === null) {
-        $result['notes'] = 'could not download our image';
-        $results[] = $result;
-        continue;
+        // Force-expire the cached URL so getBreedPhotoUrlCached re-fetches from sources
+        $pdo->prepare("UPDATE breed_images SET image_url = '' WHERE id = ?")->execute([$row['id']]);
+        $newUrl = getBreedPhotoUrlCached($pdo, $breedName);
+        if ($newUrl) {
+            $ourImg           = bpvImageToBase64($newUrl);
+            $row['image_url'] = $newUrl;
+        }
+        if ($ourImg === null) {
+            // All sources failed — mark so the loop doesn't spin on this breed forever
+            $pdo->prepare(
+                "UPDATE breed_images SET verified_at = CURRENT_TIMESTAMP, verification_score = 0, verification_notes = 'image URL broken — needs manual review' WHERE id = ?"
+            )->execute([$row['id']]);
+            $result['notes'] = 'broken image URL';
+            $results[] = $result;
+            continue;
+        }
     }
 
     // Fetch AKC reference image (if AKC recognises this breed)

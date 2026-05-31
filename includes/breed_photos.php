@@ -295,6 +295,9 @@ function breedWikipediaTitle(string $breedName): ?string
 function fetchWikipediaPhoto(string $articleTitle): string
 {
     // ── Source 1: MediaWiki pageimages API ───────────────────────────────────
+    // Request 640px — Wikimedia returns whatever thumbnail size it has cached
+    // (often larger, e.g. 960px). Use the URL as-is; do NOT force /640px- on
+    // the path because many images only exist at their native cached size.
     $apiUrl = 'https://en.wikipedia.org/w/api.php?' . http_build_query([
         'action'      => 'query',
         'titles'      => $articleTitle,
@@ -318,13 +321,14 @@ function fetchWikipediaPhoto(string $articleTitle): string
         $data = json_decode($raw, true);
         foreach (($data['query']['pages'] ?? []) as $page) {
             $src = (string) ($page['thumbnail']['source'] ?? '');
-            if ($src !== '') {
-                return preg_replace('/\/\d+px-/', '/640px-', $src);
+            // Only use thumbnail URLs (contain /thumb/) — originals return 403
+            if ($src !== '' && strpos($src, '/thumb/') !== false) {
+                return $src;
             }
         }
     }
 
-    // ── Source 2: Wikipedia REST summary API ─────────────────────────────────
+    // ── Source 2: Wikipedia REST summary API — always returns a real thumbnail ──
     $restUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . rawurlencode($articleTitle);
     $ch = curl_init($restUrl);
     curl_setopt_array($ch, [
@@ -341,7 +345,7 @@ function fetchWikipediaPhoto(string $articleTitle): string
         $data = json_decode($raw, true);
         $src  = (string) ($data['thumbnail']['source'] ?? '');
         if ($src !== '') {
-            return preg_replace('/\/\d+px-/', '/640px-', $src);
+            return $src;
         }
     }
 
@@ -482,41 +486,41 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
     $source      = 'not_mapped';
     $attribution = null;
 
-    // ── Source 1: Dog CEO ─────────────────────────────────────────────────────
-    $slug = breedPhotoSlug($breedName);
-    if ($slug !== null) {
-        $ch = curl_init('https://dog.ceo/api/breed/' . $slug . '/images/random');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 5,
-            CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
-            CURLOPT_FOLLOWLOCATION => true,
-        ]);
-        $raw  = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($raw !== false && $code === 200) {
-            $data = json_decode($raw, true);
-            if (isset($data['status'], $data['message']) && $data['status'] === 'success' && is_string($data['message'])) {
-                $imageUrl = $data['message'];
-                $source   = 'dog_ceo';
-            }
+    // ── Source 1: Wikipedia / Wikimedia ──────────────────────────────────────
+    $wikiTitle = breedWikipediaTitle($breedName);
+    if ($wikiTitle !== null) {
+        $imageUrl = fetchWikipediaPhoto($wikiTitle);
+        if ($imageUrl !== '') {
+            $source = 'wikipedia';
         }
     }
 
-    // ── Source 2–4: Wikipedia / Wikimedia ────────────────────────────────────
+    // ── Source 2: Dog CEO ─────────────────────────────────────────────────────
     if ($imageUrl === '') {
-        $wikiTitle = breedWikipediaTitle($breedName);
-        if ($wikiTitle !== null) {
-            $imageUrl = fetchWikipediaPhoto($wikiTitle);
-            if ($imageUrl !== '') {
-                $source = 'wikipedia';
+        $slug = breedPhotoSlug($breedName);
+        if ($slug !== null) {
+            $ch = curl_init('https://dog.ceo/api/breed/' . $slug . '/images/random');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 5,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
+                CURLOPT_FOLLOWLOCATION => true,
+            ]);
+            $raw  = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($raw !== false && $code === 200) {
+                $data = json_decode($raw, true);
+                if (isset($data['status'], $data['message']) && $data['status'] === 'success' && is_string($data['message'])) {
+                    $imageUrl = $data['message'];
+                    $source   = 'dog_ceo';
+                }
             }
         }
     }
 
-    // ── Source 5: Unsplash ────────────────────────────────────────────────────
+    // ── Source 3: Unsplash ────────────────────────────────────────────────────
     if ($imageUrl === '') {
         $unsplashKey = trim((string) gpEnv('UNSPLASH_ACCESS_KEY', ''));
         if ($unsplashKey !== '') {
@@ -529,7 +533,7 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // ── Source 6: Pexels ──────────────────────────────────────────────────────
+    // ── Source 4: Pexels ──────────────────────────────────────────────────────
     if ($imageUrl === '') {
         $pexelsKey = trim((string) gpEnv('PEXELS_API_KEY', ''));
         if ($pexelsKey !== '') {
