@@ -169,11 +169,18 @@ A failed lint or failed build means: **do not commit**. Fix the problem first.
 Every version bump requires all of these, in the same commit:
 1. `app/build.gradle` — bump `versionCode` and `versionName`
 2. `CompanionAppVersion.kt` — bump both constants
-3. `master.env` — bump both vars, add `# was: X.XXX (DATE)` comment
+3. `master.env` — bump both vars, add `# was: X.XXX (DATE)` comment; also update `GUIDEPAW_COMPANION_APK_PATH=downloads/GuidePaw_Companion_vX.XXX_release.apk`
 4. `includes/changelog.php` — add new entry at the top of the array
-5. Push env to Render: `bash scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=XX GUIDEPAW_COMPANION_VERSION_NAME=0.0XX`
+5. Push env to Render: `bash scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=XX GUIDEPAW_COMPANION_VERSION_NAME=0.0XX GUIDEPAW_COMPANION_APK_PATH=downloads/GuidePaw_Companion_vX.XXX_release.apk`
 6. Build the APK: `./gradlew --no-daemon clean :app:assembleRelease`
 7. Copy APK from `app/build/outputs/apk/release/app-release.apk` to `downloads/GuidePaw_Companion_vX.XXX_release.apk`
+8. Update `/etc/nginx/sites-available/guidepaw` — set all three companion params:
+   ```
+   fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME X.XXX;
+   fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE XX;
+   fastcgi_param GUIDEPAW_COMPANION_APK_PATH downloads/GuidePaw_Companion_vX.XXX_release.apk;
+   ```
+   Then: `sudo nginx -t && sudo systemctl reload nginx`
 
 Miss any one of these and the version will be out of sync. Check the last versionCode before picking the next one — never skip or reuse a number.
 

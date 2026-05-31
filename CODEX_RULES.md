@@ -54,13 +54,21 @@ If any match is user-visible, rewrite it in plain language.
 **Rule:** Every version change requires ALL of these in the same commit:
 1. `android/guidepaw-companion/app/build.gradle` — `versionCode` and `versionName`
 2. `android/guidepaw-companion/app/src/main/java/com/guidepaw/companion/CompanionAppVersion.kt` — both constants
-3. `master.env` — `GUIDEPAW_COMPANION_VERSION_CODE` and `GUIDEPAW_COMPANION_VERSION_NAME`
+3. `master.env` — `GUIDEPAW_COMPANION_VERSION_CODE`, `GUIDEPAW_COMPANION_VERSION_NAME`, and `GUIDEPAW_COMPANION_APK_PATH=downloads/GuidePaw_Companion_vX.XXX_release.apk`
 4. `includes/changelog.php` — new entry at top of array
 
 After updating master.env, push to Render:
 ```bash
-bash scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=XX GUIDEPAW_COMPANION_VERSION_NAME=0.0XX
+bash scripts/render-set-env.sh GUIDEPAW_COMPANION_VERSION_CODE=XX GUIDEPAW_COMPANION_VERSION_NAME=0.0XX GUIDEPAW_COMPANION_APK_PATH=downloads/GuidePaw_Companion_vX.XXX_release.apk
 ```
+
+Also update `/etc/nginx/sites-available/guidepaw` — all three companion params must match:
+```
+fastcgi_param GUIDEPAW_COMPANION_VERSION_NAME X.XXX;
+fastcgi_param GUIDEPAW_COMPANION_VERSION_CODE XX;
+fastcgi_param GUIDEPAW_COMPANION_APK_PATH downloads/GuidePaw_Companion_vX.XXX_release.apk;
+```
+Then: `sudo nginx -t && sudo systemctl reload nginx`
 
 **Version numbering:**
 - versionName is always `0.0XX` format (three digits: 0.098, 0.099, 0.100, 0.101...)
