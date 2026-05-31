@@ -178,6 +178,7 @@ body { background: #f1f5f9; color: #0f172a; }
                 <div id="modal-photo-placeholder" class="modal-photo-placeholder">🐕</div>
                 <img id="modal-photo" class="modal-photo" src="" alt="" style="display:none;">
                 <div id="modal-photo-hint" class="modal-photo-hint" style="display:none;">Tap photo to expand full size</div>
+                <div id="modal-photo-attr" class="modal-photo-hint" style="display:none;"></div>
                 <div class="info-row">
                     <div class="info-label">Group</div>
                     <div class="info-value" id="modal-group"></div>
@@ -262,6 +263,7 @@ body { background: #f1f5f9; color: #0f172a; }
             .then(function (data) {
                 card.dataset.photoLoaded = 'done';
                 card.dataset.photoUrl = (data && data.url) ? data.url : '';
+                card.dataset.photoAttr = (data && data.attribution) ? data.attribution : '';
                 if (data && data.url) {
                     const wrap = card.querySelector('.breed-photo-wrap');
                     const placeholder = wrap.querySelector('.breed-placeholder');
@@ -316,15 +318,25 @@ body { background: #f1f5f9; color: #0f172a; }
 
         const modalPhoto = document.getElementById('modal-photo');
         const modalPlaceholder = document.getElementById('modal-photo-placeholder');
+        const modalHint = document.getElementById('modal-photo-hint');
+        const modalAttr = document.getElementById('modal-photo-attr');
 
         if (url) {
             modalPhoto.src = url;
             modalPhoto.alt = breed;
             modalPhoto.style.display = '';
             modalPlaceholder.style.display = 'none';
+            if (modalHint) modalHint.style.display = '';
+            const attr = card.dataset.photoAttr || '';
+            if (modalAttr) {
+                modalAttr.textContent = attr;
+                modalAttr.style.display = attr ? '' : 'none';
+            }
         } else {
             modalPhoto.style.display = 'none';
             modalPlaceholder.style.display = '';
+            if (modalHint) modalHint.style.display = 'none';
+            if (modalAttr) modalAttr.style.display = 'none';
         }
 
         modal.show();

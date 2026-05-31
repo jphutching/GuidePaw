@@ -23,4 +23,16 @@ if ($breedName === '') {
     apiJson(['url' => null], 400);
 }
 
-apiJson(['url' => getBreedPhotoUrlCached($pdo, $breedName)]);
+$url = getBreedPhotoUrlCached($pdo, $breedName);
+
+$attribution = null;
+if ($url !== null) {
+    $stmt = $pdo->prepare('SELECT photo_attribution FROM breed_images WHERE breed_name = ? AND color_variant = \'\' LIMIT 1');
+    $stmt->execute([$breedName]);
+    $attr = $stmt->fetchColumn();
+    if ($attr) {
+        $attribution = (string) $attr;
+    }
+}
+
+apiJson(['url' => $url, 'attribution' => $attribution]);

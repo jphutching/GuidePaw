@@ -381,9 +381,82 @@ function fetchWikipediaPhoto(string $articleTitle): string
 }
 
 /**
+ * Fetch from Unsplash (free tier, requires attribution).
+ * Returns ['url' => '...', 'attribution' => 'Photo by NAME on Unsplash'] or empty strings.
+ */
+function fetchUnsplashPhoto(string $query, string $apiKey): array
+{
+    $url = 'https://api.unsplash.com/search/photos?' . http_build_query([
+        'query'       => $query . ' dog breed',
+        'per_page'    => 5,
+        'orientation' => 'squarish',
+        'client_id'   => $apiKey,
+    ]);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
+    ]);
+    $raw  = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw === false || $code !== 200) {
+        return ['url' => '', 'attribution' => ''];
+    }
+    $data = json_decode($raw, true);
+    foreach (($data['results'] ?? []) as $photo) {
+        $imgUrl = (string) ($photo['urls']['regular'] ?? '');
+        if ($imgUrl === '') {
+            continue;
+        }
+        $name  = (string) ($photo['user']['name'] ?? '');
+        $attr  = $name !== '' ? 'Photo by ' . $name . ' on Unsplash' : 'Photo on Unsplash';
+        return ['url' => $imgUrl, 'attribution' => $attr];
+    }
+    return ['url' => '', 'attribution' => ''];
+}
+
+/**
+ * Fetch from Pexels (CC0 — no attribution required).
+ * Returns image URL or empty string.
+ */
+function fetchPexelsPhoto(string $query, string $apiKey): string
+{
+    $url = 'https://api.pexels.com/v1/search?' . http_build_query([
+        'query'    => $query . ' dog',
+        'per_page' => 5,
+        'size'     => 'medium',
+    ]);
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app)',
+        CURLOPT_HTTPHEADER     => ['Authorization: ' . $apiKey],
+    ]);
+    $raw  = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw === false || $code !== 200) {
+        return '';
+    }
+    $data = json_decode($raw, true);
+    foreach (($data['photos'] ?? []) as $photo) {
+        $imgUrl = (string) ($photo['src']['large'] ?? $photo['src']['medium'] ?? '');
+        if ($imgUrl !== '') {
+            return $imgUrl;
+        }
+    }
+    return '';
+}
+
+/**
  * Returns a cached photo URL for $breedName.
- * Tries Dog CEO first, then Wikipedia, then gives up.
- * Returns null when feature is disabled, table missing, or no photo found.
+ * Source priority: Dog CEO → Wikipedia (3 methods) → Unsplash → Pexels
+ * Returns null when feature disabled, table missing, or no photo found anywhere.
  */
 function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
 {
@@ -405,11 +478,12 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         return $cached !== '' ? $cached : null;
     }
 
-    // Try Dog CEO
-    $slug     = breedPhotoSlug($breedName);
-    $imageUrl = '';
-    $source   = 'not_mapped';
+    $imageUrl    = '';
+    $source      = 'not_mapped';
+    $attribution = null;
 
+    // ── Source 1: Dog CEO ─────────────────────────────────────────────────────
+    $slug = breedPhotoSlug($breedName);
     if ($slug !== null) {
         $ch = curl_init('https://dog.ceo/api/breed/' . $slug . '/images/random');
         curl_setopt_array($ch, [
@@ -420,9 +494,8 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
             CURLOPT_FOLLOWLOCATION => true,
         ]);
         $raw  = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
         if ($raw !== false && $code === 200) {
             $data = json_decode($raw, true);
             if (isset($data['status'], $data['message']) && $data['status'] === 'success' && is_string($data['message'])) {
@@ -432,7 +505,7 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // Fallback to Wikipedia if Dog CEO had nothing
+    // ── Source 2–4: Wikipedia / Wikimedia ────────────────────────────────────
     if ($imageUrl === '') {
         $wikiTitle = breedWikipediaTitle($breedName);
         if ($wikiTitle !== null) {
@@ -443,17 +516,40 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // Always cache: successful URL, or truly unmappable (no slug + all sources failed).
-    // Don't cache empty results when a slug exists but external sources timed out —
-    // those should retry on the next request.
-    $hasSlug = breedPhotoSlug($breedName) !== null;
-    if ($imageUrl !== '' || (!$hasSlug && $source === 'not_mapped')) {
+    // ── Source 5: Unsplash ────────────────────────────────────────────────────
+    if ($imageUrl === '') {
+        $unsplashKey = trim((string) gpEnv('UNSPLASH_ACCESS_KEY', ''));
+        if ($unsplashKey !== '') {
+            $result = fetchUnsplashPhoto($breedName, $unsplashKey);
+            if ($result['url'] !== '') {
+                $imageUrl    = $result['url'];
+                $source      = 'unsplash';
+                $attribution = $result['attribution'] ?: null;
+            }
+        }
+    }
+
+    // ── Source 6: Pexels ──────────────────────────────────────────────────────
+    if ($imageUrl === '') {
+        $pexelsKey = trim((string) gpEnv('PEXELS_API_KEY', ''));
+        if ($pexelsKey !== '') {
+            $imageUrl = fetchPexelsPhoto($breedName, $pexelsKey);
+            if ($imageUrl !== '') {
+                $source = 'pexels';
+            }
+        }
+    }
+
+    // Only cache on success — never write empty results so future requests can retry
+    // all sources (important when new API keys are added or sources improve coverage)
+    if ($imageUrl !== '') {
         $pdo->prepare(
-            'INSERT INTO breed_images (breed_name, color_variant, image_url, source)
-             VALUES (?, \'\', ?, ?)
+            'INSERT INTO breed_images (breed_name, color_variant, image_url, source, photo_attribution)
+             VALUES (?, \'\', ?, ?, ?)
              ON CONFLICT (breed_name, color_variant)
-             DO UPDATE SET image_url = EXCLUDED.image_url, source = EXCLUDED.source, fetched_at = CURRENT_TIMESTAMP'
-        )->execute([$breedName, $imageUrl, $source]);
+             DO UPDATE SET image_url = EXCLUDED.image_url, source = EXCLUDED.source,
+                           photo_attribution = EXCLUDED.photo_attribution, fetched_at = CURRENT_TIMESTAMP'
+        )->execute([$breedName, $imageUrl, $source, $attribution]);
     }
 
     return $imageUrl !== '' ? $imageUrl : null;
