@@ -66,6 +66,10 @@ function breedPhotoSlug(string $breedName): ?string
         'Tibetan Mastiff'                    => 'mastiff/tibetan',
         'Boerboel'                           => 'mastiff/english',
         'Caucasian Shepherd Dog'             => 'ovcharka/caucasian',
+        'Central Asian Shepherd Dog'         => 'ovcharka/caucasian',
+        'Dutch Shepherd'                     => 'german/shepherd',
+        'Black Russian Terrier'              => 'schnauzer/giant',
+        'Bohemian Shepherd'                  => 'german/shepherd',
         'Entlebucher Mountain Dog'           => 'entlebucher',
         'Appenzeller Sennenhund'             => 'appenzeller',
 
@@ -81,7 +85,10 @@ function breedPhotoSlug(string $breedName): ?string
         'Brittany'                           => 'spaniel/brittany',
         'English Toy Spaniel'                => 'spaniel/blenheim',
         'King Charles Spaniel'               => 'spaniel/blenheim',
+        'Cavalier King Charles Spaniel'      => 'spaniel/cavalier',
         'Japanese Chin'                      => 'spaniel/japanese',
+        'Boykin Spaniel'                     => 'spaniel/cocker',
+        'Field Spaniel'                      => 'spaniel/cocker',
 
         // ── Setters / Pointers ───────────────────────────────────────────────
         'Irish Setter'                       => 'setter/irish',
@@ -275,13 +282,47 @@ function breedWikipediaTitle(string $breedName): ?string
 }
 
 /**
- * Fetch photo URL from Wikipedia REST API (free, no key).
- * Returns the thumbnail URL or empty string on failure.
+ * Fetch a breed photo from Wikipedia/Wikimedia (free, no key required).
+ * Tries three sources in order and returns the first usable URL:
+ *   1. MediaWiki API (pageimages) — more reliable than REST
+ *   2. Wikipedia REST summary — fast fallback
+ *   3. Wikimedia Commons image search — covers hybrids/rare breeds
  */
 function fetchWikipediaPhoto(string $articleTitle): string
 {
-    $url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . rawurlencode($articleTitle);
-    $ch  = curl_init($url);
+    // ── Source 1: MediaWiki pageimages API ───────────────────────────────────
+    $apiUrl = 'https://en.wikipedia.org/w/api.php?' . http_build_query([
+        'action'      => 'query',
+        'titles'      => $articleTitle,
+        'prop'        => 'pageimages',
+        'pithumbsize' => 640,
+        'format'      => 'json',
+        'redirects'   => '1',
+    ]);
+    $ch = curl_init($apiUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app; breed photo lookup)',
+        CURLOPT_FOLLOWLOCATION => true,
+    ]);
+    $raw  = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw !== false && $code === 200) {
+        $data = json_decode($raw, true);
+        foreach (($data['query']['pages'] ?? []) as $page) {
+            $src = (string) ($page['thumbnail']['source'] ?? '');
+            if ($src !== '') {
+                return preg_replace('/\/\d+px-/', '/640px-', $src);
+            }
+        }
+    }
+
+    // ── Source 2: Wikipedia REST summary API ─────────────────────────────────
+    $restUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . rawurlencode($articleTitle);
+    $ch = curl_init($restUrl);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 6,
@@ -290,16 +331,49 @@ function fetchWikipediaPhoto(string $articleTitle): string
         CURLOPT_FOLLOWLOCATION => true,
     ]);
     $raw  = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-
-    if ($raw === false || $code !== 200) {
-        return '';
+    if ($raw !== false && $code === 200) {
+        $data = json_decode($raw, true);
+        $src  = (string) ($data['thumbnail']['source'] ?? '');
+        if ($src !== '') {
+            return preg_replace('/\/\d+px-/', '/640px-', $src);
+        }
     }
-    $data = json_decode($raw, true);
-    $src  = $data['thumbnail']['source'] ?? '';
-    // Upgrade to larger size if available (Wikipedia serves /320px- by default)
-    return is_string($src) ? preg_replace('/\/\d+px-/', '/640px-', $src) : '';
+
+    // ── Source 3: Wikimedia Commons image search ──────────────────────────────
+    $commonsUrl = 'https://commons.wikimedia.org/w/api.php?' . http_build_query([
+        'action'       => 'query',
+        'generator'    => 'search',
+        'gsrsearch'    => $articleTitle . ' dog breed',
+        'gsrnamespace' => 6,
+        'gsrlimit'     => 5,
+        'prop'         => 'imageinfo',
+        'iiprop'       => 'url',
+        'iiurlwidth'   => 640,
+        'format'       => 'json',
+    ]);
+    $ch = curl_init($commonsUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_USERAGENT      => 'GuidePaw/1.0 (guidepaw.app; breed photo lookup)',
+    ]);
+    $raw  = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw !== false && $code === 200) {
+        $data = json_decode($raw, true);
+        foreach (($data['query']['pages'] ?? []) as $page) {
+            $thumb = (string) ($page['imageinfo'][0]['thumburl'] ?? '');
+            if ($thumb !== '') {
+                return $thumb;
+            }
+        }
+    }
+
+    return '';
 }
 
 /**
@@ -365,13 +439,16 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // Cache result (empty string = tried but unavailable)
-    $pdo->prepare(
-        'INSERT INTO breed_images (breed_name, color_variant, image_url, source)
-         VALUES (?, \'\', ?, ?)
-         ON CONFLICT (breed_name, color_variant)
-         DO UPDATE SET image_url = EXCLUDED.image_url, source = EXCLUDED.source, fetched_at = CURRENT_TIMESTAMP'
-    )->execute([$breedName, $imageUrl, $source]);
+    // Cache result — only write empty string if source was not_mapped
+    // (so a future deploy with new mappings can still retry wikipedia/commons)
+    if ($imageUrl !== '' || $source === 'not_mapped') {
+        $pdo->prepare(
+            'INSERT INTO breed_images (breed_name, color_variant, image_url, source)
+             VALUES (?, \'\', ?, ?)
+             ON CONFLICT (breed_name, color_variant)
+             DO UPDATE SET image_url = EXCLUDED.image_url, source = EXCLUDED.source, fetched_at = CURRENT_TIMESTAMP'
+        )->execute([$breedName, $imageUrl, $source]);
+    }
 
     return $imageUrl !== '' ? $imageUrl : null;
 }

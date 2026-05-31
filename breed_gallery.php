@@ -8,9 +8,10 @@ require_once __DIR__ . '/includes/feature_flags.php';
 
 $catalog = getDogBreedsCatalog();
 
+$skipGallery = ['Unknown Breed', 'Unknown / Rescue Mix', 'Other / Custom', 'Other / Not Listed'];
 $mappedBreeds = [];
 foreach ($catalog as $name => $info) {
-    if (breedPhotoSlug($name) !== null) {
+    if (!in_array($name, $skipGallery, true)) {
         $mappedBreeds[$name] = $info;
     }
 }
