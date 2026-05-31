@@ -24,6 +24,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.Image
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.draw.scale as drawScale
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -10003,12 +10007,29 @@ class MainActivity : AppCompatActivity() {
                                 AnimatedVisibility(visible = isExpanded) {
                                     Column(modifier = Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         if (m.photoUrl != null) {
-                                            AsyncImage(
-                                                model = m.photoUrl,
-                                                contentDescription = "${m.breed} photo",
-                                                modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(8.dp)),
-                                                contentScale = ContentScale.Crop,
-                                            )
+                                            var photoScale by remember { mutableFloatStateOf(1f) }
+                                            val photoTransformState = rememberTransformableState { zoom, _, _ ->
+                                                photoScale = (photoScale * zoom).coerceIn(1f, 5f)
+                                            }
+                                            LaunchedEffect(isExpanded) {
+                                                if (!isExpanded) photoScale = 1f
+                                            }
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(180.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .transformable(state = photoTransformState)
+                                            ) {
+                                                AsyncImage(
+                                                    model = m.photoUrl,
+                                                    contentDescription = "${m.breed} photo",
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .drawScale(photoScale),
+                                                    contentScale = ContentScale.Fit,
+                                                )
+                                            }
                                         }
                                         if (m.temperament.isNotBlank()) Text("Temperament: ${m.temperament}", style = MaterialTheme.typography.bodySmall)
                                         if (m.traits.isNotBlank()) Text("Traits: ${m.traits}", style = MaterialTheme.typography.bodySmall, color = GpOnSurfaceVariant)

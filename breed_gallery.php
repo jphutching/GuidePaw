@@ -70,7 +70,7 @@ body { background: #f1f5f9; color: #0f172a; }
 .breed-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(15,23,42,.12); }
 .breed-card--hidden { display: none; }
 .breed-photo-wrap { position: relative; width: 100%; padding-top: 72%; background: #e8f0fe; overflow: hidden; }
-.breed-photo-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.breed-photo-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #f0f4f8; }
 .breed-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #94a3b8; }
 .breed-card-body { padding: .65rem .75rem .75rem; }
 .breed-card-name { font-size: .85rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: .2rem; }
@@ -125,6 +125,8 @@ body { background: #f1f5f9; color: #0f172a; }
                 </div>
             </div>
             <button id="prefetch-btn" class="btn btn-primary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?>>Pre-fetch all photos</button>
+            <button id="analyze-btn" class="btn btn-outline-secondary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Uses AI to score each cached photo for full-dog visibility and swaps in a better image if score is low">🤖 Analyze photos</button>
+            <span id="analyze-status" class="small text-muted ms-1"></span>
         </div>
     <?php endif; ?>
 
@@ -372,6 +374,62 @@ body { background: #f1f5f9; color: #0f172a; }
         if (e.key === 'Escape') closeLightbox();
     });
 
+    // ── Lightbox pinch-to-zoom ────────────────────────────────────────────────
+    (function () {
+        var lbImg = document.getElementById('lightbox-img');
+        if (!lbImg) return;
+        var lbScale = 1, lbTX = 0, lbTY = 0, lbLastDist = null, lbLastX = null, lbLastY = null;
+
+        function lbApply() {
+            lbImg.style.transform = 'scale(' + lbScale + ') translate(' + lbTX / lbScale + 'px,' + lbTY / lbScale + 'px)';
+        }
+        function lbReset() { lbScale = 1; lbTX = 0; lbTY = 0; lbImg.style.transform = ''; }
+        function lbDist(e) {
+            var dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        lbImg.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) { lbLastDist = lbDist(e); }
+            else if (e.touches.length === 1) { lbLastX = e.touches[0].clientX; lbLastY = e.touches[0].clientY; }
+        }, { passive: true });
+
+        lbImg.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            if (e.touches.length === 2) {
+                var d = lbDist(e);
+                lbScale = Math.max(1, Math.min(6, lbScale * (d / lbLastDist)));
+                lbLastDist = d;
+                lbApply();
+            } else if (e.touches.length === 1 && lbScale > 1) {
+                lbTX += e.touches[0].clientX - lbLastX;
+                lbTY += e.touches[0].clientY - lbLastY;
+                lbLastX = e.touches[0].clientX;
+                lbLastY = e.touches[0].clientY;
+                lbApply();
+            }
+        }, { passive: false });
+
+        lbImg.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) lbLastDist = null;
+            if (e.touches.length === 0 && lbScale <= 1) lbReset();
+        });
+
+        // Reset zoom when lightbox closes
+        var lb = document.getElementById('photo-lightbox');
+        if (lb) {
+            var observer = new MutationObserver(function () { if (!lb.classList.contains('open')) lbReset(); });
+            observer.observe(lb, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        // Mouse wheel zoom for desktop
+        lbImg.addEventListener('wheel', function (e) {
+            e.preventDefault();
+            lbScale = Math.max(1, Math.min(6, lbScale * (e.deltaY < 0 ? 1.15 : 0.87)));
+            if (lbScale <= 1) lbReset(); else lbApply();
+        }, { passive: false });
+    }());
+
     // ── Admin pre-fetch ───────────────────────────────────────────────────────
     const prefetchBtn = document.getElementById('prefetch-btn');
     if (prefetchBtn) {
@@ -396,6 +454,36 @@ body { background: #f1f5f9; color: #0f172a; }
             }
             status.textContent = '✓ All ' + total + ' breeds cached. Reload any card to see new photos.';
             prefetchBtn.textContent = 'Done';
+        });
+    }
+
+    // ── AI photo analysis ─────────────────────────────────────────────────────
+    const analyzeBtn    = document.getElementById('analyze-btn');
+    const analyzeStatus = document.getElementById('analyze-status');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', async function runBatch() {
+            analyzeBtn.disabled = true;
+            analyzeStatus.textContent = 'Analyzing…';
+            let totalAnalyzed = 0, totalImproved = 0;
+
+            while (true) {
+                let data;
+                try {
+                    const res = await fetch('/api/breed_photo_analyze.php?limit=10');
+                    data = await res.json();
+                } catch (e) {
+                    analyzeStatus.textContent = 'Error: ' + e.message;
+                    break;
+                }
+                if (!data.success) { analyzeStatus.textContent = 'Error: ' + (data.message || 'unknown'); break; }
+                totalAnalyzed += data.analyzed || 0;
+                totalImproved += (data.results || []).filter(function (r) { return r.improved; }).length;
+                analyzeStatus.textContent = totalAnalyzed + ' scored, ' + totalImproved + ' improved — ' + (data.remaining || 0) + ' remaining';
+                if (!data.remaining || data.remaining <= 0 || data.analyzed === 0) break;
+            }
+
+            analyzeStatus.textContent = '✓ Done — ' + totalAnalyzed + ' scored, ' + totalImproved + ' photos improved. Reload to see updates.';
+            analyzeBtn.textContent = 'Done';
         });
     }
 }());
