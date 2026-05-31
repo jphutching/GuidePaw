@@ -688,7 +688,7 @@ body { background: #f1f5f9; color: #0f172a; }
             const data = await res.json();
             if (!data.success) { errDiv.textContent = data.message || 'Save failed.'; errDiv.style.display = ''; return; }
             // Update card photo and lock state
-            const card = grid.querySelector('[data-breed="' + CSS.escape(currentBreed) + '"]');
+            const card = document.getElementById('breed-grid').querySelector('[data-breed="' + CSS.escape(currentBreed) + '"]');
             if (card) {
                 card.dataset.photoLoaded = 'false';
                 card.dataset.photoUrl    = url;
