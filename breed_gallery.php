@@ -29,6 +29,13 @@ sort($groups);
 $isAdmin       = !empty($_SESSION['is_admin']);
 $photosEnabled = featureEnabled($pdo, 'breed_photos_enabled');
 
+// Admin: which breeds have a cached photo right now
+$breedsWithPhoto = [];
+if ($isAdmin && $photosEnabled) {
+    $rows = $pdo->query("SELECT breed_name FROM breed_images WHERE image_url != ''")->fetchAll(PDO::FETCH_COLUMN);
+    $breedsWithPhoto = array_flip($rows);
+}
+
 $breedData = [];
 foreach ($mappedBreeds as $name => $info) {
     $breedData[$name] = [
@@ -88,6 +95,10 @@ body { background: #f1f5f9; color: #0f172a; }
 .info-row { margin-bottom: .6rem; }
 .info-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; color: #64748b; }
 .info-value { font-size: .9rem; color: #334155; margin-top: .1rem; }
+/* Admin photo-status dot */
+.photo-status-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; z-index: 2; }
+.photo-status-dot.loaded  { background: #22c55e; }
+.photo-status-dot.missing { background: #f97316; }
 /* Pre-fetch */
 .prefetch-bar { background: #fff; border: 1px solid rgba(15,23,42,.08); border-radius: 14px; padding: .85rem 1rem; margin-bottom: 1.5rem; }
 .prefetch-progress { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: .5rem; }
@@ -126,6 +137,7 @@ body { background: #f1f5f9; color: #0f172a; }
                 </div>
             </div>
             <button id="prefetch-btn" class="btn btn-primary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?>>Pre-fetch all photos</button>
+            <button id="wipe-btn" class="btn btn-outline-danger btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Wipe all cached photos then re-fetch from scratch">🗑️ Wipe &amp; Re-fetch</button>
             <button id="analyze-btn" class="btn btn-outline-secondary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Uses AI to score each cached photo for full-dog visibility and swaps in a better image if score is low">🤖 Analyze photos</button>
             <button id="verify-btn" class="btn btn-outline-success btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Verifies each photo against AKC's reference image using AI. Auto-replaces wrong breeds.">✅ Verify vs AKC</button>
             <span id="analyze-status" class="small text-muted ms-1"></span>
@@ -155,6 +167,9 @@ body { background: #f1f5f9; color: #0f172a; }
                  aria-label="<?= e($name) ?> breed profile">
                 <div class="breed-photo-wrap">
                     <div class="breed-placeholder">🐕</div>
+                    <?php if ($isAdmin): ?>
+                    <div class="photo-status-dot <?= isset($breedsWithPhoto[$name]) ? 'loaded' : 'missing' ?>"></div>
+                    <?php endif; ?>
                 </div>
                 <div class="breed-card-body">
                     <div class="breed-card-name"><?= e($name) ?></div>
@@ -445,30 +460,62 @@ body { background: #f1f5f9; color: #0f172a; }
         }, { passive: false });
     }());
 
-    // ── Admin pre-fetch ───────────────────────────────────────────────────────
+    // ── Admin pre-fetch (shared helper) ──────────────────────────────────────
+    async function runPrefetch() {
+        const status   = document.getElementById('prefetch-status');
+        const barWrap  = document.getElementById('prefetch-bar-wrap');
+        const fill     = document.getElementById('prefetch-fill');
+        const total    = breedNames.length;
+        barWrap.style.display = '';
+        let done = 0, loaded = 0, failed = 0;
+        for (const breed of breedNames) {
+            let url = null;
+            try {
+                const res = await fetch('/api/breed_photo.php?breed=' + encodeURIComponent(breed));
+                const data = res.ok ? await res.json() : null;
+                url = data && data.url ? data.url : null;
+            } catch (_) {}
+            done++;
+            if (url) loaded++; else failed++;
+            fill.style.width = Math.round((done / total) * 100) + '%';
+            status.textContent = done + ' / ' + total + ' — ' + loaded + ' loaded, ' + failed + ' no photo found';
+            // Update status dot
+            const card = grid.querySelector('[data-breed="' + CSS.escape(breed) + '"]');
+            if (card) {
+                const dot = card.querySelector('.photo-status-dot');
+                if (dot) { dot.className = 'photo-status-dot ' + (url ? 'loaded' : 'missing'); }
+                if (url && card.dataset.photoLoaded === 'false') loadPhoto(card);
+            }
+        }
+        status.textContent = '✓ Done — ' + loaded + ' loaded, ' + failed + ' no photo found out of ' + total + ' breeds.';
+    }
+
     const prefetchBtn = document.getElementById('prefetch-btn');
     if (prefetchBtn) {
         prefetchBtn.addEventListener('click', async function () {
             prefetchBtn.disabled = true;
-            const status   = document.getElementById('prefetch-status');
-            const barWrap  = document.getElementById('prefetch-bar-wrap');
-            const fill     = document.getElementById('prefetch-fill');
-            const total    = breedNames.length;
-            barWrap.style.display = '';
-            let done = 0;
-            for (const breed of breedNames) {
-                try {
-                    await fetch('/api/breed_photo.php?breed=' + encodeURIComponent(breed));
-                } catch (_) {}
-                done++;
-                fill.style.width = Math.round((done / total) * 100) + '%';
-                status.textContent = 'Fetching ' + done + ' / ' + total + ' — ' + breed;
-                // Re-render any visible card that now has a photo
-                const card = grid.querySelector('[data-breed="' + CSS.escape(breed) + '"]');
-                if (card && card.dataset.photoLoaded === 'false') loadPhoto(card);
-            }
-            status.textContent = '✓ All ' + total + ' breeds cached. Reload any card to see new photos.';
+            await runPrefetch();
             prefetchBtn.textContent = 'Done';
+        });
+    }
+
+    // ── Admin wipe & re-fetch ─────────────────────────────────────────────────
+    const wipeBtn = document.getElementById('wipe-btn');
+    if (wipeBtn) {
+        wipeBtn.addEventListener('click', async function () {
+            if (!confirm('Wipe ALL ' + breedNames.length + ' cached breed photos and re-fetch from scratch?\n\nThis will clear the database and re-download every photo.')) return;
+            wipeBtn.disabled = true;
+            prefetchBtn.disabled = true;
+            document.getElementById('prefetch-status').textContent = 'Wiping cache…';
+            try {
+                await fetch('/api/breed_photos_wipe.php', { method: 'POST' });
+            } catch (_) {}
+            // Reset all status dots to missing
+            grid.querySelectorAll('.photo-status-dot').forEach(function (d) {
+                d.className = 'photo-status-dot missing';
+            });
+            await runPrefetch();
+            wipeBtn.textContent = 'Done';
         });
     }
 
