@@ -320,7 +320,15 @@ function fetchWikipediaPhoto(string $articleTitle): string
     if ($raw !== false && $code === 200) {
         $data = json_decode($raw, true);
         foreach (($data['query']['pages'] ?? []) as $page) {
-            $src = (string) ($page['thumbnail']['source'] ?? '');
+            $title = (string) ($page['title'] ?? '');
+            $src   = (string) ($page['thumbnail']['source'] ?? '');
+            // Reject list/disambiguation pages — they return a generic image
+            // shared across all breeds that lack their own article (e.g. the
+            // "List of dog crossbreeds" page whose thumbnail is a Labradoodle
+            // assistance dog photo, wrongly applied to dozens of breeds).
+            if (preg_match('/^(List of|Lists of|Crossbreed|Disambiguation)/i', $title)) {
+                return '';
+            }
             // Only use thumbnail URLs (contain /thumb/) — originals return 403
             if ($src !== '' && strpos($src, '/thumb/') !== false) {
                 return $src;
@@ -343,9 +351,13 @@ function fetchWikipediaPhoto(string $articleTitle): string
     curl_close($ch);
     if ($raw !== false && $code === 200) {
         $data = json_decode($raw, true);
-        $src  = (string) ($data['thumbnail']['source'] ?? '');
-        if ($src !== '') {
-            return $src;
+        // Reject if the REST summary also resolved to a list/disambiguation page
+        $resolvedTitle = (string) ($data['title'] ?? '');
+        if (!preg_match('/^(List of|Lists of|Crossbreed|Disambiguation)/i', $resolvedTitle)) {
+            $src = (string) ($data['thumbnail']['source'] ?? '');
+            if ($src !== '') {
+                return $src;
+            }
         }
     }
 
