@@ -103,7 +103,7 @@ function breedPhotoSlug(string $breedName): ?string
         'Afghan Hound'                       => 'hound/afghan',
         'Ibizan Hound'                       => 'hound/ibizan',
         'Rhodesian Ridgeback'                => 'ridgeback/rhodesian',
-        'Greyhound'                          => 'greyhound/italian',
+        // Greyhound omitted — dog.ceo only has Italian Greyhound; Wikipedia has the real article
         'Italian Greyhound'                  => 'greyhound/italian',
         'Whippet'                            => 'whippet',
         'Borzoi'                             => 'borzoi',
@@ -120,9 +120,7 @@ function breedPhotoSlug(string $breedName): ?string
         'Basenji'                            => 'basenji',
         'Vizsla'                             => 'vizsla',
         'Weimaraner'                         => 'weimaraner',
-        'Pointer'                            => 'pointer',
-        'Harrier'                            => 'hound',
-        'Hamiltonstovare'                    => 'hound',
+        // Pointer/Harrier/Hamiltonstovare omitted — dog.ceo slugs are wrong breed or too generic
 
         // ── Terriers ─────────────────────────────────────────────────────────
         'Yorkshire Terrier'                  => 'terrier/yorkshire',
@@ -280,6 +278,17 @@ function breedWikipediaTitle(string $breedName): ?string
         'Poochon'                                     => 'Poochon',
         'Peekapoo'                                    => 'Peekapoo',
         'Aussalier'                                   => 'Australian Shepherd',
+
+        // Disambiguation: breed name is also a place, animal, or concept on Wikipedia
+        'Newfoundland'                                => 'Newfoundland dog',
+        'Hokkaido'                                    => 'Hokkaido (dog breed)',
+        'Havanese'                                    => 'Havanese dog',
+        'Harrier'                                     => 'Harrier (dog)',
+        'Jindo'                                       => 'Jindo (dog)',
+        'Tosa'                                        => 'Tosa (dog)',
+        'Chinook'                                     => 'Chinook dog',
+        'Pointer'                                     => 'Pointer (dog breed)',
+        'Hamiltonstovare'                             => 'Hamiltonstövare',
     ];
 
     return $overrides[$breedName] ?? $breedName;
