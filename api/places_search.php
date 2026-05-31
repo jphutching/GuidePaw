@@ -67,6 +67,26 @@ function gpPlacesFormat(array $results): array
     return $out;
 }
 
+// ── Reverse geocode mode ──────────────────────────────────────────────────
+if (!empty($_GET['reverse'])) {
+    if ($lat === null || $lng === null) {
+        echo json_encode(['success' => false, 'message' => 'lat and lng required.']);
+        exit;
+    }
+    $url  = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query([
+        'latlng'       => $lat . ',' . $lng,
+        'result_type'  => 'street_address|establishment|point_of_interest',
+        'key'          => $apiKey,
+    ]);
+    $data = gpPlacesCurl($url);
+    $address = '';
+    if ($data && ($data['status'] ?? '') === 'OK') {
+        $address = (string) ($data['results'][0]['formatted_address'] ?? '');
+    }
+    echo json_encode(['success' => true, 'address' => $address]);
+    exit;
+}
+
 if ($q !== '' && $q !== '') {
     // Text Search — finds by name/query with optional location bias
     $params = ['query' => $q . ' ' . str_replace('_', ' ', $type), 'key' => $apiKey];

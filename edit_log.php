@@ -169,11 +169,23 @@ $longitudeValue = (string) ($log['longitude'] ?? '');
 
         status.textContent = 'Requesting GPS location...';
         navigator.geolocation.getCurrentPosition(function (position) {
-            latitude.value = position.coords.latitude.toFixed(7);
-            longitude.value = position.coords.longitude.toFixed(7);
-            if (latitudeManual) latitudeManual.value = latitude.value;
-            if (longitudeManual) longitudeManual.value = longitude.value;
-            status.textContent = 'GPS coordinates updated from your device.';
+            var lat = position.coords.latitude.toFixed(7);
+            var lng = position.coords.longitude.toFixed(7);
+            latitude.value = lat;
+            longitude.value = lng;
+            if (latitudeManual) latitudeManual.value = lat;
+            if (longitudeManual) longitudeManual.value = lng;
+            status.textContent = 'GPS updated — resolving address…';
+            fetch('api/places_search.php?reverse=1&lat=' + lat + '&lng=' + lng)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    status.textContent = data.address
+                        ? 'Near: ' + data.address
+                        : 'GPS coordinates updated from your device.';
+                })
+                .catch(function () {
+                    status.textContent = 'GPS coordinates updated from your device.';
+                });
         }, function () {
             status.textContent = 'Location permission was not granted. Use manual coordinates if needed.';
         }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
