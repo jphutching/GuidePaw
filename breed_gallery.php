@@ -29,11 +29,17 @@ sort($groups);
 $isAdmin       = !empty($_SESSION['is_admin']);
 $photosEnabled = featureEnabled($pdo, 'breed_photos_enabled');
 
-// Admin: which breeds have a cached photo right now
+// Admin: which breeds have a cached photo, and which are locked
 $breedsWithPhoto = [];
+$breedsLocked    = [];
 if ($isAdmin && $photosEnabled) {
-    $rows = $pdo->query("SELECT breed_name FROM breed_images WHERE image_url != ''")->fetchAll(PDO::FETCH_COLUMN);
-    $breedsWithPhoto = array_flip($rows);
+    $rows = $pdo->query("SELECT breed_name, photo_locked FROM breed_images WHERE image_url != ''")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rows as $r) {
+        $breedsWithPhoto[$r['breed_name']] = true;
+        if ($r['photo_locked']) {
+            $breedsLocked[$r['breed_name']] = true;
+        }
+    }
 }
 
 $breedData = [];
@@ -99,6 +105,10 @@ body { background: #f1f5f9; color: #0f172a; }
 .photo-status-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; z-index: 2; }
 .photo-status-dot.loaded  { background: #22c55e; }
 .photo-status-dot.missing { background: #f97316; }
+/* Admin lock button */
+.photo-lock-btn { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.85); border: none; border-radius: 50%; width: 26px; height: 26px; font-size: .9rem; line-height: 1; cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+.breed-card:hover .photo-lock-btn { opacity: 1; }
+.photo-lock-btn.locked { opacity: 1; background: #fef9c3; }
 /* Pre-fetch */
 .prefetch-bar { background: #fff; border: 1px solid rgba(15,23,42,.08); border-radius: 14px; padding: .85rem 1rem; margin-bottom: 1.5rem; }
 .prefetch-progress { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: .5rem; }
@@ -169,6 +179,12 @@ body { background: #f1f5f9; color: #0f172a; }
                     <div class="breed-placeholder">🐕</div>
                     <?php if ($isAdmin): ?>
                     <div class="photo-status-dot <?= isset($breedsWithPhoto[$name]) ? 'loaded' : 'missing' ?>"></div>
+                    <button class="photo-lock-btn <?= isset($breedsLocked[$name]) ? 'locked' : '' ?>"
+                            data-breed="<?= e($name) ?>"
+                            title="<?= isset($breedsLocked[$name]) ? 'Unlock photo (allow re-fetch)' : 'Lock photo (prevent re-fetch)' ?>"
+                            onclick="event.stopPropagation(); togglePhotoLock(this)">
+                        <?= isset($breedsLocked[$name]) ? '🔒' : '🔓' ?>
+                    </button>
                     <?php endif; ?>
                 </div>
                 <div class="breed-card-body">
@@ -588,6 +604,31 @@ body { background: #f1f5f9; color: #0f172a; }
         });
     }
 }());
+
+// ── Admin photo lock ──────────────────────────────────────────────────────────
+async function togglePhotoLock(btn) {
+    const breed  = btn.dataset.breed;
+    const locked = !btn.classList.contains('locked');
+    btn.disabled = true;
+    try {
+        const res  = await fetch('/api/breed_photo_lock.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ breed, locked })
+        });
+        const data = await res.json();
+        if (data.success) {
+            btn.classList.toggle('locked', locked);
+            btn.textContent = locked ? '🔒' : '🔓';
+            btn.title = locked ? 'Unlock photo (allow re-fetch)' : 'Lock photo (prevent re-fetch)';
+        } else {
+            alert('Lock failed: ' + (data.message || 'unknown error'));
+        }
+    } catch (e) {
+        alert('Lock error: ' + e.message);
+    }
+    btn.disabled = false;
+}
 </script>
 </body>
 </html>

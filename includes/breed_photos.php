@@ -39,6 +39,12 @@ function breedPhotoSlug(string $breedName): ?string
         'Australian Stumpy Tail Cattle Dog'  => 'cattledog/australian',
         'Australian Kelpie'                  => 'australian/kelpie',
 
+        // ── Belgian Shepherds ────────────────────────────────────────────────
+        'Belgian Malinois'                   => 'malinois',
+        'Belgian Tervuren'                   => 'tervuren',
+        'Belgian Sheepdog'                   => 'groenendael',
+        // Belgian Laekenois not in dog.ceo — falls through to Unsplash/Pexels
+
         // ── Corgis ───────────────────────────────────────────────────────────
         'Pembroke Welsh Corgi'               => 'pembroke',
         'Cardigan Welsh Corgi'               => 'corgi/cardigan',
@@ -332,16 +338,21 @@ function fetchWikipediaPhoto(string $articleTitle): string
             $title = (string) ($page['title'] ?? '');
             $src   = (string) ($page['thumbnail']['source'] ?? '');
             // Reject list/disambiguation pages — they return a generic image
-            // shared across all breeds that lack their own article (e.g. the
-            // "List of dog crossbreeds" page whose thumbnail is a Labradoodle
-            // assistance dog photo, wrongly applied to dozens of breeds).
+            // shared across all breeds that lack their own article.
             if (preg_match('/^(List of|Lists of|Crossbreed|Disambiguation)/i', $title)) {
                 return '';
             }
             // Only use thumbnail URLs (contain /thumb/) — originals return 403
-            if ($src !== '' && strpos($src, '/thumb/') !== false) {
-                return $src;
+            if ($src === '' || strpos($src, '/thumb/') === false) {
+                continue;
             }
+            // Reject composite/group-of-breeds photos (filename contains
+            // "varieties", "types", comma-separated breed names, etc.)
+            $filename = rawurldecode(basename(parse_url($src, PHP_URL_PATH)));
+            if (preg_match('/variet|,\s*[A-Z][a-z]+|_and_[A-Z]|dog_breeds|_breeds_/i', $filename)) {
+                continue;
+            }
+            return $src;
         }
     }
 
@@ -480,8 +491,9 @@ function fetchPexelsPhoto(string $query, string $apiKey): string
 
 /**
  * Returns a cached photo URL for $breedName.
- * Source priority: Dog CEO → Wikipedia (3 methods) → Unsplash → Pexels
+ * Source priority: Wikipedia (3 methods) → Dog CEO → Unsplash → Pexels
  * Returns null when feature disabled, table missing, or no photo found anywhere.
+ * Locked photos (photo_locked = true) are always served as-is and never overwritten.
  */
 function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
 {
@@ -495,12 +507,17 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         return null;
     }
 
-    // Serve from cache
-    $stmt = $pdo->prepare('SELECT image_url FROM breed_images WHERE breed_name = ? AND color_variant = \'\' LIMIT 1');
+    // Serve from cache — locked photos are always returned as-is
+    $stmt = $pdo->prepare("SELECT image_url, photo_locked FROM breed_images WHERE breed_name = ? AND color_variant = '' LIMIT 1");
     $stmt->execute([$breedName]);
-    $cached = $stmt->fetchColumn();
-    if ($cached !== false) {
-        return $cached !== '' ? $cached : null;
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row !== false) {
+        if (!empty($row['photo_locked'])) {
+            return $row['image_url'] !== '' ? $row['image_url'] : null;
+        }
+        if ($row['image_url'] !== '') {
+            return $row['image_url'];
+        }
     }
 
     $imageUrl    = '';
@@ -541,15 +558,27 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
+    // Build search terms: primary name + common aliases from catalog
+    $searchTerms = [$breedName];
+    $catalog = function_exists('getDogBreedsCatalog') ? getDogBreedsCatalog() : [];
+    if (!empty($catalog[$breedName]['aliases'])) {
+        foreach ((array) $catalog[$breedName]['aliases'] as $alias) {
+            $searchTerms[] = $alias;
+        }
+    }
+
     // ── Source 3: Unsplash ────────────────────────────────────────────────────
     if ($imageUrl === '') {
         $unsplashKey = trim((string) gpEnv('UNSPLASH_ACCESS_KEY', ''));
         if ($unsplashKey !== '') {
-            $result = fetchUnsplashPhoto($breedName, $unsplashKey);
-            if ($result['url'] !== '') {
-                $imageUrl    = $result['url'];
-                $source      = 'unsplash';
-                $attribution = $result['attribution'] ?: null;
+            foreach ($searchTerms as $term) {
+                $result = fetchUnsplashPhoto($term . ' dog', $unsplashKey);
+                if ($result['url'] !== '') {
+                    $imageUrl    = $result['url'];
+                    $source      = 'unsplash';
+                    $attribution = $result['attribution'] ?: null;
+                    break;
+                }
             }
         }
     }
@@ -558,9 +587,12 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
     if ($imageUrl === '') {
         $pexelsKey = trim((string) gpEnv('PEXELS_API_KEY', ''));
         if ($pexelsKey !== '') {
-            $imageUrl = fetchPexelsPhoto($breedName, $pexelsKey);
-            if ($imageUrl !== '') {
-                $source = 'pexels';
+            foreach ($searchTerms as $term) {
+                $imageUrl = fetchPexelsPhoto($term . ' dog', $pexelsKey);
+                if ($imageUrl !== '') {
+                    $source = 'pexels';
+                    break;
+                }
             }
         }
     }

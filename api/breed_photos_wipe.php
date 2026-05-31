@@ -18,5 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$stmt = $pdo->query('DELETE FROM breed_images');
-echo json_encode(['success' => true, 'wiped' => $stmt->rowCount()]);
+$stmt = $pdo->query('DELETE FROM breed_images WHERE photo_locked = false');
+$locked = (int) $pdo->query('SELECT COUNT(*) FROM breed_images WHERE photo_locked = true')->fetchColumn();
+echo json_encode(['success' => true, 'wiped' => $stmt->rowCount(), 'locked_preserved' => $locked]);
