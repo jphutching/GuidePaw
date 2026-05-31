@@ -105,10 +105,17 @@ body { background: #f1f5f9; color: #0f172a; }
 .photo-status-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; z-index: 2; }
 .photo-status-dot.loaded  { background: #22c55e; }
 .photo-status-dot.missing { background: #f97316; }
-/* Admin lock button */
-.photo-lock-btn { position: absolute; top: 6px; left: 6px; background: rgba(255,255,255,.85); border: none; border-radius: 50%; width: 26px; height: 26px; font-size: .9rem; line-height: 1; cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
-.breed-card:hover .photo-lock-btn { opacity: 1; }
+/* Admin lock + edit buttons */
+.photo-lock-btn, .photo-edit-btn { position: absolute; top: 6px; background: rgba(255,255,255,.85); border: none; border-radius: 50%; width: 26px; height: 26px; font-size: .9rem; line-height: 1; cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+.photo-lock-btn { left: 6px; }
+.photo-edit-btn { left: 36px; }
+.breed-card:hover .photo-lock-btn,
+.breed-card:hover .photo-edit-btn { opacity: 1; }
 .photo-lock-btn.locked { opacity: 1; background: #fef9c3; }
+/* Edit photo modal */
+#editPhotoModal .modal-body { display: flex; flex-direction: column; gap: .75rem; }
+#editPhotoModal #edit-preview { width: 100%; height: 180px; object-fit: contain; background: #f0f4f8; border-radius: 10px; display: none; }
+#editPhotoModal #edit-preview.visible { display: block; }
 /* Pre-fetch */
 .prefetch-bar { background: #fff; border: 1px solid rgba(15,23,42,.08); border-radius: 14px; padding: .85rem 1rem; margin-bottom: 1.5rem; }
 .prefetch-progress { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: .5rem; }
@@ -185,6 +192,12 @@ body { background: #f1f5f9; color: #0f172a; }
                             onclick="event.stopPropagation(); togglePhotoLock(this)">
                         <?= isset($breedsLocked[$name]) ? '🔒' : '🔓' ?>
                     </button>
+                    <button class="photo-edit-btn"
+                            data-breed="<?= e($name) ?>"
+                            title="Set photo URL manually"
+                            onclick="event.stopPropagation(); openEditPhoto(this)">
+                        📷
+                    </button>
                     <?php endif; ?>
                 </div>
                 <div class="breed-card-body">
@@ -236,6 +249,30 @@ body { background: #f1f5f9; color: #0f172a; }
         </div>
     </div>
 </div>
+
+<!-- Edit photo modal (admin only) -->
+<?php if ($isAdmin): ?>
+<div class="modal fade" id="editPhotoModal" tabindex="-1" aria-labelledby="editPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content" style="border-radius:18px">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="editPhotoModalLabel">Set photo — <span id="edit-breed-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <img id="edit-preview" src="" alt="Preview">
+                <input type="url" id="edit-url-input" class="form-control" placeholder="https://… paste image URL">
+                <div id="edit-url-error" class="text-danger small" style="display:none"></div>
+                <div class="text-muted small">Paste any direct image URL. The photo will be locked automatically.</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button id="edit-save-btn" class="btn btn-primary btn-sm fw-bold">Save &amp; Lock</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Full-size lightbox -->
 <div class="photo-lightbox" id="photo-lightbox" role="dialog" aria-modal="true" aria-label="Full size breed photo">
@@ -603,6 +640,77 @@ body { background: #f1f5f9; color: #0f172a; }
             verifyBtn.textContent = 'Done';
         });
     }
+}());
+
+// ── Admin edit photo ──────────────────────────────────────────────────────────
+(function () {
+    const modal      = document.getElementById('editPhotoModal');
+    if (!modal) return;
+    const bsModal    = new bootstrap.Modal(modal);
+    const breedLabel = document.getElementById('edit-breed-name');
+    const urlInput   = document.getElementById('edit-url-input');
+    const preview    = document.getElementById('edit-preview');
+    const saveBtn    = document.getElementById('edit-save-btn');
+    const errDiv     = document.getElementById('edit-url-error');
+    let currentBreed = '';
+
+    window.openEditPhoto = function (btn) {
+        currentBreed     = btn.dataset.breed;
+        breedLabel.textContent = currentBreed;
+        urlInput.value   = '';
+        preview.src      = '';
+        preview.classList.remove('visible');
+        errDiv.style.display = 'none';
+        bsModal.show();
+    };
+
+    urlInput.addEventListener('input', function () {
+        const url = urlInput.value.trim();
+        if (url.match(/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)/i)) {
+            preview.src = url;
+            preview.classList.add('visible');
+        } else {
+            preview.classList.remove('visible');
+        }
+        errDiv.style.display = 'none';
+    });
+
+    saveBtn.addEventListener('click', async function () {
+        const url = urlInput.value.trim();
+        if (!url) { errDiv.textContent = 'Enter a URL.'; errDiv.style.display = ''; return; }
+        saveBtn.disabled = true;
+        try {
+            const res  = await fetch('/api/breed_photo_set.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ breed: currentBreed, url })
+            });
+            const data = await res.json();
+            if (!data.success) { errDiv.textContent = data.message || 'Save failed.'; errDiv.style.display = ''; return; }
+            // Update card photo and lock state
+            const card = grid.querySelector('[data-breed="' + CSS.escape(currentBreed) + '"]');
+            if (card) {
+                card.dataset.photoLoaded = 'false';
+                card.dataset.photoUrl    = url;
+                const wrap = card.querySelector('.breed-photo-wrap');
+                wrap.querySelectorAll('img').forEach(function (i) { i.remove(); });
+                const img = document.createElement('img');
+                img.src = url; img.alt = currentBreed; img.loading = 'lazy';
+                wrap.appendChild(img);
+                const ph = wrap.querySelector('.breed-placeholder');
+                if (ph) ph.style.display = 'none';
+                // Mark locked + loaded
+                const dot = wrap.querySelector('.photo-status-dot');
+                if (dot) dot.className = 'photo-status-dot loaded';
+                const lockBtn = wrap.querySelector('.photo-lock-btn');
+                if (lockBtn) { lockBtn.classList.add('locked'); lockBtn.textContent = '🔒'; }
+            }
+            bsModal.hide();
+        } catch (e) {
+            errDiv.textContent = 'Error: ' + e.message; errDiv.style.display = '';
+        }
+        saveBtn.disabled = false;
+    });
 }());
 
 // ── Admin photo lock ──────────────────────────────────────────────────────────
