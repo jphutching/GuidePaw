@@ -231,25 +231,33 @@ foreach ($rows as $row) {
     $result['had_akc_ref']      = ($akcImg !== null);
 
     // Auto-replace if score is too low
+    $skipVerifiedAt = false;
     if ($replace && $v['score'] < 55) {
-        // Delete from cache so getBreedPhotoUrlCached() re-fetches
         $pdo->prepare('DELETE FROM breed_images WHERE id = ?')->execute([$row['id']]);
         $newUrl = getBreedPhotoUrlCached($pdo, $breedName);
-        if ($newUrl && $newUrl !== $row['image_url']) {
-            $replaced++;
-            $result['replaced']    = true;
-            $result['new_url']     = $newUrl;
-            // Update the id for the score write below
-            $newRow = $pdo->prepare('SELECT id FROM breed_images WHERE breed_name = ? AND color_variant = \'\' LIMIT 1');
-            $newRow->execute([$breedName]);
-            $row['id'] = (int) ($newRow->fetchColumn() ?: $row['id']);
+        // Always re-lookup the new row ID — the old one was just deleted
+        $stmt = $pdo->prepare("SELECT id FROM breed_images WHERE breed_name = ? AND color_variant = '' LIMIT 1");
+        $stmt->execute([$breedName]);
+        $newId = (int) $stmt->fetchColumn();
+        if ($newId > 0) {
+            $row['id'] = $newId;
+            if ($newUrl && $newUrl !== $row['image_url']) {
+                $replaced++;
+                $result['replaced'] = true;
+                $result['new_url']  = $newUrl;
+            }
+        } else {
+            // Fetch failed entirely — no row to update; skip so it retries next run
+            $skipVerifiedAt = true;
         }
     }
 
-    // Store verification result
-    $pdo->prepare(
-        'UPDATE breed_images SET verified_at = CURRENT_TIMESTAMP, verification_score = ?, verification_notes = ? WHERE id = ?'
-    )->execute([$v['score'], $v['notes'], $row['id']]);
+    // Store verification result (skipped only if replacement fetch failed completely)
+    if (!$skipVerifiedAt) {
+        $pdo->prepare(
+            'UPDATE breed_images SET verified_at = CURRENT_TIMESTAMP, verification_score = ?, verification_notes = ? WHERE id = ?'
+        )->execute([$v['score'], $v['notes'], $row['id']]);
+    }
 
     $results[] = $result;
 }
