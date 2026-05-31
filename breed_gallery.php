@@ -127,7 +127,9 @@ body { background: #f1f5f9; color: #0f172a; }
             </div>
             <button id="prefetch-btn" class="btn btn-primary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?>>Pre-fetch all photos</button>
             <button id="analyze-btn" class="btn btn-outline-secondary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Uses AI to score each cached photo for full-dog visibility and swaps in a better image if score is low">🤖 Analyze photos</button>
+            <button id="verify-btn" class="btn btn-outline-success btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Verifies each photo against AKC's reference image using AI. Auto-replaces wrong breeds.">✅ Verify vs AKC</button>
             <span id="analyze-status" class="small text-muted ms-1"></span>
+            <span id="verify-status" class="small text-muted ms-1"></span>
         </div>
     <?php endif; ?>
 
@@ -497,6 +499,45 @@ body { background: #f1f5f9; color: #0f172a; }
 
             analyzeStatus.textContent = '✓ Done — ' + totalAnalyzed + ' scored, ' + totalImproved + ' photos improved. Reload to see updates.';
             analyzeBtn.textContent = 'Done';
+        });
+    }
+
+    // ── AKC photo verification ────────────────────────────────────────────────
+    const verifyBtn    = document.getElementById('verify-btn');
+    const verifyStatus = document.getElementById('verify-status');
+    if (verifyBtn) {
+        verifyBtn.addEventListener('click', async function () {
+            verifyBtn.disabled = true;
+            verifyStatus.textContent = 'Starting AKC verification…';
+            let totalVerified = 0, totalReplaced = 0, totalFailed = 0;
+
+            while (true) {
+                let data;
+                try {
+                    const res = await fetch('/api/breed_photo_verify.php?limit=5');
+                    data = await res.json();
+                } catch (e) {
+                    verifyStatus.textContent = 'Error: ' + e.message;
+                    break;
+                }
+                if (!data.success) { verifyStatus.textContent = 'Error: ' + (data.message || 'unknown'); break; }
+
+                totalVerified += data.verified || 0;
+                totalReplaced += data.replaced || 0;
+                (data.results || []).forEach(function (r) {
+                    if (r.score !== null && r.score < 55) totalFailed++;
+                });
+
+                verifyStatus.textContent = totalVerified + ' verified, ' +
+                    totalReplaced + ' replaced, ' + totalFailed + ' flagged — ' +
+                    (data.remaining || 0) + ' remaining';
+
+                if (!data.remaining || data.remaining <= 0 || data.verified === 0) break;
+            }
+
+            verifyStatus.textContent = '✓ Done — ' + totalVerified + ' verified, ' +
+                totalReplaced + ' photos replaced, ' + totalFailed + ' flags. Reload to see updates.';
+            verifyBtn.textContent = 'Done';
         });
     }
 }());
