@@ -85,7 +85,6 @@ function breedPhotoSlug(string $breedName): ?string
         'Brittany'                           => 'spaniel/brittany',
         'English Toy Spaniel'                => 'spaniel/blenheim',
         'King Charles Spaniel'               => 'spaniel/blenheim',
-        'Cavalier King Charles Spaniel'      => 'spaniel/cavalier',
         'Japanese Chin'                      => 'spaniel/japanese',
         'Boykin Spaniel'                     => 'spaniel/cocker',
         'Field Spaniel'                      => 'spaniel/cocker',
@@ -121,8 +120,12 @@ function breedPhotoSlug(string $breedName): ?string
         'Basenji'                            => 'basenji',
         'Vizsla'                             => 'vizsla',
         'Weimaraner'                         => 'weimaraner',
+        'Pointer'                            => 'pointer',
+        'Harrier'                            => 'hound',
+        'Hamiltonstovare'                    => 'hound',
 
         // ── Terriers ─────────────────────────────────────────────────────────
+        'Yorkshire Terrier'                  => 'terrier/yorkshire',
         'Airedale Terrier'                   => 'airedale',
         'Cairn Terrier'                      => 'terrier/cairn',
         'West Highland White Terrier'        => 'terrier/westhighland',
@@ -133,6 +136,7 @@ function breedPhotoSlug(string $breedName): ?string
         'Miniature Bull Terrier'             => 'bullterrier/staffordshire',
         'Miniature Schnauzer'                => 'schnauzer/miniature',
         'Giant Schnauzer'                    => 'schnauzer/giant',
+        'Standard Schnauzer'                 => 'schnauzer',
         'Border Terrier'                     => 'terrier/border',
         'Australian Terrier'                 => 'terrier/australian',
         'Irish Terrier'                      => 'terrier/irish',
@@ -439,9 +443,11 @@ function getBreedPhotoUrlCached(PDO $pdo, string $breedName): ?string
         }
     }
 
-    // Cache result — only write empty string if source was not_mapped
-    // (so a future deploy with new mappings can still retry wikipedia/commons)
-    if ($imageUrl !== '' || $source === 'not_mapped') {
+    // Always cache: successful URL, or truly unmappable (no slug + all sources failed).
+    // Don't cache empty results when a slug exists but external sources timed out —
+    // those should retry on the next request.
+    $hasSlug = breedPhotoSlug($breedName) !== null;
+    if ($imageUrl !== '' || (!$hasSlug && $source === 'not_mapped')) {
         $pdo->prepare(
             'INSERT INTO breed_images (breed_name, color_variant, image_url, source)
              VALUES (?, \'\', ?, ?)
