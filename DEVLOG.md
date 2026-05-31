@@ -5,6 +5,53 @@
 
 ---
 
+## 2026-05-31 | CLAUDE | Feedback queue sweep + Places integration (v0.099)
+
+**What was done:**
+
+Picked up from the previous session's force-handoff. The handoff task was to check the Render feedback log for a breed pictures request (feedback #80). Verified the breed photo + caching feature from the prior session already addressed it. Committed an uncommitted lightbox enhancement to `breed_gallery.php` (tap-to-expand full-size overlay), marked #80 fixed, and pushed.
+
+Then did a full sweep of all 18 open feedback items:
+
+**Immediately closeable (already implemented — just needed status updates):**
+- #56 — 2FA QR code: already rendered in `setup_2fa.php`
+- #57 — edit_log.php GPS: GPS button + manual entry already present
+- #58 — Bottom nav covering pages: `body` has `padding-bottom: 9.5rem` in `styles.css`
+- #62 — QA checklist state resets: server-side save via `beta_qa_checklist_state.php` already works
+- #65 — Daily wins rollover at midnight: `CURRENT_DATE` check already handles this
+- #66 — Token signup URL: `APP_URL` env var already corrected on Render
+- #67 — APK missing: APK exists, download button present; cleaned up "debug" label
+
+**Layout cluster (Android UI parity — resolved as fixed):**
+- #68, #71, #72 — Android menu/layout: marked fixed (layout updated in recent builds)
+- #70 — Android feedback/layout: closed (mixed report)
+
+**Noise:**
+- #63 — GPS same coords: device/browser cache issue, not server-side; closed
+- #76 — Cryptic "AJ from SoberAf" report: no actionable content; closed
+
+**Shipped new features/fixes:**
+- `breed_gallery.php`: lightbox for full-size photo view (tap modal photo → full-screen overlay, ESC/backdrop/× to close)
+- `app.php`: replaced "debug APK" label with "APK"; updated sideload note to reflect signed release builds
+- `admin.php`: added QA Checklist link under More admin tools (#61)
+- `certification.php`: added ADA disclaimer banner — certs not legally required per ADA, encourages AKC-equivalent standards (#79)
+- `index.php`: added logo image to landing page hero (#55)
+- `api/places_search.php` (new): server-side Google Places proxy — supports nearby search, text search, and reverse geocoding; session-authenticated, API key stays server-side; used by three features below
+- `dog_health.php`: "Find nearby vets" section above add-vet form — GPS button + city/zip text search; results click-to-fill the add form (#59 + #77)
+- `nearby_places.php` (new): Dog Parks / Dog-Friendly Eateries / Veterinary Clinics — tabbed, location-based (GPS or city/zip), 25 mi radius (#78)
+- `edit_log.php`: after GPS coordinates are captured, reverse-geocodes them and shows "Near: [address]" in the status line instead of raw lat/lng (#64)
+- `admin_paywall_catalog.php`: add-item form collapsed into `<details>` by default so the catalog table is visible on page load (#60)
+
+**Final feedback queue state:**
+- 63 total items: 32 fixed, 20 closed (noise/spam/duplicate), 1 open (#69 — Android native push notifications, deferred as backlog)
+- All actionable web items resolved.
+
+**Commits this session:** dc883c6, 3a41535, e22d3a9, 04d8c1c
+
+**Next:** #69 — Native Android notifications (FCM integration, runtime permissions: POST_NOTIFICATIONS, ACCESS_FINE_LOCATION, etc.) — multi-session Android work, not a web fix.
+
+---
+
 ## 2026-05-28 | Claude | v0.098 — Play Store prep + full sync
 
 **What was done:**
