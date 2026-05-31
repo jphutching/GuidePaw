@@ -111,12 +111,22 @@ $docs = $docs->fetchAll();
                 <?php endif; ?>
                 <?php if ($vets): ?><div class="list-group list-group-flush mb-3"><?php foreach ($vets as $vet): ?><div class="list-group-item px-0"><div class="fw-semibold"><?= e($vet['clinic_name']) ?> <?php if (!empty($vet['is_primary'])): ?><span class="badge bg-primary">Primary</span><?php endif; ?></div><div class="small text-muted"><?= e($vet['vet_name']) ?><?= !empty($vet['phone']) ? ' • ' . e($vet['phone']) : '' ?></div><div class="small"><?= nl2br(e($vet['address'])) ?></div></div><?php endforeach; ?></div><?php else: ?><p class="text-muted">No vets saved yet.</p><?php endif; ?>
                 <?php if ($canEdit): ?>
+                <div class="mb-3 p-3 rounded bg-light border">
+                    <div class="fw-bold small mb-2">🔍 Find nearby vets</div>
+                    <div class="d-flex gap-2 mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="findNearbyVetsBtn">Use my location</button>
+                        <input type="text" class="form-control form-control-sm" id="vetCitySearch" placeholder="Or enter a city / zip">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="vetCitySearchBtn">Search</button>
+                    </div>
+                    <div id="vetFindStatus" class="small text-muted"></div>
+                    <div id="vetFindResults" class="mt-2 d-grid gap-2"></div>
+                </div>
                 <form method="post" class="row g-2 border-top pt-3">
                     <input type="hidden" name="csrf_token" value="<?= e($csrf) ?>"><input type="hidden" name="action" value="add_vet">
-                    <div class="col-12"><input type="text" name="clinic_name" class="form-control" placeholder="Clinic or emergency vet" required></div>
-                    <div class="col-12"><input type="text" name="vet_name" class="form-control" placeholder="Vet doctor name"></div>
-                    <div class="col-12"><input type="text" name="phone" class="form-control" placeholder="Phone"></div>
-                    <div class="col-12"><textarea name="address" class="form-control" rows="2" placeholder="Address"></textarea></div>
+                    <div class="col-12"><input type="text" name="clinic_name" id="addVetClinic" class="form-control" placeholder="Clinic or emergency vet" required></div>
+                    <div class="col-12"><input type="text" name="vet_name" id="addVetName" class="form-control" placeholder="Vet doctor name"></div>
+                    <div class="col-12"><input type="text" name="phone" id="addVetPhone" class="form-control" placeholder="Phone"></div>
+                    <div class="col-12"><textarea name="address" id="addVetAddress" class="form-control" rows="2" placeholder="Address"></textarea></div>
                     <div class="col-12"><textarea name="notes" class="form-control" rows="2" placeholder="Hours, after-hours notes, etc."></textarea></div>
                     <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="is_primary" id="is_primary"><label class="form-check-label" for="is_primary">Primary/home vet</label></div>
                     <div class="col-12"><button class="btn btn-primary w-100">Save Vet</button></div>
@@ -207,6 +217,89 @@ $docs = $docs->fetchAll();
 
     search.addEventListener('input', filter);
     filter();
+})();
+
+// ── Nearby vet finder ──────────────────────────────────────────────────────
+(function () {
+    var findBtn      = document.getElementById('findNearbyVetsBtn');
+    var cityInput    = document.getElementById('vetCitySearch');
+    var citySearchBtn= document.getElementById('vetCitySearchBtn');
+    var statusEl     = document.getElementById('vetFindStatus');
+    var resultsEl    = document.getElementById('vetFindResults');
+    if (!findBtn || !resultsEl) return;
+
+    var clinic  = document.getElementById('addVetClinic');
+    var phone   = document.getElementById('addVetPhone');
+    var address = document.getElementById('addVetAddress');
+
+    function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
+
+    function renderPlaces(places) {
+        resultsEl.innerHTML = '';
+        if (!places.length) { setStatus('No nearby veterinary clinics found.'); return; }
+        setStatus(places.length + ' results — click one to fill the form below.');
+        places.slice(0, 10).forEach(function (p) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-secondary text-start btn-sm w-100';
+            var stars = p.rating ? ' <span class="text-warning">★</span> ' + p.rating.toFixed(1) : '';
+            var open  = p.open_now ? ' <span class="badge bg-success">Open</span>' : '';
+            btn.innerHTML = '<strong>' + escHtml(p.name) + '</strong>' + stars + open +
+                '<div class="small text-muted">' + escHtml(p.address) + '</div>';
+            btn.addEventListener('click', function () {
+                if (clinic)  clinic.value  = p.name;
+                if (phone)   phone.value   = '';
+                if (address) address.value = p.address;
+                setStatus('Filled from Places result. Add phone and doctor name if needed.');
+                resultsEl.innerHTML = '';
+            });
+            resultsEl.appendChild(btn);
+        });
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fetchNearby(lat, lng) {
+        setStatus('Searching for vets near you…');
+        fetch('api/places_search.php?type=veterinary_care&lat=' + lat + '&lng=' + lng + '&radius=25')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) renderPlaces(data.results);
+                else setStatus('Search error: ' + (data.message || 'unknown'));
+            })
+            .catch(function () { setStatus('Could not reach search service.'); });
+    }
+
+    function fetchByText(q) {
+        setStatus('Searching for "' + q + '"…');
+        fetch('api/places_search.php?type=veterinary_care&q=' + encodeURIComponent(q))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) renderPlaces(data.results);
+                else setStatus('Search error: ' + (data.message || 'unknown'));
+            })
+            .catch(function () { setStatus('Could not reach search service.'); });
+    }
+
+    findBtn.addEventListener('click', function () {
+        if (!navigator.geolocation) { setStatus('Geolocation not supported by this browser.'); return; }
+        setStatus('Getting your location…');
+        navigator.geolocation.getCurrentPosition(
+            function (pos) { fetchNearby(pos.coords.latitude, pos.coords.longitude); },
+            function ()    { setStatus('Location access denied. Try the city/zip search instead.'); }
+        );
+    });
+
+    function doTextSearch() {
+        var q = (cityInput ? cityInput.value : '').trim();
+        if (!q) { setStatus('Enter a city or zip code.'); return; }
+        fetchByText(q + ' veterinarian');
+    }
+
+    if (citySearchBtn) citySearchBtn.addEventListener('click', doTextSearch);
+    if (cityInput) cityInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doTextSearch(); } });
 })();
 </script>
 </body></html>

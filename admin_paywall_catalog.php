@@ -208,9 +208,11 @@ $recentPurchases = $pdo->query("
     <?php if ($message): ?><div class="alert alert-success"><?= apEsc($message) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= apEsc($error) ?></div><?php endif; ?>
 
-    <div class="catalog-card mb-3">
-        <h2 class="h5 mb-2">Add or update a catalog item</h2>
-        <div class="mini mb-3">Use the item slug as the stable key. Existing rows update in place.</div>
+    <details class="catalog-card mb-3">
+        <summary style="cursor:pointer;font-size:1rem;font-weight:800;list-style:none;padding:.25rem 0;" class="mb-2">
+            ＋ Add or update a catalog item <span class="mini fw-normal">(click to expand)</span>
+        </summary>
+        <div class="mini mb-3 mt-2">Use the item slug as the stable key. Existing rows update in place.</div>
         <form method="post" class="row g-2">
             <input type="hidden" name="csrf_token" value="<?= apEsc($csrf) ?>">
             <input type="hidden" name="action" value="save_item">
@@ -231,7 +233,7 @@ $recentPurchases = $pdo->query("
             <div class="col-md-12"><label class="form-label small">Notes</label><textarea name="notes" class="form-control" placeholder="Admin notes"></textarea></div>
             <div class="col-12"><button class="btn btn-primary">Save catalog item</button></div>
         </form>
-    </div>
+    </details>
 
     <div class="row g-3">
         <div class="col-lg-7">
