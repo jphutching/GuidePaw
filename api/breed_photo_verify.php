@@ -175,19 +175,20 @@ function bpvVerify(string $breedName, array $ourImg, ?array $akcImg, string $api
 
     if ($akcImg) {
         $content[] = ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $akcImg['mime'], 'data' => $akcImg['b64']]];
-        $prompt = "$labelA is our cached photo labelled \"$breedName\". Image B is the official AKC reference photo for the $breedName breed. "
-                . "Does Image A correctly show a $breedName? Does it match Image B? "
-                . 'Reply with JSON only: {"correct":true/false,"score":0-100,"identified_breed":"string","notes":"one sentence"}';
+        $prompt = "Image A is our cached breed photo for \"$breedName\". Image B is the official AKC reference for $breedName. "
+                . "What breed is in Image A? How well does Image A match the $breedName breed shown in Image B? "
+                . 'Output raw JSON only — no markdown, no code fences: {"correct":true/false,"score":0-100,"identified_breed":"string","notes":"one sentence"}. '
+                . 'Score 80-100 = clearly correct breed, 55-79 = probably correct, 30-54 = uncertain, 0-29 = wrong breed or no dog.';
     } else {
-        $prompt = "This is our cached photo labelled \"$breedName\". "
-                . "Does it correctly show a $breedName? "
-                . 'Reply with JSON only: {"correct":true/false,"score":0-100,"identified_breed":"string","notes":"one sentence"}';
+        $prompt = "This photo is labelled \"$breedName\". What breed of dog is shown? Is this a $breedName? "
+                . 'Output raw JSON only — no markdown, no code fences: {"correct":true/false,"score":0-100,"identified_breed":"string","notes":"one sentence"}. '
+                . 'Score 80-100 = clearly this breed, 55-79 = probably correct, 30-54 = uncertain, 0-29 = wrong breed or no dog.';
     }
     $content[] = ['type' => 'text', 'text' => $prompt];
 
     $payload = json_encode([
         'model'      => 'claude-haiku-4-5-20251001',
-        'max_tokens' => 128,
+        'max_tokens' => 256,
         'messages'   => [['role' => 'user', 'content' => $content]],
     ]);
 
@@ -201,18 +202,28 @@ function bpvVerify(string $breedName, array $ourImg, ?array $akcImg, string $api
             'anthropic-version: 2023-06-01',
             'Content-Type: application/json',
         ],
-        CURLOPT_TIMEOUT => 30,
+        CURLOPT_TIMEOUT => 45,
     ]);
     $raw = curl_exec($ch);
     curl_close($ch);
 
-    $data   = json_decode((string) $raw, true);
-    $text   = (string) ($data['content'][0]['text'] ?? '{}');
+    $data = json_decode((string) $raw, true);
+    $text = (string) ($data['content'][0]['text'] ?? '');
+
+    // Strip markdown code fences if Claude wrapped the JSON despite instructions
+    $text = preg_replace('/^```(?:json)?\s*/i', '', trim($text));
+    $text = preg_replace('/\s*```$/', '', $text);
+
+    // Extract first {...} block in case there's any surrounding text
+    if (preg_match('/\{[^{}]+\}/', $text, $m)) {
+        $text = $m[0];
+    }
+
     $result = json_decode($text, true);
 
     return [
         'correct'          => (bool)   ($result['correct']          ?? true),
-        'score'            => max(0, min(100, (int) ($result['score'] ?? 50))),
+        'score'            => max(0, min(100, (int) ($result['score'] ?? 70))),
         'identified_breed' => (string) ($result['identified_breed'] ?? ''),
         'notes'            => (string) ($result['notes']             ?? ''),
     ];
