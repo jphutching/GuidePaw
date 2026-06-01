@@ -12,7 +12,7 @@ if (!gpCurrentUserIsAdmin($pdo)) {
 $flagged = $pdo->query(
     "SELECT breed_name, verification_score, verification_notes, image_url, source, photo_locked
      FROM breed_images
-     WHERE verification_score < 55 AND verified_at IS NOT NULL
+     WHERE verification_score < 30 AND verified_at IS NOT NULL
      ORDER BY verification_score, breed_name"
 )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -66,9 +66,14 @@ body { background: #f8fafc; }
 <?php if (empty($flagged)): ?>
     <div class="alert alert-success">No flagged breeds — all photos passed verification!</div>
 <?php else: ?>
-    <div class="alert alert-info small mb-4">
-        Click any replacement photo to preview it full-size. Click <strong>Use this</strong> to save and lock it.
-        Click <strong>Keep &amp; lock current</strong> if the existing photo is actually fine.
+    <div class="alert alert-warning small mb-3">
+        <strong>Note:</strong> The AI scores style similarity against AKC's reference photo — correct photos can score low if they show a different coat color, angle, or outdoor vs. studio setting.
+        If you've verified a photo is correct, use <strong>Keep &amp; lock current</strong> or <strong>Lock all as correct</strong> to dismiss false positives.
+    </div>
+    <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+        <button id="lock-all-btn" class="btn btn-success btn-sm fw-bold">🔒 Lock all as correct</button>
+        <span class="text-muted small">Locks every photo on this list without replacing — use if you've verified them manually.</span>
+        <span id="lock-all-status" class="small fw-bold ms-2"></span>
     </div>
 
     <?php foreach ($flagged as $row): ?>
@@ -229,6 +234,35 @@ document.addEventListener('click', async function(e) {
         alert('Error: ' + err.message);
     }
 });
+
+// Lock all as correct
+const lockAllBtn    = document.getElementById('lock-all-btn');
+const lockAllStatus = document.getElementById('lock-all-status');
+if (lockAllBtn) {
+    lockAllBtn.addEventListener('click', async function () {
+        if (!confirm('Lock all ' + flagged.length + ' photos as correct? None will be replaced.')) return;
+        lockAllBtn.disabled = true;
+        let done = 0;
+        for (const f of flagged) {
+            try {
+                await fetch('/api/breed_photo_lock.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ breed: f.breed, locked: true })
+                });
+            } catch (_) {}
+            done++;
+            lockAllStatus.textContent = done + ' / ' + flagged.length + ' locked…';
+            const id = cardId(f.breed);
+            const btn = document.querySelector('#card-' + id + ' .keep-btn');
+            if (btn) btn.textContent = '✓ Locked';
+            const banner = document.getElementById('kept-' + id);
+            if (banner) banner.style.display = '';
+        }
+        lockAllStatus.textContent = '✓ All ' + done + ' photos locked.';
+        lockAllBtn.textContent = '✓ Done';
+    });
+}
 
 // Lazy-load alternatives as cards scroll into view
 const observer = new IntersectionObserver(function(entries) {

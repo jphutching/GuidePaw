@@ -6,13 +6,13 @@
  *   2. Downloads both our image and AKC's image
  *   3. Asks claude-haiku: "Does our photo show the correct breed?"
  *   4. Stores score + notes in breed_images
- *   5. If score < 55 and replace=1, auto-replaces from all sources
+ *   5. If score < 30 and replace=1, auto-replaces from all sources
  *
  * GET params:
  *   limit       — breeds per call (default 5, max 15)
  *   rerun       — re-verify already-verified breeds
  *   replace     — auto-replace bad images (default true)
- *   flagged_only — only process breeds already scored < 55 (for phase-2 replacement)
+ *   flagged_only — only process breeds already scored < 30 (for phase-2 replacement)
  *   summary     — return flagged breed list without verifying (no Anthropic calls)
  */
 require_once __DIR__ . '/../includes/db_connect.php';
@@ -31,7 +31,7 @@ if (!empty($_GET['summary'])) {
     $flagged = $pdo->query(
         "SELECT breed_name, verification_score, verification_notes, image_url
          FROM breed_images
-         WHERE verified_at IS NOT NULL AND verification_score < 55
+         WHERE verified_at IS NOT NULL AND verification_score < 30
          ORDER BY verification_score, breed_name"
     )->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['success' => true, 'flagged' => $flagged, 'count' => count($flagged)]);
@@ -54,7 +54,7 @@ if ($flaggedOnly) {
     // Phase 2: only re-verify breeds that already scored poorly
     $rows = $pdo->query(
         "SELECT id, breed_name, image_url, source FROM breed_images
-         WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 55
+         WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 30
          ORDER BY breed_name LIMIT $limit"
     )->fetchAll(PDO::FETCH_ASSOC);
 } elseif ($rerun) {
@@ -279,7 +279,7 @@ foreach ($rows as $row) {
 
     // Auto-replace if score is too low
     $skipVerifiedAt = false;
-    if ($replace && $v['score'] < 55) {
+    if ($replace && $v['score'] < 30) {
         $pdo->prepare('DELETE FROM breed_images WHERE id = ?')->execute([$row['id']]);
         $newUrl = getBreedPhotoUrlCached($pdo, $breedName);
         // Always re-lookup the new row ID — the old one was just deleted
@@ -310,7 +310,7 @@ foreach ($rows as $row) {
 }
 
 $remaining = $flaggedOnly
-    ? (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 55")->fetchColumn()
+    ? (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 30")->fetchColumn()
     : (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NULL")->fetchColumn();
 
 echo json_encode([

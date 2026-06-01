@@ -158,7 +158,7 @@ body { background: #f1f5f9; color: #0f172a; }
             <button id="analyze-btn" class="btn btn-outline-secondary btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Uses AI to score each cached photo for full-dog visibility and swaps in a better image if score is low">🤖 Analyze photos</button>
             <button id="verify-btn" class="btn btn-outline-success btn-sm fw-bold" <?= !$photosEnabled ? 'disabled' : '' ?> title="Verifies each photo against AKC's reference image using AI. Auto-replaces wrong breeds.">✅ Verify vs AKC</button>
             <?php
-            $flaggedCount = (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE verification_score < 55 AND verified_at IS NOT NULL")->fetchColumn();
+            $flaggedCount = (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE verification_score < 30 AND verified_at IS NOT NULL")->fetchColumn();
             if ($flaggedCount > 0):
             ?>
             <a href="breed_photo_review.php" class="btn btn-warning btn-sm fw-bold">⚠️ Review <?= $flaggedCount ?> flagged</a>
