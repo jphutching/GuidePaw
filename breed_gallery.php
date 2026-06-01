@@ -160,6 +160,15 @@ body { background: #f1f5f9; color: #0f172a; }
             <span id="analyze-status" class="small text-muted ms-1"></span>
             <span id="verify-status" class="small text-muted ms-1"></span>
         </div>
+        <!-- Verify confirmation panel (hidden until phase 1 complete) -->
+        <div id="verify-confirm-panel" style="display:none; margin-top:.75rem;">
+            <div class="fw-bold small mb-1" id="verify-confirm-heading"></div>
+            <div id="verify-flagged-list" style="max-height:260px; overflow-y:auto; font-size:.8rem; border:1px solid #e2e8f0; border-radius:8px; padding:.5rem .75rem; background:#fff8f0; margin-bottom:.75rem;"></div>
+            <div class="d-flex gap-2">
+                <button id="verify-replace-btn" class="btn btn-warning btn-sm fw-bold">Replace flagged photos</button>
+                <button id="verify-skip-btn" class="btn btn-outline-secondary btn-sm">Skip — keep scores only</button>
+            </div>
+        </div>
     <?php endif; ?>
 
     <div class="filter-bar">
@@ -602,42 +611,94 @@ body { background: #f1f5f9; color: #0f172a; }
         });
     }
 
-    // ── AKC photo verification ────────────────────────────────────────────────
-    const verifyBtn    = document.getElementById('verify-btn');
-    const verifyStatus = document.getElementById('verify-status');
+    // ── AKC photo verification (two-phase: score → confirm → replace) ────────
+    const verifyBtn          = document.getElementById('verify-btn');
+    const verifyStatus       = document.getElementById('verify-status');
+    const verifyConfirmPanel = document.getElementById('verify-confirm-panel');
+    const verifyConfirmHead  = document.getElementById('verify-confirm-heading');
+    const verifyFlaggedList  = document.getElementById('verify-flagged-list');
+    const verifyReplaceBtn   = document.getElementById('verify-replace-btn');
+    const verifySkipBtn      = document.getElementById('verify-skip-btn');
+
+    async function runVerifyLoop(params, statusPrefix) {
+        let total = 0, flagged = 0;
+        while (true) {
+            let data;
+            try {
+                const res = await fetch('/api/breed_photo_verify.php?' + params);
+                data = await res.json();
+            } catch (e) {
+                verifyStatus.textContent = 'Error: ' + e.message;
+                return null;
+            }
+            if (!data.success) { verifyStatus.textContent = 'Error: ' + (data.message || 'unknown'); return null; }
+            total   += data.verified || 0;
+            flagged += (data.results || []).filter(function (r) { return r.score !== null && r.score < 55; }).length;
+            verifyStatus.textContent = statusPrefix + total + ' done — ' + (data.remaining || 0) + ' remaining';
+            if (!data.remaining || data.remaining <= 0 || data.verified === 0) break;
+        }
+        return { total, flagged };
+    }
+
     if (verifyBtn) {
         verifyBtn.addEventListener('click', async function () {
             verifyBtn.disabled = true;
-            verifyStatus.textContent = 'Starting AKC verification…';
-            let totalVerified = 0, totalReplaced = 0, totalFailed = 0;
+            verifyConfirmPanel.style.display = 'none';
+            verifyStatus.textContent = 'Phase 1 — scoring photos (no changes yet)…';
 
-            while (true) {
-                let data;
-                try {
-                    const res = await fetch('/api/breed_photo_verify.php?limit=5');
-                    data = await res.json();
-                } catch (e) {
-                    verifyStatus.textContent = 'Error: ' + e.message;
-                    break;
-                }
-                if (!data.success) { verifyStatus.textContent = 'Error: ' + (data.message || 'unknown'); break; }
+            // Phase 1: score only, no replacements
+            const p1 = await runVerifyLoop('limit=5&replace=0', 'Scoring: ');
+            if (!p1) { verifyBtn.disabled = false; return; }
 
-                totalVerified += data.verified || 0;
-                totalReplaced += data.replaced || 0;
-                (data.results || []).forEach(function (r) {
-                    if (r.score !== null && r.score < 55) totalFailed++;
-                });
+            // Fetch flagged list for confirmation
+            let flaggedBreeds = [];
+            try {
+                const res  = await fetch('/api/breed_photo_verify.php?summary=1');
+                const data = await res.json();
+                flaggedBreeds = data.flagged || [];
+            } catch (_) {}
 
-                verifyStatus.textContent = totalVerified + ' verified, ' +
-                    totalReplaced + ' replaced, ' + totalFailed + ' flagged — ' +
-                    (data.remaining || 0) + ' remaining';
-
-                if (!data.remaining || data.remaining <= 0 || data.verified === 0) break;
+            if (flaggedBreeds.length === 0) {
+                verifyStatus.textContent = '✓ All ' + p1.total + ' photos passed — no replacements needed.';
+                verifyBtn.textContent = 'Done';
+                return;
             }
 
-            verifyStatus.textContent = '✓ Done — ' + totalVerified + ' verified, ' +
-                totalReplaced + ' photos replaced, ' + totalFailed + ' flags. Reload to see updates.';
-            verifyBtn.textContent = 'Done';
+            // Show confirmation panel
+            verifyStatus.textContent = '⚠️ ' + flaggedBreeds.length + ' photos scored below 55 — review below before replacing.';
+            verifyConfirmHead.textContent = flaggedBreeds.length + ' breed' + (flaggedBreeds.length > 1 ? 's' : '') + ' flagged for replacement:';
+            verifyFlaggedList.innerHTML = flaggedBreeds.map(function (b) {
+                const score = b.verification_score;
+                const color = score < 30 ? '#dc2626' : '#d97706';
+                return '<div style="padding:.3rem 0; border-bottom:1px solid #f0e8e0; display:flex; gap:.5rem; align-items:flex-start;">' +
+                    '<img src="' + b.image_url + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+                    '<div><span style="font-weight:700;">' + b.breed_name + '</span> ' +
+                    '<span style="color:' + color + ';font-weight:700;">(' + score + '/100)</span><br>' +
+                    '<span style="color:#64748b;">' + (b.verification_notes || '') + '</span></div></div>';
+            }).join('');
+            verifyConfirmPanel.style.display = '';
+
+            // Phase 2 on confirmation
+            verifyReplaceBtn.onclick = async function () {
+                verifyReplaceBtn.disabled = true;
+                verifySkipBtn.disabled   = true;
+                verifyConfirmPanel.style.display = 'none';
+                verifyStatus.textContent = 'Phase 2 — replacing flagged photos…';
+                const p2 = await runVerifyLoop('limit=5&replace=1&flagged_only=1', 'Replacing: ');
+                if (p2) {
+                    verifyStatus.textContent = '✓ Done — ' + p2.total + ' photos replaced. Reload to see updates.';
+                    verifyBtn.textContent = 'Done';
+                }
+                verifyReplaceBtn.disabled = false;
+                verifySkipBtn.disabled   = false;
+            };
+
+            verifySkipBtn.onclick = function () {
+                verifyConfirmPanel.style.display = 'none';
+                verifyStatus.textContent = '✓ Scoring complete — ' + flaggedBreeds.length + ' flagged, no photos changed.';
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '✅ Verify vs AKC';
+            };
         });
     }
 }());

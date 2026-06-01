@@ -6,12 +6,14 @@
  *   2. Downloads both our image and AKC's image
  *   3. Asks claude-haiku: "Does our photo show the correct breed?"
  *   4. Stores score + notes in breed_images
- *   5. If score < 55, auto-replaces from all sources and re-verifies
+ *   5. If score < 55 and replace=1, auto-replaces from all sources
  *
  * GET params:
- *   limit   — breeds to process per call (default 5, max 15)
- *   rerun   — re-verify already-verified breeds
- *   replace — auto-replace bad images (default true)
+ *   limit       — breeds per call (default 5, max 15)
+ *   rerun       — re-verify already-verified breeds
+ *   replace     — auto-replace bad images (default true)
+ *   flagged_only — only process breeds already scored < 55 (for phase-2 replacement)
+ *   summary     — return flagged breed list without verifying (no Anthropic calls)
  */
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once __DIR__ . '/../includes/breed_photos.php';
@@ -24,18 +26,38 @@ if (!gpCurrentUserIsAdmin($pdo)) {
     exit;
 }
 
+// ── Summary mode: return flagged breeds without calling Claude ────────────
+if (!empty($_GET['summary'])) {
+    $flagged = $pdo->query(
+        "SELECT breed_name, verification_score, verification_notes, image_url
+         FROM breed_images
+         WHERE verified_at IS NOT NULL AND verification_score < 55
+         ORDER BY verification_score, breed_name"
+    )->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'flagged' => $flagged, 'count' => count($flagged)]);
+    exit;
+}
+
 $anthropicKey = trim((string) gpEnv('ANTHROPIC_API_KEY', ''));
 if ($anthropicKey === '') {
     echo json_encode(['success' => false, 'message' => 'ANTHROPIC_API_KEY not set.']);
     exit;
 }
 
-$limit    = min((int) ($_GET['limit']   ?? 5), 15);
-$rerun    = !empty($_GET['rerun']);
-$replace  = ($_GET['replace'] ?? '1') !== '0';
+$limit       = min((int) ($_GET['limit']   ?? 5), 15);
+$rerun       = !empty($_GET['rerun']);
+$replace     = ($_GET['replace'] ?? '1') !== '0';
+$flaggedOnly = !empty($_GET['flagged_only']);
 
 // ── Fetch breeds to verify ────────────────────────────────────────────────
-if ($rerun) {
+if ($flaggedOnly) {
+    // Phase 2: only re-verify breeds that already scored poorly
+    $rows = $pdo->query(
+        "SELECT id, breed_name, image_url, source FROM breed_images
+         WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 55
+         ORDER BY breed_name LIMIT $limit"
+    )->fetchAll(PDO::FETCH_ASSOC);
+} elseif ($rerun) {
     $rows = $pdo->query(
         "SELECT id, breed_name, image_url, source FROM breed_images
          WHERE image_url != '' ORDER BY breed_name LIMIT $limit"
@@ -276,9 +298,9 @@ foreach ($rows as $row) {
     $results[] = $result;
 }
 
-$remaining = (int) $pdo->query(
-    "SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NULL"
-)->fetchColumn();
+$remaining = $flaggedOnly
+    ? (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NOT NULL AND verification_score < 55")->fetchColumn()
+    : (int) $pdo->query("SELECT COUNT(*) FROM breed_images WHERE image_url != '' AND verified_at IS NULL")->fetchColumn();
 
 echo json_encode([
     'success'   => true,
