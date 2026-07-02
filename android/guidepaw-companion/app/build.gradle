@@ -15,8 +15,8 @@ android {
         applicationId 'com.guidepaw.companion'
         minSdk 26
         targetSdk 34
-        versionCode 100
-        versionName '0.100'
+        versionCode 102
+        versionName '0.102'
     }
 
     signingConfigs {

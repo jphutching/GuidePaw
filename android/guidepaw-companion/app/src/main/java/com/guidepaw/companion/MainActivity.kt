@@ -363,6 +363,19 @@ class MainActivity : AppCompatActivity() {
     private var apptVetExpanded     by mutableStateOf(false)
     private var apptShowForm        by mutableStateOf(false)
 
+    // Recurring meeting support (per date picker rules)
+    private var apptIsRecurring     by mutableStateOf(false)
+    private var apptWeekdays        by mutableStateOf(setOf<Int>()) // 0=Sun ... 6=Sat , use s,m,t,w,t,f,s
+    private var apptTimes           by mutableStateOf(listOf<String>())
+    private var apptNewTime         by mutableStateOf("")
+    private var apptCategory        by mutableStateOf("")
+    private var apptCustomCategory  by mutableStateOf("")
+    private var apptCategoryExpanded by mutableStateOf(false)
+    private var apptTimezone        by mutableStateOf("")
+
+    // Monthly "on the Nth weekday of the month" using checkboxes (cleaner than dropdowns)
+    private var apptMonthPositions  by mutableStateOf(setOf<Int>()) // 1=1st, 2=2nd, 3=3rd, 4=4th, 5=Last
+
     // ── Medications state ──────────────────────────────────────────────────
     private var medicationsResult     by mutableStateOf<GpMedicationsResult?>(null)
     private var medicationsMessage    by mutableStateOf("")
@@ -6543,7 +6556,15 @@ class MainActivity : AppCompatActivity() {
                 SectionMessage(appointmentsMessage, onRetry = { loadAppointments() })
 
                 OutlinedButton(
-                    onClick  = { apptShowForm = !apptShowForm },
+                    onClick  = {
+                        if (apptShowForm) {
+                            // reset on cancel
+                            apptTitle = ""; apptAt = ""; apptReminderAt = ""; apptLocation = ""; apptNotes = ""; apptVetId = 0
+                            apptIsRecurring = false; apptWeekdays = setOf(); apptTimes = listOf(); apptNewTime = ""
+                            apptCategory = ""; apptCustomCategory = ""; apptTimezone = ""; apptMonthPositions = setOf()
+                        }
+                        apptShowForm = !apptShowForm
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(if (apptShowForm) "Cancel" else "+ Schedule Appointment") }
 
@@ -6595,15 +6616,122 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
 
-                            OutlinedTextField(
-                                value         = apptAt,
-                                onValueChange = { apptAt = it },
-                                label         = { Text("Appointment time *") },
-                                placeholder   = { Text("e.g. 2024-06-15 09:00") },
-                                modifier      = Modifier.fillMaxWidth(),
-                                singleLine    = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            )
+                            // Recurring toggle
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                Checkbox(
+                                    checked = apptIsRecurring,
+                                    onCheckedChange = { apptIsRecurring = it }
+                                )
+                                Text("Recurring meeting")
+                            }
+
+                            if (apptIsRecurring) {
+                                // Weekday boxes (s m t w t f s). 
+                                // For "on the __ of the month" we use additional position checkboxes *in place* with the days.
+                                // Unchecked positions = weekly on the selected days. Checked = monthly e.g. 2nd Tue.
+                                Text("Weekdays (s m t w t f s)", style = MaterialTheme.typography.labelMedium)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                ) {
+                                    listOf("s", "m", "t", "w", "t", "f", "s").forEachIndexed { i, label ->
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.width(36.dp)
+                                        ) {
+                                            Checkbox(
+                                                checked = i in apptWeekdays,
+                                                onCheckedChange = { checked ->
+                                                    apptWeekdays = if (checked) apptWeekdays + i else apptWeekdays - i
+                                                }
+                                            )
+                                            Text(label, style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+                                }
+
+                                // "On the" positions using checkboxes right here (added function to the pattern selection).
+                                // This replaces the clunky dropdown pair.
+                                Text("On the", style = MaterialTheme.typography.labelMedium)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                ) {
+                                    listOf("1st", "2nd", "3rd", "4th", "Last").forEachIndexed { idx, label ->
+                                        val pos = idx + 1
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.width(48.dp)
+                                        ) {
+                                            Checkbox(
+                                                checked = pos in apptMonthPositions,
+                                                onCheckedChange = { checked ->
+                                                    apptMonthPositions = if (checked) apptMonthPositions + pos else apptMonthPositions - pos
+                                                }
+                                            )
+                                            Text(label, style = MaterialTheme.typography.labelSmall)
+                                        }
+                                    }
+                                }
+                                Text("of the selected weekday(s) each month", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                if (apptMonthPositions.isEmpty()) {
+                                    Text("(leave positions unchecked for weekly recurring)", style = MaterialTheme.typography.labelSmall, color = GpOnSurfaceVariant)
+                                }
+
+                                // Times: multiple per day ok for same pattern
+                                Text("Times (multiple allowed)", style = MaterialTheme.typography.labelMedium)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    OutlinedTextField(
+                                        value = apptNewTime,
+                                        onValueChange = { apptNewTime = it },
+                                        placeholder = { Text("09:00") },
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Button(onClick = {
+                                        val t = apptNewTime.trim()
+                                        if (t.isNotEmpty()) {
+                                            apptTimes = apptTimes + t
+                                            apptNewTime = ""
+                                        }
+                                    }) { Text("+") }
+                                }
+                                if (apptTimes.isNotEmpty()) {
+                                    Column {
+                                        apptTimes.forEachIndexed { idx, t ->
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text("• $t", modifier = Modifier.weight(1f))
+                                                TextButton(onClick = {
+                                                    apptTimes = apptTimes.toMutableList().apply { removeAt(idx) }
+                                                }) { Text("Remove") }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Anchor date for the recurring series (pattern is driven by the checkboxes + times above)
+                                OutlinedTextField(
+                                    value         = apptAt,
+                                    onValueChange = { apptAt = it },
+                                    label         = { Text("Start date (anchor for series)") },
+                                    placeholder   = { Text("2024-07-01") },
+                                    modifier      = Modifier.fillMaxWidth(),
+                                    singleLine    = true,
+                                )
+                            } else {
+                                // One-off date picker: include full date (day of month ok here)
+                                OutlinedTextField(
+                                    value         = apptAt,
+                                    onValueChange = { apptAt = it },
+                                    label         = { Text("Appointment time *") },
+                                    placeholder   = { Text("e.g. 2024-06-15 09:00") },
+                                    modifier      = Modifier.fillMaxWidth(),
+                                    singleLine    = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                )
+                            }
+
                             OutlinedTextField(
                                 value         = apptReminderAt,
                                 onValueChange = { apptReminderAt = it },
@@ -6613,6 +6741,61 @@ class MainActivity : AppCompatActivity() {
                                 singleLine    = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             )
+
+                            // Category + custom field
+                            ExposedDropdownMenuBox(
+                                expanded         = apptCategoryExpanded,
+                                onExpandedChange = { apptCategoryExpanded = it },
+                            ) {
+                                OutlinedTextField(
+                                    value         = apptCategory.ifBlank { "Select category" },
+                                    onValueChange = {},
+                                    readOnly      = true,
+                                    label         = { Text("Category") },
+                                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(apptCategoryExpanded) },
+                                    modifier      = Modifier.menuAnchor().fillMaxWidth(),
+                                )
+                                ExposedDropdownMenu(
+                                    expanded         = apptCategoryExpanded,
+                                    onDismissRequest = { apptCategoryExpanded = false },
+                                ) {
+                                    listOf("Vet", "Training", "Grooming", "Other").forEach { cat ->
+                                        DropdownMenuItem(
+                                            text = { Text(cat) },
+                                            onClick = {
+                                                apptCategory = cat
+                                                apptCategoryExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            // Custom field under category "as well what it is"
+                            OutlinedTextField(
+                                value         = apptCustomCategory,
+                                onValueChange = { apptCustomCategory = it },
+                                label         = { Text("Custom (what it is)") },
+                                placeholder   = { Text("Describe if needed") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+
+                            // Timezone with note
+                            OutlinedTextField(
+                                value         = apptTimezone,
+                                onValueChange = { apptTimezone = it },
+                                label         = { Text("Timezone") },
+                                placeholder   = { Text("America/Denver") },
+                                modifier      = Modifier.fillMaxWidth(),
+                                singleLine    = true,
+                            )
+                            Text(
+                                "This is for the timezone of the meeting.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = GpOnSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+
                             LocationPickerButton { name, _ ->
                                 if (apptLocation.isBlank()) apptLocation = name
                             }
@@ -8270,21 +8453,31 @@ class MainActivity : AppCompatActivity() {
     private fun submitAddAppointment() {
         val token = currentToken ?: return
         if (apptTitle.isBlank()) { appointmentsMessage = "Title is required."; return }
-        if (apptAt.isBlank()) { appointmentsMessage = "Appointment time is required."; return }
+        if (!apptIsRecurring && apptAt.isBlank()) { appointmentsMessage = "Appointment time is required."; return }
         setLoading(true, "Saving appointment...")
         worker.execute {
             try {
                 api.addAppointment(
-                    token         = token,
-                    title         = apptTitle.trim(),
-                    appointmentAt = apptAt.trim(),
-                    reminderAt    = apptReminderAt.trim(),
-                    locationText  = apptLocation.trim(),
-                    notes         = apptNotes.trim(),
-                    vetId         = apptVetId,
+                    token          = token,
+                    title          = apptTitle.trim(),
+                    appointmentAt  = apptAt.trim(),
+                    reminderAt     = apptReminderAt.trim(),
+                    locationText   = apptLocation.trim(),
+                    notes          = apptNotes.trim(),
+                    vetId          = apptVetId,
+                    isRecurring    = apptIsRecurring,
+                    weekdays       = apptWeekdays,
+                    times          = apptTimes,
+                    category       = apptCategory,
+                    customCategory = apptCustomCategory,
+                    timezone       = apptTimezone.trim(),
+                    monthPositions = apptMonthPositions,
                 )
                 runOnUiThread {
                     apptTitle = ""; apptAt = ""; apptReminderAt = ""; apptLocation = ""; apptNotes = ""; apptVetId = 0
+                    apptIsRecurring = false; apptWeekdays = setOf(); apptTimes = listOf(); apptNewTime = ""
+                    apptCategory = ""; apptCustomCategory = ""; apptTimezone = ""
+                    apptMonthPositions = setOf()
                     apptShowForm = false
                     setLoading(false, "Appointment saved.")
                     loadAppointments()

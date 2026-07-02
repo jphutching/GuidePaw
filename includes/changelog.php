@@ -4,6 +4,25 @@ if (!function_exists('gpChangelogEntries')) {
     {
         return [
             [
+                'version' => '0.102',
+                'date'    => 'July 2, 2026',
+                'title'   => 'Recurring meeting date picker refinements',
+                'items'   => [
+                    'For recurring: exclude day-of-month numbers; use only weekday letters (s,m,t,w,t,f,s) + multiple times per day.',
+                    'Category now has custom "what it is" field. Timezone field notes it is for the meeting\'s timezone.',
+                    'Android companion v0.102.',
+                ],
+            ],
+            [
+                'version' => '0.101',
+                'date'    => 'July 1, 2026',
+                'title'   => 'Recurring selectors & companion release',
+                'items'   => [
+                    'Cleaner weekday checkboxes (Sun–Sat) and natural "On the Nth weekday of the month" flow for recurring appointments.',
+                    'Android companion v0.101 with improved schedule pickers and update check.',
+                ],
+            ],
+            [
                 'version' => '0.098',
                 'date'    => 'May 28, 2026',
                 'title'   => 'Google Play ready — web checkout, privacy policy',

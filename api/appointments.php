@@ -106,6 +106,29 @@ if ($action === 'add_appointment') {
     $reminderAt  = trim((string) ($input['reminder_at'] ?? ''));
     $location    = trim((string) ($input['location_text'] ?? ''));
     $notes       = trim((string) ($input['notes'] ?? ''));
+
+    // Recurring meeting extras (date picker uses weekdays s,m,t,w,t,f,s + times only; exclude day-of-month numbers)
+    $isRecurring   = !empty($input['is_recurring']);
+    $weekdays      = trim((string) ($input['weekdays'] ?? ''));
+    $times         = trim((string) ($input['times'] ?? ''));
+    $category      = trim((string) ($input['category'] ?? ''));
+    $customCat     = trim((string) ($input['custom_category'] ?? ''));
+    $tz            = trim((string) ($input['timezone'] ?? ''));
+    $monthPos      = trim((string) ($input['month_positions'] ?? ''));
+
+    if ($isRecurring || $weekdays || $times || $category || $customCat || $tz || $monthPos) {
+        $recMeta = [];
+        if ($isRecurring) $recMeta[] = 'recurring';
+        if ($weekdays)    $recMeta[] = 'days:' . $weekdays;
+        if ($times)       $recMeta[] = 'times:' . $times;
+        if ($category)    $recMeta[] = 'cat:' . $category;
+        if ($customCat)   $recMeta[] = 'what:' . $customCat;
+        if ($tz)          $recMeta[] = 'tz:' . $tz;
+        if ($monthPos)    $recMeta[] = 'monthpos:' . $monthPos;
+        $prefix = '[Recur ' . implode(' ', $recMeta) . '] ';
+        $notes = $prefix . $notes;
+    }
+
     $vetId       = (int) ($input['dog_vet_id'] ?? 0) ?: null;
 
     $pdo->prepare("

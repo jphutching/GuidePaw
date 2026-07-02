@@ -1542,6 +1542,13 @@ class GuidePawApiClient(
         locationText: String,
         notes: String,
         vetId: Int,
+        isRecurring: Boolean = false,
+        weekdays: Set<Int> = emptySet(),
+        times: List<String> = emptyList(),
+        category: String = "",
+        customCategory: String = "",
+        timezone: String = "",
+        monthPositions: Set<Int> = emptySet(),
     ) {
         val payload = JSONObject()
             .put("action", "add_appointment")
@@ -1551,6 +1558,13 @@ class GuidePawApiClient(
             .put("location_text", locationText)
             .put("notes", notes)
             .put("dog_vet_id", if (vetId > 0) vetId else JSONObject.NULL)
+            .put("is_recurring", isRecurring)
+            .put("weekdays", weekdays.joinToString(","))
+            .put("times", times.joinToString(","))
+            .put("category", category)
+            .put("custom_category", customCategory)
+            .put("timezone", timezone)
+            .put("month_positions", monthPositions.joinToString(","))
         val response = requestJson("api/appointments.php", "POST", token, payload)
         ensureSuccess(response)
     }
